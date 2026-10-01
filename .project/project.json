@@ -1,0 +1,26 @@
+{
+  "$schema": "../schemas/project.schema.json",
+  "project_id": "m_t69f",
+  "author": {
+    "id": "1674438941"
+  },
+  "entry": "main.lua",
+  "version": "1.0.0",
+  "taptap_publish": {
+    "title": "万物的觉醒",
+    "description": "",
+    "category": "casual",
+    "screen_orientation": "landscape",
+    "collection_type": "sce",
+    "trial_note": "",
+    "app_platforms": "1,2",
+    "app_id": 953703,
+    "developer_id": 410748,
+    "miniapp_id": "tapmcaz9letlzekarc"
+  },
+  "assets": {
+    "icon": "",
+    "screenshots": [],
+    "promotional_image": ""
+  }
+}
