@@ -1,6 +1,6 @@
 -- ============================================================================
 -- config/GameConfig.lua
--- 全局配置 — 所有可调参数集中在此，避免散落在各处
+-- 全局配置 — 所有可调参数集中在此
 --
 -- ⚠️ 长度单位一律是「米」(见 AGENTS.md 规则 #0)
 -- ⚠️ 坐标系: Y 轴向上, X 右, Z 前 (与 Unity 相同)
@@ -11,35 +11,106 @@ local GameConfig = {}
 -- ============================================
 -- 基础信息
 -- ============================================
-GameConfig.Title = "万物的觉醒"
+GameConfig.Title = "泡涌"
 
 -- ============================================
--- 相机
+-- 相机 (3D 第三人称)
 -- ============================================
 GameConfig.Camera = {
-    FOV = 75.0,
+    FOV = 60.0,
     NEAR_CLIP = 0.1,
-    FAR_CLIP = 1000.0,
-    START_POSITION = { x = 0.0, y = 2.0, z = -10.0 },  -- 初始位置
-    START_YAW = 0.0,
-    START_PITCH = 0.0,
+    FAR_CLIP = 500.0,
+    -- 第三人称：相对角色的偏移
+    OFFSET = { x = 0.0, y = 3.5, z = -6.0 },
+    LOOK_AT_HEIGHT = 1.0,        -- 注视点相对角色的高度
+    MOUSE_SENSITIVITY = 0.1,
+    PITCH_MIN = -30.0,
+    PITCH_MAX = 60.0,
 }
 
 -- ============================================
--- 自由漫游相机控制
+-- 主角 (3D 小人)
 -- ============================================
-GameConfig.FlyControl = {
-    SPEED = 20.0,              -- 移动速度 (米/秒)
-    SPEED_BOOST = 2.0,         -- Shift 加速倍率
-    MOUSE_SENSITIVITY = 0.1,   -- 鼠标灵敏度
-    PITCH_MIN = -90.0,         -- 俯仰下限 (度)
-    PITCH_MAX = 90.0,          -- 俯仰上限 (度)
+GameConfig.Player = {
+    MOVE_SPEED = 6.0,            -- 移动速度 (米/秒)
+    JUMP_SPEED = 7.0,            -- 跳跃初速度 (米/秒)
+    GRAVITY = -20.0,             -- 重力加速度
+    HEIGHT = 1.7,                -- 身高 (米)
+    RADIUS = 0.35,               -- 碰撞半径 (米)
+    CAMERA_DISTANCE = 6.0,       -- 相机距离
 }
 
 -- ============================================
--- 光照环境预设
+-- 泡泡能力系统
 -- ============================================
--- 可选: "LightGroup/Daytime.xml"  /  "LightGroup/Dusk.xml"  /  "LightGroup/Night.xml"
+-- 三种泡泡: 弹力 / 浮力 / 炸弹
+GameConfig.Bubble = {
+    -- 蓄力 (左键长按)
+    CHARGE_TIME = 1.5,           -- 满蓄力所需秒数
+    MIN_SCALE = 0.5,             -- 最小泡泡尺寸
+    MAX_SCALE = 2.5,             -- 最大泡泡尺寸
+
+    -- 释放
+    LAUNCH_SPEED_MIN = 8.0,      -- 最小发射速度 (米/秒)
+    LAUNCH_SPEED_MAX = 25.0,     -- 最大发射速度 (米/秒)
+
+    -- 泡泡空间
+    SPACE_LIFETIME = 30.0,       -- 泡泡空间存活时间 (秒)
+
+    -- 三种泡泡的专属参数
+    Types = {
+        -- 弹力泡泡: 可发射可放置; 弹射玩家 / 破坏物体
+        BOUNCE = {
+            name = "弹力",
+            color = { r = 0.3, g = 0.7, b = 1.0 },   -- 蓝
+            canLaunch = true,                         -- 可发射
+            canPlace = true,                          -- 可放置
+            bounceForce = 18.0,                       -- 弹射力
+            breakPower = 1.0,                         -- 破坏力
+        },
+        -- 浮力泡泡: 只能放置; 漂浮 / 连成桥
+        FLOAT = {
+            name = "浮力",
+            color = { r = 0.3, g = 1.0, b = 0.9 },   -- 青
+            canLaunch = false,
+            canPlace = true,
+            floatForce = -12.0,                       -- 向上浮力 (负值向上)
+            bridgeRadius = 3.0,                       -- 连接成桥的判定半径
+        },
+        -- 炸弹泡泡: 只能放置; 压开关 / 远程引爆
+        BOMB = {
+            name = "炸弹",
+            color = { r = 1.0, g = 0.5, b = 0.2 },   -- 橙红
+            canLaunch = false,
+            canPlace = true,
+            blastRadius = 5.0,                        -- 爆炸半径
+            blastForce = 25.0,                        -- 爆炸冲击力
+            maxActive = 1,                            -- ⚠️ 一次只能控制一枚
+        },
+    },
+}
+
+-- ============================================
+-- 世界规则 (泡泡间的物理交互)
+-- ============================================
+GameConfig.WorldRule = {
+    SPLIT_FORCE = 10.0,          -- 分裂: 扰动阈值
+    MERGE_RADIUS = 1.5,          -- 融合: 同类靠近的判定半径
+    DIFFUSE_COEFF = 0.5,         -- ⚠️ 膨胀: 弥散系数 (最需调优)
+}
+
+-- ============================================
+-- 瞄准引导线
+-- ============================================
+GameConfig.AimLine = {
+    ENABLED = true,
+    SEGMENTS = 30,               -- 抛物线的分段数
+    DOT_SPACING = 0.5,           -- 落点标记间距
+}
+
+-- ============================================
+-- 光照
+-- ============================================
 GameConfig.Lighting = {
     PRESET = "LightGroup/Daytime.xml",
 }
@@ -48,7 +119,7 @@ GameConfig.Lighting = {
 -- 渲染
 -- ============================================
 GameConfig.Rendering = {
-    HDR = true,                -- PBR 材质建议开启
+    HDR = true,
 }
 
 -- ============================================
@@ -56,23 +127,15 @@ GameConfig.Rendering = {
 -- ============================================
 GameConfig.UI = {
     FONT_NORMAL = "Fonts/MiSans-Regular.ttf",
-    FPS_UPDATE_INTERVAL = 0.25,  -- FPS 刷新间隔 (秒)，避免每帧测量文本
+    FPS_UPDATE_INTERVAL = 0.25,
 }
 
 -- ============================================
 -- 调试
 -- ============================================
 GameConfig.Debug = {
-    VERBOSE = true,            -- 开发期打开日志 (见 AGENTS.md 规则 #16)
-    DEBUG_DRAW = false,        -- 启动时是否开启调试绘制 (Tab 可切换)
-}
-
--- ============================================
--- 玩法参数（待玩法定稿后填充）
--- ============================================
-GameConfig.Gameplay = {
-    -- 主题: 涌现 (Emergence)
-    -- 例: 个体数量、局部规则强度、涌现参数等
+    VERBOSE = true,
+    DEBUG_DRAW = false,
 }
 
 return GameConfig

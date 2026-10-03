@@ -1,13 +1,16 @@
 -- ============================================================================
 -- ui/HUD.lua
--- 游戏界面 — 基于 urhox-libs/UI (Yoga Flexbox + NanoVG)
+-- 游戏界面 — 极简 HUD (见策划案 11.2)
 --
--- 动态控件用「保留 local 引用」模式，后续直接调方法 (见 recipes/ui.md §11)
+-- 显示: FPS / 当前泡泡 / 蓄力状态 / 炸弹数
 -- ============================================================================
 
 local UI = require("urhox-libs/UI")
 local GameConfig = require("config.GameConfig")
 local Logger = require("utils.Logger")
+
+local BubbleManager = require("game.BubbleManager")
+local BubbleLauncher = require("game.BubbleLauncher")
 
 local TAG = "HUD"
 
@@ -15,11 +18,19 @@ local HUD = {}
 
 ---@type Label|nil
 local fpsLabel_ = nil
-local fpsTimer_ = 0.0
+---@type Label|nil
+local typeLabel_ = nil
+---@type Label|nil
+local chargeLabel_ = nil
 ---@type Widget|nil
 local uiRoot_ = nil
 
----初始化 UI 系统（必须在创建控件前调用）
+local fpsTimer_ = 0.0
+
+-- ============================================================
+-- 初始化
+-- ============================================================
+
 function HUD.Init()
     UI.Init({
         fonts = {
@@ -32,7 +43,6 @@ function HUD.Init()
     Logger.Info(TAG, "UI 系统已初始化")
 end
 
----构建界面
 function HUD.Create()
     fpsLabel_ = UI.Label {
         text = "FPS: --",
@@ -43,6 +53,24 @@ function HUD.Create()
         right = 10,
     }
 
+    typeLabel_ = UI.Label {
+        text = "泡泡: 弹力",
+        fontSize = 16,
+        fontColor = { 200, 230, 255, 230 },
+        position = "absolute",
+        top = 10,
+        left = 10,
+    }
+
+    chargeLabel_ = UI.Label {
+        text = "",
+        fontSize = 14,
+        fontColor = { 255, 220, 120, 240 },
+        position = "absolute",
+        top = 36,
+        left = 10,
+    }
+
     uiRoot_ = UI.Panel {
         id = "gameUI",
         width = "100%",
@@ -50,7 +78,7 @@ function HUD.Create()
         pointerEvents = "box-none",
         children = {
             UI.Label {
-                text = "WASD: Move | Mouse Right: Look | Space: Up | C: Down | Tab: Debug",
+                text = "WASD 移动 | Space 跳跃 | 左键长按蓄力 | 右键释放 | 1/2/3 切换泡泡",
                 fontSize = 12,
                 fontColor = { 255, 255, 200, 200 },
                 position = "absolute",
@@ -59,6 +87,8 @@ function HUD.Create()
                 right = 0,
                 textAlign = "center",
             },
+            typeLabel_,
+            chargeLabel_,
             fpsLabel_,
         }
     }
@@ -67,21 +97,53 @@ function HUD.Create()
     Logger.Info(TAG, "界面构建完成")
 end
 
----每帧更新（FPS 节流刷新，避免每帧文本测量开销）
+-- ============================================================
+-- 每帧更新
+-- ============================================================
+
 ---@param dt number
 function HUD.Update(dt)
-    local newTimer = fpsTimer_ + dt
-    fpsTimer_ = newTimer
-    if fpsLabel_ ~= nil and newTimer >= GameConfig.UI.FPS_UPDATE_INTERVAL and dt > 0 then
+    fpsTimer_ = fpsTimer_ + dt
+    if fpsTimer_ < GameConfig.UI.FPS_UPDATE_INTERVAL or dt <= 0 then
+        return
+    end
+    fpsTimer_ = fpsTimer_ - GameConfig.UI.FPS_UPDATE_INTERVAL
+
+    if fpsLabel_ ~= nil then
         fpsLabel_:SetText(string.format("FPS: %d", math.floor(1.0 / dt)))
-        fpsTimer_ = newTimer - GameConfig.UI.FPS_UPDATE_INTERVAL
+    end
+
+    -- 当前泡泡类型
+    if typeLabel_ ~= nil then
+        local cfg = BubbleManager.GetTypeConfig()
+        if cfg ~= nil then
+            local count = BubbleManager.Count()
+            typeLabel_:SetText(string.format("泡泡: %s  [%d]", cfg.name, count))
+        end
+    end
+
+    -- 蓄力状态
+    if chargeLabel_ ~= nil then
+        if BubbleLauncher.IsCharging() then
+            local ratio = BubbleLauncher.GetChargeRatio()
+            local bars = math.floor(ratio * 10)
+            local bar = string.rep("█", bars) .. string.rep("░", 10 - bars)
+            chargeLabel_:SetText(string.format("蓄力 %s %d%%", bar, math.floor(ratio * 100)))
+        else
+            chargeLabel_:SetText("")
+        end
     end
 end
 
----清理
+-- ============================================================
+-- 清理
+-- ============================================================
+
 function HUD.Shutdown()
     UI.Shutdown()
     fpsLabel_ = nil
+    typeLabel_ = nil
+    chargeLabel_ = nil
     uiRoot_ = nil
     Logger.Info(TAG, "UI 已关闭")
 end

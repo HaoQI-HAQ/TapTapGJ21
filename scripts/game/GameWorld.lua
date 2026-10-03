@@ -1,35 +1,24 @@
 -- ============================================================================
 -- game/GameWorld.lua
--- 玩法内容 — 游戏对象的创建与每帧更新
+-- 玩法内容 — 组装玩家、泡泡、关卡
 --
--- 🎯 这是「涌现」玩法的落地区域。
---    当前为空场景，待玩法定稿后在此填充。
+-- 🎯 这是「泡涌」玩法的落地区域。
 -- ============================================================================
 
+local GameConfig = require("config.GameConfig")
 local Logger = require("utils.Logger")
 local SceneManager = require("core.SceneManager")
+
+local PlayerController = require("game.PlayerController")
+local BubbleManager = require("game.BubbleManager")
+local BubbleLauncher = require("game.BubbleLauncher")
 
 local TAG = "GameWorld"
 
 local GameWorld = {}
 
 -- ============================================================
--- 创建游戏对象
--- ============================================================
--- 参考写法：
---   local scene = SceneManager.GetScene()
---   local node = scene:CreateChild("Name")
---   node.position = Vector3(0, 0, 0)
---   local model = node:CreateComponent("StaticModel")
---   model:SetModel(cache:GetResource("Model", "Models/Box.mdl"))
---
--- 程序化材质只用这三个 Technique（见 AGENTS.md 规则 #9.4）：
---   "Techniques/PBR/PBRNoTexture.xml"       不透明
---   "Techniques/PBR/PBRNoTextureAlpha.xml"  透明
---   "Techniques/NoTextureUnlit.xml"         无光照
---
--- ⚠️ 内置模型尺寸不要猜，用 boundingBox 获取（规则 #9.2）：
---   local size = model.boundingBox.size
+-- 创建
 -- ============================================================
 
 function GameWorld.Create()
@@ -39,24 +28,96 @@ function GameWorld.Create()
         return
     end
 
-    -- TODO: 在此创建游戏对象
+    -- 1. 主角
+    local cameraNode = SceneManager.GetCameraNode()
+    if cameraNode == nil then
+        Logger.Error(TAG, "相机节点不存在，无法创建主角")
+        return
+    end
+    PlayerController.Init(scene, cameraNode)
 
-    Logger.Key(TAG, "玩法内容创建完成（当前为空）")
+    -- 2. 临时地面（供测试，后续换成关卡内容）
+    GameWorld.CreateTempGround(scene)
+
+    Logger.Key(TAG, "玩法内容创建完成")
+end
+
+---临时地面（灰盒测试用）
+---@param scene Scene
+function GameWorld.CreateTempGround(scene)
+    local groundNode = scene:CreateChild("Ground")
+    groundNode.position = Vector3(0, -0.5, 0)
+    groundNode.scale = Vector3(60, 1, 60)
+
+    local model = groundNode:CreateComponent("StaticModel")
+    model:SetModel(cache:GetResource("Model", "Models/Box.mdl"))
+
+    local mat = Material:new()
+    mat:SetTechnique(0, cache:GetResource("Technique", "Techniques/PBR/PBRNoTexture.xml"))
+    mat:SetShaderParameter("MatDiffColor", Variant(Color(0.25, 0.28, 0.35, 1.0)))
+    mat:SetShaderParameter("MatSpecColor", Variant(Color(0.3, 0.3, 0.3, 1.0)))
+    mat:SetShaderParameter("Metallic", Variant(0.0))
+    mat:SetShaderParameter("Roughness", Variant(0.9))
+    model:SetMaterial(mat)
+    model.castShadows = false
+
+    Logger.Info(TAG, "临时地面已创建")
 end
 
 -- ============================================================
 -- 每帧更新
 -- ============================================================
+
 ---@param dt number
 function GameWorld.Update(dt)
-    -- TODO: 在此填充每帧逻辑
+    -- 主角
+    PlayerController.Update(dt)
+
+    -- 泡泡世界规则
+    BubbleManager.Update(dt)
+
+    -- 蓄力释放
+    GameWorld.HandleBubbleInput(dt)
+
+    -- 切换泡泡类型
+    GameWorld.HandleTypeSwitch()
+end
+
+---泡泡输入处理
+---@param dt number
+function GameWorld.HandleBubbleInput(dt)
+    local playerPos = PlayerController.GetPosition()
+    if playerPos == nil then
+        return
+    end
+
+    -- 瞄准点 = 主角前方（后续接入鼠标射线检测）
+    local aimPos = playerPos + Vector3(0, 0, 5)
+
+    BubbleLauncher.Update(dt, aimPos)
+end
+
+---切换泡泡类型 (1/2/3 键)
+function GameWorld.HandleTypeSwitch()
+    if input:GetKeyPress(KEY_1) then
+        BubbleManager.SetType("BOUNCE")
+        BubbleLauncher.Reset()
+    elseif input:GetKeyPress(KEY_2) then
+        BubbleManager.SetType("FLOAT")
+        BubbleLauncher.Reset()
+    elseif input:GetKeyPress(KEY_3) then
+        BubbleManager.SetType("BOMB")
+        BubbleLauncher.Reset()
+    end
 end
 
 -- ============================================================
 -- 清理
 -- ============================================================
+
 function GameWorld.Clear()
-    -- TODO: 在此释放玩法相关的对象
+    BubbleManager.Clear()
+    PlayerController.Reset()
     Logger.Info(TAG, "玩法内容已清空")
 end
 

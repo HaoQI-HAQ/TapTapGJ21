@@ -10,6 +10,7 @@ logs/.nfs*
 
 # Temp & swap files
 .tmp/
+_uploads/
 *.crswap
 .DS_Store
 
