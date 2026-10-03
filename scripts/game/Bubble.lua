@@ -69,7 +69,10 @@ end
 ---@return boolean
 function Bubble:CanLaunch()
     local cfg = self:GetTypeConfig()
-    return cfg ~= nil and cfg.canLaunch == true
+    if cfg == nil then
+        return false
+    end
+    return cfg.canLaunch == true
 end
 
 -- ============================================================

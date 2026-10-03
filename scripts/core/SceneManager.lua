@@ -51,8 +51,10 @@ function SceneManager.SetupCamera()
     end
 
     cameraNode_ = scene_:CreateChild("Camera")
-    local start = GameConfig.Camera.START_POSITION
-    cameraNode_.position = Vector3(start.x, start.y, start.z)
+
+    -- 初始位置用相机相对主角的偏移（之后由 PlayerController 每帧跟随）
+    local offset = GameConfig.Camera.OFFSET
+    cameraNode_.position = Vector3(offset.x, offset.y, offset.z)
 
     camera_ = cameraNode_:CreateComponent("Camera")
     camera_.nearClip = GameConfig.Camera.NEAR_CLIP
@@ -64,7 +66,7 @@ function SceneManager.SetupCamera()
     renderer.hdrRendering = GameConfig.Rendering.HDR
 
     Logger.Info(TAG, string.format("相机就位 pos=(%.1f, %.1f, %.1f)",
-        start.x, start.y, start.z))
+        offset.x, offset.y, offset.z))
 end
 
 ---@return Scene|nil

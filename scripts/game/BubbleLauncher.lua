@@ -86,6 +86,13 @@ function BubbleLauncher.Release(aimPosition)
     local scale = BubbleLauncher.GetCurrentScale()
     local cfg = BubbleManager.GetTypeConfig()
 
+    if cfg == nil then
+        Logger.Error(TAG, "未知泡泡类型: " .. tostring(typeName))
+        charging_ = false
+        chargeTime_ = 0.0
+        return
+    end
+
     local ok, reason = BubbleManager.CanCreate(typeName)
     if not ok then
         Logger.Warn(TAG, "释放失败: " .. tostring(reason))
