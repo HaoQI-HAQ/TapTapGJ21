@@ -1,0 +1,56 @@
+# ===== Unity 生成目录（绝对不要提交）=====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]serSettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Cc]rashlytics/
+
+# Unity 的自动生成缓存
+sysinfo.txt
+*.stackdump
+
+# ===== IDE / 编辑器生成文件 =====
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Rider
+.idea/
+*.sln.DotSettings.user
+
+# ===== 构建产物 =====
+*.apk
+*.aab
+*.ipa
+*.unitypackage
+*.app
+ExportedObj/
+crashlytics-build.properties
+
+# ===== 资源导入器临时文件 =====
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ===== 保留所有 .meta 文件（版本控制必需）=====
+!/[Aa]ssets/**/*.meta
+!/[Pp]ackages/**/*.meta

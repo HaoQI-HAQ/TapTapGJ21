@@ -35,15 +35,49 @@
 
 ## 技术栈
 
-- 引擎：UrhoX
-- 脚本：Lua 5.4
+- 引擎：**Unity 2022.3.34f1c1**（URP 渲染管线）
+- 语言：**C#**
+- 框架：**GameFramework** + UnityGameFramework（以内嵌包形式随仓库分发，队友 clone 即用）
 
 ## 项目结构
 
 ```
-scripts/    游戏逻辑代码（Lua）
+docs/plan/           策划文档
+UnityProject/PAO/    Unity 工程（用 Unity Hub 打开这一层，不是仓库根目录）
+  Assets/GameMain/   项目自有资源与代码
+  Packages/          框架内嵌包 com.jiangyin.gameframework
+scripts/             早期 Lua 方案遗留，已停用
 ```
 
 ## 开发说明
 
-游戏逻辑代码统一写在 `scripts/` 目录下。引擎文档、示例与工具库由开发环境提供，不纳入版本管理。
+### 环境
+
+- **Unity 版本必须全队统一为 `2022.3.34f1c1`**，否则 `Library/` 与资源序列化会互相冲突
+- 用 Unity Hub 打开 `UnityProject/PAO` 目录
+
+### 代码放哪
+
+所有自有资源与代码放在 `Assets/GameMain/` 下，第三方插件放 `Assets/ThirdParty/`。
+完整的目录规范、命名约定、协作分工见 **[Assets/GameMain/README.md](UnityProject/PAO/Assets/GameMain/README.md)**。
+
+- 命名空间统一用 `PAO`
+- 游戏流程写在 `Assets/GameMain/Scripts/Procedure/`
+- 玩法逻辑写在 `Assets/GameMain/Scripts/Gameplay/`
+
+### ⚠️ 日志默认是关闭的
+
+GameFramework 的 `Log.Info` 等接口带编译期开关，**不加宏的话所有日志会被编译器直接删掉**（不报错、没输出，极易误判成"代码没执行"）。
+
+需要在 `编辑 → 项目设置 → 播放器 → 其他设置 → 脚本定义符号` 中加入：
+
+```
+ENABLE_LOG
+```
+
+发布正式版时再去掉，日志开销归零。
+
+### 提交注意
+
+- `Library/`、`Temp/`、`Logs/`、`UserSettings/` 已被 `.gitignore` 忽略，**不要强行加入**
+- **`.meta` 文件必须提交**（丢了引用会全断）
