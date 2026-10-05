@@ -8,7 +8,7 @@ namespace PAO
     /// </summary>
     public enum BubbleType
     {
-        Buoyancy = 0,   // 浮力泡泡：漂浮、缓慢上升（已实现）
+        Sticky = 0,     // 浮粘泡泡：漂浮上升，会粘住碰到的泡泡（已实现）
         Bouncy = 1,     // 弹力泡泡：碰到东西会弹跳（待实现）
         Bomb = 2        // 炸弹泡泡：会爆炸（待实现）
     }
@@ -43,11 +43,11 @@ namespace PAO
 
         [SerializeField] private int m_FontSize = 30;
 
-        private static readonly string[] s_DisplayNames = { "浮力泡泡", "弹力泡泡", "炸弹泡泡" };
+        private static readonly string[] s_DisplayNames = { "浮粘泡泡", "弹力泡泡", "炸弹泡泡" };
 
         private static readonly Color[] s_TypeColors =
         {
-            new Color(0.55f, 0.85f, 1f),    // 浮力：淡蓝
+            new Color(0.55f, 0.85f, 1f),    // 浮粘：淡蓝
             new Color(0.55f, 1f, 0.62f),    // 弹力：淡绿
             new Color(1f, 0.62f, 0.42f)     // 炸弹：橙红
         };
@@ -77,7 +77,7 @@ namespace PAO
         {
             if (m_EnableHotkeys)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { SetType(BubbleType.Buoyancy); return; }
+                if (Input.GetKeyDown(KeyCode.Alpha1)) { SetType(BubbleType.Sticky); return; }
                 if (Input.GetKeyDown(KeyCode.Alpha2)) { SetType(BubbleType.Bouncy); return; }
                 if (Input.GetKeyDown(KeyCode.Alpha3)) { SetType(BubbleType.Bomb); return; }
             }

@@ -9,25 +9,20 @@ namespace PAO
     ///   点按左键 → 立刻射出一个小泡泡
     ///   长按左键 → 泡泡停在身前不断变大（不发射），松开才射出去
     ///
+    /// 【三种泡泡】
+    /// 参数完全独立，在 Inspector 里分成三组：浮粘 / 弹力 / 炸弹。
+    /// 当前用哪一种由 BubbleTypeSwitcher 决定（按 1/2/3 或滚轮切换）。
+    /// 各类型的具体行为写在 Bubble.cs 里。
+    ///
     /// 【场景里怎么搭】
     /// 挂在 Player 上即可，零配置可跑。
     /// 想控制生成位置就建一个空物体当 Muzzle（比如手部），拖进对应字段。
-    ///
-    /// 【泡泡外观】
-    /// 指定 Bubble Prefab 就用你的美术资源；
-    /// 留空则用代码生成的蓝色球体，方便先跑通手感。
     /// </summary>
     public class BubbleLauncher : MonoBehaviour
     {
         [Header("蓄力")]
         [Tooltip("蓄满力需要的时间（秒）。点按即为不足这个时间就松手")]
         [SerializeField] private float m_MaxChargeTime = 2f;
-
-        [Tooltip("点按时泡泡的直径（米）")]
-        [SerializeField] private float m_MinSize = 0.2f;
-
-        [Tooltip("蓄满力时泡泡的直径（米）")]
-        [SerializeField] private float m_MaxSize = 1.5f;
 
         [Header("生成位置")]
         [Tooltip("泡泡生成基准点。留空则以角色自身为基准")]
@@ -43,41 +38,22 @@ namespace PAO
         [Tooltip("圆心推移方向（局部）：X=右 / Y=上 / Z=前。默认沿正前方，可改成一侧或斜上方")]
         [SerializeField] private Vector3 m_GrowthPushDirection = new Vector3(0f, 0f, 1f);
 
-        [Header("发射")]
-        [Tooltip("点按时的初速度（米/秒）")]
-        [SerializeField] private float m_MinLaunchSpeed = 8f;
+        [Header("① 浮粘泡泡参数")]
+        [SerializeField] private StickyBubbleSettings m_StickySettings = new StickyBubbleSettings();
 
-        [Tooltip("蓄满力时的初速度（米/秒）")]
-        [SerializeField] private float m_MaxLaunchSpeed = 22f;
+        [Header("② 弹力泡泡参数（行为待实现）")]
+        [SerializeField] private BouncyBubbleSettings m_BouncySettings = new BouncyBubbleSettings();
 
-        [Header("泡泡")]
-        [Tooltip("泡泡预制体。留空则用代码生成的球体")]
-        [SerializeField] private GameObject m_BubblePrefab;
-
-        [Tooltip("代码生成泡泡时的颜色")]
-        [SerializeField] private Color m_BubbleColor = new Color(0.55f, 0.85f, 1f, 1f);
-
-        [Tooltip("泡泡存活时间（秒），到点自动消失")]
-        [SerializeField] private float m_BubbleLifeTime = 10f;
-
-        [Tooltip("泡泡是否受重力。关掉即为漂浮（更符合泡泡的手感）")]
-        [SerializeField] private bool m_BubbleUseGravity = false;
-
-        [Header("泡泡浮力")]
-        [Tooltip("最小泡泡的上升速度（米/秒），最快")]
-        [SerializeField] private float m_SmallRiseSpeed = 2.5f;
-
-        [Tooltip("最大泡泡的上升速度（米/秒），最慢")]
-        [SerializeField] private float m_LargeRiseSpeed = 0.25f;
-
-        [Tooltip("空气阻力。越大越快进入匀速、飘得越稳，但飞得越近")]
-        [SerializeField] private float m_BubbleDrag = 0.8f;
+        [Header("③ 炸弹泡泡参数（行为待实现）")]
+        [SerializeField] private BombBubbleSettings m_BombSettings = new BombBubbleSettings();
 
         // ---------- 运行时状态 ----------
         private GameObject m_CurrentBubble;     // 正在蓄力的泡泡
         private float m_ChargeTime;             // 已蓄力时间
         private bool m_Charging;
-        private readonly Material[] m_RuntimeMaterials = new Material[3];   // 按泡泡类型缓存的材质，避免每次新建造成泄漏
+
+        // 按泡泡类型缓存的材质，避免每次生成都新建造成泄漏
+        private readonly Material[] m_RuntimeMaterials = new Material[3];
 
         /// <summary>
         /// 蓄力进度 0~1，UI 想画蓄力条可以读它。
@@ -134,10 +110,7 @@ namespace PAO
             m_Charging = true;
             m_ChargeTime = 0f;
 
-            Vector3 spawnPosition = GetSpawnPosition();
-            Quaternion spawnRotation = GetSpawnRotation();
-
-            m_CurrentBubble = CreateBubble(spawnPosition, spawnRotation);
+            m_CurrentBubble = CreateBubble(GetSpawnPosition(), GetSpawnRotation());
             ApplyChargeSize();
         }
 
@@ -168,11 +141,13 @@ namespace PAO
                 return;
             }
 
+            BubbleSettings settings = GetSettings();
+
             GameObject bubble = m_CurrentBubble;
             m_CurrentBubble = null;
 
             // 点按与长按在这里统一：蓄力时间越久，速度越快
-            float speed = Mathf.Lerp(m_MinLaunchSpeed, m_MaxLaunchSpeed, ChargeProgress);
+            float speed = Mathf.Lerp(settings.minLaunchSpeed, settings.maxLaunchSpeed, ChargeProgress);
             Vector3 direction = GetSpawnRotation() * Vector3.forward;
 
             bubble.transform.SetParent(null);
@@ -181,20 +156,32 @@ namespace PAO
             if (body != null)
             {
                 body.isKinematic = false;
-                body.useGravity = m_BubbleUseGravity;
+                body.useGravity = settings.useGravity;
                 body.velocity = direction * speed;
 
-                ApplyBuoyancy(bubble, body);
+                ApplyBuoyancy(bubble, body, settings);
             }
 
-            // 发射后恢复实体碰撞（蓄力期间是触发器）
+            // 发射后恢复实体碰撞（蓄力期间是触发器），否则撞不到别的泡泡
             Collider bubbleCollider = bubble.GetComponent<Collider>();
             if (bubbleCollider != null)
             {
                 bubbleCollider.isTrigger = false;
             }
 
-            Destroy(bubble, m_BubbleLifeTime);
+            // 炸弹泡泡发射后登记到管理器，排队等着按 R 引爆
+            if (GetCurrentType() == BubbleType.Bomb)
+            {
+                BombBubbleManager bombManager = GetComponent<BombBubbleManager>();
+                Bubble bombBehaviour = bubble.GetComponent<Bubble>();
+
+                if (bombManager != null && bombBehaviour != null)
+                {
+                    bombManager.RegisterBomb(bombBehaviour);
+                }
+            }
+
+            Destroy(bubble, settings.lifeTime);
         }
 
         /// <summary>
@@ -202,15 +189,15 @@ namespace PAO
         /// 用 ConstantForce 持续施加向上的力，配合空气阻力，
         /// 泡泡会在飞行一小段后稳定到目标速度匀速上升。
         /// </summary>
-        private void ApplyBuoyancy(GameObject bubble, Rigidbody body)
+        private void ApplyBuoyancy(GameObject bubble, Rigidbody body, BubbleSettings settings)
         {
             // 按尺寸在「小泡快、大泡慢」之间插值出目标上升速度
-            float sizeProgress = Mathf.InverseLerp(m_MinSize, m_MaxSize, GetCurrentSize());
-            float targetRiseSpeed = Mathf.Lerp(m_SmallRiseSpeed, m_LargeRiseSpeed, sizeProgress);
+            float sizeProgress = Mathf.InverseLerp(settings.minSize, settings.maxSize, GetCurrentSize());
+            float targetRiseSpeed = Mathf.Lerp(settings.smallRiseSpeed, settings.largeRiseSpeed, sizeProgress);
 
             // 空气阻力：让泡泡飞一段后自然减速，同时让上升稳定为匀速
-            body.drag = m_BubbleDrag;
-            body.angularDrag = m_BubbleDrag;
+            body.drag = settings.drag;
+            body.angularDrag = settings.drag;
 
             // 匀速时阻力与浮力平衡：F = v * drag * mass
             ConstantForce buoyancy = bubble.GetComponent<ConstantForce>();
@@ -219,7 +206,7 @@ namespace PAO
                 buoyancy = bubble.AddComponent<ConstantForce>();
             }
 
-            buoyancy.force = Vector3.up * (targetRiseSpeed * m_BubbleDrag * body.mass);
+            buoyancy.force = Vector3.up * (targetRiseSpeed * settings.drag * body.mass);
         }
 
         /// <summary>
@@ -240,19 +227,23 @@ namespace PAO
         /// </summary>
         private float GetCurrentSize()
         {
-            return Mathf.Lerp(m_MinSize, m_MaxSize, ChargeProgress);
+            BubbleSettings settings = GetSettings();
+            return Mathf.Lerp(settings.minSize, settings.maxSize, ChargeProgress);
         }
 
         /// <summary>
-        /// 生成一个泡泡。优先用预制体，没配就用代码搓一个球。
+        /// 生成一个泡泡。优先用该类型的预制体，没配就用代码搓一个球。
+        /// 同时挂上 Bubble 组件并把类型与参数注入进去。
         /// </summary>
         private GameObject CreateBubble(Vector3 position, Quaternion rotation)
         {
+            BubbleSettings settings = GetSettings();
+
             GameObject bubble;
 
-            if (m_BubblePrefab != null)
+            if (settings.prefab != null)
             {
-                bubble = Instantiate(m_BubblePrefab, position, rotation);
+                bubble = Instantiate(settings.prefab, position, rotation);
                 bubble.name = "Bubble";
             }
             else
@@ -260,7 +251,7 @@ namespace PAO
                 bubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 bubble.name = "Bubble";
                 bubble.transform.SetPositionAndRotation(position, rotation);
-                ApplyFallbackMaterial(bubble);
+                ApplyFallbackMaterial(bubble, settings);
             }
 
             // 蓄力期间不参与物理，免得把角色自己顶开
@@ -287,13 +278,22 @@ namespace PAO
                 }
             }
 
+            // 挂上行为组件并注入类型，让它知道自己是哪种泡泡
+            Bubble behaviour = bubble.GetComponent<Bubble>();
+            if (behaviour == null)
+            {
+                behaviour = bubble.AddComponent<Bubble>();
+            }
+
+            behaviour.Setup(GetCurrentType(), settings);
+
             return bubble;
         }
 
         /// <summary>
         /// 代码生成泡泡时给它上色。找不到 URP 着色器就退回内置 Standard。
         /// </summary>
-        private void ApplyFallbackMaterial(GameObject bubble)
+        private void ApplyFallbackMaterial(GameObject bubble, BubbleSettings settings)
         {
             Renderer bubbleRenderer = bubble.GetComponent<Renderer>();
             if (bubbleRenderer == null)
@@ -303,7 +303,7 @@ namespace PAO
 
             int typeIndex = GetCurrentTypeIndex();
 
-            // 材质只建一次并复用，否则每次点按都 new 一个，材质会越攒越多
+            // 每种类型只建一次材质并复用，否则每次点按都 new 一个，材质会越攒越多
             if (m_RuntimeMaterials[typeIndex] == null)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/Lit");
@@ -318,7 +318,7 @@ namespace PAO
                 }
 
                 Material material = new Material(shader);
-                material.color = GetBubbleColor();
+                material.color = settings.color;
                 m_RuntimeMaterials[typeIndex] = material;
             }
 
@@ -356,12 +356,45 @@ namespace PAO
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
-            if (m_Muzzle != null)
-            {
-                return m_Muzzle.rotation;
-            }
-
+            // 只取角色自身的朝向，不取 Muzzle 的。
+            // 喷嘴模型常为了摆正外观而自带旋转（例如绕 X 转 90°），
+            // 若跟着它走，整条弹道会被带偏——表现就是泡泡一出膛就朝下掉。
             return transform.rotation;
+        }
+
+        /// <summary>
+        /// 当前泡泡类型。场景里没挂切换器时按浮粘泡泡处理。
+        /// </summary>
+        private BubbleType GetCurrentType()
+        {
+            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
+            return switcher != null ? switcher.Current : BubbleType.Sticky;
+        }
+
+        /// <summary>
+        /// 当前类型的序号，用于取缓存的材质。
+        /// </summary>
+        private int GetCurrentTypeIndex()
+        {
+            return (int)GetCurrentType();
+        }
+
+        /// <summary>
+        /// 取当前类型对应的那组参数。三种泡泡的参数互不影响。
+        /// </summary>
+        private BubbleSettings GetSettings()
+        {
+            switch (GetCurrentType())
+            {
+                case BubbleType.Bouncy:
+                    return m_BouncySettings;
+
+                case BubbleType.Bomb:
+                    return m_BombSettings;
+
+                default:
+                    return m_StickySettings;
+            }
         }
 
         /// <summary>
@@ -376,24 +409,6 @@ namespace PAO
             Gizmos.DrawWireSphere(basePosition, 0.08f);
             Gizmos.DrawWireSphere(spawnPosition, 0.15f);
             Gizmos.DrawLine(basePosition, spawnPosition);
-        }
-
-        /// <summary>
-        /// 当前泡泡类型的序号。场景里没挂切换器时按浮力泡泡处理。
-        /// </summary>
-        private int GetCurrentTypeIndex()
-        {
-            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
-            return switcher != null ? (int)switcher.Current : 0;
-        }
-
-        /// <summary>
-        /// 泡泡颜色：挂了切换器就用该类型的代表色，否则用 Inspector 里配的颜色。
-        /// </summary>
-        private Color GetBubbleColor()
-        {
-            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
-            return switcher != null ? switcher.CurrentColor : m_BubbleColor;
         }
     }
 }

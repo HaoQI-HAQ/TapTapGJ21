@@ -35,6 +35,38 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
   - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &-907158063205912355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37c12719f8c44d4a9877b5013cb7cfd7, type: 3}
+  m_Name: BubbleSDFRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    passEvent: 500
+    resolutionDivisor: 2
+    enableFrustumCulling: 1
+    enableRendering: 1
+    debugMode: 0
+    enableOcclusion: 1
+    globalFuse: 0.05
+    distortionSpeed: 1.2
+    iridescenceIntensity: 1.2
+    iridescenceScale: 1.6
+    specularIntensity: 1.1
+    specularPower: 96
+    opacity: 0.65
+    rimPower: 2.2
+    globalTint: {r: 1, g: 1, b: 1, a: 1}
+    useLightDirection: 1
+    lightDirection: {x: -0.4, y: 0.8, z: -0.45}
+  material: {fileID: 0}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53,7 +85,8 @@ MonoBehaviour:
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
   - {fileID: -1878332245247344467}
-  m_RendererFeatureMap: adc0de57c6d2eee5
+  - {fileID: -907158063205912355}
+  m_RendererFeatureMap: adc0de57c6d2eee5ddf07a3f8c2069f3
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
