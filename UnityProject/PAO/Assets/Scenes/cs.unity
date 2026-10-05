@@ -632,6 +632,7 @@ GameObject:
   - component: {fileID: 608002525}
   - component: {fileID: 608002524}
   - component: {fileID: 608002526}
+  - component: {fileID: 608002527}
   m_Layer: 0
   m_Name: takoyaki
   m_TagString: Untagged
@@ -743,6 +744,24 @@ MonoBehaviour:
   m_SmallRiseSpeed: 2.5
   m_LargeRiseSpeed: 0.25
   m_BubbleDrag: 0.8
+--- !u!114 &608002527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 608002522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36d0750d41f1ab442b1bf62309fae346, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EnableHotkeys: 1
+  m_EnableScrollWheel: 1
+  m_ScrollThreshold: 0.05
+  m_Label: {fileID: 0}
+  m_UiOffset: {x: 28, y: 24}
+  m_FontSize: 30
 --- !u!1 &739269473
 GameObject:
   m_ObjectHideFlags: 0

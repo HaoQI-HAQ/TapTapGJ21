@@ -77,7 +77,7 @@ namespace PAO
         private GameObject m_CurrentBubble;     // 正在蓄力的泡泡
         private float m_ChargeTime;             // 已蓄力时间
         private bool m_Charging;
-        private Material m_RuntimeBubbleMaterial;   // 代码生成泡泡时复用的材质，避免每次新建造成泄漏
+        private readonly Material[] m_RuntimeMaterials = new Material[3];   // 按泡泡类型缓存的材质，避免每次新建造成泄漏
 
         /// <summary>
         /// 蓄力进度 0~1，UI 想画蓄力条可以读它。
@@ -301,8 +301,10 @@ namespace PAO
                 return;
             }
 
+            int typeIndex = GetCurrentTypeIndex();
+
             // 材质只建一次并复用，否则每次点按都 new 一个，材质会越攒越多
-            if (m_RuntimeBubbleMaterial == null)
+            if (m_RuntimeMaterials[typeIndex] == null)
             {
                 Shader shader = Shader.Find("Universal Render Pipeline/Lit");
                 if (shader == null)
@@ -315,11 +317,12 @@ namespace PAO
                     return;
                 }
 
-                m_RuntimeBubbleMaterial = new Material(shader);
-                m_RuntimeBubbleMaterial.color = m_BubbleColor;
+                Material material = new Material(shader);
+                material.color = GetBubbleColor();
+                m_RuntimeMaterials[typeIndex] = material;
             }
 
-            bubbleRenderer.sharedMaterial = m_RuntimeBubbleMaterial;
+            bubbleRenderer.sharedMaterial = m_RuntimeMaterials[typeIndex];
         }
 
         /// <summary>
@@ -373,6 +376,24 @@ namespace PAO
             Gizmos.DrawWireSphere(basePosition, 0.08f);
             Gizmos.DrawWireSphere(spawnPosition, 0.15f);
             Gizmos.DrawLine(basePosition, spawnPosition);
+        }
+
+        /// <summary>
+        /// 当前泡泡类型的序号。场景里没挂切换器时按浮力泡泡处理。
+        /// </summary>
+        private int GetCurrentTypeIndex()
+        {
+            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
+            return switcher != null ? (int)switcher.Current : 0;
+        }
+
+        /// <summary>
+        /// 泡泡颜色：挂了切换器就用该类型的代表色，否则用 Inspector 里配的颜色。
+        /// </summary>
+        private Color GetBubbleColor()
+        {
+            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
+            return switcher != null ? switcher.CurrentColor : m_BubbleColor;
         }
     }
 }
