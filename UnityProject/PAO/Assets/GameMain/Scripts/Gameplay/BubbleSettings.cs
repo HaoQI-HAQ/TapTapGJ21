@@ -89,6 +89,13 @@ namespace PAO
 
         [Tooltip("最多反弹几次，0 表示不限")]
         public int maxBounceCount = 0;
+
+        [Header("弹力泡泡 · 填充地形泡泡")]
+        [Tooltip("最小泡泡（点按）打进地形泡泡时提供的容积")]
+        public int fillAmountMin = 1;
+
+        [Tooltip("最大泡泡（蓄满力）打进地形泡泡时提供的容积")]
+        public int fillAmountMax = 3;
     }
 
     /// <summary>

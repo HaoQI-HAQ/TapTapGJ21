@@ -152,6 +152,13 @@ namespace PAO
 
             bubble.transform.SetParent(null);
 
+            // 把这次的蓄力进度写进泡泡，供撞击力、填充量之类使用
+            Bubble launchedBehaviour = bubble.GetComponent<Bubble>();
+            if (launchedBehaviour != null)
+            {
+                launchedBehaviour.SizeProgress = ChargeProgress;
+            }
+
             Rigidbody body = bubble.GetComponent<Rigidbody>();
             if (body != null)
             {
@@ -181,7 +188,17 @@ namespace PAO
                 }
             }
 
-            Destroy(bubble, settings.lifeTime);
+            // 交给泡泡自己计时，这样进了地形容器后还能取消掉，
+            // 否则它会在容器里凭空消失
+            Bubble lifeTarget = bubble.GetComponent<Bubble>();
+            if (lifeTarget != null)
+            {
+                lifeTarget.ScheduleLifeEnd(settings.lifeTime);
+            }
+            else
+            {
+                Destroy(bubble, settings.lifeTime);
+            }
         }
 
         /// <summary>

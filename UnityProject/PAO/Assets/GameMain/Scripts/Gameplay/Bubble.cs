@@ -1,14 +1,14 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace PAO
 {
     /// <summary>
     /// 挂在每个飞出去的泡泡上：记录自己的类型，并执行该类型对应的行为。
     ///
-    /// 浮粘泡泡：碰到其他泡泡时粘在一起   —— 已实现
-    /// 弹力泡泡：碰到东西反弹             —— 参数已就位，行为待实现
-    /// 炸弹泡泡：引爆                     —— 参数已就位，行为待实现
+    /// 浮粘泡泡：粘住碰到的其他泡泡；够大时还能载人
+    /// 弹力泡泡：撞到地形泡泡会被收进去填充容积
+    /// 炸弹泡泡：按 R 引爆，把范围内刚体推开
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     public class Bubble : MonoBehaviour
@@ -22,10 +22,24 @@ namespace PAO
         /// <summary>炸弹编号，从 1 开始。非炸弹泡泡为 0。</summary>
         public int BombIndex { get; set; }
 
+        /// <summary>
+        /// 发射时的蓄力进度 0~1。0 = 点按的最小泡泡，1 = 蓄满力。
+        /// 冲击力、填充量之类跟「吹多大」相关的数值都读它。
+        /// </summary>
+        public float SizeProgress { get; set; }
+
+        /// <summary>当前所在的地形泡泡容器。没被打进去则为 null。</summary>
+        public TerrainBubble Container
+        {
+            get { return m_Container; }
+        }
+
         private BubbleSettings m_Settings;
         private StickyBubbleSettings m_StickySettings;
         private BouncyBubbleSettings m_BouncySettings;
         private BombBubbleSettings m_BombSettings;
+
+        private TerrainBubble m_Container;      // 被打进去的那个地形泡泡
         private int m_BounceCount;
 
         /// <summary>
@@ -43,6 +57,13 @@ namespace PAO
 
         private void OnCollisionEnter(Collision collision)
         {
+            // 已经在容器里的泡泡只处理同类粘连，不再走外面的撞击逻辑
+            if (m_Container != null)
+            {
+                HandleContainedCollision(collision);
+                return;
+            }
+
             switch (Type)
             {
                 case BubbleType.Sticky:
@@ -57,6 +78,26 @@ namespace PAO
                     HandleBomb(collision);
                     break;
             }
+        }
+
+        /// <summary>
+        /// 每帧朝容器球心收拢。多个泡泡会自然挤到一起。
+        /// </summary>
+        private void FixedUpdate()
+        {
+            if (m_Container == null)
+            {
+                return;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body == null || body.isKinematic)
+            {
+                return;
+            }
+
+            Vector3 toCenter = m_Container.Center - transform.position;
+            body.AddForce(toCenter * m_Container.GatherForce, ForceMode.Acceleration);
         }
 
         /// <summary>
@@ -106,9 +147,8 @@ namespace PAO
         }
 
         /// <summary>
-        /// 弹力泡泡：碰到东西反弹。
-        /// TODO 待实现：按 m_BouncySettings.bounciness 反射速度，
-        ///      并用 m_BouncySettings.maxBounceCount 限制次数。
+        /// 弹力泡泡：撞到地形泡泡就被收进去。
+        /// 本体不销毁，留在里面朝球心收拢，和别的泡泡挤成一团。
         /// </summary>
         private void HandleBouncy(Collision collision)
         {
@@ -117,13 +157,28 @@ namespace PAO
                 return;
             }
 
-            // 占位：目前不做任何事，泡泡行为等同于浮粘泡泡
+            TerrainBubble terrain = collision.collider.GetComponentInParent<TerrainBubble>();
+            if (terrain == null)
+            {
+                // TODO 撞到别的东西：按 m_BouncySettings.bounciness 反弹（待实现）
+                return;
+            }
+
+            // 泡泡吹得越大，填进去的容积越多
+            int amount = Mathf.RoundToInt(Mathf.Lerp(
+                m_BouncySettings.fillAmountMin,
+                m_BouncySettings.fillAmountMax,
+                Mathf.Clamp01(SizeProgress)));
+
+            // 先装进去再加容积：万一这一下正好填满，
+            // 地形爆炸时会连带把刚进去的它一起炸掉，符合预期
+            terrain.ContainBubble(this);
+            terrain.Absorb(amount);
         }
 
         /// <summary>
-        /// 炸弹泡泡：引爆。
-        /// TODO 待实现：按 m_BombSettings.blastRadius 找范围内物体，
-        ///      用 blastForce 施加冲量，然后销毁自己。
+        /// 炸弹泡泡：碰到东西时的行为。
+        /// 目前只支持按 R 手动引爆，撞到东西不炸；要做「撞到就炸」在这里调 Explode()。
         /// </summary>
         private void HandleBomb(Collision collision)
         {
@@ -131,9 +186,75 @@ namespace PAO
             {
                 return;
             }
-
-            // 占位：目前不做任何事，泡泡行为等同于浮粘泡泡
         }
+
+        /// <summary>
+        /// 容器内泡泡之间的碰撞：粘在一起，这样会挤成一团而不是互相弹开。
+        /// </summary>
+        private void HandleContainedCollision(Collision collision)
+        {
+            if (m_Container == null || !m_Container.StickContainedBubbles)
+            {
+                return;
+            }
+
+            Bubble other = collision.collider.GetComponentInParent<Bubble>();
+            if (other == null || other == this)
+            {
+                return;
+            }
+
+            // 只粘同一个容器里的泡泡
+            if (other.Container != m_Container)
+            {
+                return;
+            }
+
+            Rigidbody otherBody = other.GetComponent<Rigidbody>();
+            if (otherBody == null)
+            {
+                return;
+            }
+
+            FixedJoint[] existingJoints = GetComponents<FixedJoint>();
+            for (int i = 0; i < existingJoints.Length; i++)
+            {
+                if (existingJoints[i] != null && existingJoints[i].connectedBody == otherBody)
+                {
+                    return;
+                }
+            }
+
+            FixedJoint joint = gameObject.AddComponent<FixedJoint>();
+            joint.connectedBody = otherBody;
+            joint.breakForce = float.PositiveInfinity;   // 容器内不会自己散开
+            joint.breakTorque = float.PositiveInfinity;
+        }
+
+        /// <summary>
+        /// 这一种类型的泡泡能不能被粘住。三种开关都在 Inspector 里。
+        /// </summary>
+        private bool CanStickType(BubbleType otherType)
+        {
+            if (m_StickySettings == null)
+            {
+                return false;
+            }
+
+            switch (otherType)
+            {
+                case BubbleType.Bouncy:
+                    return m_StickySettings.stickBouncy;
+
+                case BubbleType.Bomb:
+                    return m_StickySettings.stickBomb;
+
+                default:
+                    return m_StickySettings.stickSticky;
+            }
+        }
+
+        // ==================== 载人 ====================
 
         /// <summary>
         /// 现在能不能钻进去：必须是浮粘泡泡、尺寸够大、而且里面还没人。
@@ -167,6 +288,12 @@ namespace PAO
                 float radius = GetDiameter() * 0.5f;
                 return transform.position - Vector3.up * (radius * 0.45f);
             }
+        }
+
+        /// <summary>乘客可以在里头活动的内半径（米）。</summary>
+        public float RideInnerRadius
+        {
+            get { return GetDiameter() * 0.5f * 0.6f; }
         }
 
         /// <summary>
@@ -236,32 +363,50 @@ namespace PAO
             return Mathf.Max(scale.x, Mathf.Max(scale.y, scale.z));
         }
 
+        // ==================== 地形容器 ====================
+
         /// <summary>
-        /// 这一种类型的泡泡能不能被粘住。三种开关都在 Inspector 里。
+        /// 被地形泡泡吸进去了：停掉浮力、加大阻力，之后交给 FixedUpdate 收拢。
+        /// 注意这里不销毁泡泡本体，它要留在容器里作为可见的填充物。
         /// </summary>
-        private bool CanStickType(BubbleType otherType)
+        public void OnContained(TerrainBubble container)
         {
-            if (m_StickySettings == null)
+            if (container == null)
             {
-                return false;
+                return;
             }
 
-            switch (otherType)
+            m_Container = container;
+
+            // 停掉上升浮力，否则它会一直往上顶，挤不到中心去
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
             {
-                case BubbleType.Bouncy:
-                    return m_StickySettings.stickBouncy;
+                buoyancy.force = Vector3.zero;
+            }
 
-                case BubbleType.Bomb:
-                    return m_StickySettings.stickBomb;
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.useGravity = false;
+                body.drag = container.ContainedDrag;
+                body.angularDrag = container.ContainedDrag;
+            }
 
-                default:
-                    return m_StickySettings.stickSticky;
+            // 忽略与地形外壳的碰撞，不然会被外壳弹开、根本挤不进去
+            Collider ownCollider = GetComponent<Collider>();
+            if (ownCollider != null)
+            {
+                container.IgnoreCollisionWith(ownCollider);
             }
         }
 
+        // ==================== 爆炸 ====================
+
         /// <summary>
         /// 引爆：把半径内的刚体按爆炸力推开，然后销毁自己。
-        /// 由 BombBubbleManager 在按下引爆键时调用。
+        /// 由 BombBubbleManager 在按下引爆键时调用；
+        /// 地形泡泡被填满时也会调它来清掉里面的泡泡。
         /// </summary>
         public void Explode()
         {
@@ -315,6 +460,27 @@ namespace PAO
 
             Gizmos.color = new Color(1f, 0.5f, 0.2f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, m_BombSettings.blastRadius);
+        }
+
+        /// <summary>
+        /// 排入寿命倒计时。不用 Destroy(obj, t) 是因为那个撤不掉，
+        /// 而进了地形容器的泡泡需要「一直留着直到容器炸掉」。
+        /// </summary>
+        public void ScheduleLifeEnd(float lifeTime)
+        {
+            CancelInvoke("OnLifeEnd");
+            Invoke("OnLifeEnd", Mathf.Max(0.1f, lifeTime));
+        }
+
+        private void OnLifeEnd()
+        {
+            // 已经进了容器：不自动消失，等容器被填满炸掉时一起处理
+            if (m_Container != null)
+            {
+                return;
+            }
+
+            Destroy(gameObject);
         }
     }
 }

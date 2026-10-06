@@ -24,6 +24,13 @@ namespace PAO
         [Tooltip("提示显示在泡泡上方多高处（米）")]
         [SerializeField] private float m_HintHeightOffset = 0.6f;
 
+        [Header("乘坐位置")]
+        [Tooltip("在泡泡里的位置微调（米）。0 = 正球心，正数往上，负数往下")]
+        [SerializeField] private float m_RideHeightOffset = 0f;
+
+        [Tooltip("跳出泡泡时是否把泡泡弄破（消失）")]
+        [SerializeField] private bool m_PopBubbleOnExit = true;
+
         private Bubble m_NearbyBubble;      // 附近可进入的泡泡
         private Bubble m_RidingBubble;      // 正在乘坐的泡泡
         private bool m_IsRiding;            // 显式标记：不能只靠 m_RidingBubble 判空
@@ -81,11 +88,16 @@ namespace PAO
 
         private void LateUpdate()
         {
-            // 载人时把玩家钉在泡泡里
-            if (m_IsRiding && m_RidingBubble != null)
+            if (!m_IsRiding || m_RidingBubble == null)
             {
-                transform.position = m_RidingBubble.RideAnchorPosition;
+                return;
             }
+
+            // 直接钉在泡泡球心上。之前是「超出范围才夹回来」，
+            // 结果进入瞬间人还停在原地，看起来偏在球的一侧。
+            // 钉中心还有个好处：不会贴到内壁把泡泡带歪。
+            transform.position = m_RidingBubble.transform.position
+                + Vector3.up * m_RideHeightOffset;
         }
 
         private void EnterBubble(Bubble bubble)
@@ -101,15 +113,21 @@ namespace PAO
 
             SetPlayerColliders(false);
 
-            // 关掉角色控制与碰撞体，免得和泡泡的刚体互相打架
-            if (m_PlayerController != null)
-            {
-                m_PlayerController.enabled = false;
-            }
-
+            // 关掉碰撞体，免得角色顶到泡泡内壁把泡泡顶歪
             if (m_CharacterController != null)
             {
                 m_CharacterController.enabled = false;
+            }
+
+            // 但 PlayerController 保持启用：视角、转身、移动都还要用。
+            // 只是切成载具模式——不走 CharacterController、不受重力，
+            // 允许在泡泡里小幅走动
+            if (m_PlayerController != null)
+            {
+                m_PlayerController.IsInCarrier = true;
+
+                // 把泡泡的刚体交给控制器：WASD 会变成推着泡泡走
+                m_PlayerController.CarrierBody = bubble.GetComponent<Rigidbody>();
             }
         }
 
@@ -117,7 +135,15 @@ namespace PAO
         {
             if (m_RidingBubble != null)
             {
-                m_RidingBubble.ExitRide();
+                Bubble bubbleToPop = m_RidingBubble;
+                bubbleToPop.ExitRide();
+
+                // 跳出时把泡泡弄破。走 Explode 而不是直接 Destroy，
+                // 这样以后给它加破裂特效或冲击波也能直接接上。
+                if (m_PopBubbleOnExit)
+                {
+                    bubbleToPop.Explode();
+                }
             }
 
             m_RidingBubble = null;
@@ -133,7 +159,8 @@ namespace PAO
 
             if (m_PlayerController != null)
             {
-                m_PlayerController.enabled = true;
+                m_PlayerController.IsInCarrier = false;
+                m_PlayerController.CarrierBody = null;
             }
         }
 

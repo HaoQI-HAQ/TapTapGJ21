@@ -33,7 +33,7 @@ Material:
     - _FlowSpeed: 0.4
     - _Iridescence: 0.58
     - _IridescenceScale: 1.8
-    - _Opacity: 0.792
+    - _Opacity: 1
     - _RimIntensity: 2.88
     - _RimPower: 2.83
     - _Spec2Intensity: 0.5
@@ -42,7 +42,7 @@ Material:
     - _ThicknessNoise: 0.42
     - _Transmission: 2
     m_Colors:
-    - _BaseColor: {r: 1, g: 0, b: 0.6682229, a: 1}
-    - _EnvColor: {r: 1, g: 0, b: 0.023367882, a: 1}
-    - _TransmissionTint: {r: 1, g: 0, b: 0.69978714, a: 1}
+    - _BaseColor: {r: 0.40445852, g: 0, b: 1, a: 1}
+    - _EnvColor: {r: 1, g: 0, b: 0.70440054, a: 1}
+    - _TransmissionTint: {r: 1, g: 0, b: 0.42839193, a: 1}
   m_BuildTextureStacks: []

@@ -44,7 +44,7 @@ Shader "PAO/BubbleBall"
         {
             "RenderPipeline"  = "UniversalPipeline"
             "RenderType"      = "Transparent"
-            "Queue"           = "AlphaTest"
+            "Queue"           = "Transparent"
             "IgnoreProjector" = "True"
         }
 

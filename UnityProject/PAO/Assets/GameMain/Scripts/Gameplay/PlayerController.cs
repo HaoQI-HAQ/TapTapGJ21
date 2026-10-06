@@ -37,6 +37,9 @@ namespace PAO
         [Tooltip("角色转身的平滑速度，越大转得越快。8~20 比较自然")]
         [SerializeField] private float m_RotationSpeed = 12f;
 
+        [Tooltip("在泡泡里驾驶时施加的推力（米/秒²）。越大越灵活，越小越飘")]
+        [SerializeField] private float m_CarrierMoveForce = 6f;
+
         [Header("视角")]
         [Tooltip("摄像机枢轴（空物体）。留空则自动取 MainCamera")]
         [SerializeField] private Transform m_CameraPivot;
@@ -86,6 +89,19 @@ namespace PAO
         private float m_Pitch;                  // 摄像机俯仰角
         private float m_VerticalSpeed;          // 垂直速度（由重力累积而来）
         private float m_CurrentCameraDistance;  // 摄像机当前实际距离
+
+        /// <summary>
+        /// 是否身处载具内（比如钻进了泡泡）。
+        /// 开启后不施加重力、不走 CharacterController，改为直接小幅位移，
+        /// 位置由载具那边每帧夹在活动范围内。视角与转身不受影响。
+        /// </summary>
+        public bool IsInCarrier { get; set; }
+
+        /// <summary>
+        /// 当前乘坐的载具刚体（比如泡泡）。设置后 WASD 会变成对它施加推力，
+        /// 也就是「带着载具走」，而不是自己在里头走。
+        /// </summary>
+        public Rigidbody CarrierBody { get; set; }
 
         private void Awake()
         {
@@ -225,6 +241,20 @@ namespace PAO
                 // 帧率无关的平滑：t 只取决于经过的时间，不受帧数影响
                 float t = 1f - Mathf.Exp(-m_RotationSpeed * Time.deltaTime);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, t);
+            }
+
+            // 载具内：WASD 用来驾驶载具（泡泡），而不是自己走。
+            // 只推水平方向，垂直交给泡泡自身的浮力，这样抬头低头不会乱飞。
+            // 视角与转身已经在上面处理过了，所以照样能自由看、能转身。
+            if (IsInCarrier)
+            {
+                if (CarrierBody != null)
+                {
+                    Vector3 horizontal = new Vector3(moveDirection.x, 0f, moveDirection.z);
+                    CarrierBody.AddForce(horizontal * m_CarrierMoveForce, ForceMode.Acceleration);
+                }
+
+                return;
             }
 
             float speed = m_MoveSpeed;
