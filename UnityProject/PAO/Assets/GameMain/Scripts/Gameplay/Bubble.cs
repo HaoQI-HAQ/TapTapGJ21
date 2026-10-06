@@ -41,6 +41,9 @@ namespace PAO
 
         private TerrainBubble m_Container;      // 被打进去的那个地形泡泡
         private int m_BounceCount;
+        private bool m_HasEjected;              // 弹力泡泡是否已经弹射过（只弹一次）
+        private bool m_IsStuck;                 // 是否已经粘在可粘地形上了
+        private Collider m_IgnoredPlayerCollider;    // 发射时被忽略掉的那个玩家碰撞体，粘住时要恢复
 
         /// <summary>
         /// 由发射器在生成泡泡时调用，把类型与参数注入进来。
@@ -111,6 +114,15 @@ namespace PAO
                 return;
             }
 
+            // 优先判断是不是「可粘地形」：是的话整颗泡泡钉死在接触点上，
+            // 不再走下面的泡泡互粘逻辑
+            StickySurface surface = collision.collider.GetComponentInParent<StickySurface>();
+            if (surface != null)
+            {
+                StickToSurface(collision, surface);
+                return;
+            }
+
             // 只粘泡泡，不粘墙和地面
             Bubble other = collision.collider.GetComponentInParent<Bubble>();
             if (other == null || other == this)
@@ -144,6 +156,15 @@ namespace PAO
             joint.connectedBody = otherBody;
             joint.breakForce = m_StickySettings.stickBreakForce;
             joint.breakTorque = m_StickySettings.stickBreakForce;
+
+            // 对方已经是「固定住」的了（粘在地形上，或者属于某座已经成形的桥），
+            // 那我也跟着固定：不消失、不飘走，成为桥的一部分。
+            // 注意这里不切成 kinematic —— 保留物理才会摇摇晃晃，
+            // 而玩家是 CharacterController，站上来不会产生真实压力，压不塌。
+            if (other.IsStuck)
+            {
+                BecomeStuck();
+            }
         }
 
         /// <summary>
@@ -264,9 +285,11 @@ namespace PAO
         {
             get
             {
-                if (m_StickySettings == null)
+                // 已经粘成地形了：它不再是可乘坐的泡泡，
+                // 交互提示也不该再出现
+                if (m_IsStuck)
                 {
-                    return false;   // 只有浮粘泡泡能载人
+                    return false;
                 }
 
                 if (Rider != null)
@@ -274,7 +297,19 @@ namespace PAO
                     return false;   // 已经有人了
                 }
 
-                return GetDiameter() >= m_StickySettings.rideMinSize;
+                // 浮粘泡泡：按它自己的门槛
+                if (m_StickySettings != null)
+                {
+                    return GetDiameter() >= m_StickySettings.rideMinSize;
+                }
+
+                // 弹力泡泡：也能钻进去，用它自己的门槛
+                if (m_BouncySettings != null)
+                {
+                    return GetDiameter() >= m_BouncySettings.rideMinSize;
+                }
+
+                return false;   // 炸弹泡泡不给载
             }
         }
 
@@ -288,6 +323,42 @@ namespace PAO
                 float radius = GetDiameter() * 0.5f;
                 return transform.position - Vector3.up * (radius * 0.45f);
             }
+        }
+
+        /// <summary>是不是弹力泡泡。交互层靠它决定按 F 是弹射还是跳出。</summary>
+        /// <summary>
+        /// 能不能被 E 键远程操控。只有浮粘泡泡可以。
+        /// 弹力泡泡只走 F 那条线（钻进去 + 按 F 弹射），不参与远程操控。
+        /// </summary>
+        public bool CanControl
+        {
+            get
+            {
+                // 粘成地形了就不能再操控
+                if (m_IsStuck)
+                {
+                    return false;
+                }
+
+                // 不是浮粘泡泡就没这个功能
+                if (m_StickySettings == null)
+                {
+                    return false;
+                }
+
+                return GetDiameter() >= m_StickySettings.rideMinSize;
+            }
+        }
+
+        public bool IsBouncy
+        {
+            get { return m_BouncySettings != null; }
+        }
+
+        /// <summary>弹力泡泡是否已经弹射过。弹射只能来一次。</summary>
+        public bool HasEjected
+        {
+            get { return m_HasEjected; }
         }
 
         /// <summary>乘客可以在里头活动的内半径（米）。</summary>
@@ -307,7 +378,25 @@ namespace PAO
             }
 
             Rider = rider;
-            ApplyBuoyancyWithRide();
+
+            if (m_BouncySettings != null)
+            {
+                // 弹力泡泡：没有浮力，靠重力贴地，玩家推着它在地上走
+                EnterBouncyRide();
+            }
+            else
+            {
+                // 浮粘泡泡：保留浮力，载人后升得更快
+                ApplyBuoyancyWithRide();
+
+                // 按 F 钻进来后开始倒计时，时间到自己炸开
+                if (m_StickySettings != null && m_StickySettings.rideFloatDuration > 0f)
+                {
+                    CancelInvoke("OnFloatTimeout");
+                    Invoke("OnFloatTimeout", m_StickySettings.rideFloatDuration);
+                }
+            }
+
             return true;
         }
 
@@ -323,6 +412,74 @@ namespace PAO
 
             Rider = null;
             ApplyBuoyancyWithRide();
+        }
+
+        /// <summary>
+        /// 弹力泡泡的载人初始化：关掉浮力、打开重力。
+        /// 没有浮力它才不会自己往上飘，玩家才能控制它在地面上四处走。
+        /// </summary>
+        private void EnterBouncyRide()
+        {
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
+            {
+                buoyancy.force = Vector3.zero;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.isKinematic = false;
+                body.useGravity = true;          // 有重力才贴得住地面
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>
+        /// 连人带泡泡一起弹射出去，走标准的抛物线。
+        /// 做法是把朝向往水平面压平后，按仰角拆成水平分量与垂直分量，
+        /// 之后交给重力自然形成弧线。
+        /// </summary>
+        public void EjectRide(Vector3 direction)
+        {
+            if (m_BouncySettings == null || m_HasEjected)
+            {
+                return;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body == null)
+            {
+                return;
+            }
+
+            m_HasEjected = true;
+
+            Vector3 flat = new Vector3(direction.x, 0f, direction.z);
+            if (flat.sqrMagnitude < 0.0001f)
+            {
+                flat = transform.forward;
+            }
+
+            flat.Normalize();
+
+            float speed = m_BouncySettings.ejectSpeed;
+            float angle = Mathf.Clamp(m_BouncySettings.ejectAngle, 0f, 89f) * Mathf.Deg2Rad;
+
+            Vector3 velocity = flat * (Mathf.Cos(angle) * speed)
+                + Vector3.up * (Mathf.Sin(angle) * speed);
+
+            // 飞行期间必须是自由的：关浮力、开重力、不是 kinematic
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
+            {
+                buoyancy.force = Vector3.zero;
+            }
+
+            body.isKinematic = false;
+            body.useGravity = true;
+            body.velocity = velocity;
         }
 
         /// <summary>
@@ -502,7 +659,147 @@ namespace PAO
                 return;
             }
 
+            // 粘在可粘地形上了：同样留着不消失。
+            // 它已经变成场景的一部分（可以踩、可以当落脚点），
+            // 不该因为发射时定的存活时间到点就凭空不见。
+            if (m_IsStuck)
+            {
+                return;
+            }
+
             Destroy(gameObject);
+        }
+        /// <summary>
+        /// 粘在可粘地形上：直接冻住刚体，泡泡会永远停在这个位置。
+        /// 存活时间到点也不会消失——它已经是场景的一部分了。
+        /// </summary>
+        private void StickToSurface(Collision collision, StickySurface surface)
+        {
+            if (m_IsStuck)
+            {
+                return;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body == null)
+            {
+                return;
+            }
+
+            m_IsStuck = true;
+
+            // 停掉浮力，否则粘住了还会一直往上顶
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
+            {
+                buoyancy.force = Vector3.zero;
+            }
+
+            body.velocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+
+            if (surface.SnapToContactPoint && collision.contactCount > 0)
+            {
+                // 贴着接触面摆正：沿接触法线把球心往外推一个半径
+                ContactPoint contact = collision.GetContact(0);
+                transform.position = contact.point + contact.normal * (GetDiameter() * 0.5f);
+            }
+
+            if (surface.FreezeRotation)
+            {
+                body.freezeRotation = true;
+            }
+
+            // 完全停住物理，才是真正的「一直粘在这个位置」
+            body.isKinematic = true;
+
+            // 同理恢复与玩家的碰撞：粘在地形上的泡泡也要能踩
+            RestorePlayerCollision();
+        }
+
+        /// <summary>
+        /// 按 F 钻进来后的倒计时到点了：连人带泡一起炸掉。
+        /// </summary>
+        private void OnFloatTimeout()
+        {
+            // 人已经提前跳出去了就不再炸
+            if (Rider == null)
+            {
+                return;
+            }
+
+            Explode();
+        }
+
+        /// <summary>是否已经粘在可粘地形上。</summary>
+        public bool IsStuck
+        {
+            get { return m_IsStuck; }
+        }
+        /// <summary>
+        /// 变成桥的一部分：不再消失、不再上浮，但保留物理所以会晃。
+        ///
+        /// 和「粘在地形上」的区别：锚点那颗是 kinematic 完全固定的，
+        /// 桥上的泡泡则是动态的 —— 一端死锚、一端摇晃，正好是要的手感。
+        /// </summary>
+        /// <summary>
+        /// 变成桥的一部分：直接冻住，位置就停在粘上的那一刻。
+        /// 和「粘在地形上」用的是同一套手段（关浮力 + kinematic），
+        /// 所以它同样不会因为存活时间到点而消失（见 OnLifeEnd）。
+        /// </summary>
+        private void BecomeStuck()
+        {
+            if (m_IsStuck)
+            {
+                return;
+            }
+
+            m_IsStuck = true;
+
+            // 停掉浮力，否则冻住了还会一直往上顶
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
+            {
+                buoyancy.force = Vector3.zero;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                body.isKinematic = true;   // 完全停住物理
+
+            // 恢复与玩家的碰撞：粘住后它就是地形了，人要能踩上来。
+            // 发射时为了让泡泡不弹回自己，曾把这一对碰撞忽略掉。
+            RestorePlayerCollision();
+            }
+        }
+        /// <summary>
+        /// 由发射器登记：这个泡泡当前忽略了与哪个碰撞体的碰撞。
+        /// 粘住时要靠它把碰撞恢复回来，人才能踩上去。
+        /// </summary>
+        public void SetIgnoredCollider(Collider playerCollider)
+        {
+            m_IgnoredPlayerCollider = playerCollider;
+        }
+
+        /// <summary>
+        /// 恢复与玩家的碰撞。粘住后泡泡就是地形的一部分了，
+        /// 必须让 CharacterController 能站上来，而不是穿过去。
+        /// </summary>
+        private void RestorePlayerCollision()
+        {
+            if (m_IgnoredPlayerCollider == null)
+            {
+                return;
+            }
+
+            Collider ownCollider = GetComponent<Collider>();
+            if (ownCollider != null)
+            {
+                Physics.IgnoreCollision(ownCollider, m_IgnoredPlayerCollider, false);
+            }
         }
     }
 }

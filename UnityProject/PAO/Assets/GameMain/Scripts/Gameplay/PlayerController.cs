@@ -103,6 +103,13 @@ namespace PAO
         /// </summary>
         public Rigidbody CarrierBody { get; set; }
 
+        /// <summary>
+        /// 相机跟随的锚点。为空时跟随自己（正常情况）；
+        /// 设为别的物体时，相机就切到那个物体上，而人留在原地不动。
+        /// E 键远程操控泡泡就是靠它实现的。
+        /// </summary>
+        public Transform CameraAnchor { get; set; }
+
         private void Awake()
         {
             m_Controller = GetComponent<CharacterController>();
@@ -194,7 +201,9 @@ namespace PAO
             // 枢轴只跟随角色的「位置」和固定高度，水平位置强制归零。
             // 若放任它作为角色的子物体继承旋转，角色一转身枢轴就绕圈，
             // 摄像机会跟着漂出去——表现为按 WASD 时镜头莫名偏移或拉远拉近。
-            m_CameraPivot.position = transform.position + Vector3.up * m_PivotHeight;
+            // 有锚点就跟随锚点（比如被操控的泡泡），否则跟随自己
+            Vector3 anchorPosition = CameraAnchor != null ? CameraAnchor.position : transform.position;
+            m_CameraPivot.position = anchorPosition + Vector3.up * m_PivotHeight;
             m_CameraPivot.rotation = Quaternion.Euler(m_Pitch, m_Yaw, 0f);
         }
 

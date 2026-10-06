@@ -20,8 +20,11 @@ namespace PAO
         [SerializeField] private int m_MaxBombs = 4;
 
         [Header("引爆")]
-        [Tooltip("引爆按键")]
-        [SerializeField] private KeyCode m_DetonateKey = KeyCode.R;
+        [Tooltip("引爆按键：0 = 鼠标左键，1 = 鼠标右键，2 = 鼠标中键")]
+        [SerializeField] private int m_DetonateMouseButton = 1;
+
+        [Tooltip("是否同时保留 R 键引爆（方便调试，不需要就取消勾选）")]
+        [SerializeField] private bool m_AlsoUseRKey = true;
 
         [Header("编号提示")]
         [Tooltip("是否在炸弹泡泡上方显示编号")]
@@ -55,7 +58,8 @@ namespace PAO
         {
             CleanupDestroyed();
 
-            if (Input.GetKeyDown(m_DetonateKey))
+            if (Input.GetMouseButtonDown(m_DetonateMouseButton)
+                || (m_AlsoUseRKey && Input.GetKeyDown(KeyCode.R)))
             {
                 DetonateOldest();
             }

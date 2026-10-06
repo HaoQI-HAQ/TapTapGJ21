@@ -304,6 +304,14 @@ namespace PAO
 
             behaviour.Setup(GetCurrentType(), settings);
 
+            // 登记一下被忽略的那个玩家碰撞体。
+            // 泡泡粘住变成地形时，要靠它把碰撞恢复回来，人才能踩上去。
+            Collider playerCollider = GetComponent<Collider>();
+            if (playerCollider != null)
+            {
+                behaviour.SetIgnoredCollider(playerCollider);
+            }
+
             return bubble;
         }
 

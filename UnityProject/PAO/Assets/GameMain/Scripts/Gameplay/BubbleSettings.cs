@@ -74,6 +74,12 @@ namespace PAO
 
         [Tooltip("钻进去后额外的上升速度（米/秒）。泡泡越大加得越多，所以别填太大")]
         public float rideExtraRiseSpeed = 1.6f;
+
+        [Tooltip("按 F 钻进去后，多久自动爆炸（秒）")]
+        public float rideFloatDuration = 6f;
+
+        [Tooltip("按 E 操控时的移动推力（米/秒²）")]
+        public float controlMoveForce = 7f;
     }
 
     /// <summary>
@@ -96,6 +102,19 @@ namespace PAO
 
         [Tooltip("最大泡泡（蓄满力）打进地形泡泡时提供的容积")]
         public int fillAmountMax = 3;
+
+        [Header("弹力泡泡 · 载人与弹射")]
+        [Tooltip("可以钻进去的最小直径（米）。比这小的进不去")]
+        public float rideMinSize = 1.0f;
+
+        [Tooltip("载人时的移动推力（米/秒²）。弹力泡泡没有浮力，靠这个在地面上走")]
+        public float rideMoveForce = 8f;
+
+        [Tooltip("按 F 弹射出去的初速度（米/秒）")]
+        public float ejectSpeed = 14f;
+
+        [Tooltip("弹射仰角（度）。0 = 水平，45 最远，90 直上")]
+        public float ejectAngle = 35f;
     }
 
     /// <summary>

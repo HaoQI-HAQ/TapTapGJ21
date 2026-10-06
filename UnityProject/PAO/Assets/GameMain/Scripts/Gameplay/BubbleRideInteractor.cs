@@ -17,6 +17,9 @@ namespace PAO
         [Tooltip("进入 / 退出的按键")]
         [SerializeField] private KeyCode m_RideKey = KeyCode.F;
 
+        [Tooltip("操控模式按键：相机跟到泡泡上，WASD 主动驾驶它飞")]
+        [SerializeField] private KeyCode m_ControlKey = KeyCode.E;
+
         [Header("UI")]
         [Tooltip("提示文字大小")]
         [SerializeField] private int m_HintFontSize = 22;
@@ -34,6 +37,7 @@ namespace PAO
         private Bubble m_NearbyBubble;      // 附近可进入的泡泡
         private Bubble m_RidingBubble;      // 正在乘坐的泡泡
         private bool m_IsRiding;            // 显式标记：不能只靠 m_RidingBubble 判空
+        private bool m_IsControlling;       // 是否处于 E 键操控模式（可 WASD 驾驶）
 
         private PlayerController m_PlayerController;
         private CharacterController m_CharacterController;
@@ -41,6 +45,8 @@ namespace PAO
         private Camera m_Camera;
         private GUIStyle m_HintStyle;
         private GUIStyle m_HintShadowStyle;
+
+        private const string kControlHintText = "[E] 操控泡泡";
 
         /// <summary>是否正在泡泡里。</summary>
         public bool IsRiding
@@ -60,6 +66,33 @@ namespace PAO
 
         private void Update()
         {
+            // ===== E 模式：远程操控中（人留在原地，相机在泡泡上）=====
+            if (m_IsControlling)
+            {
+                // 泡泡自爆了或被打掉了
+                if (m_RidingBubble == null)
+                {
+                    ExitControl(false);
+                    return;
+                }
+
+                // 粘上了可粘地形：交还控制权，泡泡留在那儿
+                if (m_RidingBubble.IsStuck)
+                {
+                    ExitControl(false);
+                    return;
+                }
+
+                // 再按一次 E 退出操控
+                if (Input.GetKeyDown(m_ControlKey))
+                {
+                    ExitControl(false);
+                    return;
+                }
+
+                return;
+            }
+
             if (m_IsRiding)
             {
                 // 泡泡被打破或到寿命销毁时，Unity 重载的 == 会返回 true。
@@ -72,13 +105,34 @@ namespace PAO
 
                 if (Input.GetKeyDown(m_RideKey))
                 {
+                    // 弹力泡泡：第一次按 F 是连人带泡一起弹射出去，人还坐在里面；
+                    // 已经弹射过、或者是浮粘泡泡，按 F 就是正常跳出来
+                    if (m_RidingBubble.IsBouncy && !m_RidingBubble.HasEjected)
+                    {
+                        m_RidingBubble.EjectRide(transform.forward);
+                        return;
+                    }
+
+                    // 浮粘泡泡：按 F 直接炸开，人会随着冲击被抛出去
+                    if (!m_RidingBubble.IsBouncy)
+                    {
+                        m_RidingBubble.Explode();
+                    }
+
                     ExitBubble();
                 }
-
                 return;
             }
 
             m_NearbyBubble = FindRideableBubble();
+
+            // E 键：进入操控模式，相机跟到泡泡上，WASD 主动驾驶
+            if (m_NearbyBubble != null && m_NearbyBubble.CanControl
+                && Input.GetKeyDown(m_ControlKey))
+            {
+                EnterControl(m_NearbyBubble);
+                return;
+            }
 
             if (m_NearbyBubble != null && Input.GetKeyDown(m_RideKey))
             {
@@ -88,7 +142,9 @@ namespace PAO
 
         private void LateUpdate()
         {
-            if (!m_IsRiding || m_RidingBubble == null)
+            // 只有 F 模式（人真的钻进泡泡）才把人钉过去。
+            // E 模式人留在原地，相机自己会跟到泡泡上。
+            if (!m_IsRiding || m_IsControlling || m_RidingBubble == null)
             {
                 return;
             }
@@ -120,14 +176,19 @@ namespace PAO
             }
 
             // 但 PlayerController 保持启用：视角、转身、移动都还要用。
-            // 只是切成载具模式——不走 CharacterController、不受重力，
-            // 允许在泡泡里小幅走动
+            // 只是切成载具模式——不走 CharacterController、不受重力。
+            //
+            // 关键区别在这里：
+            //   浮粘泡泡 = 被动上升，不给刚体，所以 WASD 推不动它
+            //   弹力泡泡 = 要能贴着地面四处走，必须给刚体才推得动
             if (m_PlayerController != null)
             {
                 m_PlayerController.IsInCarrier = true;
+                m_PlayerController.CameraAnchor = null;
 
-                // 把泡泡的刚体交给控制器：WASD 会变成推着泡泡走
-                m_PlayerController.CarrierBody = bubble.GetComponent<Rigidbody>();
+                m_PlayerController.CarrierBody = bubble.IsBouncy
+                    ? bubble.GetComponent<Rigidbody>()
+                    : null;
             }
         }
 
@@ -148,6 +209,7 @@ namespace PAO
 
             m_RidingBubble = null;
             m_IsRiding = false;
+            m_IsControlling = false;
 
             SetPlayerColliders(true);
 
@@ -231,18 +293,33 @@ namespace PAO
                 m_HintShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.85f);
             }
 
-            string text = m_IsRiding ? "[F] 跳出泡泡" : "[F] 进入泡泡";
-            Vector2 size = m_HintStyle.CalcSize(new GUIContent(text));
+            string textF = m_IsRiding ? "[F] 跳出泡泡" : "[F] 进入泡泡";
 
-            Rect rect = new Rect(
-                screenPoint.x - size.x * 0.5f,
-                Screen.height - screenPoint.y - size.y * 0.5f,
-                size.x,
-                size.y);
+            // 只有在「还没进去」的时候才显示 E 的提示，画在 F 的正下方
+            // 弹力泡泡没有 E 功能，所以它的提示只显示 F 那一行
+            bool showHintE = !m_IsRiding && target.CanControl;
 
-            // 先画一层黑色描边，保证在任何背景上都看得清
-            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, m_HintShadowStyle);
-            GUI.Label(rect, text, m_HintStyle);
+            Vector2 sizeF = m_HintStyle.CalcSize(new GUIContent(textF));
+            Vector2 sizeE = showHintE ? m_HintStyle.CalcSize(new GUIContent(kControlHintText)) : Vector2.zero;
+
+            float width = Mathf.Max(sizeF.x, sizeE.x);
+            float lineHeight = sizeF.y;
+
+            // 第一行：F。居中到泡泡上方
+            Rect rectF = new Rect(
+                screenPoint.x - width * 0.5f,
+                Screen.height - screenPoint.y - lineHeight,
+                width,
+                lineHeight);
+
+            DrawHint(rectF, textF);
+
+            // 第二行：E，紧跟在 F 的正下方
+            if (showHintE)
+            {
+                Rect rectE = new Rect(rectF.x, rectF.y + lineHeight, width, lineHeight);
+                DrawHint(rectE, kControlHintText);
+            }
         }
 
         /// <summary>
@@ -264,5 +341,81 @@ namespace PAO
                 }
             }
         }
+        /// <summary>
+        /// E 键操控模式：进泡泡，并且把泡泡的刚体交给控制器，
+        /// 于是 WASD 能推着它飞（浮力照旧，所以会自动上升）。
+        /// 视角仍然是第三人称，跟着泡泡走。
+        /// </summary>
+        /// <summary>
+        /// E 键远程操控：人留在原地不动，只把相机切到泡泡上，
+        /// WASD 用来推泡泡飞（浮力照旧，所以会自动上升）。
+        /// 结束时：再按一次 E、泡泡到时间自爆、或者粘上了可粘地形。
+        /// </summary>
+        private void EnterControl(Bubble bubble)
+        {
+            if (bubble == null || !bubble.EnterRide(transform))
+            {
+                return;
+            }
+
+            m_RidingBubble = bubble;
+            m_NearbyBubble = null;
+
+            // 注意这里不设 m_IsRiding：人根本没上去，只是远程操控
+            m_IsControlling = true;
+
+            // 人不动，所以碰撞体、CharacterController 都不用关
+
+            if (m_PlayerController != null)
+            {
+                // 相机切到泡泡身上
+                m_PlayerController.CameraAnchor = bubble.transform;
+
+                // 载具模式：WASD 不再让自己走路，而是去推泡泡
+                m_PlayerController.IsInCarrier = true;
+                m_PlayerController.CarrierBody = bubble.GetComponent<Rigidbody>();
+            }
+        }
+
+        /// <summary>
+        /// 结束 E 键远程操控：相机回到自己身上，控制权交还。
+        /// </summary>
+        private void ExitControl(bool popBubble)
+        {
+            Bubble bubbleToRelease = m_RidingBubble;
+
+            if (bubbleToRelease != null)
+            {
+                bubbleToRelease.ExitRide();
+
+                if (popBubble)
+                {
+                    bubbleToRelease.Explode();
+                }
+            }
+
+            m_RidingBubble = null;
+            m_IsControlling = false;
+
+            if (m_PlayerController != null)
+            {
+                m_PlayerController.CameraAnchor = null;
+                m_PlayerController.IsInCarrier = false;
+                m_PlayerController.CarrierBody = null;
+            }
+        }
+
+        /// <summary>是否处于操控模式。</summary>
+        public bool IsControlling
+        {
+            get { return m_IsControlling; }
+        }
+        /// <summary>画一行带黑色描边的提示文字。</summary>
+        private void DrawHint(Rect rect, string text)
+        {
+            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, m_HintShadowStyle);
+            GUI.Label(rect, text, m_HintStyle);
+        }
     }
 }
+
