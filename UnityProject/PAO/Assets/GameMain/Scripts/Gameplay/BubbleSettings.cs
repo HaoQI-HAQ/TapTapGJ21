@@ -114,5 +114,8 @@ namespace PAO
 
         [Tooltip("引信时间（秒），从发射算起")]
         public float fuseTime = 2f;
+
+        [Tooltip("爆炸时是否连带引爆范围内的地形泡泡（范围用上面的爆炸半径）")]
+        public bool detonateTerrains = true;
     }
 }

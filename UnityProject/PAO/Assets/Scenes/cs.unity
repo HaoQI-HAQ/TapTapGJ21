@@ -560,9 +560,9 @@ MonoBehaviour:
   m_ContainedDrag: 5
   m_StickContainedBubbles: 1
   m_TintByFill: 1
-  m_EmptyColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
-  m_FullColor: {r: 1, g: 0.45, b: 0.35, a: 1}
-  m_PopDelay: 0
+  m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
+  m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
+  m_PopDelay: 0.5
 --- !u!1 &270104488
 GameObject:
   m_ObjectHideFlags: 0
@@ -820,13 +820,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 410087039}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.01697035, y: -0.6647766, z: 0.3745239, w: 0.6461548}
+  m_LocalRotation: {x: 0.032193992, y: -0.743628, z: 0.37352332, w: 0.5535894}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 28.426, y: -82.449, z: 35.17}
+  m_LocalEulerAnglesHint: {x: 36.24, y: -97.698, z: 26.961}
 --- !u!114 &410087042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1118,9 +1118,10 @@ MonoBehaviour:
     drag: 0.8
     useGravity: 0
     lifeTime: 13
-    blastRadius: 3
+    blastRadius: 0.3
     blastForce: 12
     fuseTime: 2
+    detonateTerrains: 1
 --- !u!114 &608002527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1873,9 +1874,9 @@ MonoBehaviour:
   m_ContainedDrag: 5
   m_StickContainedBubbles: 1
   m_TintByFill: 1
-  m_EmptyColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
-  m_FullColor: {r: 1, g: 0.45, b: 0.35, a: 1}
-  m_PopDelay: 0
+  m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
+  m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
+  m_PopDelay: 0.5
 --- !u!1 &1320298728
 GameObject:
   m_ObjectHideFlags: 0
@@ -2099,14 +2100,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0b9e59595f5db34397386f8b993b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Capacity: 5
+  m_Capacity: 10
   m_GatherForce: 12
   m_ContainedDrag: 5
   m_StickContainedBubbles: 1
   m_TintByFill: 1
-  m_EmptyColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
-  m_FullColor: {r: 1, g: 0.45, b: 0.35, a: 1}
-  m_PopDelay: 0
+  m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
+  m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
+  m_PopDelay: 0.5
 --- !u!1 &1485484412
 GameObject:
   m_ObjectHideFlags: 0
@@ -2466,14 +2467,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0b9e59595f5db34397386f8b993b65b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Capacity: 5
+  m_Capacity: 8
   m_GatherForce: 12
   m_ContainedDrag: 5
   m_StickContainedBubbles: 1
   m_TintByFill: 1
-  m_EmptyColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
-  m_FullColor: {r: 1, g: 0.45, b: 0.35, a: 1}
-  m_PopDelay: 0
+  m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
+  m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
+  m_PopDelay: 0.5
 --- !u!1 &1886811976
 GameObject:
   m_ObjectHideFlags: 0
@@ -2702,9 +2703,9 @@ MonoBehaviour:
   m_ContainedDrag: 5
   m_StickContainedBubbles: 1
   m_TintByFill: 1
-  m_EmptyColor: {r: 0.62, g: 0.62, b: 0.68, a: 1}
-  m_FullColor: {r: 1, g: 0.45, b: 0.35, a: 1}
-  m_PopDelay: 0
+  m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
+  m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
+  m_PopDelay: 0.5
 --- !u!1 &2124579072
 GameObject:
   m_ObjectHideFlags: 0

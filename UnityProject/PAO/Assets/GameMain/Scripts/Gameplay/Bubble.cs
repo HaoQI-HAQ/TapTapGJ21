@@ -448,6 +448,28 @@ namespace PAO
                 body.AddExplosionForce(force, center, radius, 0f, ForceMode.Impulse);
             }
 
+            // 连带引爆范围内的地形泡泡。用 HashSet 去重，
+            // 免得一个地形因为挂了多个碰撞体被引爆好几次
+            if (m_BombSettings.detonateTerrains)
+            {
+                HashSet<TerrainBubble> terrains = new HashSet<TerrainBubble>();
+
+                for (int t = 0; t < hits.Length; t++)
+                {
+                    TerrainBubble terrain = hits[t].GetComponentInParent<TerrainBubble>();
+                    if (terrain != null)
+                    {
+                        terrains.Add(terrain);
+                    }
+                }
+
+                // TerrainBubble.Explode 自带防重入，连锁时不会互相递归
+                foreach (TerrainBubble terrain in terrains)
+                {
+                    terrain.Explode();
+                }
+            }
+
             Destroy(gameObject);
         }
 

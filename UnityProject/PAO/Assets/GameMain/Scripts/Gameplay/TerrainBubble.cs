@@ -44,6 +44,7 @@ namespace PAO
         [SerializeField] private float m_PopDelay = 0f;
 
         private int m_CurrentFill;
+        private bool m_IsExploding;      // 正在爆炸中，用来防止连锁时重复引爆自己
         private Renderer m_Renderer;
         private MaterialPropertyBlock m_PropertyBlock;
         private Collider m_OwnCollider;
@@ -151,6 +152,15 @@ namespace PAO
         /// </summary>
         public void Explode()
         {
+            // 防重入：里面的炸弹泡泡爆炸时会反过来引爆周围地形，
+            // 而自己此时还没销毁，会被再次命中，加个闸挡住
+            if (m_IsExploding)
+            {
+                return;
+            }
+
+            m_IsExploding = true;
+
             // 先让里面的泡泡全部爆掉。用倒序遍历，因为 Explode 会改动场景对象
             for (int i = m_Contained.Count - 1; i >= 0; i--)
             {

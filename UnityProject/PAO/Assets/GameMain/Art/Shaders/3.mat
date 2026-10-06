@@ -29,20 +29,33 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _EnvIntensity: 0.235
-    - _FlowSpeed: 0.44
-    - _Iridescence: 0.39
-    - _IridescenceScale: 1.69
-    - _Opacity: 0.547
-    - _RimIntensity: 2.24
-    - _RimPower: 1.06
-    - _Spec2Intensity: 0.5
+    - _EnvIntensity: 0.92
+    - _FlowSpeed: 0.57
+    - _Iridescence: 2.67
+    - _IridescenceScale: 6
+    - _NormalWobble: 0.18
+    - _Opacity: 1
+    - _OutlineWidth: 0.003
+    - _RimIntensity: 0.43
+    - _RimPower: 7.9
+    - _RimThreshold: 0.47
+    - _Spec2Intensity: 2.11
     - _SpecIntensity: 1.6
-    - _SpecPower: 160
-    - _ThicknessNoise: 0.36
-    - _Transmission: 0.11
+    - _SpecPower: 1
+    - _SpecThreshold: 0.81
+    - _ThicknessNoise: 0.66
+    - _ToonSoftness: 0.01
+    - _ToonSteps: 1.4
+    - _Transmission: 2
+    - _WobbleAmplitude: 0.03
+    - _WobbleFrequency: 0.7
+    - _WobbleSpeed: 1.2
     m_Colors:
     - _BaseColor: {r: 1, g: 0.07939364, b: 0, a: 1}
     - _EnvColor: {r: 1, g: 0.09659824, b: 0, a: 1}
-    - _TransmissionTint: {r: 1, g: 0.9959451, b: 0, a: 1}
+    - _IridColorA: {r: 0.45, g: 0.95, b: 0.85, a: 1}
+    - _IridColorB: {r: 1, g: 0.62, b: 0.92, a: 1}
+    - _OutlineColor: {r: 1, g: 0, b: 0.021698475, a: 0.78039217}
+    - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TransmissionTint: {r: 0.8113208, g: 0.12509784, b: 0.079090886, a: 1}
   m_BuildTextureStacks: []
