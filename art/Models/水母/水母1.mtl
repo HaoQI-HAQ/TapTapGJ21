@@ -1,0 +1,62 @@
+# Blender 4.5.14 LTS MTL File: '小水母.blend'
+# www.blender.org
+
+newmtl 材质
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_node_57bab344-a018-48a2-86f5-1bbfe754a551_material.001_BaseColor.png
+map_Ns taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_node_57bab344-a018-48a2-86f5-1bbfe754a551_material.001_Roughness.png
+map_refl taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_node_57bab344-a018-48a2-86f5-1bbfe754a551_material.001_Metallic.png
+map_Bump -bm 1.000000 taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_node_57bab344-a018-48a2-86f5-1bbfe754a551_material.001_Normal.png
+
+newmtl 材质.002
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_mat_7e51da37_BaseColor.png
+map_Ns taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_mat_7e51da37_Roughness.png
+map_refl taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_mat_7e51da37_Metallic.png
+map_Ke taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_mat_7e51da37_Emissive.png
+map_Bump -bm 1.000000 taptap21天聚光灯/风格化油画水母贴图/小水母_tripo_mat_7e51da37_Normal.png
+
+newmtl 材质.018
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.500000
+illum 2
+map_Kd taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_BaseColor.png
+map_Ns taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_Roughness.png
+map_refl taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_Metallic.png
+map_Ke taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_Emissive.png
+map_d taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_op.png
+map_Bump -bm 1.000000 taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.011_Normal.png
+
+newmtl 材质.019
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.012_BaseColor.png
+map_Ns taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.012_Roughness.png
+map_refl taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.012_Metallic.png
+map_Bump -bm 1.000000 taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.012_Normal.png
+
+newmtl 材质.021
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.013_BaseColor.png
+map_Ns taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.013_Roughness.png
+map_refl taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.013_Metallic.png
+map_Bump -bm 1.000000 taptap21天聚光灯/水泡罐子贴图/小水母分好id了_材质.013_Normal.png
