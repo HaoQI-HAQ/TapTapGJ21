@@ -1128,6 +1128,7 @@ MonoBehaviour:
     blastForce: 12
     fuseTime: 2
     detonateTerrains: 1
+    absorbedBlastMultiplier: 9
 --- !u!114 &608002527
 MonoBehaviour:
   m_ObjectHideFlags: 0

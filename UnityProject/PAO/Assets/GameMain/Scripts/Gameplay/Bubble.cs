@@ -44,6 +44,12 @@ namespace PAO
         private bool m_HasEjected;              // 弹力泡泡是否已经弹射过（只弹一次）
         private bool m_IsStuck;                 // 是否已经粘在可粘地形上了
         private Collider m_IgnoredPlayerCollider;    // 发射时被忽略掉的那个玩家碰撞体，粘住时要恢复
+        private Bubble m_AbsorbedBomb;               // 体内装的炸弹泡泡（吸收来的）
+
+        private const int kDetonateMouseButton = 1;  // 1 = 鼠标右键，和 BombBubbleManager 保持一致
+        private const float kAbsorbGatherForce = 12f;   // 被吸收后朝宿主中心收拢的力度
+        private bool m_AbsorbedBombArmed;           // 炸弹是否已激活（被操控或弹射后才允许手动引爆）
+        private Bubble m_HostBubble;                 // 我是炸弹、被谁吸收了（吸收方记录在 m_AbsorbedBomb）
 
         /// <summary>
         /// 由发射器在生成泡泡时调用，把类型与参数注入进来。
@@ -88,19 +94,27 @@ namespace PAO
         /// </summary>
         private void FixedUpdate()
         {
-            if (m_Container == null)
-            {
-                return;
-            }
-
             Rigidbody body = GetComponent<Rigidbody>();
             if (body == null || body.isKinematic)
             {
                 return;
             }
 
-            Vector3 toCenter = m_Container.Center - transform.position;
-            body.AddForce(toCenter * m_Container.GatherForce, ForceMode.Acceleration);
+            // 被地形泡泡收容：朝它的球心收拢
+            if (m_Container != null)
+            {
+                Vector3 toCenter = m_Container.Center - transform.position;
+                body.AddForce(toCenter * m_Container.GatherForce, ForceMode.Acceleration);
+                return;
+            }
+
+            // 被别的泡泡吸收（我是那颗炸弹）：同样朝宿主球心收拢，
+            // 于是看起来就是「飞进去、停在中间」
+            if (m_HostBubble != null)
+            {
+                Vector3 toHost = m_HostBubble.transform.position - transform.position;
+                body.AddForce(toHost * kAbsorbGatherForce, ForceMode.Acceleration);
+            }
         }
 
         /// <summary>
@@ -126,6 +140,13 @@ namespace PAO
             // 只粘泡泡，不粘墙和地面
             Bubble other = collision.collider.GetComponentInParent<Bubble>();
             if (other == null || other == this)
+            {
+                return;
+            }
+
+            // 炸弹优先走「被吸收」这条路，不走粘连。
+            // 否则同一帧里既粘住又被吸收，两条逻辑会打架。
+            if (other.Type == BubbleType.Bomb && CanAbsorbBomb)
             {
                 return;
             }
@@ -201,12 +222,41 @@ namespace PAO
         /// 炸弹泡泡：碰到东西时的行为。
         /// 目前只支持按 R 手动引爆，撞到东西不炸；要做「撞到就炸」在这里调 Explode()。
         /// </summary>
+        /// <summary>
+        /// 炸弹泡泡：被浮粘泡泡或弹力泡泡吸收。
+        /// 撞上去就钻进对方体内，自己消失，对方从此装着一颗炸弹。
+        /// </summary>
+        /// <summary>
+        /// 炸弹泡泡：被浮粘泡泡或弹力泡泡吸收。
+        /// 本体不销毁 —— 它会像弹力泡泡被地形吸收那样飞进对方体内、停在中心，
+        /// 直到对方引爆时才跟着一起炸。
+        /// </summary>
         private void HandleBomb(Collision collision)
         {
             if (m_BombSettings == null)
             {
                 return;
             }
+
+            // 已经被吸收过了就不再重复
+            if (m_HostBubble != null)
+            {
+                return;
+            }
+
+            Bubble host = collision.collider.GetComponentInParent<Bubble>();
+            if (host == null || host == this)
+            {
+                return;
+            }
+
+            if (!host.CanAbsorbBomb)
+            {
+                return;
+            }
+
+            // 由宿主登记我，然后我自己飞进去（不销毁）
+            host.AbsorbBomb(this);
         }
 
         /// <summary>
@@ -288,6 +338,12 @@ namespace PAO
                 // 已经粘成地形了：它不再是可乘坐的泡泡，
                 // 交互提示也不该再出现
                 if (m_IsStuck)
+                {
+                    return false;
+                }
+
+                // 体内装了炸弹就不能钻进去了，太危险
+                if (m_AbsorbedBomb != null)
                 {
                     return false;
                 }
@@ -567,14 +623,36 @@ namespace PAO
         /// </summary>
         public void Explode()
         {
+            ExplodeWithMultiplier(1f);
+        }
+
+        /// <summary>
+        /// 按倍率放大爆炸范围后引爆。被吸收来的炸弹走这条，范围会更大。
+        /// </summary>
+        public void ExplodeWithMultiplier(float radiusMultiplier)
+        {
             if (m_BombSettings == null)
             {
                 Destroy(gameObject);
                 return;
             }
 
+            // 体内还装着一颗炸弹的话，先让它炸掉自己。
+            // 否则宿主先消失，那颗炸弹会因为「宿主检查」永远留在场上。
+            if (m_AbsorbedBomb != null)
+            {
+                Bubble payload = m_AbsorbedBomb;
+                m_AbsorbedBomb = null;
+                m_AbsorbedBombArmed = false;
+
+                if (payload != null)
+                {
+                    payload.Explode();
+                }
+            }
+
             Vector3 center = transform.position;
-            float radius = m_BombSettings.blastRadius;
+            float radius = m_BombSettings.blastRadius * radiusMultiplier;
             float force = m_BombSettings.blastForce;
 
             // 先让乘客出来，否则人会被留在正在销毁的泡泡里
@@ -662,6 +740,12 @@ namespace PAO
             // 粘在可粘地形上了：同样留着不消失。
             // 它已经变成场景的一部分（可以踩、可以当落脚点），
             // 不该因为发射时定的存活时间到点就凭空不见。
+            // 被别的泡泡吸收了：同样留着不消失，等宿主引爆时一起炸
+            if (m_HostBubble != null)
+            {
+                return;
+            }
+
             if (m_IsStuck)
             {
                 return;
@@ -800,6 +884,205 @@ namespace PAO
             {
                 Physics.IgnoreCollision(ownCollider, m_IgnoredPlayerCollider, false);
             }
+        }
+        // ==================== 炸弹载荷 ====================
+
+        /// <summary>体内是否装着一颗吸收来的炸弹。</summary>
+        /// <summary>本泡泡的炸弹参数（非炸弹泡泡为 null）。吸收方要读爆炸范围倍率。</summary>
+        public BombBubbleSettings BombSettings
+        {
+            get { return m_BombSettings; }
+        }
+
+        public bool HasBomb
+        {
+            get { return m_AbsorbedBomb != null; }
+        }
+
+        /// <summary>
+        /// 能不能吸收炸弹泡泡。浮粘与弹力都可以，
+        /// 但必须满足：自己还没装炸弹、没粘成地形、而且里面没有人。
+        /// 「吸收只能发生在没上黏浮泡泡的时候」就对应最后那条。
+        /// </summary>
+        public bool CanAbsorbBomb
+        {
+            get
+            {
+                if (m_AbsorbedBomb != null) { return false; }
+                if (m_IsStuck) { return false; }
+                if (Rider != null) { return false; }
+                if (m_BombSettings != null) { return false; }   // 炸弹不能装炸弹
+
+                return m_StickySettings != null || m_BouncySettings != null;
+            }
+        }
+
+        /// <summary>
+        /// 吸收一颗炸弹泡泡。只会记下来，炸弹本体由调用方销毁。
+        /// </summary>
+        public void AbsorbBomb(Bubble bomb)
+        {
+            if (bomb == null || !CanAbsorbBomb)
+            {
+                return;
+            }
+
+            m_AbsorbedBomb = bomb;
+            m_AbsorbedBombArmed = false;
+
+            // 让它自己飞进来、停在球心（和地形泡泡吸收弹力泡泡是同一套）
+            bomb.OnAbsorbedInto(this);
+
+            // 吸收后视觉上稍微变一下，方便玩家看出这颗泡泡带着炸弹
+            Renderer ownRenderer = GetComponent<Renderer>();
+            if (ownRenderer != null)
+            {
+                MaterialPropertyBlock block = new MaterialPropertyBlock();
+                ownRenderer.GetPropertyBlock(block);
+                block.SetColor(Shader.PropertyToID("_BaseColor"), new Color(1f, 0.55f, 0.2f, 1f));
+                block.SetColor(Shader.PropertyToID("_Color"), new Color(1f, 0.55f, 0.2f, 1f));
+                ownRenderer.SetPropertyBlock(block);
+            }
+        }
+
+        /// <summary>把体内的炸弹激活，之后就能手动引爆了。</summary>
+        public void ArmAbsorbedBomb()
+        {
+            if (m_AbsorbedBomb != null)
+            {
+                m_AbsorbedBombArmed = true;
+            }
+        }
+
+        /// <summary>
+        /// 能不能用 F 把它弹射出去。装了炸弹的弹力泡泡走这条，
+        /// 而不是钻进去。
+        /// </summary>
+        public bool CanLaunchWithBomb
+        {
+            get
+            {
+                return m_BouncySettings != null
+                    && m_AbsorbedBomb != null
+                    && !m_IsStuck;
+            }
+        }
+
+        /// <summary>
+        /// 带着炸弹弹射出去。direction 是弹射方向（水平面内），
+        /// 俯仰角仍用弹力泡泡自己的 ejectAngle。
+        /// </summary>
+        public void LaunchWithBomb(Vector3 direction)
+        {
+            if (!CanLaunchWithBomb)
+            {
+                return;
+            }
+
+            // 弹出去之后炸弹就处于待爆状态，飞行途中可以按右键引爆
+            ArmAbsorbedBomb();
+
+            // 复用弹力泡泡那套抛物线
+            EjectRide(direction);
+        }
+
+        /// <summary>
+        /// 手动引爆体内的炸弹：按倍率放大范围，然后自己也炸掉。
+        /// </summary>
+        /// <summary>
+        /// 手动引爆体内的炸弹：先炸掉炸弹本体，再按放大的范围炸自己。
+        /// </summary>
+        public bool DetonateAbsorbedBomb()
+        {
+            if (m_AbsorbedBomb == null)
+            {
+                return false;
+            }
+
+            Bubble bomb = m_AbsorbedBomb;
+
+            float multiplier = bomb.BombSettings != null
+                ? bomb.BombSettings.absorbedBlastMultiplier
+                : 2f;
+
+            m_AbsorbedBomb = null;
+            m_AbsorbedBombArmed = false;
+
+            // 体内的炸弹先炸（它自己会销毁）
+            if (bomb != null)
+            {
+                bomb.Explode();
+            }
+
+            // 再按放大的范围炸宿主自己
+            ExplodeWithMultiplier(multiplier);
+            return true;
+        }
+
+        /// <summary>
+        /// 只有装着已激活炸弹的泡泡才需要每帧看一眼引爆键。
+        /// </summary>
+        private void Update()
+        {
+            if (m_AbsorbedBomb == null || !m_AbsorbedBombArmed)
+            {
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(kDetonateMouseButton))
+            {
+                DetonateAbsorbedBomb();
+            }
+        }
+        /// <summary>
+        /// 被别的泡泡吸收了：保留本体飞进对方体内，停在球心。
+        /// 走的是和「弹力泡泡被地形泡泡吸收」完全一样的路子，
+        /// 所以视觉上也是那种飞进去、往中间收的效果。
+        /// </summary>
+        public void OnAbsorbedInto(Bubble host)
+        {
+            if (host == null || m_HostBubble != null)
+            {
+                return;
+            }
+
+            m_HostBubble = host;
+
+            // 停掉浮力，否则进了人家肚子里还一直往上顶
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (buoyancy != null)
+            {
+                buoyancy.force = Vector3.zero;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.useGravity = false;
+                body.velocity *= 0.3f;          // 收一下速度，飞进去更顺
+                body.drag = 5f;
+                body.angularDrag = 5f;
+            }
+
+            // 忽略与宿主的碰撞，不然会被它的外壳弹开、挤不进去
+            Collider ownCollider = GetComponent<Collider>();
+            Collider hostCollider = host.GetComponent<Collider>();
+            if (ownCollider != null && hostCollider != null)
+            {
+                Physics.IgnoreCollision(ownCollider, hostCollider, true);
+            }
+        }
+
+        /// <summary>我是不是已经被某个泡泡吸收了。</summary>
+        public bool IsAbsorbed
+        {
+            get { return m_HostBubble != null; }
+        }
+
+        /// <summary>吸收我的那个宿主泡泡。</summary>
+        public Bubble HostBubble
+        {
+            get { return m_HostBubble; }
         }
     }
 }
