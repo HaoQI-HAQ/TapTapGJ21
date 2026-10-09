@@ -24,6 +24,10 @@ namespace PAO
         [Tooltip("蓄满力需要的时间（秒）。点按即为不足这个时间就松手")]
         [SerializeField] private float m_MaxChargeTime = 2f;
 
+        [Header("滞留")]
+        [Tooltip("蓄力直径达到这个值（米）时，松手不再发射，而是把泡泡留在发射口等第二次点击")]
+        [SerializeField] private float m_HoldThreshold = 1.0f;
+
         [Header("生成位置")]
         [Tooltip("泡泡生成基准点。留空则以角色自身为基准")]
         [SerializeField] private Transform m_Muzzle;
@@ -49,6 +53,9 @@ namespace PAO
 
         // ---------- 运行时状态 ----------
         private GameObject m_CurrentBubble;     // 正在蓄力的泡泡
+        private GameObject m_HeldBubble;        // 滞留在发射口的泡泡（等第二次点击发射）
+        private float m_HeldChargeProgress;    // 它当初的蓄力进度，发射时换算速度用
+        private BubbleType m_HeldType;         // 它是哪种泡泡
         private float m_ChargeTime;             // 已蓄力时间
         private bool m_Charging;
 
@@ -73,6 +80,17 @@ namespace PAO
 
         private void Update()
         {
+            // 有泡泡滞留在发射口时，左键不再是蓄力，而是「发射它」
+            if (m_HeldBubble != null)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    LaunchHeldBubble();
+                }
+
+                return;
+            }
+
             if (Input.GetMouseButtonDown(0))
             {
                 BeginCharge();
@@ -96,6 +114,13 @@ namespace PAO
             {
                 Destroy(m_CurrentBubble);
                 m_CurrentBubble = null;
+            }
+
+            // 滞留在发射口的泡泡也一并清掉
+            if (m_HeldBubble != null)
+            {
+                Destroy(m_HeldBubble);
+                m_HeldBubble = null;
             }
 
             m_Charging = false;
@@ -130,7 +155,8 @@ namespace PAO
         }
 
         /// <summary>
-        /// 松开左键：泡泡脱离、按蓄力换算速度射出。
+        /// 松开左键：够小就直接射出去；
+        /// 蓄到 m_HoldThreshold 以上的，改为留在发射口，等第二次点击才发射。
         /// </summary>
         private void Release()
         {
@@ -142,21 +168,127 @@ namespace PAO
             }
 
             BubbleSettings settings = GetSettings();
-
             GameObject bubble = m_CurrentBubble;
             m_CurrentBubble = null;
 
-            // 点按与长按在这里统一：蓄力时间越久，速度越快
-            float speed = Mathf.Lerp(settings.minLaunchSpeed, settings.maxLaunchSpeed, ChargeProgress);
+            float progress = ChargeProgress;
+            BubbleType type = GetCurrentType();
+            float size = GetCurrentSize();
+
+            // 够大：不发射，留在发射口。
+            // 速度给零 —— 但它已经是「活的」泡泡了，浮力、粘性、弹力都在。
+            if (size >= m_HoldThreshold)
+            {
+                m_HeldBubble = bubble;
+                m_HeldChargeProgress = progress;
+                m_HeldType = type;
+
+                ActivateBubble(bubble, settings, type, progress, size, Vector3.zero, true);
+                return;
+            }
+
+            // 不够大：照旧射出去，蓄力越久越快
+            float speed = Mathf.Lerp(settings.minLaunchSpeed, settings.maxLaunchSpeed, progress);
             Vector3 direction = GetSpawnRotation() * Vector3.forward;
+
+            ActivateBubble(bubble, settings, type, progress, size, direction * speed, false);
+        }
+
+        /// <summary>
+        /// 发射滞留在发射口的泡泡：按当初蓄的力给速度。
+        /// </summary>
+        public void LaunchHeldBubble()
+        {
+            if (m_HeldBubble == null)
+            {
+                return;
+            }
+
+            GameObject bubble = m_HeldBubble;
+            m_HeldBubble = null;
+
+            BubbleSettings settings = GetHeldSettings();
+            float speed = Mathf.Lerp(settings.minLaunchSpeed, settings.maxLaunchSpeed, m_HeldChargeProgress);
+            Vector3 direction = GetSpawnRotation() * Vector3.forward;
+
+            Rigidbody body = bubble != null ? bubble.GetComponent<Rigidbody>() : null;
+            if (body != null)
+            {
+                body.isKinematic = false;
+                body.useGravity = settings.useGravity;
+                body.velocity = direction * speed;
+
+                // 滞留期间浮力被清零过，这里要补回来，
+                // 否则发射出去的泡泡再也不会上升了
+                ApplyBuoyancy(bubble, body, settings, GetHeldSize());
+            }
+
+            // 通知泡泡：它从「滞留」变成「飞行」了
+            Bubble behaviour = bubble != null ? bubble.GetComponent<Bubble>() : null;
+            if (behaviour != null)
+            {
+                behaviour.OnLaunchedFromHold();
+            }
+        }
+
+        /// <summary>滞留中的泡泡（没有则为 null）。UI 想提示可以读它。</summary>
+        public bool HasHeldBubble
+        {
+            get { return m_HeldBubble != null; }
+        }
+
+        /// <summary>取滞留泡泡对应的那套参数。</summary>
+        /// <summary>滞留泡泡当初的直径（米）。发射时补浮力要用它。</summary>
+        private float GetHeldSize()
+        {
+            BubbleSettings settings = GetHeldSettings();
+            return Mathf.Lerp(settings.minSize, settings.maxSize, m_HeldChargeProgress);
+        }
+
+        private BubbleSettings GetHeldSettings()
+        {
+            switch (m_HeldType)
+            {
+                case BubbleType.Bouncy:
+                    return m_BouncySettings;
+
+                case BubbleType.Bomb:
+                    return m_BombSettings;
+
+                default:
+                    return m_StickySettings;
+            }
+        }
+
+        /// <summary>
+        /// 把泡泡从「生成物」变成「真正的泡泡」：脱离、激活物理、上浮力、开碰撞、登记、计时。
+        /// 发射与滞留共用这里，区别只在 velocity。
+        /// </summary>
+        private void ActivateBubble(GameObject bubble, BubbleSettings settings, BubbleType type, float progress, float size, Vector3 velocity, bool isHeld)
+        {
+            if (bubble == null)
+            {
+                return;
+            }
 
             bubble.transform.SetParent(null);
 
-            // 把这次的蓄力进度写进泡泡，供撞击力、填充量之类使用
-            Bubble launchedBehaviour = bubble.GetComponent<Bubble>();
-            if (launchedBehaviour != null)
+            Bubble behaviour = bubble.GetComponent<Bubble>();
+            if (behaviour != null)
             {
-                launchedBehaviour.SizeProgress = ChargeProgress;
+                behaviour.SizeProgress = progress;
+                behaviour.IsHeld = isHeld;
+
+                // 滞留时它要负责把玩家提起来（只有浮粘泡泡会真提）
+                behaviour.SetLiftTarget(GetComponent<PlayerController>());
+
+                // 记下泡泡此刻相对玩家的位置。之后它就锁在这儿 ——
+                // 松手时在哪就一直在哪，不会再跳到别的地方去。
+                if (isHeld)
+                {
+                    Vector3 localOffset = transform.InverseTransformPoint(behaviour.transform.position);
+                    behaviour.SetHeldOffset(localOffset);
+                }
             }
 
             Rigidbody body = bubble.GetComponent<Rigidbody>();
@@ -164,9 +296,9 @@ namespace PAO
             {
                 body.isKinematic = false;
                 body.useGravity = settings.useGravity;
-                body.velocity = direction * speed;
+                body.velocity = velocity;
 
-                ApplyBuoyancy(bubble, body, settings);
+                ApplyBuoyancy(bubble, body, settings, size);
             }
 
             // 发射后恢复实体碰撞（蓄力期间是触发器），否则撞不到别的泡泡
@@ -176,24 +308,21 @@ namespace PAO
                 bubbleCollider.isTrigger = false;
             }
 
-            // 炸弹泡泡发射后登记到管理器，排队等着按 R 引爆
-            if (GetCurrentType() == BubbleType.Bomb)
+            // 炸弹泡泡登记到管理器，排队等着引爆
+            if (type == BubbleType.Bomb && behaviour != null)
             {
                 BombBubbleManager bombManager = GetComponent<BombBubbleManager>();
-                Bubble bombBehaviour = bubble.GetComponent<Bubble>();
-
-                if (bombManager != null && bombBehaviour != null)
+                if (bombManager != null)
                 {
-                    bombManager.RegisterBomb(bombBehaviour);
+                    bombManager.RegisterBomb(behaviour);
                 }
             }
 
             // 交给泡泡自己计时，这样进了地形容器后还能取消掉，
             // 否则它会在容器里凭空消失
-            Bubble lifeTarget = bubble.GetComponent<Bubble>();
-            if (lifeTarget != null)
+            if (behaviour != null)
             {
-                lifeTarget.ScheduleLifeEnd(settings.lifeTime);
+                behaviour.ScheduleLifeEnd(settings.lifeTime);
             }
             else
             {
@@ -206,10 +335,12 @@ namespace PAO
         /// 用 ConstantForce 持续施加向上的力，配合空气阻力，
         /// 泡泡会在飞行一小段后稳定到目标速度匀速上升。
         /// </summary>
-        private void ApplyBuoyancy(GameObject bubble, Rigidbody body, BubbleSettings settings)
+        private void ApplyBuoyancy(GameObject bubble, Rigidbody body, BubbleSettings settings, float size)
         {
             // 按尺寸在「小泡快、大泡慢」之间插值出目标上升速度
-            float sizeProgress = Mathf.InverseLerp(settings.minSize, settings.maxSize, GetCurrentSize());
+            // 用调用方传进来的尺寸，而不是 GetCurrentSize()：
+            // 滞留的泡泡发射时蓄力早就重置了，现取会算错浮力
+            float sizeProgress = Mathf.InverseLerp(settings.minSize, settings.maxSize, size);
             float targetRiseSpeed = Mathf.Lerp(settings.smallRiseSpeed, settings.largeRiseSpeed, sizeProgress);
 
             // 空气阻力：让泡泡飞一段后自然减速，同时让上升稳定为匀速

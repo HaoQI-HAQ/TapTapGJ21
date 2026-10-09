@@ -80,6 +80,9 @@ namespace PAO
 
         [Tooltip("按 E 操控时的移动推力（米/秒²）")]
         public float controlMoveForce = 7f;
+
+        [Tooltip("滞留（还在嘴上）时带着玩家上升的速度（米/秒）。和发射后那套无关，单独调")]
+        public float heldLiftSpeed = 3f;
     }
 
     /// <summary>
@@ -115,6 +118,8 @@ namespace PAO
 
         [Tooltip("弹射仰角（度）。0 = 水平，45 最远，90 直上")]
         public float ejectAngle = 35f;
+
+        public float squeezeLaunchSpeedMax = 22f;
     }
 
     /// <summary>

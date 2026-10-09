@@ -20,6 +20,13 @@ namespace PAO
         [Tooltip("操控模式按键：相机跟到泡泡上，WASD 主动驾驶它飞")]
         [SerializeField] private KeyCode m_ControlKey = KeyCode.E;
 
+        [Header("跳出冲刺")]
+        [Tooltip("按 F 从浮粘泡泡里炸出来时，往角色正前方冲出去的速度（米/秒）")]
+        [SerializeField] private float m_EjectForwardSpeed = 14f;
+
+        [Tooltip("冲刺持续的时间（秒）。速度 × 时间 ≈ 冲出多远")]
+        [SerializeField] private float m_EjectForwardDuration = 0.35f;
+
         [Header("UI")]
         [Tooltip("提示文字大小")]
         [SerializeField] private int m_HintFontSize = 22;
@@ -113,13 +120,23 @@ namespace PAO
                         return;
                     }
 
-                    // 浮粘泡泡：按 F 直接炸开，人会随着冲击被抛出去
-                    if (!m_RidingBubble.IsBouncy)
+                    // 浮粘泡泡：按 F 直接炸开，人会随着冲击被抛出去。
+                    // 先记下是不是浮粘泡泡 —— ExitBubble 之后引用就没了
+                    bool ejectForward = m_RidingBubble != null && !m_RidingBubble.IsBouncy;
+
+                    if (ejectForward)
                     {
                         m_RidingBubble.Explode();
                     }
 
                     ExitBubble();
+
+                    // 往角色正前方冲一小段，而不是单纯自然落下。
+                    // 速度和时长都是独立参数，在 Inspector 的「跳出冲刺」里调。
+                    if (ejectForward && m_PlayerController != null)
+                    {
+                        m_PlayerController.LaunchForward(m_EjectForwardSpeed, m_EjectForwardDuration);
+                    }
                 }
                 return;
             }

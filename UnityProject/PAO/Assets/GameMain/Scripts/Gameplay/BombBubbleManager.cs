@@ -108,7 +108,17 @@ namespace PAO
 
             if (oldest != null)
             {
+            // 这颗炸弹如果已经被浮粘/弹力泡泡吸收了，就改引爆宿主。
+            // 直接炸它自己的话走的是普通爆炸，范围不会放大；
+            // 而且它现在正待在宿主体内，炸了也带不走宿主。
+            if (oldest.IsAbsorbed && oldest.HostBubble != null)
+            {
+                oldest.HostBubble.DetonateAbsorbedBomb();
+            }
+            else
+            {
                 oldest.Explode();
+            }
             }
 
             RefreshIndices();

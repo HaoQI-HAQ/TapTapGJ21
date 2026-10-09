@@ -40,6 +40,9 @@ namespace PAO
         [Tooltip("在泡泡里驾驶时施加的推力（米/秒²）。越大越灵活，越小越飘")]
         [SerializeField] private float m_CarrierMoveForce = 6f;
 
+        [Tooltip("被泡泡提着时的水平移动速度倍率。比走路慢，体现「微微操控方向」")]
+        [SerializeField] private float m_LiftMoveMultiplier = 0.45f;
+
         [Header("视角")]
         [Tooltip("摄像机枢轴（空物体）。留空则自动取 MainCamera")]
         [SerializeField] private Transform m_CameraPivot;
@@ -109,6 +112,35 @@ namespace PAO
         /// E 键远程操控泡泡就是靠它实现的。
         /// </summary>
         public Transform CameraAnchor { get; set; }
+
+        /// <summary>
+        /// 是否正被泡泡提着上升。为 true 时不走重力，
+        /// 垂直速度由 LiftSpeed 决定（由泡泡每帧写入）。
+        /// </summary>
+        public bool IsLifted { get; set; }
+
+        /// <summary>被提着时的垂直速度（米/秒），由泡泡写入。</summary>
+        public float LiftSpeed { get; set; }
+
+        /// <summary>
+        /// 当前有没有移动输入（WASD 是否按着）。
+        /// 弹力泡泡靠它判断玩家「松手了」，好把攒下的弹力放出去。
+        /// </summary>
+        public bool HasMoveInput { get; private set; }
+
+        // ---------- 跳出冲刺 ----------
+        private float m_DashSpeed;          // 冲刺速度（米/秒）
+        private float m_DashTimeLeft;       // 冲刺剩余时间（秒）
+
+        /// <summary>
+        /// 往角色正前方冲一小段。从浮粘泡泡里炸出来时用，
+        /// 比单纯自然落下更有「被冲击抛出去」的感觉。
+        /// </summary>
+        public void LaunchForward(float speed, float duration)
+        {
+            m_DashSpeed = speed;
+            m_DashTimeLeft = Mathf.Max(0f, duration);
+        }
 
         private void Awake()
         {
@@ -212,6 +244,7 @@ namespace PAO
         /// </summary>
         private void UpdateMove()
         {
+
             float inputX = Input.GetAxisRaw("Horizontal");
             float inputY = Input.GetAxisRaw("Vertical");
 
@@ -242,6 +275,9 @@ namespace PAO
                 moveDirection.Normalize();
             }
 
+            // 记下这一帧有没有移动输入（转身和弹力泡泡都要用）
+            HasMoveInput = moveDirection.sqrMagnitude > 0.0001f;
+
             // 只有真的要移动时才转身，松手时保持当前朝向
             if (moveDirection.sqrMagnitude > 0.0001f)
             {
@@ -250,6 +286,35 @@ namespace PAO
                 // 帧率无关的平滑：t 只取决于经过的时间，不受帧数影响
                 float t = 1f - Mathf.Exp(-m_RotationSpeed * Time.deltaTime);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, t);
+            }
+
+            // 到这里为止「读输入 + 转身」都已经做完了 —— 转身不该受控制器状态影响，
+            // 否则钻进泡泡（CharacterController 被禁用）时人就转不了身了。
+            // 再往下才是真正的「移动」，控制器不可用时才该停下来。
+            if (m_Controller == null
+                || !m_Controller.enabled
+                || !m_Controller.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            // 跳出冲刺：这段时间每帧额外往正前方推一点。
+            // 用 Move 直接叠加，所以冲刺和正常移动、重力是并行生效的。
+            if (m_DashTimeLeft > 0f)
+            {
+                m_DashTimeLeft -= Time.deltaTime;
+                m_Controller.Move(transform.forward * (m_DashSpeed * Time.deltaTime));
+            }
+
+            // 被滞留的浮粘泡泡提着：水平还能微微操控方向，
+            // 垂直完全交给泡泡 —— 它升多快人就升多快。
+            if (IsLifted)
+            {
+                Vector3 liftVelocity = moveDirection * (m_MoveSpeed * m_LiftMoveMultiplier)
+                    + Vector3.up * LiftSpeed;
+
+                m_Controller.Move(liftVelocity * Time.deltaTime);
+                return;
             }
 
             // 载具内：WASD 用来驾驶载具（泡泡），而不是自己走。

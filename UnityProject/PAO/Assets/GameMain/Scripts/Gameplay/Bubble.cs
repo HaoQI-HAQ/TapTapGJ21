@@ -47,8 +47,15 @@ namespace PAO
         private Bubble m_AbsorbedBomb;               // 体内装的炸弹泡泡（吸收来的）
 
         private const int kDetonateMouseButton = 1;  // 1 = 鼠标右键，和 BombBubbleManager 保持一致
-        private const float kAbsorbGatherForce = 12f;   // 被吸收后朝宿主中心收拢的力度
+        private const float kAbsorbGatherForce = 40f;   // 被吸收后朝宿主中心收拢的力度
         private bool m_AbsorbedBombArmed;           // 炸弹是否已激活（被操控或弹射后才允许手动引爆）
+        private bool m_IsHeld;                      // 是否滞留在发射口还没发射
+        private PlayerController m_LiftTarget;              // 滞留时被我提着的玩家
+        private Vector3 m_HeldLocalOffset;                  // 滞留时相对玩家的局部位置，松手瞬间记下就不再变
+
+        private const float kMaxLiftDistance = 4f;          // 超过这个距离就不再提着玩家
+        private const float kHeldForwardOffset = 0.5f;      // 滞留时泡泡离玩家身前多远（米）
+        private const float kHeldHeightOffset = 0.2f;       // 再往上抬一点，免得贴地
         private Bubble m_HostBubble;                 // 我是炸弹、被谁吸收了（吸收方记录在 m_AbsorbedBomb）
 
         /// <summary>
@@ -94,6 +101,15 @@ namespace PAO
         /// </summary>
         private void FixedUpdate()
         {
+            // 滞留中的浮粘泡泡优先处理。
+            // 注意要放在下面的 kinematic 检查【之前】：
+            // 滞留时泡泡是 kinematic 的，放后面就永远进不来了。
+            if (m_IsHeld)
+            {
+                UpdateHeldLift();
+                return;
+            }
+
             Rigidbody body = GetComponent<Rigidbody>();
             if (body == null || body.isKinematic)
             {
@@ -233,11 +249,6 @@ namespace PAO
         /// </summary>
         private void HandleBomb(Collision collision)
         {
-            if (m_BombSettings == null)
-            {
-                return;
-            }
-
             // 已经被吸收过了就不再重复
             if (m_HostBubble != null)
             {
@@ -335,6 +346,12 @@ namespace PAO
         {
             get
             {
+                // 还在嘴上（滞留）时不能钻进去，得先吹出去
+                if (m_IsHeld)
+                {
+                    return false;
+                }
+
                 // 已经粘成地形了：它不再是可乘坐的泡泡，
                 // 交互提示也不该再出现
                 if (m_IsStuck)
@@ -390,6 +407,12 @@ namespace PAO
         {
             get
             {
+                // 还在嘴上（滞留）时也不能远程操控
+                if (m_IsHeld)
+                {
+                    return false;
+                }
+
                 // 粘成地形了就不能再操控
                 if (m_IsStuck)
                 {
@@ -626,15 +649,30 @@ namespace PAO
             ExplodeWithMultiplier(1f);
         }
 
-        /// <summary>
-        /// 按倍率放大爆炸范围后引爆。被吸收来的炸弹走这条，范围会更大。
-        /// </summary>
+        /// <summary>按倍率放大范围引爆（用自身的炸弹参数）。</summary>
         public void ExplodeWithMultiplier(float radiusMultiplier)
         {
-            if (m_BombSettings == null)
+            ExplodeWithMultiplier(radiusMultiplier, null);
+        }
+
+        /// <summary>
+        /// 真正的爆炸实现。
+        /// settingsOverride 是给「宿主」用的：宿主自己是浮粘/弹力泡泡，
+        /// 没有 m_BombSettings，必须由调用方把体内那颗炸弹的参数传进来。
+        /// 不能靠 m_AbsorbedBomb 现取 —— 调用方往往在清空引用之后才调这里。
+        /// </summary>
+        public void ExplodeWithMultiplier(float radiusMultiplier, BombBubbleSettings settingsOverride)
+        {
+            // 宿主自己是浮粘/弹力泡泡，没有 m_BombSettings。
+            // 这时必须借用体内那颗炸弹的参数，否则下面会直接销毁、
+            // 什么爆炸都不发生（炸不动地形就是这么来的）。
+            BombBubbleSettings bombSettings = settingsOverride != null
+                ? settingsOverride
+                : m_BombSettings;
+
+            if (bombSettings == null && m_AbsorbedBomb != null)
             {
-                Destroy(gameObject);
-                return;
+                bombSettings = m_AbsorbedBomb.BombSettings;
             }
 
             // 体内还装着一颗炸弹的话，先让它炸掉自己。
@@ -652,8 +690,14 @@ namespace PAO
             }
 
             Vector3 center = transform.position;
-            float radius = m_BombSettings.blastRadius * radiusMultiplier;
-            float force = m_BombSettings.blastForce;
+            if (bombSettings == null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            float radius = bombSettings.blastRadius * radiusMultiplier;
+            float force = bombSettings.blastForce;
 
             // 先让乘客出来，否则人会被留在正在销毁的泡泡里
             if (Rider != null)
@@ -685,7 +729,7 @@ namespace PAO
 
             // 连带引爆范围内的地形泡泡。用 HashSet 去重，
             // 免得一个地形因为挂了多个碰撞体被引爆好几次
-            if (m_BombSettings.detonateTerrains)
+            if (bombSettings.detonateTerrains)
             {
                 HashSet<TerrainBubble> terrains = new HashSet<TerrainBubble>();
 
@@ -1001,6 +1045,10 @@ namespace PAO
 
             Bubble bomb = m_AbsorbedBomb;
 
+            // 先把参数取出来存好，因为下面会把 m_AbsorbedBomb 清空，
+            // 清空之后 ExplodeWithMultiplier 就借不到了
+            BombBubbleSettings payloadSettings = bomb.BombSettings;
+
             float multiplier = bomb.BombSettings != null
                 ? bomb.BombSettings.absorbedBlastMultiplier
                 : 2f;
@@ -1008,14 +1056,15 @@ namespace PAO
             m_AbsorbedBomb = null;
             m_AbsorbedBombArmed = false;
 
-            // 体内的炸弹先炸（它自己会销毁）
+            // 只炸一次：销毁体内的炸弹本体，但不单独引爆它。
+            // 否则会有两组力（一小一大）叠加，推两次。
             if (bomb != null)
             {
-                bomb.Explode();
+                Destroy(bomb.gameObject);
             }
 
             // 再按放大的范围炸宿主自己
-            ExplodeWithMultiplier(multiplier);
+            ExplodeWithMultiplier(multiplier, payloadSettings);
             return true;
         }
 
@@ -1083,6 +1132,254 @@ namespace PAO
         public Bubble HostBubble
         {
             get { return m_HostBubble; }
+        }
+        /// <summary>
+        /// 从「滞留在发射口」变成「飞出去」时调用。
+        /// 默认什么都不做；浮粘/弹力泡泡会在这里交接它们的滞留态效果。
+        /// </summary>
+        public void OnLaunchedFromHold()
+        {
+            m_IsHeld = false;
+
+            // 发射了就不再提着玩家，让他自己飞
+            ReleaseLiftTarget();
+        }
+
+        /// <summary>是否正滞留在发射口还没发射。</summary>
+        public bool IsHeld
+        {
+            get { return m_IsHeld; }
+            set { m_IsHeld = value; }
+        }
+        /// <summary>
+        /// 由发射器在生成时调用：告诉泡泡「滞留时该提谁」。
+        /// </summary>
+        /// <summary>
+        /// 由发射器在滞留瞬间调用：记下泡泡此刻相对玩家的位置。
+        /// 之后它就锁在这个位置 —— 松手时在哪，就一直在哪，不会再跳。
+        /// </summary>
+        public void SetHeldOffset(Vector3 localOffset)
+        {
+            m_HeldLocalOffset = localOffset;
+        }
+
+        public void SetLiftTarget(PlayerController player)
+        {
+            m_LiftTarget = player;
+
+            // 顺手把与玩家所有碰撞体的碰撞都忽略掉。
+            // 只忽略主碰撞体是不够的：泡泡贴着身体时会被子物体的碰撞体
+            // 反复顶开，而跟随逻辑又把它拉回来 —— 会加重抖动。
+            IgnorePlayerCollisions();
+        }
+
+        /// <summary>
+        /// 滞留态：浮粘泡泡把玩家提起来。
+        ///
+        /// 泡泡在这里切成 kinematic 并直接摆到锚点上 —— 不走物理跟随。
+        /// 之前用速度去追锚点，玩家一转身锚点就绕圈，泡泡追着一个移动的靶子
+        /// 反复过冲，表现就是持续抖动（转得越快抖得越凶）。
+        /// 直接摆位置就没有这个问题。
+        ///
+        /// 代价是 kinematic 撞静态地形不会触发碰撞事件，
+        /// 所以粘附改成主动检测（见 CheckStickySurfaceWhileHeld）。
+        /// </summary>
+        private void UpdateHeldLift()
+        {
+            // 已经粘成地形了：不再是「嘴上的泡泡」，松开玩家让他掉下去
+            if (m_IsStuck)
+            {
+                ReleaseLiftTarget();
+                return;
+            }
+
+            // 只有浮粘泡泡有浮力这一说
+            if (m_StickySettings == null || m_LiftTarget == null)
+            {
+                return;
+            }
+
+            // 离太远就松手，不然隔着半张地图还能把人吊起来
+            float distance = Vector3.Distance(transform.position, m_LiftTarget.transform.position);
+            if (distance > kMaxLiftDistance)
+            {
+                ReleaseLiftTarget();
+                return;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                ConstantForce buoyancy = GetComponent<ConstantForce>();
+                if (buoyancy != null)
+                {
+                    buoyancy.force = Vector3.zero;   // 浮力关掉，位置由跟随决定
+                }
+
+                body.useGravity = false;
+
+                // 顺序很重要：必须先清速度、再切 kinematic。
+                // 反过来的话，对已经是 kinematic 的刚体设 velocity 会每帧刷
+                // "Setting linear velocity of a kinematic body is not supported"。
+                if (!body.isKinematic)
+                {
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                    body.isKinematic = true;
+                }
+
+                // 位置同步交给 LateUpdate 去做（和玩家同一个节奏），这里不再摆位置
+            }
+
+            // 上升体现在玩家身上，速度由 Held Lift Speed 直接控制
+            m_LiftTarget.IsLifted = true;
+            m_LiftTarget.LiftSpeed = m_StickySettings.heldLiftSpeed;
+
+            // kinematic 撞不到静态地形，只能自己查有没有贴到可粘地形
+            CheckStickySurfaceWhileHeld();
+        }
+
+        /// <summary>
+        /// 滞留时的粘附检测。
+        /// 泡泡此刻是 kinematic，撞静态地形不会有碰撞事件，
+        /// 所以每帧主动查一下自己有没有贴到可粘地形。
+        /// </summary>
+        private void CheckStickySurfaceWhileHeld()
+        {
+            if (m_IsStuck || m_StickySettings == null)
+            {
+                return;
+            }
+
+            float radius = GetDiameter() * 0.5f + 0.15f;
+            Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                if (hits[i] == null)
+                {
+                    continue;
+                }
+
+                StickySurface surface = hits[i].GetComponentInParent<StickySurface>();
+                if (surface != null)
+                {
+                    StickWhileHeld(surface);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 滞留途中粘上了可粘地形：变成地形的一部分，同时把玩家放下。
+        /// </summary>
+        private void StickWhileHeld(StickySurface surface)
+        {
+            if (m_IsStuck)
+            {
+                return;
+            }
+
+            m_IsStuck = true;
+            m_IsHeld = false;              // 不再是「嘴上的泡泡」
+
+            // 玩家立刻掉下来 —— 这正是「吹泡黏住时角色自动落下」
+            ReleaseLiftTarget();
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                ConstantForce buoyancy = GetComponent<ConstantForce>();
+                if (buoyancy != null)
+                {
+                    buoyancy.force = Vector3.zero;
+                }
+
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+
+                if (surface != null && surface.FreezeRotation)
+                {
+                    body.freezeRotation = true;
+                }
+
+                body.isKinematic = true;   // 彻底钉住
+            }
+
+            // 粘住后就是地形了，恢复与玩家的碰撞，人能踩上去
+            RestorePlayerCollision();
+        }
+
+        /// <summary>滞留时泡泡该待的位置：松手那一刻记下的相对位置。</summary>
+        private Vector3 GetHeldAnchorPosition(Transform player)
+        {
+            // 锁在松手时记下的那个相对位置，不再另算 —— 免得松手就跳一下
+            return player.TransformPoint(m_HeldLocalOffset);
+        }
+
+
+        /// <summary>
+        /// 泡泡被销毁（寿命到、爆炸、退出 Play）时也要松开玩家，
+        /// 否则他会永远卡在「被提着」的状态里浮着下不来。
+        /// </summary>
+        private void OnDestroy()
+        {
+            ReleaseLiftTarget();
+        }
+
+        private void ReleaseLiftTarget()
+        {
+            if (m_LiftTarget != null)
+            {
+                m_LiftTarget.IsLifted = false;
+                m_LiftTarget.LiftSpeed = 0f;
+            }
+        }
+        /// <summary>
+        /// 忽略与玩家身上所有碰撞体的碰撞。
+        /// 滞留时泡泡紧贴身体，只忽略主碰撞体的话，
+        /// 子物体（模型自带的碰撞体）会不停把它顶开，
+        /// 而跟随逻辑又把它拉回来 —— 看起来就是抖个不停。
+        /// </summary>
+        private void IgnorePlayerCollisions()
+        {
+            if (m_LiftTarget == null)
+            {
+                return;
+            }
+
+            Collider ownCollider = GetComponent<Collider>();
+            if (ownCollider == null)
+            {
+                return;
+            }
+
+            Collider[] playerColliders = m_LiftTarget.GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < playerColliders.Length; i++)
+            {
+                if (playerColliders[i] != null)
+                {
+                    Physics.IgnoreCollision(ownCollider, playerColliders[i], true);
+                }
+            }
+        }
+        /// <summary>
+        /// 滞留时在渲染帧同步位置。
+        ///
+        /// 为什么不在 FixedUpdate 里做：物理固定 50Hz，而玩家是按渲染帧移动的，
+        /// 两者节奏不一致，泡泡就会在目标位置附近轻微摆动。
+        /// 放到 LateUpdate 后和玩家同一个节奏，看起来就平稳了。
+        ///
+        /// 也刻意不去同步 rotation —— 一转头泡泡就跟着转，看着也像在摆。
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (!m_IsHeld || m_IsStuck || m_LiftTarget == null)
+            {
+                return;
+            }
+
+            transform.position = GetHeldAnchorPosition(m_LiftTarget.transform);
         }
     }
 }
