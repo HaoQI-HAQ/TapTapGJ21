@@ -1339,7 +1339,7 @@ MonoBehaviour:
     prefab: {fileID: 136554135}
     color: {r: 1, g: 0, b: 0.910151, a: 1}
     minSize: 0.3
-    maxSize: 1.5
+    maxSize: 1.1
     minLaunchSpeed: 4
     maxLaunchSpeed: 0.1
     smallRiseSpeed: 0
@@ -1355,6 +1355,10 @@ MonoBehaviour:
     rideMoveForce: 5
     ejectSpeed: 14
     ejectAngle: 35
+    squeezeThreshold: 0.06
+    squeezeMinScale: 0.55
+    squeezeLaunchSpeedMin: 7
+    squeezeLaunchSpeedMax: 22
   m_BombSettings:
     prefab: {fileID: 193157977}
     color: {r: 0.55, g: 0.85, b: 1, a: 1}

@@ -119,6 +119,17 @@ namespace PAO
         [Tooltip("弹射仰角（度）。0 = 水平，45 最远，90 直上")]
         public float ejectAngle = 35f;
 
+        [Header("弹力泡泡 · 贴墙挤压弹射")]
+        [Tooltip("嘴上的泡泡被挤进墙里多少米以上才算「压住了」")]
+        public float squeezeThreshold = 0.06f;
+
+        [Tooltip("压到极限时，沿前进方向只剩多少比例（0.55 = 压掉快一半）")]
+        public float squeezeMinScale = 0.55f;
+
+        [Tooltip("刚好压到阈值时的弹射速度（米/秒）")]
+        public float squeezeLaunchSpeedMin = 7f;
+
+        [Tooltip("压到极限时的弹射速度（米/秒）")]
         public float squeezeLaunchSpeedMax = 22f;
     }
 

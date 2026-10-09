@@ -50,11 +50,25 @@ namespace PAO
         private const float kAbsorbGatherForce = 40f;   // 被吸收后朝宿主中心收拢的力度
         private bool m_AbsorbedBombArmed;           // 炸弹是否已激活（被操控或弹射后才允许手动引爆）
         private bool m_IsHeld;                      // 是否滞留在发射口还没发射
+        private float m_Squeeze;                    // 弹力泡泡被墙挤进去多少米
+        private bool m_WasSqueezing;                // 上一帧是不是正在挤（用来判断「松手」）
+
+        // 【重要】滞留那一刻的原始直径。
+        // 形变是靠改 localScale 实现的，而 GetDiameter() 读的就是 localScale，
+        // 每帧现取再写回去会形成「读自己写过的值」的自反馈，尺寸会指数增长。
+        // 所以基准值只在进滞留时取一次，之后所有形变都基于它算。
+        private float m_BaseDiameter;
+
+        // 滞留时这一帧该待的位置。物理帧算好、渲染帧才摆 ——
+        // 和浮粘泡泡同一套路，这样才和玩家的移动节奏一致。
+        private Vector3 m_HeldTargetPosition;
         private PlayerController m_LiftTarget;              // 滞留时被我提着的玩家
         private Vector3 m_HeldLocalOffset;                  // 滞留时相对玩家的局部位置，松手瞬间记下就不再变
 
         private const float kMaxLiftDistance = 4f;          // 超过这个距离就不再提着玩家
         private const float kHeldForwardOffset = 0.5f;      // 滞留时泡泡离玩家身前多远（米）
+        private const float kMinHeldDistance = 0.35f;       // 滞留偏移的合理下限（米）
+        private const float kMaxHeldDistance = 5f;          // 滞留偏移的合理上限（米）
         private const float kHeldHeightOffset = 0.2f;       // 再往上抬一点，免得贴地
         private Bubble m_HostBubble;                 // 我是炸弹、被谁吸收了（吸收方记录在 m_AbsorbedBomb）
 
@@ -69,6 +83,12 @@ namespace PAO
             m_StickySettings = settings as StickyBubbleSettings;
             m_BouncySettings = settings as BouncyBubbleSettings;
             m_BombSettings = settings as BombBubbleSettings;
+
+            // 【临时诊断】看类型与参数是否匹配
+            Debug.Log(string.Format(
+                "[Bubble] Setup type={0} settings={1} sticky={2} bouncy={3}",
+                type, settings != null ? settings.GetType().Name : "null",
+                m_StickySettings != null, m_BouncySettings != null));
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -106,7 +126,17 @@ namespace PAO
             // 滞留时泡泡是 kinematic 的，放后面就永远进不来了。
             if (m_IsHeld)
             {
-                UpdateHeldLift();
+                // 两种泡泡在嘴上的行为完全不同：
+                //   浮粘泡泡 = 把玩家提起来
+                //   弹力泡泡 = 贴墙挤压攒力，松手弹出去
+                if (m_BouncySettings != null)
+                {
+                    UpdateHeldBounce();
+                }
+                else
+                {
+                    UpdateHeldLift();
+                }
                 return;
             }
 
@@ -823,8 +853,14 @@ namespace PAO
                 buoyancy.force = Vector3.zero;
             }
 
-            body.velocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
+            // 只在不是 kinematic 时才清速度 ——
+            // 对已经是 kinematic 的刚体设 velocity 会刷
+            // "Setting linear velocity of a kinematic body is not supported"
+            if (!body.isKinematic)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
 
             if (surface.SnapToContactPoint && collision.contactCount > 0)
             {
@@ -894,8 +930,14 @@ namespace PAO
             Rigidbody body = GetComponent<Rigidbody>();
             if (body != null)
             {
+            // 只在不是 kinematic 时才清速度 ——
+            // 对已经是 kinematic 的刚体设 velocity 会刷
+            // "Setting linear velocity of a kinematic body is not supported"
+            if (!body.isKinematic)
+            {
                 body.velocity = Vector3.zero;
                 body.angularVelocity = Vector3.zero;
+            }
                 body.isKinematic = true;   // 完全停住物理
 
             // 恢复与玩家的碰撞：粘住后它就是地形了，人要能踩上来。
@@ -1149,7 +1191,18 @@ namespace PAO
         public bool IsHeld
         {
             get { return m_IsHeld; }
-            set { m_IsHeld = value; }
+            set
+            {
+                m_IsHeld = value;
+
+                if (value)
+                {
+                    // 进滞留时把原始直径记下来，后面形变都用它，不再读 localScale
+                    m_BaseDiameter = GetDiameter();
+                    m_Squeeze = 0f;
+                    m_WasSqueezing = false;
+                }
+            }
         }
         /// <summary>
         /// 由发射器在生成时调用：告诉泡泡「滞留时该提谁」。
@@ -1160,6 +1213,19 @@ namespace PAO
         /// </summary>
         public void SetHeldOffset(Vector3 localOffset)
         {
+            // 兜底：偏移太小泡泡会贴在玩家身上（看起来像把人包住），
+            // 太大又会飘到很远。超出合理范围就退回默认的身前位置。
+            // 【临时诊断】把关键数值打到 Console，定位偏移为什么是 0
+            Debug.Log(string.Format(
+                "[Bubble] heldOffset={0} len={1:F3} myScale={2} myPos={3}",
+                localOffset, localOffset.magnitude, transform.lossyScale, transform.position));
+
+            float distance = localOffset.magnitude;
+            if (distance < kMinHeldDistance || distance > kMaxHeldDistance)
+            {
+                localOffset = new Vector3(0f, kHeldHeightOffset, kHeldForwardOffset);
+            }
+
             m_HeldLocalOffset = localOffset;
         }
 
@@ -1295,8 +1361,14 @@ namespace PAO
                     buoyancy.force = Vector3.zero;
                 }
 
+            // 只在不是 kinematic 时才清速度 ——
+            // 对已经是 kinematic 的刚体设 velocity 会刷
+            // "Setting linear velocity of a kinematic body is not supported"
+            if (!body.isKinematic)
+            {
                 body.velocity = Vector3.zero;
                 body.angularVelocity = Vector3.zero;
+            }
 
                 if (surface != null && surface.FreezeRotation)
                 {
@@ -1372,6 +1444,13 @@ namespace PAO
         ///
         /// 也刻意不去同步 rotation —— 一转头泡泡就跟着转，看着也像在摆。
         /// </summary>
+        /// <summary>
+        /// 滞留时在渲染帧摆位置。
+        ///
+        /// 物理是固定 50Hz，而玩家是按渲染帧移动的，两者节奏不一致；
+        /// 在 FixedUpdate 里直接摆会差半个物理帧，看起来就是泡泡位置对不上（偏）。
+        /// 所以统一在这里摆 —— 浮粘和弹力都走这条。
+        /// </summary>
         private void LateUpdate()
         {
             if (!m_IsHeld || m_IsStuck || m_LiftTarget == null)
@@ -1379,7 +1458,272 @@ namespace PAO
                 return;
             }
 
-            transform.position = GetHeldAnchorPosition(m_LiftTarget.transform);
+            if (m_BouncySettings != null)
+            {
+                // 弹力泡泡：位置由 UpdateHeldBounce 算好放在这里
+                transform.position = m_HeldTargetPosition;
+            }
+            else
+            {
+                // 浮粘泡泡：锁在松手时记下的相对位置
+                transform.position = GetHeldAnchorPosition(m_LiftTarget.transform);
+            }
+        }
+        /// <summary>
+        /// 滞留态（弹力泡泡）：跟着玩家，被墙挤到就压缩攒力，
+        /// 玩家一松开移动键就把弹力放出去，自己弹飞。
+        ///
+        /// 形变做的是缩放（把球沿前进方向压扁），不是真正的软体模拟 ——
+        /// 后者要额外的物理插件，缩放足够表达「被挤扁」了。
+        ///
+        /// 【关键】尺寸一律基于 m_BaseDiameter（进滞留时缓存的），
+        /// 绝不能读 GetDiameter() —— 它读的就是 localScale 本身，
+        /// 每帧读写自己会指数放大（上一版就是栽在这）。
+        /// </summary>
+        private void UpdateHeldBounce()
+        {
+            if (m_BouncySettings == null || m_LiftTarget == null)
+            {
+                return;
+            }
+
+            Transform player = m_LiftTarget.transform;
+
+            // 兜底：万一没走 setter（运行时挂载之类）也不会算出 0
+            if (m_BaseDiameter <= 0.0001f)
+            {
+                m_BaseDiameter = GetDiameter();
+            }
+
+            float radius = m_BaseDiameter * 0.5f;
+
+            // 起点高度直接用吹泡泡时记录的高度，不做额外抬高 ——
+            // （球体扎进地面的问题已由下面「跳过法线朝上的面」解决，
+            //   所以这里不需要再抬一个半径。）
+            float originHeight = m_HeldLocalOffset.y;
+
+            // 期望位置 = 「嘴上」：用松手那一刻记录下来的相对位置，跟着玩家走。
+            // 高度对齐到起点，这样「挤」的方向就是水平的，不会斜着往上跑。
+            Vector3 desired = player.TransformPoint(m_HeldLocalOffset);
+            desired.y = player.position.y + originHeight;
+
+            Vector3 origin = player.position + Vector3.up * originHeight;
+
+            Vector3 toDesired = desired - origin;
+            toDesired.y = 0f;
+
+            float desiredDistance = toDesired.magnitude;
+            if (desiredDistance < 0.001f)
+            {
+                desiredDistance = 0.001f;
+                toDesired = player.forward;
+                toDesired.y = 0f;
+            }
+
+            Vector3 direction = toDesired.normalized;
+            float allowedDistance = desiredDistance;
+
+            // 用 SphereCastAll 再筛掉自己人：
+            // 起点就在玩家身上，直接用 SphereCast 会先打到玩家的碰撞体，挤压量永远算不对
+            RaycastHit[] hits = Physics.SphereCastAll(
+                origin, radius, direction, desiredDistance, ~0, QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Collider other = hits[i].collider;
+                if (other == null)
+                {
+                    continue;
+                }
+
+                if (other.transform.IsChildOf(player)
+                    || other.transform == transform
+                    || other.transform.IsChildOf(transform))
+                {
+                    continue;
+                }
+
+                // 跳过法线朝上的面（地面、平台顶面）。
+                // 球体投射的球很大，起点又贴着地，不跳过的话一开始就扎进地板，
+                // 距离会被算成 0 —— 泡泡就被拉到玩家身上、并被压到最扁。
+                if (hits[i].normal.y > 0.7f)
+                {
+                    continue;
+                }
+
+                if (hits[i].distance < allowedDistance)
+                {
+                    allowedDistance = Mathf.Max(0f, hits[i].distance);
+                }
+            }
+
+            // 挤压量 = 想去的距离 - 实际能到的距离
+            m_Squeeze = Mathf.Max(0f, desiredDistance - allowedDistance);
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                ConstantForce buoyancy = GetComponent<ConstantForce>();
+                if (buoyancy != null)
+                {
+                    buoyancy.force = Vector3.zero;
+                }
+
+                // 顺序：先清速度、再切 kinematic。
+                // 反过来的话，对已经是 kinematic 的刚体设 velocity 会每帧刷警告
+                if (!body.isKinematic)
+                {
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                    body.isKinematic = true;
+                }
+
+                // 位置先记下来，交给 LateUpdate 摆 ——
+                // 在物理帧直接摆会和玩家的渲染帧差半帧，看起来就是位置对不上
+                m_HeldTargetPosition = origin + direction * allowedDistance;
+
+                // 只跟水平朝向，避免玩家抬头低头时泡泡跟着翻
+                body.rotation = Quaternion.Euler(0f, player.eulerAngles.y, 0f);
+            }
+
+            ApplySqueezeScale();
+            UpdateSqueezeRelease();
+        }
+
+        /// <summary>
+        /// 按挤压量把泡泡沿前进方向压扁。
+        /// 注意用的是 m_BaseDiameter，不是 GetDiameter() —— 见上面的说明。
+        /// </summary>
+        private void ApplySqueezeScale()
+        {
+            if (m_BouncySettings == null)
+            {
+                return;
+            }
+
+            float baseDiameter = m_BaseDiameter > 0.0001f ? m_BaseDiameter : 1f;
+
+            float maxSqueeze = baseDiameter * (1f - m_BouncySettings.squeezeMinScale);
+            float ratio = maxSqueeze > 0.0001f ? Mathf.Clamp01(m_Squeeze / maxSqueeze) : 0f;
+
+            float forwardScale = Mathf.Lerp(1f, m_BouncySettings.squeezeMinScale, ratio);
+            float sideScale = Mathf.Lerp(1f, 1.15f, ratio);   // 侧向鼓一点，像被压扁的球
+
+            transform.localScale = new Vector3(
+                baseDiameter * sideScale,
+                baseDiameter * sideScale,
+                baseDiameter * forwardScale);
+        }
+
+        /// <summary>
+        /// 判断玩家是不是「松手了」：上一帧还在挤，这一帧没有移动输入。
+        /// </summary>
+        private void UpdateSqueezeRelease()
+        {
+            if (m_BouncySettings == null || m_LiftTarget == null)
+            {
+                return;
+            }
+
+            bool squeezingNow = m_Squeeze > m_BouncySettings.squeezeThreshold;
+            bool pressing = m_LiftTarget.HasMoveInput;
+
+            if (m_WasSqueezing && !pressing && squeezingNow)
+            {
+                LaunchFromSqueeze();
+                return;
+            }
+
+            m_WasSqueezing = squeezingNow && pressing;
+        }
+
+        /// <summary>
+        /// 按挤压量往后弹射。泡泡不会消失，它会自己飞出去。
+        /// </summary>
+        private void LaunchFromSqueeze()
+        {
+            float baseDiameter = m_BaseDiameter > 0.0001f ? m_BaseDiameter : 1f;
+
+            // 压得越狠弹得越快
+            float maxSqueeze = Mathf.Max(0.0001f, baseDiameter * (1f - m_BouncySettings.squeezeMinScale));
+            float ratio = Mathf.Clamp01(m_Squeeze / maxSqueeze);
+
+            float speed = Mathf.Lerp(
+                m_BouncySettings.squeezeLaunchSpeedMin,
+                m_BouncySettings.squeezeLaunchSpeedMax,
+                ratio);
+
+            // 往玩家背后弹 —— 也就是远离被挤的那面墙
+            Vector3 direction = -m_LiftTarget.transform.forward;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                direction = -Vector3.forward;
+            }
+
+            direction.Normalize();
+
+            // 先把尺寸还原再飞，否则会带着被压扁的样子出去
+            transform.localScale = Vector3.one * baseDiameter;
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.isKinematic = false;
+                body.useGravity = m_Settings != null && m_Settings.useGravity;
+                body.angularVelocity = Vector3.zero;
+                body.velocity = direction * speed;
+            }
+
+            // 浮力要还回来，否则它飞出去之后再也不上升了
+            RestoreBuoyancy();
+
+            // 已经弹出去了，不再是「嘴上的泡泡」
+            m_IsHeld = false;
+            m_Squeeze = 0f;
+            m_WasSqueezing = false;
+        }
+
+        /// <summary>
+        /// 恢复浮力。挂在嘴上时浮力被清零过，弹出去要还回来。
+        /// </summary>
+        private void RestoreBuoyancy()
+        {
+            if (m_Settings == null)
+            {
+                return;
+            }
+
+            Rigidbody body = GetComponent<Rigidbody>();
+            ConstantForce buoyancy = GetComponent<ConstantForce>();
+            if (body == null || buoyancy == null)
+            {
+                return;
+            }
+
+            float sizeProgress = Mathf.InverseLerp(m_Settings.minSize, m_Settings.maxSize, GetDiameter());
+            float riseSpeed = Mathf.Lerp(m_Settings.smallRiseSpeed, m_Settings.largeRiseSpeed, sizeProgress);
+
+            buoyancy.force = Vector3.up * (riseSpeed * m_Settings.drag * body.mass);
+        }
+        /// <summary>
+        /// 在 Scene 视图里画出滞留目标位置，方便直接看出泡泡该待在哪。
+        /// 选中泡泡、进入 Play、松手滞留时就能看到。
+        /// </summary>
+        private void OnDrawGizmos()
+        {
+            if (!m_IsHeld || m_LiftTarget == null)
+            {
+                return;
+            }
+
+            Vector3 anchor = m_BouncySettings != null
+                ? m_HeldTargetPosition
+                : GetHeldAnchorPosition(m_LiftTarget.transform);
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(anchor, 0.12f);
+            Gizmos.DrawLine(m_LiftTarget.transform.position, anchor);
         }
     }
 }
