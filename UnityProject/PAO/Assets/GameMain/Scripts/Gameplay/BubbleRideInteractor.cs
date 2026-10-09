@@ -134,6 +134,17 @@ namespace PAO
                 return;
             }
 
+            // 装了炸弹的弹力泡泡：按 F 不是进去，而是把它弹射出去。
+            // 方向取「玩家 → 泡泡」，也就是往玩家面朝的那一侧推出去。
+            if (m_NearbyBubble != null && m_NearbyBubble.CanLaunchWithBomb
+                && Input.GetKeyDown(m_RideKey))
+            {
+                Vector3 launchDirection = m_NearbyBubble.transform.position - transform.position;
+                launchDirection.y = 0f;
+                m_NearbyBubble.LaunchWithBomb(launchDirection);
+                return;
+            }
+
             if (m_NearbyBubble != null && Input.GetKeyDown(m_RideKey))
             {
                 EnterBubble(m_NearbyBubble);
@@ -239,7 +250,16 @@ namespace PAO
             for (int i = 0; i < hits.Length; i++)
             {
                 Bubble bubble = hits[i].GetComponentInParent<Bubble>();
-                if (bubble == null || !bubble.CanRide)
+                // 只要满足任意一种交互就算「可互动」：
+                //   CanRide           → 能钻进去（F）
+                //   CanControl        → 能远程操控（E）
+                //   CanLaunchWithBomb → 能带弹弹射（F）
+                // 装了炸弹的泡泡 CanRide 是 false，所以不能只看它，
+                // 否则 NPC 都找不到它，F 和 E 就全哑了。
+                bool interactive = bubble != null &&
+                    (bubble.CanRide || bubble.CanControl || bubble.CanLaunchWithBomb);
+
+                if (!interactive)
                 {
                     continue;
                 }
@@ -293,7 +313,20 @@ namespace PAO
                 m_HintShadowStyle.normal.textColor = new Color(0f, 0f, 0f, 0.85f);
             }
 
-            string textF = m_IsRiding ? "[F] 跳出泡泡" : "[F] 进入泡泡";
+            // 带弹的弹力泡泡按 F 是弹射，提示要跟着变，否则玩家会以为能进去
+            string textF;
+            if (m_IsRiding)
+            {
+                textF = "[F] 跳出泡泡";
+            }
+            else if (m_NearbyBubble != null && m_NearbyBubble.CanLaunchWithBomb)
+            {
+                textF = "[F] 带弹弹射";
+            }
+            else
+            {
+                textF = "[F] 进入泡泡";
+            }
 
             // 只有在「还没进去」的时候才显示 E 的提示，画在 F 的正下方
             // 弹力泡泡没有 E 功能，所以它的提示只显示 F 那一行
@@ -353,7 +386,10 @@ namespace PAO
         /// </summary>
         private void EnterControl(Bubble bubble)
         {
-            if (bubble == null || !bubble.EnterRide(transform))
+            // 刻意不调 bubble.EnterRide()：
+            // 那个方法会先查 CanRide，而装了炸弹的泡泡 CanRide 是 false。
+            // 但 E 是远程操控、人根本没进去，不该受「能不能进人」的限制。
+            if (bubble == null)
             {
                 return;
             }
@@ -363,6 +399,9 @@ namespace PAO
 
             // 注意这里不设 m_IsRiding：人根本没上去，只是远程操控
             m_IsControlling = true;
+
+            // 被操控了，体内的炸弹进入待爆状态：操控途中按右键就能引爆
+            bubble.ArmAbsorbedBomb();
 
             // 人不动，所以碰撞体、CharacterController 都不用关
 

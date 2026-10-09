@@ -136,5 +136,9 @@ namespace PAO
 
         [Tooltip("爆炸时是否连带引爆范围内的地形泡泡（范围用上面的爆炸半径）")]
         public bool detonateTerrains = true;
+
+        [Header("炸弹泡泡 · 被吸收后")]
+        [Tooltip("被浮粘/弹力泡泡吸收后引爆，爆炸半径的倍率。1 = 跟普通引爆一样大")]
+        public float absorbedBlastMultiplier = 2f;
     }
 }
