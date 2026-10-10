@@ -1,0 +1,46 @@
+newmtl blinn1SG
+illum 4
+Kd 0.11 0.16 0.25
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+newmtl blinn2SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd test3_low_test3_BaseColor.tga
+map_Ka test3_low_test3_MRAH.tga
+bump  -bm 1 test3_low_test3_Normal_OpenGL.tga
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl blinn3SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd Ƭ_pasted__blinn1SG1_BaseColor.tga
+map_Ka Ƭ_pasted__blinn1SG1_MRAH.tga
+Ni 1.00
+Ks 0.50 0.50 0.50
+newmtl initialShadingGroup
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 0.00
+newmtl pasted__blinn1SG
+illum 4
+Kd 0.11 0.16 0.25
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
+newmtl pasted__blinn1SG1
+illum 4
+Kd 0.11 0.16 0.25
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+Ni 1.00
+Ks 0.00 0.00 0.00
