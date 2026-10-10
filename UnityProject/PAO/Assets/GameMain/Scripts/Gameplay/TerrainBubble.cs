@@ -43,6 +43,13 @@ namespace PAO
         [Tooltip("填满后延迟多久消失（秒），0 为立即")]
         [SerializeField] private float m_PopDelay = 0f;
 
+        [Header("泡泡潮")]
+        [Tooltip("每被填进一份容积，整条泡泡潮变慢多少。0.02 = 慢 2%。\n" +
+                 "这让玩家「把泡泡塞进地形」变成一种对抗潮水的手段：\n" +
+                 "填得越多，潮水推得越慢 —— 等于用水泵往外抽水。\n" +
+                 "【别填大】一个地形能吸好几颗，而全局减速是乘算的，很容易调过头。")]
+        [SerializeField, Range(0f, 0.2f)] private float m_TideSlowdownPerFill = 0.02f;
+
         private int m_CurrentFill;
         private bool m_IsExploding;      // 正在爆炸中，用来防止连锁时重复引爆自己
         private Renderer m_Renderer;
@@ -123,6 +130,14 @@ namespace PAO
 
             m_CurrentFill = Mathf.Min(m_CurrentFill + amount, m_Capacity);
             RefreshTint();
+
+            // 泡泡潮反制：这份容积是从潮水里抽走的，整条潮水因此慢一点。
+            // 场景里没有潮水时这个方法自己会跳过，不影响玩法。
+            if (m_TideSlowdownPerFill > 0f)
+            {
+                PAO.BubbleTide.BubbleTideBridge.OnBubbleConsumedByTerrain(
+                    m_TideSlowdownPerFill * amount);
+            }
 
             if (!IsFull)
             {

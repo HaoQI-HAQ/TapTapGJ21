@@ -130,14 +130,31 @@ namespace PAO
 
         // ---------- 跳出冲刺 ----------
         private float m_DashSpeed;          // 冲刺速度（米/秒）
+        private Vector3 m_DashDirection;    // 冲刺方向（世界空间）
         private float m_DashTimeLeft;       // 冲刺剩余时间（秒）
 
         /// <summary>
         /// 往角色正前方冲一小段。从浮粘泡泡里炸出来时用，
         /// 比单纯自然落下更有「被冲击抛出去」的感觉。
         /// </summary>
+        /// <summary>往角色正前方冲一小段。从浮粘泡泡里炸出来时用。</summary>
         public void LaunchForward(float speed, float duration)
         {
+            Launch(transform.forward, speed, duration);
+        }
+
+        /// <summary>
+        /// 往指定方向冲一段。弹力泡泡贴墙弹射时，人会跟着泡泡一起往后飞。
+        /// 方向传世界空间向量，内部会归一化。
+        /// </summary>
+        public void Launch(Vector3 direction, float speed, float duration)
+        {
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
+            m_DashDirection = direction.normalized;
             m_DashSpeed = speed;
             m_DashTimeLeft = Mathf.Max(0f, duration);
         }
@@ -303,7 +320,9 @@ namespace PAO
             if (m_DashTimeLeft > 0f)
             {
                 m_DashTimeLeft -= Time.deltaTime;
-                m_Controller.Move(transform.forward * (m_DashSpeed * Time.deltaTime));
+                // 用记录下来的方向，而不是永远朝前 ——
+                // 弹力泡泡把人往后弹时，方向是往后的
+                m_Controller.Move(m_DashDirection * (m_DashSpeed * Time.deltaTime));
             }
 
             // 被滞留的浮粘泡泡提着：水平还能微微操控方向，

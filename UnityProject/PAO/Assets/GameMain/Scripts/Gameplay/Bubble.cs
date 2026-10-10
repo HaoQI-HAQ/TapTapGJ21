@@ -735,6 +735,10 @@ namespace PAO
                 ExitRide();
             }
 
+            // 泡泡潮反制：在潮水里炸出一个洞，范围内潮水被往后推几秒。
+            // 场景里没有潮水时这个方法自己会跳过，不影响玩法。
+            PAO.BubbleTide.BubbleTideBridge.OnBombExploded(center, radius);
+
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
             Collider[] hits = Physics.OverlapSphere(center, radius);
             HashSet<Rigidbody> affected = new HashSet<Rigidbody>();
@@ -879,6 +883,11 @@ namespace PAO
 
             // 同理恢复与玩家的碰撞：粘在地形上的泡泡也要能踩
             RestorePlayerCollision();
+
+            // 泡泡潮反制：粘住的泡泡等于一道墙，周围潮水被推迟一会儿。
+            // 半径按泡泡大小给，吹得越大挡得越宽。
+            PAO.BubbleTide.BubbleTideBridge.OnStickyBubbleAnchored(
+                transform.position, GetDiameter() * 1.5f);
         }
 
         /// <summary>
@@ -930,19 +939,24 @@ namespace PAO
             Rigidbody body = GetComponent<Rigidbody>();
             if (body != null)
             {
-            // 只在不是 kinematic 时才清速度 ——
-            // 对已经是 kinematic 的刚体设 velocity 会刷
-            // "Setting linear velocity of a kinematic body is not supported"
-            if (!body.isKinematic)
-            {
-                body.velocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
-            }
+                // 只在不是 kinematic 时才清速度 ——
+                // 对已经是 kinematic 的刚体设 velocity 会刷
+                // "Setting linear velocity of a kinematic body is not supported"
+                if (!body.isKinematic)
+                {
+                    body.velocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+
                 body.isKinematic = true;   // 完全停住物理
 
-            // 恢复与玩家的碰撞：粘住后它就是地形了，人要能踩上来。
-            // 发射时为了让泡泡不弹回自己，曾把这一对碰撞忽略掉。
-            RestorePlayerCollision();
+                // 恢复与玩家的碰撞：粘住后它就是地形了，人要能踩上来。
+                // 发射时为了让泡泡不弹回自己，曾把这一对碰撞忽略掉。
+                RestorePlayerCollision();
+
+                // 泡泡潮反制：粘成桥的一部分，同样是一道墙
+                PAO.BubbleTide.BubbleTideBridge.OnStickyBubbleAnchored(
+                    transform.position, GetDiameter() * 1.5f);
             }
         }
         /// <summary>
@@ -1673,6 +1687,16 @@ namespace PAO
                 body.useGravity = m_Settings != null && m_Settings.useGravity;
                 body.angularVelocity = Vector3.zero;
                 body.velocity = direction * speed;
+            }
+
+            // ★ 人也一起往后弹 —— 同方向，速度按时长可调
+            // 这些都在下面一行之前做，因为下面要清掉 m_LiftTarget 之外的状态
+            if (m_LiftTarget != null && m_BouncySettings.riderLaunchRatio > 0f)
+            {
+                m_LiftTarget.Launch(
+                    direction,
+                    speed * m_BouncySettings.riderLaunchRatio,
+                    m_BouncySettings.riderLaunchDuration);
             }
 
             // 浮力要还回来，否则它飞出去之后再也不上升了

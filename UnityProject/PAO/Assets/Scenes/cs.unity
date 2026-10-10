@@ -683,6 +683,7 @@ MonoBehaviour:
   m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
   m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
   m_PopDelay: 0.5
+  m_TideSlowdownPerFill: 0.02
 --- !u!1 &270104488
 GameObject:
   m_ObjectHideFlags: 0
@@ -1359,6 +1360,8 @@ MonoBehaviour:
     squeezeMinScale: 0.55
     squeezeLaunchSpeedMin: 7
     squeezeLaunchSpeedMax: 22
+    riderLaunchRatio: 1
+    riderLaunchDuration: 0.4
   m_BombSettings:
     prefab: {fileID: 193157977}
     color: {r: 0.55, g: 0.85, b: 1, a: 1}
@@ -2285,6 +2288,7 @@ MonoBehaviour:
   m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
   m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
   m_PopDelay: 0.5
+  m_TideSlowdownPerFill: 0.02
 --- !u!1 &1281391947
 GameObject:
   m_ObjectHideFlags: 0
@@ -2651,6 +2655,7 @@ MonoBehaviour:
   m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
   m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
   m_PopDelay: 0.5
+  m_TideSlowdownPerFill: 0.02
 --- !u!1 &1464487498
 GameObject:
   m_ObjectHideFlags: 0
@@ -3288,6 +3293,7 @@ MonoBehaviour:
   m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
   m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
   m_PopDelay: 0.5
+  m_TideSlowdownPerFill: 0.02
 --- !u!1 &1886811976
 GameObject:
   m_ObjectHideFlags: 0
@@ -3654,6 +3660,7 @@ MonoBehaviour:
   m_EmptyColor: {r: 0.25358486, g: 0, b: 1, a: 1}
   m_FullColor: {r: 1, g: 0, b: 0.0577116, a: 1}
   m_PopDelay: 0.5
+  m_TideSlowdownPerFill: 0.02
 --- !u!1 &2124579072
 GameObject:
   m_ObjectHideFlags: 0

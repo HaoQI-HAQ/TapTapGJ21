@@ -131,6 +131,12 @@ namespace PAO
 
         [Tooltip("压到极限时的弹射速度（米/秒）")]
         public float squeezeLaunchSpeedMax = 22f;
+
+        [Tooltip("弹射时玩家一起被弹出去的速度倍率（1 = 和泡泡同速，0 = 人不动）")]
+        public float riderLaunchRatio = 1f;
+
+        [Tooltip("玩家被弹出去的持续时间（秒）。乘上速度就是人飞多远")]
+        public float riderLaunchDuration = 0.4f;
     }
 
     /// <summary>
