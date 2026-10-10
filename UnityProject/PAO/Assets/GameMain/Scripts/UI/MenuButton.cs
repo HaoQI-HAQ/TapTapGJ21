@@ -86,6 +86,23 @@ namespace PAO.UI
             get { return m_PointerInside || m_PointerDown || (m_Selected && m_NavigationEngaged); }
         }
 
+        /// <summary>
+        /// 把所有菜单按钮的导航高亮收掉，并遗忘「玩家用过方向键」这件事。
+        /// 设置面板关闭、回到主菜单时调用：否则手柄选中过的那颗按钮会一直亮着。
+        /// 用 FindObjectsOfType 而不是静态注册表，是为了不引入需要清理的全局状态。
+        /// </summary>
+        public static void ResetNavigationState()
+        {
+            MenuButton[] buttons = Object.FindObjectsOfType<MenuButton>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null)
+                {
+                    buttons[i].NavigationEngaged = false;
+                }
+            }
+        }
+
         private void Awake()
         {
             m_Button = GetComponent<Button>();
