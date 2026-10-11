@@ -77,6 +77,7 @@
     <Compile Include="Assets\GameMain\Scripts\UI\VolumeSlider.cs" />
     <Compile Include="Assets\GameMain\Scripts\Gameplay\Bubble\BubbleBallVisual.cs" />
     <Compile Include="Assets\GameMain\Scripts\UI\LoadPanel.cs" />
+    <Compile Include="Assets\GameMain\Scripts\UI\LevelSelectPanel.cs" />
     <Compile Include="Assets\GameMain\Scripts\UI\exit button.cs" />
     <Compile Include="Assets\GameMain\Scripts\UI\LoadButtonOpener.cs" />
     <Compile Include="Assets\GameMain\Scripts\Gameplay\BubbleLauncher.cs" />

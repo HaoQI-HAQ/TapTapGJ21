@@ -68,6 +68,7 @@
     <Compile Include="Assets\GameMain\Scripts\Editor\LevelWhiteboxSetup.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LoadPanelBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\PausePanelBuilder.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\LevelSelectBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
