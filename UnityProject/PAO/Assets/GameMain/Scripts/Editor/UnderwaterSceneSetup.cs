@@ -902,9 +902,11 @@ namespace PAO.Underwater.EditorTools
             {
                 mat.SetColor("_BaseColor", volume.surfaceColor);
                 mat.SetFloat("_Brightness", volume.surfaceBrightness);
-                mat.SetFloat("_RippleScale", volume.surfaceRippleScale);
-                mat.SetFloat("_RippleSpeed", volume.surfaceRippleSpeed);
                 mat.SetFloat("_RimIntensity", volume.surfaceRimIntensity);
+                mat.SetFloat("_CausticScale", volume.surfaceCausticScale);
+                mat.SetFloat("_RippleSpeed", volume.surfaceRippleSpeed);
+                mat.SetFloat("_Sparkle", volume.surfaceSparkle);
+                mat.SetVector("_LightDir", volume.surfaceLightDirection);
                 EditorUtility.SetDirty(mat);
             }
 

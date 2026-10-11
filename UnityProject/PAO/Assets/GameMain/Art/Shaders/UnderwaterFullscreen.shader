@@ -278,6 +278,16 @@ Shader "PAO/UnderwaterFullscreen"
                 return o;
             }
 
+            /// 屏幕 uv + 原始深度 → 世界坐标。
+            /// 和 Pass 0 里同名函数完全一致 —— 调试模式要靠它验证
+            /// 「世界坐标到底重建对没有」，两边不一致的话调试结果就没意义了。
+            float3 ReconstructWorldPos(float2 uv, float rawDepth)
+            {
+                float4 clip = float4(uv * 2.0 - 1.0, rawDepth, 1.0);
+                float4 worldH = mul(_PAO_CameraInvVP, clip);
+                return worldH.xyz / worldH.w;
+            }
+
             float4 FragFog(Varyings input) : SV_Target
             {
                 float4 src = SAMPLE_TEXTURE2D(_PAO_ColorTexture,
@@ -349,7 +359,68 @@ Shader "PAO/UnderwaterFullscreen"
 
                 color += _PAO_CausticsColor.rgb * stored.r * 0.35 * surfaceMatch * amount;
 
+                // ---- 调试可视化 ----
+                //
+                // 【为什么放在最后这一趟，而不是焦散那一趟】
+                //   焦散那一趟的输出是中间纹理，不是画面 —— 在那里画什么都看不见。
+                //   只有这一趟是全屏最后一道，它的输出才是玩家/你看到的东西。
+                //
+                // 【为什么背景用非黑的颜色】
+                //   深灰底 (0.12) 而不是纯黑：这样「没算出来」和「算出来是 0」
+                //   能区分开。纯黑底的话两种情况长得一模一样，等于没调试。
+                if (_PAO_DebugMode > 0.5)
+                {
+                    return float4(DebugCaustics(input, rawDepth, eyeDepth, stored, surfaceMatch), 1.0);
+                }
+
                 return float4(color, src.a);
+            }
+
+            /// 调试输出。每种模式对应一类失败原因，见 UnderwaterInclude 里的说明。
+            float3 DebugCaustics(Varyings input,
+                                 float rawDepth,
+                                 float eyeDepth,
+                                 float2 stored,
+                                 float surfaceMatch)
+            {
+                float3 background = 0.12;   // 深灰：能区分「没算出来」和「算出来是 0」
+
+                if (_PAO_DebugMode < 1.5)
+                {
+                    // 1 = 焦散量（绿通道里那一份）→ 应该看到一张会动的亮网
+                    return stored.r * float3(0.3, 1.0, 0.4);
+                }
+
+                if (_PAO_DebugMode < 2.5)
+                {
+                    // 2 = 表面匹配度 → 白 = 这个像素还是原来的几何表面
+                    //     全黑就说明被透明物体盖住了（或者深度对不上）
+                    return surfaceMatch * float3(0.4, 0.8, 1.0);
+                }
+
+                if (_PAO_DebugMode < 3.5)
+                {
+                    // 3 = 视距（米 / 20）→ 应该是一层随距离变亮的灰
+                    return (eyeDepth / 20.0) * float3(1.0, 0.9, 0.5);
+                }
+
+                if (_PAO_DebugMode < 4.5)
+                {
+                    // 4 = 焦散图案在世界里的平铺 → 
+                    //     应该看到规则的格子；糊成一片或者条纹化 = 世界坐标重建有问题
+                    float3 worldPos = ReconstructWorldPos(input.uv, rawDepth);
+                    float2 cell = frac(worldPos.xz / max(_PAO_CausticsScale, 0.01));
+
+                    float grid = step(cell.x, 0.06) + step(cell.y, 0.06);
+                    grid += step(0.94, cell.x) + step(0.94, cell.y);
+
+                    float3 base = float3(cell.x, cell.y, 0.35) * 0.55;
+                    return base + saturate(grid) * float3(0.45, 0.45, 0.45);
+                }
+
+                // 5 = 相机是否在水下 / 水下程度
+                //     （在体积光那一趟里有更直接的版本，这里给个红的兜底）
+                return float3(0.7, 0.1, 0.1);
             }
             ENDHLSL
         }

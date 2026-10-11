@@ -3,6 +3,35 @@ using UnityEngine;
 namespace PAO.Underwater
 {
     /// <summary>
+    /// 调试可视化模式。数值直接传给 shader 的 _PAO_DebugMode。
+    ///
+    /// 【为什么要做成一个显式的枚举，而不是一个 0~5 的 int】
+    ///   排查时最怕的是「记错了哪个数字对应哪个模式」——
+    ///   看到一张莫名其妙的图，然后怀疑自己看的是不是这一项。
+    ///   名字写进 Inspector 的下拉框里，就不会记错。
+    /// </summary>
+    public enum UnderwaterDebugMode
+    {
+        /// <summary>正常渲染。</summary>
+        Off = 0,
+
+        /// <summary>焦散量。应该看到一张会动的亮网；全黑 = 图案没算出来。</summary>
+        Caustics = 1,
+
+        /// <summary>表面匹配度。白 = 这个像素还是几何表面；全黑 = 被透明物体盖住。</summary>
+        SurfaceMatch = 2,
+
+        /// <summary>视距（米 / 20）。应该是一层随距离变亮的灰。</summary>
+        ViewDistance = 3,
+
+        /// <summary>世界坐标的平铺格子。应该看到规则格子；糊掉 = 世界坐标重建错了。</summary>
+        WorldGrid = 4,
+
+        /// <summary>水面光柱强度（体积光那一趟的原始值）。应该看到水面上的亮网。</summary>
+        GodRayBeam = 5,
+    }
+
+    /// <summary>
     /// C# 与 shader 之间**唯一**的名字契约。
     ///
     /// 【为什么单独开一个文件】
@@ -71,6 +100,9 @@ namespace PAO.Underwater
         // 所以光看采样结果分不出「没图」和「图是黑的」。
         public static readonly int CausticsTex = Shader.PropertyToID("_PAO_CausticsTex");
         public static readonly int CausticsTexST = Shader.PropertyToID("_PAO_CausticsTex_ST");
+
+        // ---- 调试（由 UnderwaterRenderFeature 上的 debugMode 推）----
+        public static readonly int DebugMode = Shader.PropertyToID("_PAO_DebugMode");
 
         // ---- 体积光 ----
         public static readonly int GodRayEnabled = Shader.PropertyToID("_PAO_GodRayEnabled");

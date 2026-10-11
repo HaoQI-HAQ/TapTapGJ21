@@ -35,26 +35,49 @@ namespace PAO.Underwater
         [Serializable]
         public class UnderwaterSettings
         {
+            /// <summary>
+            /// 注入时机的**硬上限**。
+            ///
+            /// 【为什么有这条线】URP 里 RenderPassEvent 的实际数值是：
+            ///   AfterRenderingOpaques            = 300
+            ///   BeforeRenderingSkybox            = 350
+            ///   BeforeRenderingTransparents      = 450
+            ///   AfterRenderingTransparents       = 500
+            ///   AfterRenderingPostProcessing     = **600**
+            ///
+            /// 超过 600 之后，相机的颜色目标已经交还给渲染管线，
+            /// cameraColorTargetHandle 会开始返回 null —— 那一段就画不出来了。
+            ///
+            /// 这个值不是估计的，是从 URP 源码的 ScriptableRenderPass.cs 里
+            /// 读出来的。之前把体积光设在 560，看着离 600 还有余量，
+            /// 实际已经踩线，表现是 Console 报「拿不到相机颜色目标」。
+            /// 所以现在由 ClampEvent 强制夹住，不让它有机会配错。
+            /// </summary>
+            public const RenderPassEvent k_MaxEvent = RenderPassEvent.AfterRenderingTransparents + 90;   // 590
+
             [Header("注入时机")]
             [Tooltip("焦散那一趟的注入时机。\n" +
-                     "默认 BeforeRenderingSkybox —— 不透明几何体已经画完、深度也就绪，\n" +
+                     "默认 BeforeRenderingSkybox(350) —— 不透明几何体已经画完、深度也就绪，\n" +
                      "但天空盒和透明物体还没画。焦散正好该长在这时候的几何体上。\n" +
-                     "⚠️ 改成 AfterRenderingTransparents 会让焦散穿透泡泡和玻璃。")]
+                     "⚠️ 改成 AfterRenderingTransparents(500) 会让焦散穿透泡泡和玻璃。")]
             public RenderPassEvent causticsEvent = RenderPassEvent.BeforeRenderingSkybox;
 
             [Tooltip("焦散合成那一趟。必须紧跟焦散，中间不能插进别的东西。")]
             public RenderPassEvent causticsCompositeEvent = RenderPassEvent.BeforeRenderingSkybox;
 
-            [Tooltip("雾 + 焦散补色。\n" +
-                     "默认 AfterRenderingTransparents + 50 —— 必须排在泡泡（500）之后，\n" +
-                     "否则泡泡会是「泡在干净空气里」，而画面其他地方都是雾，一眼穿帮。\n" +
+            [Tooltip("雾 + 焦散补色。默认 AfterRenderingTransparents + 50 = 550。\n" +
+                     "必须排在泡泡（500）之后，否则泡泡会是「泡在干净空气里」，\n" +
+                     "而画面其他地方都是雾，一眼穿帮。\n" +
                      "这一趟跑**全分辨率**，因为它很便宜（一次深度采样 + 一个 lerp）。")]
             public RenderPassEvent compositeEvent = RenderPassEvent.AfterRenderingTransparents + 50;
 
-            [Tooltip("体积光。默认排在雾之后 10。\n" +
-                     "它跑在**半分辨率**上 —— 光柱是十几米厚的体积，\n" +
-                     "半分辨率看不出差别，但能省掉一半的步进算力。")]
-            public RenderPassEvent godRayEvent = RenderPassEvent.AfterRenderingTransparents + 60;
+            [Tooltip("体积光。默认 AfterRenderingTransparents + 30 = 530。\n" +
+                     "排在雾（550）之前，所以光柱会被雾淡化一点点 —— 这更真实，\n" +
+                     "光在浑水里本来就该衰减。\n" +
+                     "它跑在**半分辨率**上：光柱是十几米厚的体积，半分辨率看不出差别，\n" +
+                     "但能省掉一半的步进算力。\n" +
+                     "⚠️ 不要设到 590 以上，超过之后相机颜色目标会失效（见 k_MaxEvent）。")]
+            public RenderPassEvent godRayEvent = RenderPassEvent.AfterRenderingTransparents + 30;
 
             [Header("性能")]
             [Tooltip("焦散中间纹理的分辨率除数。2 = 半分辨率。\n" +
@@ -82,6 +105,18 @@ namespace PAO.Underwater
             public bool godRaysEnabled = true;
 
             [Header("调试")]
+            [Tooltip("可视化中间结果。排查「效果没出来」用，正常保持「关」。\n" +
+                     "\n" +
+                     "焦散看不见有五种完全不同的原因，画面上表现却一模一样：\n" +
+                     "  焦散量        → 应该看到一张会动的亮网。全黑 = 图案没算出来\n" +
+                     "  表面匹配度    → 白 = 这个像素还是几何表面。全黑 = 被透明物体盖住\n" +
+                     "  视距          → 应该是随距离变亮的灰。不对 = 深度读错了\n" +
+                     "  世界坐标格子  → 应该看到规则格子。糊掉/条纹 = 世界坐标重建错了\n" +
+                     "  水面光柱强度  → 体积光那趟的原始值。应该看到水面上的亮网\n" +
+                     "\n" +
+                     "背景用深灰而不是纯黑 —— 这样「没算出来」和「算出来是 0」能区分开。")]
+            public UnderwaterDebugMode debugMode = UnderwaterDebugMode.Off;
+
             [Tooltip("在 Console 里打印每帧的水下参数（水面高度、相机是否在水下）。\n" +
                      "只在排查「效果没出来」时开，正常关掉 —— 它会每帧刷屏。")]
             public bool debugLogState = false;
@@ -92,17 +127,44 @@ namespace PAO.Underwater
                 switch (stage)
                 {
                     case UnderwaterPass.Stage.Caustics:
-                        return causticsEvent;
+                        return ClampEvent(causticsEvent, "焦散");
 
                     case UnderwaterPass.Stage.CausticsComposite:
-                        return causticsCompositeEvent;
+                        return ClampEvent(causticsCompositeEvent, "焦散合成");
 
                     case UnderwaterPass.Stage.GodRays:
-                        return godRayEvent;
+                        return ClampEvent(godRayEvent, "体积光");
 
                     default:
-                        return compositeEvent;
+                        return ClampEvent(compositeEvent, "深度雾");
                 }
+            }
+
+            /// <summary>
+            /// 把注入时机夹进安全范围。
+            ///
+            /// 【为什么要夹而不是只在文档里写】
+            ///   设错这个值的后果是「那一段静默地不画」，不崩溃、不报错
+            ///   （只会有一条我加的诊断，而且它本身也可能被忽略）。
+            ///   与其指望下一个人读过注释，不如让错值根本传不进去。
+            ///
+            ///   夹的时候会在 Console 里说清楚是被夹了，不会让人以为设置生效了。
+            /// </summary>
+            public static RenderPassEvent ClampEvent(RenderPassEvent value, string label)
+            {
+                if (value <= k_MaxEvent)
+                {
+                    return value;
+                }
+
+                Debug.LogWarning(string.Format(
+                    "[水下] {0} 的注入时机设成了 {1}（数值 {2}），超过了安全上限 " +
+                    "{3}（数值 {4}）。\n" +
+                    "超过这个点之后相机的颜色目标已经交还给渲染管线，这一段画不出来。\n" +
+                    "已自动夹到上限。",
+                    label, value, (int)value, k_MaxEvent, (int)k_MaxEvent));
+
+                return k_MaxEvent;
             }
         }
 
@@ -232,6 +294,10 @@ namespace PAO.Underwater
             // 是为了保证「渲染用的值」和「这一帧 Inspector 里的值」严格一致 ——
             // 编辑器里暂停、拖动时间轴的时候，Update 不一定跑。
             water.PushGlobals();
+
+            // 调试模式跟 WaterVolume 无关（它是渲染管线的排查开关，不是观感参数），
+            // 所以不放进 PushGlobals，在这里单独推。
+            Shader.SetGlobalFloat(UnderwaterShaderIDs.DebugMode, (float)settings.debugMode);
 
             if (settings.debugLogState)
             {

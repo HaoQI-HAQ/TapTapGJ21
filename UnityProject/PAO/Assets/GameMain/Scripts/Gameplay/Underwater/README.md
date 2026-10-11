@@ -1,14 +1,41 @@
-# 水下效果
+## 四个部分共用一个「水面亮网」
 
-给「整个游戏都发生在水下」这个前提做的氛围效果。四个部分，各自可以单独开关：
+**这是整套效果的统一原理，理解了它四个部分就都懂了：**
 
-| 部分 | 玩家看到什么 | 代码位置 |
+水面被波浪折射，把阳光聚成一张**会动的亮网**。这张网有三个投影：
+
+| 投影到哪 | 看到什么 | 对应代码 |
 |---|---|---|
-| **水面** | 抬头看见晃动的波光，边缘挂一圈柔光 | `WaterSurface.shader` + 场景里的 `WaterSurface` 子物体 |
-| **焦散** | 地板上有游动的亮网（参考图里那种） | `UnderwaterFullscreen.shader` Pass 0/1 |
-| **深度雾** | 远处发蓝绿、越来越糊，越深越暗 | `UnderwaterFullscreen.shader` Pass 2 |
-| **体积光** | 斜着从水面照下来的光柱 | `UnderwaterGodRays.shader` |
-| **后处理** | 整体青色调、暗角、远处景深、轻微色散 | `Assets/Settings/UnderwaterProfile.asset` |
+| 往下打到地板 | **焦散** —— 地板上游动的亮网 | `PAO_SampleCaustics` 用在 Pass 0 |
+| 沿视线往下看 | **体积光** —— 一束束光柱 | 光柱亮度 = 水面命中点的焦散值 |
+| 抬头看水面本身 | **波光粼粼** | `PAO_WaterSurfaceShade` 复用同一套细胞噪声 |
+
+所以**它们天然自洽**：地板上的亮斑正好在光柱底下，抬头看到的亮纹和脚下的对应。
+这不是巧合，是刻意共用同一张网的缘故。
+
+> ⚠️ 上一版体积光是沿视线采样 3D 噪声做的，那是**体积雾**不是光柱 ——
+> 噪声场里没有「一束」这个概念，每条光线穿过好几块噪声平均下来就平了。
+> 现在的做法是「水面命中点定强度，沿射线保持不变」，那才是柱。
+> 详见 `UnderwaterGodRays.shader` 顶部的说明。
+
+---
+
+## 调试模式：焦散看不见时先开这个
+
+焦散看不见有**五种完全不同的原因，画面上表现却一模一样**（都是没有）：
+
+| 模式 | 应该看到什么 | 不对说明什么 |
+|---|---|---|
+| `Caustics` | 一张会动的亮网 | 全黑 → 图案没算出来 |
+| `SurfaceMatch` | 白色 = 这个像素还是几何表面 | 全黑 → 被透明物体盖住，或深度对不上 |
+| `ViewDistance` | 随距离变亮的灰 | 不对 → 深度读错了 |
+| `WorldGrid` | 规则格子 | 糊掉/条纹 → **世界坐标重建错了** |
+| `GodRayBeam` | 水面上的亮网 | 全黑 → 水面命中点算错了 |
+
+背景用**深灰而不是纯黑**：这样「没算出来」和「算出来是 0」能区分开 ——
+纯黑底的话这两种情况长得一样，等于没调试。
+
+开关在 URP Renderer 资产的 **Underwater Render Feature → 调试 → Debug Mode**。
 
 ---
 
@@ -105,18 +132,41 @@ Pass 便宜得多——换来的是不会莫名其妙炸。
 
 ### 2. 注入时机 + 分辨率 → URP Renderer 资产上的 **Underwater Render Feature**
 
-只有四项是渲染管线相关的：
+只有这几项是渲染管线相关的：
 
-| 参数 | 说明 |
-|---|---|
-| `causticsEvent` / `causticsCompositeEvent` | 默认 `BeforeRenderingSkybox`。**改成 AfterRenderingTransparents 会让焦散穿透泡泡** |
-| `compositeEvent` | 默认 `AfterRenderingTransparents + 50`。必须排在泡泡（500）之后 |
-| `godRayEvent` | 默认 `AfterRenderingTransparents + 60` |
-| `causticsResolutionDivisor` | 默认 2（半分辨率） |
-| `godRayResolutionDivisor` | 默认 2。**建议不要改成 1**，算力翻倍而观感几乎无差别 |
-| `causticsEnabled` / `fogEnabled` / `godRaysEnabled` | 三段总开关 |
+| 参数 | 默认值 | 说明 |
+|---|---|---|
+| `causticsEvent` / `causticsCompositeEvent` | `BeforeRenderingSkybox`（350） | **改成 500 会让焦散穿透泡泡和玻璃** |
+| `godRayEvent` | `AfterRenderingTransparents + 30`（530） | 排在雾之前，光柱被雾淡化一点——光在浑水里本来就该衰减 |
+| `compositeEvent` | `AfterRenderingTransparents + 50`（550） | 必须排在泡泡（500）之后，否则泡泡「泡在干净空气里」 |
+| `causticsResolutionDivisor` | 2 | 半分辨率。焦散花纹是低频的，看不出来 |
+| `godRayResolutionDivisor` | 2 | **别改成 1**，算力翻倍而观感几乎无差别 |
+| `causticsEnabled` / `fogEnabled` / `godRaysEnabled` | 全开 | 三段总开关 |
 
 ⚠️ 在这里关掉某一段之后，`WaterVolume` 上对应的参数就完全失效了。
+
+#### ⚠️ 注入时机的硬上限：590
+
+URP 的 `RenderPassEvent` 实际数值（从 `ScriptableRenderPass.cs` 读出来的）：
+
+```
+AfterRenderingOpaques         = 300
+BeforeRenderingSkybox         = 350
+BeforeRenderingTransparents   = 450
+AfterRenderingTransparents    = 500
+AfterRenderingPostProcessing  = 600   ← 硬边界
+```
+
+**超过 590 之后，相机颜色目标已经交还给渲染管线，`cameraColorTargetHandle`
+开始返回 null，那一段就静默地画不出来了。**
+
+这个坑踩过一次：体积光原来设在 560，看着离 600 还有 40 的余量，
+实际已经踩线，Console 报「拿不到相机颜色目标（相机类型 Game）」。
+
+现在由 `UnderwaterSettings.ClampEvent()` 强制夹住——配错也不会静默失效，
+而是会在 Console 里明说「被夹到上限了」。**但夹到上限仍然是不对的位置**，
+所以真要改的话，请留在 350 ~ 590 之间。
+
 
 ---
 

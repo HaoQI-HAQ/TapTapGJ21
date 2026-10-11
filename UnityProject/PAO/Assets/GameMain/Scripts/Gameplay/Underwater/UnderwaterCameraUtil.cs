@@ -94,12 +94,18 @@ namespace PAO.Underwater
                 return false;
             }
 
-            if (destination == null || destination.rt == null)
+            // 【只判断 == null，不判断 destination.rt == null】
+            //   相机颜色目标在很多路径下是 RTHandle 的 fallback 形式：
+            //   handle 有效，但 .rt 是 null（它挂在 builtin 的 CameraTarget 上，
+            //   不是一张 URP 自己的 RenderTexture）。加上 .rt 判断会把这个
+            //   完全正常的情况误报成「渲染目标为空」。
+            if (destination == null)
             {
                 Debug.LogError("[水下] " + label + "：渲染目标为空。" +
                                "如果这是「相机颜色目标」，说明这一段注入的时机" +
-                               "已经不在相机的渲染流程里 —— 检查 Renderer Feature 上" +
-                               "的 causticsEvent / compositeEvent / godRayEvent。");
+                               "已经超出了相机的渲染流程（URP 的硬上限是 590 左右）——" +
+                               "检查 Renderer Feature 上的 causticsEvent / " +
+                               "compositeEvent / godRayEvent。");
                 return false;
             }
 

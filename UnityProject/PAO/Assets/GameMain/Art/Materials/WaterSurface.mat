@@ -25,11 +25,14 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Brightness: 2.4
+    - _Brightness: 1.73
+    - _CausticScale: 5.3
     - _CausticStrength: 0
-    - _RimIntensity: 1.4
+    - _RimIntensity: 3.31
     - _RippleScale: 14
-    - _RippleSpeed: 0.8
+    - _RippleSpeed: 0.63
+    - _Sparkle: 1.14
     m_Colors:
-    - _BaseColor: {r: 0.72, g: 0.95, b: 1, a: 1}
+    - _BaseColor: {r: 0.36163503, g: 0.8831161, b: 1, a: 1}
+    - _LightDir: {r: 0.25, g: 1, b: 0.35, a: 0}
   m_BuildTextureStacks: []

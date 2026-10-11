@@ -1,11 +1,27 @@
 Shader "PAO/WaterSurface"
 {
     // -----------------------------------------------------------------------
-    // 水面（从下方往上看）
+    // 水面（从下方往上看）—— 风格化波光
     //
     // 一块铺在 waterLevel 高度上的大平面，玩家在水下抬头就能看见。
     // 参考图里水面是整张画面最亮的地方 —— 亮到会被 Bloom 咬一口，
     // 边缘挂一圈柔光。这个「过曝」不是失误，是效果的一部分。
+    //
+    // -----------------------------------------------------------------------
+    // 【风格化波光是怎么做出来的】
+    //
+    // 三个成分，各管一件事（详细说明见 UnderwaterInclude 里的
+    // PAO_WaterSurfaceShader）：
+    //
+    //   1. 焦散网    —— 主体形状。和地板焦散共用同一个细胞噪声，
+    //                   所以抬头的水面和脚下的地板是同一池水
+    //   2. 峰值闪光  —— 「波光粼粼」四个字的全部含义。把网的峰值挑出来
+    //                   平方两次，只有最亮的点留下，其余压暗，交给 Bloom 咬
+    //   3. 方向性反光 —— 两层正弦波解析求法线 + 太阳高光。
+    //                   波纹朝哪边斜，高光就往哪边跑
+    //
+    // 调参顺序建议：先调 `_Sparkle`（闪不闪），再调 `_CausticScale`
+    // （网多大），最后调 `_Brightness`（整体多亮）。
     //
     // -----------------------------------------------------------------------
     // 【为什么是平面，不是半球穹顶】
@@ -19,26 +35,29 @@ Shader "PAO/WaterSurface"
     //
     // -----------------------------------------------------------------------
     // 【为什么 Cull Front】
-    //   玩家在水下，永远是从**下方**看这块面。Cull Front 让背面可见 = 
+    //   玩家在水下，永远是从**下方**看这块面。Cull Front 让背面可见 =
     //   从下面看得到、从上面看不到。这样万一相机跑到水面以上，
     //   也不会看到一块奇怪的发光地板。
     //
     // 【为什么队列设成 Geometry 而不是 Transparent】
     //   它是个实心面，需要正常写深度，才能把水下的泡泡、鱼、地形正确挡住。
-    //   设成 Transparent 的话它会和 Sphere 那几个泡泡抢排序，一闪一闪的。
+    //   设成 Transparent 的话它会和泡泡抢排序，一闪一闪的。
     // -----------------------------------------------------------------------
 
     Properties
     {
         [Header(Surface)]
         _BaseColor        ("底色", Color)         = (0.72, 0.95, 1.0, 1)
-        _Brightness       ("亮度（超过 1 触发 Bloom）", Range(0, 8)) = 2.4
-        _RippleScale      ("涟漪频率", Range(0.5, 60))   = 14
-        _RippleSpeed      ("涟漪速度", Range(0, 4))      = 0.8
+        _Brightness       ("亮度（超过 1 触发 Bloom）", Range(0, 8)) = 2.6
         _RimIntensity     ("掠射亮边", Range(0, 4))      = 1.4
 
-        [Header(Caustics)]
-        _CausticStrength  ("焦散反光强度（默认 0：水面自己已经很亮，\n多算一遍焦散是白花算力。想更闪可以开到 0.3）", Range(0, 2)) = 0
+        [Header(Caustics Net)]
+        _CausticScale     ("焦散网尺寸（米）", Range(1, 60)) = 16
+        _RippleSpeed      ("流动速度", Range(0, 4))      = 0.8
+
+        [Header(Sparkle)]
+        _Sparkle          ("闪光强度（波光粼粼）", Range(0, 4)) = 1.5
+        _LightDir         ("反光方向（指向光源）", Vector) = (0.25, 1, 0.35, 0)
     }
 
     SubShader
@@ -81,15 +100,14 @@ Shader "PAO/WaterSurface"
                 float3 positionWS : TEXCOORD1;
             };
 
-            // 材质自带的几个参数。用 UNDERWATER_GLOBAL 宏切换数据来源，
-            // 这样材质在 URP 里既能被 RenderFeature 全局控制，也能单独摆一个用。
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float  _Brightness;
-                float  _RippleScale;
-                float  _RippleSpeed;
                 float  _RimIntensity;
-                float  _CausticStrength;
+                float  _CausticScale;
+                float  _RippleSpeed;
+                float  _Sparkle;
+                float4 _LightDir;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
@@ -109,19 +127,30 @@ Shader "PAO/WaterSurface"
             {
                 float3 viewDir = normalize(GetCameraPositionWS() - input.positionWS);
 
-                // 平面法线是 +Y。玩家在下方 → viewDir.y > 0，
-                // NoV 随视线变斜而变小（掠射 → 趋近 0）。
-                float NoV = saturate(viewDir.y);
+                // 【为什么取 abs 而不是直接 viewDir.y】
+                //   玩家在水下，viewDir.y 应该为正（从下往上看）。
+                //   但相机贴着水面、或者那一帧刚好在水面之上时它会变负，
+                //   NoV 变负 → pow 出 NaN → 整片水面变黑闪一下。
+                //   abs 兜住这个边角，代价是水面之上看水面也不会有异常。
+                float NoV = saturate(abs(viewDir.y));
+
+                // 反光方向：留空的话给一个默认的斜上方
+                float3 lightDir = _LightDir.xyz;
+                if (dot(lightDir, lightDir) < 1e-6)
+                {
+                    lightDir = float3(0.25, 1.0, 0.35);
+                }
 
                 return PAO_WaterSurfaceShade(
                     input.positionWS,
                     viewDir,
                     NoV,
                     PAO_WaterTime(),
-                    _RippleScale,
+                    _CausticScale,
                     _RippleSpeed,
                     _RimIntensity,
-                    _CausticStrength,
+                    _Sparkle,
+                    lightDir,
                     _BaseColor.rgb,
                     _Brightness);
             }

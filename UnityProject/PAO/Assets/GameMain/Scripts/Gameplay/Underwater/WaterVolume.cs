@@ -175,17 +175,34 @@ namespace PAO.Underwater
 
         [Header("水面波光（从下方往上看）")]
         [Tooltip("水面亮度。参考图里水面是整张画面最亮的地方 —— \n" +
-                 "这个值超过 1 就会被 Bloom 咬一口，形成那圈柔和的光晕。")]
-        [Range(0f, 8f)] public float surfaceBrightness = 2.4f;
+                 "这个值超过 1 就会被 Bloom 咬一口，形成那圈柔和的光晕。\n" +
+                 "\n" +
+                 "【注意】这一组水面参数属于「烤给材质的初值」，不是运行时数据 ——\n" +
+                 "改完要重新跑一次「一键搭建」，或者直接改 WaterSurface.mat。\n" +
+                 "原因见 PushGlobals 里的说明。")]
+        [Range(0f, 8f)] public float surfaceBrightness = 2.6f;
 
-        [Tooltip("水面的涟漪频率。")]
-        [Range(0.5f, 60f)] public float surfaceRippleScale = 14f;
+        [Tooltip("焦散网尺寸（米）。数越小，水面上的网越密。\n" +
+                 "参考图里一组亮纹大概十几米宽，所以 16 左右。")]
+        [Range(1f, 60f)] public float surfaceCausticScale = 16f;
 
-        [Tooltip("水面涟漪的游动速度。")]
+        [Tooltip("水面流动速度。水面越活，闪光点跑得越快。")]
         [Range(0f, 4f)] public float surfaceRippleSpeed = 0.8f;
 
-        [Tooltip("水面在掠射角处的亮边强度（从正下方看水面时，边缘那一圈最亮）。")]
+        [Tooltip("掠射亮边强度（贴边看水面时那一圈最亮）。")]
         [Range(0f, 4f)] public float surfaceRimIntensity = 1.4f;
+
+        [Tooltip("★ 闪光强度 —— 「波光粼粼」就是这个参数。\n" +
+                 "把焦散网的峰值挑出来平方两次，只有最亮的点留下，其余压暗，\n" +
+                 "超过 1 的那一截交给 Bloom 咬成柔光。\n" +
+                 "0 = 只有一层会动的网（不发亮）；1.5 左右最像；\n" +
+                 "超过 3 会闪得像故障的霓虹灯。")]
+        [Range(0f, 4f)] public float surfaceSparkle = 1.5f;
+
+        [Tooltip("水面反光方向（指向光源）。水面高光会朝这个方向跑。\n" +
+                 "建议和「体积光」那栏的 sunDirection 保持一致 —— \n" +
+                 "两边不一致的话，水面反光和光柱会来自两个不同的太阳。")]
+        public Vector3 surfaceLightDirection = new Vector3(0.25f, 1f, 0.35f);
 
         [Tooltip("水面颜色。")]
         public Color surfaceColor = new Color(0.72f, 0.95f, 1f, 1f);

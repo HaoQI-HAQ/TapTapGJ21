@@ -18,7 +18,8 @@ MonoBehaviour:
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
   - {fileID: 349748997992618868}
-  m_RendererFeatureMap: 741be651dc8eda04
+  - {fileID: 4189008501054733216}
+  m_RendererFeatureMap: 741be651dc8eda04a07b75920959223a
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -93,3 +94,30 @@ MonoBehaviour:
     useLightDirection: 1
     lightDirection: {x: -0.4, y: 0.8, z: -0.45}
   material: {fileID: 0}
+--- !u!114 &4189008501054733216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55492eec2f80ab45841563a3d486236, type: 3}
+  m_Name: UnderwaterRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    causticsEvent: 350
+    causticsCompositeEvent: 350
+    compositeEvent: 550
+    godRayEvent: 530
+    causticsResolutionDivisor: 2
+    godRayResolutionDivisor: 2
+    causticsEnabled: 1
+    fogEnabled: 1
+    godRaysEnabled: 1
+    debugMode: 0
+    debugLogState: 0
+  material: {fileID: 0}
+  godRayMaterial: {fileID: 0}

@@ -205,7 +205,15 @@ namespace PAO.Underwater
 
             RTHandle cameraTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
 
-            if (cameraTarget == null || cameraTarget.rt == null)
+            // 【为什么只判断 == null，不判断 cameraTarget.rt == null】
+            //   URP 的 cameraColorTargetHandle 在很多路径下走的是 RTHandle 的
+            //   **fallback**（见 ScriptableRenderer.RTHandleRenderTargetIdentifierCompat）：
+            //   这时 handle 有效，但 .rt 可以是 null —— 因为相机颜色挂在 builtin 的
+            //   CameraTarget 上，而不是一张 URP 自己的 RenderTexture。
+            //
+            //   加上 .rt 判断之后，这个本该正常工作的情况会被误报成
+            //   「拿不到相机颜色目标」。之前那条误导性的报错就是这么来的。
+            if (cameraTarget == null)
             {
                 ReportMissingCameraTarget(renderingData.cameraData.cameraType);
                 return;
