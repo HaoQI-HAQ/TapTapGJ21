@@ -65,6 +65,7 @@
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\BubbleSDFInstaller.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\BubbleSDFVerify.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\LevelWhiteboxSetup.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LoadPanelBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\PausePanelBuilder.cs" />
   </ItemGroup>
