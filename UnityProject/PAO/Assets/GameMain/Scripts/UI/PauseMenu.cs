@@ -18,14 +18,18 @@ namespace PAO.UI
     public sealed class PauseMenu : MonoBehaviour
     {
         [Header("行为")]
-        [Tooltip("进入这个界面时把时间暂停（Time.timeScale = 0）")]
-        [SerializeField] private bool m_PauseTimeOnEnable = true;
+        [Tooltip("进入这个界面时把时间暂停（Time.timeScale = 0）。" +
+                 "注意：这个界面现在是「按 Esc 才出现」的，所以这里应当保持关闭，否则一进游戏就暂停")]
+        [SerializeField] private bool m_PauseTimeOnEnable = false;
 
         [Tooltip("恢复游戏时把时间恢复到多少")]
         [SerializeField] private float m_ResumeTimeScale = 1f;
 
         [Tooltip("主菜单场景名")]
         [SerializeField] private string m_MainMenuScene = "Menu";
+
+        [Tooltip("打开这个界面时把时间暂停")]
+        [SerializeField] private bool m_PauseTimeOnOpen = true;
 
         [Header("可选面板")]
         [Tooltip("读档面板。留空则「读档」按钮只打日志")]
@@ -43,6 +47,17 @@ namespace PAO.UI
 
         private float m_PreviousTimeScale = 1f;
         private bool m_PausedTime;
+        private bool m_IsOpen;
+
+        /// <summary>
+        /// 暂停界面当前是否显示。
+        /// 面板未激活时它自己的 Update 不会跑，所以 Esc 由常驻的 BubbleTypeHud 收，
+        /// 靠这个属性判断该开还是该关。
+        /// </summary>
+        public bool IsOpen
+        {
+            get { return m_IsOpen; }
+        }
 
         private void Awake()
         {
@@ -50,7 +65,7 @@ namespace PAO.UI
 
             if (m_PauseTimeOnEnable)
             {
-                PauseTime();
+                Open();
             }
 
             RefreshLastSaveLabel();
@@ -72,13 +87,54 @@ namespace PAO.UI
             }
         }
 
+        // ==================== 开关 ====================
+
+        /// <summary>
+        /// 显示暂停界面（幂等）。
+        /// 幂等很重要：面板未激活时每次 SetActive(true) 都会触发一次 Awake，
+        /// 所以不能靠 Awake 维护状态，必须这里自己对齐。
+        /// </summary>
+        public bool Open()
+        {
+            m_IsOpen = true;
+            gameObject.SetActive(true);
+
+            if (m_PauseTimeOnOpen)
+            {
+                PauseTime();
+            }
+
+            RefreshLastSaveLabel();
+            Debug.Log("[PauseMenu] 暂停界面已打开。", this);
+            return true;
+        }
+
+        /// <summary>隐藏暂停界面（幂等），并把时间放回去。</summary>
+        public bool Close()
+        {
+            m_IsOpen = false;
+            ResumeTime();
+            gameObject.SetActive(false);
+            return false;
+        }
+
+        /// <summary>切换显示，返回切换后是否处于打开状态。Esc 用它。</summary>
+        public bool Toggle()
+        {
+            if (m_IsOpen)
+            {
+                return Close();
+            }
+
+            return Open();
+        }
+
         // ==================== 按钮回调 ====================
 
         /// <summary>继续游戏：恢复时间并关掉这个界面。</summary>
         public void Resume()
         {
-            ResumeTime();
-            gameObject.SetActive(false);
+            Close();
         }
 
         /// <summary>重开当前关卡：恢复时间并重新加载当前场景。</summary>
