@@ -305,6 +305,24 @@ namespace PAO
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, t);
             }
 
+            // 载具内：WASD 用来驾驶载具（泡泡），而不是自己走。
+            // 只推水平方向，垂直交给泡泡自身的浮力，这样抬头低头不会乱飞。
+            //
+            // 【放在 CharacterController 拦截之前】
+            // 钻进泡泡时 CharacterController 是被禁用的，而这里用的是
+            // CarrierBody.AddForce，压根不需要它。放后面就会被那道拦截挡掉，
+            // 表现就是「进了弹力泡泡却推不动」。
+            if (IsInCarrier)
+            {
+                if (CarrierBody != null)
+                {
+                    Vector3 horizontal = new Vector3(moveDirection.x, 0f, moveDirection.z);
+                    CarrierBody.AddForce(horizontal * m_CarrierMoveForce, ForceMode.Acceleration);
+                }
+
+                return;
+            }
+
             // 到这里为止「读输入 + 转身」都已经做完了 —— 转身不该受控制器状态影响，
             // 否则钻进泡泡（CharacterController 被禁用）时人就转不了身了。
             // 再往下才是真正的「移动」，控制器不可用时才该停下来。
@@ -336,19 +354,6 @@ namespace PAO
                 return;
             }
 
-            // 载具内：WASD 用来驾驶载具（泡泡），而不是自己走。
-            // 只推水平方向，垂直交给泡泡自身的浮力，这样抬头低头不会乱飞。
-            // 视角与转身已经在上面处理过了，所以照样能自由看、能转身。
-            if (IsInCarrier)
-            {
-                if (CarrierBody != null)
-                {
-                    Vector3 horizontal = new Vector3(moveDirection.x, 0f, moveDirection.z);
-                    CarrierBody.AddForce(horizontal * m_CarrierMoveForce, ForceMode.Acceleration);
-                }
-
-                return;
-            }
 
             float speed = m_MoveSpeed;
             if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))

@@ -146,15 +146,31 @@ namespace PAO.BubbleTide
                 return;
             }
 
-            byte[] volume = m_Field.BuildNormalizedVolume();
-            if (volume == null || volume.Length != BubbleTideDirector.FieldTexture.width
-                * BubbleTideDirector.FieldTexture.height * BubbleTideDirector.FieldTexture.depth)
+            Texture3D texture = BubbleTideDirector.FieldTexture;
+            if (texture == null || m_Field == null)
             {
                 return;
             }
 
-            BubbleTideDirector.FieldTexture.SetPixelData(volume, 0);
-            BubbleTideDirector.FieldTexture.Apply(false, false);
+            byte[] volume = m_Field.BuildNormalizedVolume();
+            if (volume == null)
+            {
+                return;
+            }
+
+            // RG16 = 每像素 4 字节（R 半精度 2 字节 + G 半精度 2 字节）
+            int expected = texture.width * texture.height * texture.depth * 4;
+            if (volume.Length != expected)
+            {
+                Debug.LogWarning(string.Format(
+                    "[泡泡潮] 体积数据长度 {0} 与纹理预期 {1} 不符（{2}×{3}×{4}，RG16）。" +
+                    "多半是格距或泡泡参数被改过而纹理没重建，重新进一次 Play 即可。",
+                    volume.Length, expected, texture.width, texture.height, texture.depth));
+                return;
+            }
+
+            texture.SetPixelData(volume, 0);
+            texture.Apply(false, false);
         }
 
         private void UpdateFrontCenter(float elapsedSeconds)

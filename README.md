@@ -53,7 +53,7 @@ scripts/             早期 Lua 方案遗留，已停用
 
 ### 环境
 
-- **Unity 版本必须全队统一为 `2022.3.34f1c1`**，否则 `Library/` 与资源序列化会互相冲突
+- **Unity 版本必须全队统一为 `2022.3.34f1`**（revision `4886f5360533`），否则 `Library/` 与资源序列化会互相冲突
 - 用 Unity Hub 打开 `UnityProject/PAO` 目录
 
 ### 代码放哪

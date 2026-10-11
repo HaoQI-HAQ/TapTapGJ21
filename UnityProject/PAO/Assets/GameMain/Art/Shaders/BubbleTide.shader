@@ -3,20 +3,35 @@ Shader "PAO/BubbleTide"
     // -----------------------------------------------------------------------
     // 泡泡潮的全屏着色器
     //
-    // Pass 0 "Raymarch" : 沿着每条像素射线走，在「泡泡潮场」里找出潮水面。
-    //                     结果写进一张（可降采样的）HDR 中间图。
-    // Pass 1 "Composite": 把 Pass 0 的结果按 alpha 混回相机颜色。
+    // Pass 0 "Raymarch" : 在「泡泡球距离场」里做真正的 SDF 光线步进，找到泡泡壳面，
+    //                     用 BubbleSDF 那套着色模型（菲涅尔亮边 + 薄膜干涉彩虹 +
+    //                     双高光）画出来，结果写进一张（可降采样的）HDR 中间图。
+    // Pass 1 "Composite": 把 Pass 0 的结果按 over 混回相机颜色。
     //
-    // 【为什么是光线步进而不是几万个泡泡网格】
-    // 一个能淹掉 43×13×33 米房间的潮水，用 0.5 米的泡泡去填是几十万颗。
-    // 做成网格就是几十万次 DrawCall 或几百万个三角形，移动端直接没戏。
-    // 而潮水本来就有一张「每格第几秒被淹」的表，把它当成一个场来步进，
-    // 成本就变成「每像素固定步数」—— 与潮水大小完全无关。
+    // -----------------------------------------------------------------------
+    // 【为什么必须是「真 SDF 步进」，而不是一张等值面】
     //
-    // 场数据由 C# 通过 Texture3D "_BubbleTideField" 传入（R8，单通道）。
-    // 纹理里存的是**归一化**的被淹时间：0 = 一开始就淹了，1 = 最后才淹到。
-    // 255 是保留值，表示「永远不会被淹」（实心障碍物）。
-    // 因为存的是归一化值，改关卡的截止时间不需要重烤纹理。
+    // 泡泡的观感几乎全部来自**球面法线**：菲涅尔边缘、薄膜干涉彩虹、两颗高光，
+    // 全都建立在「法线是一个球面的法线」这个前提上。
+    //
+    // 如果潮水只用一张「第几秒被淹」的表（那只是个体积掩码），
+    // 光线只能知道「这里算不算被淹」，重建不出球面法线 ——
+    // 只能从掩码的梯度猜一个方向出来。而那个方向是「潮水推进方向」，
+    // 不是球面法线，所以画出来永远是一层膜，不是泡泡。
+    //
+    // 解决办法：在烤制阶段往空腔里铺一层球，把「到最近泡泡球面的距离」也烤进
+    // 同一张 3D 纹理。于是 shader 里能：
+    //   · 用距离场做大步进（安全，不会穿壳）
+    //   · 用距离场的**梯度**重建出正确的球面法线
+    //   · 用同一个距离场判断壳面在哪，做出薄壁泡泡的「空心」感
+    //
+    // -----------------------------------------------------------------------
+    // 【纹理：RG16，两个通道各管一件事】
+    //   R = 归一化的「第几秒被淹」 → 潮水的**范围**（哪里已经漫到了）
+    //   G = 到最近泡泡球面的距离场 → 潮水的**形状**（泡泡长什么样）
+    //
+    // G 的编码：value = -exp(-|d| / k)，k = 半径 × 0.5
+    //   球面上 ≈ -1，离球面越远越趋近 0，球内部也是负的。
     // -----------------------------------------------------------------------
 
     SubShader
@@ -28,7 +43,7 @@ Shader "PAO/BubbleTide"
             "Queue"          = "Transparent"
         }
 
-        // ==================== Pass 0 : 光线步进 ====================
+        // ==================== Pass 0 : SDF 光线步进 ====================
         Pass
         {
             Name "BubbleTideRaymarch"
@@ -44,31 +59,36 @@ Shader "PAO/BubbleTide"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            // 复用泡泡 SDF 那套图元与调色板，保证潮水和真泡泡是同一套视觉语言
+            #include "BubbleSDFInclude.hlsl"
+
+            #define PAO_TIDE_MAX_DIST 300.0
 
             // ---- 场数据（C# 通过 SetGlobalTexture / SetGlobalVector 传入）----
             TEXTURE3D(_BubbleTideField);
             SAMPLER(sampler_BubbleTideField);
 
-            float4 _BubbleTideOrigin;   // xyz = 第 (0,0,0) 格中心的世界坐标
-            float4 _BubbleTideSize;     // xyz = 格子数，w = 格距（米）
-            float  _BubbleTideElapsed;  // 归一化后的当前时间（和纹理里同一个尺度）
-            float  _BubbleTideEnabled;  // 0 = 完全不画
+            float4 _BubbleTideOrigin;       // xyz = 第 (0,0,0) 格中心的世界坐标
+            float4 _BubbleTideSize;         // xyz = 格子数，w = 格距（米）
+            float  _BubbleTideElapsed;      // 归一化后的当前时间（和 R 通道同一个尺度）
+            float  _BubbleTideEnabled;      // 0 = 完全不画
+            float  _BubbleTideDistScale;    // 距离场解码尺度（= 3 × 泡泡半径）
+            float  _BubbleTideBubbleRadius; // 泡泡基准半径（米）
 
-            // ---- 材质参数 ----
+            // ---- 材质参数（对应 BubbleSDF 的同名参数，观感对齐）----
             float  _TideMaxSteps;
             float  _TideStepScale;
             float  _TideOpacity;
             float  _TideRimPower;
-            float  _TideRimIntensity;
+            float  _TideSpecularIntensity;
+            float  _TideSpecularPower;
             float  _TideIridescence;
             float  _TideIridescenceScale;
-            float  _TideNoiseScale;
-            float  _TideNoiseStrength;
             float  _TideUseDepthOcclusion;
             float  _TideDebug;
-            float4 _TideShallowColor;
-            float4 _TideDeepColor;      // 备用：将来做「越深越暗」时用，目前着色只读 Shallow
-            float4 _TideLightDir;       // xyz = 指向光源，w = 开关
+            float4 _TideShallowColor;       // 泡泡固有色（对应 BubbleSDF 的 _BubbleTint）
+            float4 _TideDeepColor;          // 备用：将来做「越深越暗」
+            float4 _TideLightDir;           // xyz = 指向光源，w = 开关
 
             TEXTURE2D(_BlitTexture);
             SAMPLER(sampler_BlitTexture);
@@ -89,80 +109,120 @@ Shader "PAO/BubbleTide"
 
             // ==================== 场采样 ====================
 
-            /// 格子索引（浮点，带 0.5 偏移表示格子中心）。
-            float3 TideCellCoord(float3 worldPos)
+            /// 世界坐标 → 纹理坐标（0~1 归一化）。
+            float3 TideUVW(float3 worldPos)
             {
-                return (worldPos - _BubbleTideOrigin.xyz) / _BubbleTideSize.w;
+                return (worldPos - _BubbleTideOrigin.xyz)
+                     / (_BubbleTideSize.xyz * _BubbleTideSize.w)
+                     + 0.5 / _BubbleTideSize.xyz;
             }
 
-            /// 世界坐标是否在网格覆盖范围内。
-            bool TideInside(float3 cell)
+            /// 纹理坐标是否落在网格内。
+            bool TideInside(float3 uvw)
             {
-                return all(cell >= 0.0) && all(cell <= _BubbleTideSize.xyz - 1.0);
+                return all(uvw > 0.0) && all(uvw < 1.0);
             }
 
-            /// 归一化的被淹时间。255 那一档代表「永远不会被淹」，这里返回一个大值。
-            float TideArrival(float3 cell)
+            /// R 通道：归一化的被淹时间。1 = 永不淹没。
+            float TideReveal(float3 uvw)
             {
-                float raw = SAMPLE_TEXTURE3D_LOD(_BubbleTideField, sampler_BubbleTideField, cell, 0).r;
-
-                // 254/255 是「永不淹没」的哨兵值。
-                // 用 step 而不是 if，是为了避免在步进循环里出现分支。
-                float isForever = step(254.0 / 255.0, raw);
-                return lerp(raw, 1e6, isForever);
+                return SAMPLE_TEXTURE3D_LOD(_BubbleTideField, sampler_BubbleTideField, uvw, 0).r;
             }
 
-            float TideArrivalWorld(float3 worldPos)
+            /// G 通道：距离场值（-1 ~ 0）。
+            float TideFieldRaw(float3 uvw)
             {
-                float3 cell = TideCellCoord(worldPos);
-                if (!TideInside(cell))
+                return SAMPLE_TEXTURE3D_LOD(_BubbleTideField, sampler_BubbleTideField, uvw, 0).g;
+            }
+
+            /// 距离场 → 粗略的「到球面的距离」（米）。
+            ///
+            /// 反解 value = -exp(-d/k)：  d = -k * ln(-value)
+            ///
+            /// k 不单独传，直接用 _BubbleTideDistScale / 6 ——
+            /// DistScale 是按「半径 × 3」定的，而 k = 半径 × 0.5，正好是它的 1/6。
+            /// 这样 C# 只需要传一个数，不会出现两个尺度互相漂移。
+            float TideDecodeDistance(float value)
+            {
+                float k = max(1e-4, _BubbleTideDistScale / 6.0);
+
+                // value 越接近 0 说明离球面越远，距离趋于无穷 —— 夹一下防止 log 炸掉
+                float v = clamp(-value, 1e-4, 1.0);
+                return -k * log(v);
+            }
+
+            /// 某个世界坐标处的「到最近泡泡球面的距离」（米）。
+            float TideBubbleDistance(float3 worldPos)
+            {
+                float3 uvw = TideUVW(worldPos);
+                if (!TideInside(uvw))
                 {
-                    return 1e6;   // 网格外当作永远不会被淹
+                    return PAO_TIDE_MAX_DIST;   // 网格外当作没有泡泡
                 }
 
-                // + 0.5：纹理采样点对齐到格子中心
-                return TideArrival(cell + 0.5);
+                return TideDecodeDistance(TideFieldRaw(uvw));
+            }
+
+            /// 淹没程度 0~1，在一个格子的宽度内平滑过渡。
+            ///
+            /// 【为什么不能直接用二值判断】
+            /// 潮水面是按格子推进的，直接用「时间 <= 当前」做二值判断的话，
+            /// 前沿会以格距为单位一格一格地跳 —— 播放出来是明显的方块状撕裂。
+            /// 这里把「还有多少时间才淹到」换算成空间距离，在半个格子里淡入，
+            /// 前沿就是一条干净的线。
+            float TideRevealAlpha(float3 worldPos)
+            {
+                float3 uvw = TideUVW(worldPos);
+                if (!TideInside(uvw))
+                {
+                    return 0.0;
+                }
+
+                float arrival = TideReveal(uvw);
+                float remaining = arrival - _BubbleTideElapsed;   // 正值 = 还没淹到
+
+                if (remaining <= 0.0)
+                {
+                    return 1.0;
+                }
+
+                // 一个格子在时间轴上有多宽？（用归一化尺度折算）
+                float cellWidth = max(1e-4,
+                    1.0 / max(_BubbleTideSize.x, max(_BubbleTideSize.y, _BubbleTideSize.z)));
+
+                return saturate(1.0 - remaining / cellWidth);
             }
 
             // ==================== 法线 ====================
 
-            /// 用场的中心差分求「被淹时间」的梯度，取负就是潮水推进方向。
-            /// 我们再把它和网格的「出界方向」混一下 ——
-            /// 场只能给出时间梯度，在潮水面上它垂直于潮水面，
-            /// 但单靠它拿到的是「时间变化最快」的方向，不一定等于几何法线，
-            /// 所以额外叠一个「离最近墙面的方向」，让泡泡看起来是圆的。
+            /// 用距离场的中心差分重建球面法线。
+            /// 这是「看起来像泡泡」最关键的一步 —— 没有它就只能从掩码梯度猜方向。
+            ///
+            /// 采样步长取泡泡半径的 1/4：太小会被格子量化噪声放大，
+            /// 太大就把相邻几颗泡泡抹成一个平面。
             float3 TideNormal(float3 worldPos)
             {
-                float h = _BubbleTideSize.w;
+                float h = max(0.02, _BubbleTideBubbleRadius * 0.25);
 
-                float tx0 = TideArrivalWorld(worldPos - float3(h, 0, 0));
-                float tx1 = TideArrivalWorld(worldPos + float3(h, 0, 0));
-                float ty0 = TideArrivalWorld(worldPos - float3(0, h, 0));
-                float ty1 = TideArrivalWorld(worldPos + float3(0, h, 0));
-                float tz0 = TideArrivalWorld(worldPos - float3(0, 0, h));
-                float tz1 = TideArrivalWorld(worldPos + float3(0, 0, h));
+                float dx = TideBubbleDistance(worldPos + float3(h, 0, 0))
+                         - TideBubbleDistance(worldPos - float3(h, 0, 0));
+                float dy = TideBubbleDistance(worldPos + float3(0, h, 0))
+                         - TideBubbleDistance(worldPos - float3(0, h, 0));
+                float dz = TideBubbleDistance(worldPos + float3(0, 0, h))
+                         - TideBubbleDistance(worldPos - float3(0, 0, h));
 
-                float3 grad = float3(tx1 - tx0, ty1 - ty0, tz1 - tz0);
-
-                // 用 -gradient：指向「更早被淹」的一侧，也就是朝外的方向
-                float3 n = -grad;
-
+                float3 n = float3(dx, dy, dz);
                 float len = length(n);
-                if (len > 1e-5)
-                {
-                    return n / len;
-                }
 
-                return float3(0, 1, 0);
+                return len > 1e-6 ? n / len : float3(0.0, 1.0, 0.0);
             }
 
             // ==================== 光线步进 ====================
 
             /// 计算光线与网格 AABB 的进入距离（不相交返回 -1）。
             ///
-            /// 注意这里【不能】用 1/dir 再乘 sign 的写法 ——
-            /// 那样在某个分量为 0 时会得到 inf * 0 = NaN，整条光线就废了。
-            /// 改成逐分量判断符号，逐个求进出参数。
+            /// 【注意】不能用 1/dir 再乘 sign 的写法 —— 某个分量为 0 时会得到
+            /// inf × 0 = NaN，整条光线就废了。改成逐分量判断符号。
             float RayBoxEntry(float3 origin, float3 dir, float3 boxMin, float3 boxMax)
             {
                 float tmin = -1e30;
@@ -175,7 +235,7 @@ Shader "PAO/BubbleTide"
 
                     if (abs(d) < 1e-6)
                     {
-                        // 该轴平行：原点必须落在slab内，否则永远打不到
+                        // 该轴平行：原点必须落在 slab 内，否则永远打不到
                         if (o < boxMin[axis] || o > boxMax[axis])
                         {
                             return -1.0;
@@ -200,30 +260,29 @@ Shader "PAO/BubbleTide"
                 return max(tmin, 0.0);
             }
 
-            /// 找出射线穿过潮水面的位置。
-            /// 返回 false 表示这条光线没打中潮水。
+            /// 在泡泡距离场里步进，找出潮水面所在的泡泡壳面。
             ///
-            /// 两个方向都要处理：
-            ///   · 相机在外面 → 找「没淹 → 被淹」的跨越点，看到的是潮水的外表面
-            ///   · 相机已经在潮水里面 → 找「被淹 → 没淹」的跨越点，看到的是内壁。
-            ///     如果漏了这一条，玩家一旦被淹，画面里的潮水会整个消失
-            ///     （因为起点就满足「被淹」，永远检测不到跨入）。
+            /// 与真泡泡那套（BubbleSDF 的 Raymarch）的关键区别：
+            /// 那边是一堆独立的球壳，需要自己算「到最近球面的解析距离」来避免穿壳；
+            /// 我们这边已经有一张烤好的距离场，可以直接拿它当安全步长。
+            ///
+            /// 命中条件：走到距离场接近 0（壳面）**且**那里已经被淹。
+            /// 两个条件都要 —— 距离场铺满了整个房间，
+            /// 只用距离场的话玩家会看到还没漫到的泡泡。
             bool MarchTide(
                 float3 rayOrigin,
                 float3 rayDir,
                 float maxDistance,
-                bool invert,
                 out float3 hitPosition,
-                out float hitDepth)
+                out float hitReveal)
             {
-                hitPosition = 0;
-                hitDepth = 0;
+                hitPosition = rayOrigin;
+                hitReveal = 0.0;
 
                 float cell = max(0.05, _BubbleTideSize.w);
-                float stepSize = cell * max(0.25, _TideStepScale);
+                float surfaceEps = max(0.01, _BubbleTideBubbleRadius * 0.06);
                 int maxSteps = (int)clamp(_TideMaxSteps, 16.0, 512.0);
 
-                // 提前算好包围盒，把步进范围缩到「真正可能有东西」的那一段
                 float3 boxMin = _BubbleTideOrigin.xyz - cell * 0.5;
                 float3 boxMax = _BubbleTideOrigin.xyz + (_BubbleTideSize.xyz - 0.5) * cell;
 
@@ -236,104 +295,104 @@ Shader "PAO/BubbleTide"
                 float tExit = min(maxDistance, length(boxMax - boxMin) * 1.8);
                 float t = max(tEnter, 0.0);
 
-                // 跨越检测：比较相邻两次采样的「是否被淹」状态。
-                // 比逐点比较阈值稳定得多 —— 逐点比较在场缓慢变化时会整段都落在同一侧而漏检。
-                bool prevFlooded = (TideArrivalWorld(rayOrigin + rayDir * t) - _BubbleTideElapsed) <= 0.0;
-
-                // invert 时反过来找「被淹 → 没淹」的那个面
-                bool wantFlooded = !invert;
+                float minStep = max(0.005, surfaceEps * 0.25);
+                float stepScale = max(0.15, _TideStepScale);
 
                 for (int i = 0; i < maxSteps; ++i)
                 {
-                    float nextT = t + stepSize;
-                    if (nextT > tExit)
+                    if (t > tExit)
                     {
-                        break;
+                        return false;
                     }
 
-                    float3 p = rayOrigin + rayDir * nextT;
-                    bool flooded = (TideArrivalWorld(p) - _BubbleTideElapsed) <= 0.0;
+                    float3 p = rayOrigin + rayDir * t;
+                    float d = TideBubbleDistance(p);
 
-                    if (flooded == wantFlooded && prevFlooded != wantFlooded)
+                    if (d < surfaceEps)
                     {
-                        // 在 [t, nextT] 之间二分细化，让边缘不随步长闪烁
-                        float lo = t;
-                        float hi = nextT;
+                        // 走到壳面了，但还得看这块漫到了多少
+                        float reveal = TideRevealAlpha(p);
 
-                        for (int k = 0; k < 6; ++k)
+                        if (reveal > 0.01)
                         {
-                            float mid = (lo + hi) * 0.5;
-                            float3 pm = rayOrigin + rayDir * mid;
-                            bool midFlooded = (TideArrivalWorld(pm) - _BubbleTideElapsed) <= 0.0;
-
-                            if (midFlooded == wantFlooded)
-                            {
-                                hi = mid;
-                            }
-                            else
-                            {
-                                lo = mid;
-                            }
+                            hitPosition = p;
+                            hitReveal = reveal;
+                            return true;
                         }
 
-                        hitPosition = rayOrigin + rayDir * hi;
-                        hitDepth = hi - tEnter;
-                        return true;
+                        // 完全还没漫到：直接往前推一大步跳过这颗泡泡，
+                        // 否则会在未淹没的泡泡壳上原地磨到步数用完
+                        t += max(cell * 2.0, _BubbleTideBubbleRadius * 2.0);
+                        continue;
                     }
 
-                    prevFlooded = flooded;
-                    t = nextT;
+                    // 安全步长：距离场保证不会穿过壳面，乘个保守系数兜住场的近似误差
+                    float step = clamp(d * stepScale, minStep, cell * 3.0 * stepScale);
+                    t += step;
                 }
 
                 return false;
             }
 
-            // ==================== 外观 ====================
+            // ==================== 着色 ====================
 
-            /// 用世界坐标做一层稳定的泡泡纹理，不需要任何美术资源。
-            float BubbleNoise(float3 p)
+            /// 泡泡的着色模型。这一段是照着 BubbleSDF.shader 的 FragSDF 写的，
+            /// 参数名一一对应 —— 改观感时要两边一起改，
+            /// 否则潮水和真泡泡会看起来是两种东西。
+            ///
+            /// 关键特征（少一个就不像泡泡）：
+            ///   · 中心几乎全透（底色只乘 0.10），掠射角处才亮起来
+            ///   · 菲涅尔亮边 pow(1 - NoV, rimPower)
+            ///   · 薄膜干涉用余弦调色板，相位随 (1-NoV) 增长 → 一圈圈彩虹
+            ///   · 两颗高光：主高光 + 一颗弱的反向高光，做出玻璃球质感
+            float4 TideShade(float3 p, float3 n, float3 V)
             {
-                float s = max(0.0001, _TideNoiseScale);
-                float n = sin(p.x * 7.13 * s) * sin(p.y * 9.71 * s) * sin(p.z * 8.37 * s);
-                n += 0.5 * sin(p.x * 17.3 * s + p.y * 13.1 * s) * sin(p.z * 19.7 * s);
-                return saturate(n * 0.5 + 0.5);
-            }
+                float NoV = saturate(dot(n, V));
+                float fresnel = pow(1.0 - NoV, max(_TideRimPower, 0.5));
 
-            float3 TideShade(float3 worldPos, float3 normal, float3 viewDir)
-            {
+                // ---- 薄膜干涉彩虹 ----
+                // 真实泡泡膜厚 100~1000nm，光程差 ≈ 2·n·d·cosθ 随观察角变化，
+                // 各波长交替相长/相消，于是形成一圈圈彩虹。
+                // 这里用「相位随 (1-NoV) 增长」近似 —— 和 BubbleSDF 完全一致。
+                float phase = _TideIridescenceScale * (1.0 - NoV) * 3.6;
+                float3 rainbow = palette(phase,
+                                         float3(0.5, 0.5, 0.5),
+                                         float3(0.5, 0.5, 0.5),
+                                         float3(1.0, 1.0, 1.0),
+                                         float3(0.0, 0.33, 0.67));
+                float iridMask = saturate(fresnel * 1.7) * _TideIridescence;
+
+                // ---- 双高光 ----
+                float3 L = _TideLightDir.xyz;
+                if (length(L) < 1e-4)
+                {
+                    L = float3(-0.4, 0.8, -0.45);
+                }
+                L = normalize(L);
+
+                float3 Hv = normalize(L + V);
+                float spec = pow(saturate(dot(n, Hv)), max(_TideSpecularPower, 1.0))
+                           * _TideSpecularIntensity * _TideLightDir.w;
+
+                // 一颗较弱的反向高光，加「玻璃球」质感
+                float3 L2 = normalize(float3(-L.x, -L.y * 0.4, -L.z));
+                float3 Hv2 = normalize(L2 + V);
+                float spec2 = pow(saturate(dot(n, Hv2)), max(_TideSpecularPower * 0.5, 1.0))
+                            * _TideSpecularIntensity * 0.35 * _TideLightDir.w;
+
+                // ---- 底色 ----
                 float3 base = _TideShallowColor.rgb;
 
-                // 菲涅尔亮边 —— 泡泡最好认的特征
-                float fresnel = pow(1.0 - saturate(dot(normal, viewDir)), max(0.5, _TideRimPower));
+                float3 col = base * 0.10;
+                col += rainbow * iridMask * 1.3;
+                col += float3(1.0, 1.0, 1.0) * (spec + spec2);
+                col += float3(0.55, 0.75, 0.95) * fresnel * 0.30;
 
-                // 薄膜干涉：颜色随视角与位置变化，像是肥皂膜。
-                // 注意这里的 lerp 用的是三分量常数，写成 lerp(float3(1,1,1), iris, k)
-                // 在有些编译器上会被当成标量运算，色环就没了。
-                float film = saturate(dot(normal, viewDir)) * _TideIridescenceScale
-                           + BubbleNoise(worldPos) * 2.0;
-                float3 iridescence = 0.5 + 0.5 * cos(6.2831 * (film + float3(0.0, 0.33, 0.67)));
-                iridescence = lerp(float3(1.0, 1.0, 1.0), iridescence, saturate(_TideIridescence));
+                float alpha = saturate(
+                    (0.18 + fresnel * 0.95 + spec + spec2)
+                    * (0.5 + _TideOpacity));
 
-                // 高光
-                float3 lightDir = _TideLightDir.xyz;
-                if (length(lightDir) < 1e-4)
-                {
-                    lightDir = float3(-0.4, 0.8, -0.45);
-                }
-                lightDir = normalize(lightDir);
-
-                float3 halfDir = normalize(lightDir + viewDir);
-                float specular = pow(saturate(dot(normal, halfDir)), 96.0) * 1.2;
-
-                // 泡泡纹理：让表面看起来是一颗颗的，而不是一块塑料
-                float noise = BubbleNoise(worldPos * 3.0);
-                float bubblePattern = lerp(1.0, 0.72 + 0.5 * noise, saturate(_TideNoiseStrength));
-
-                float3 color = base * bubblePattern;
-                color += iridescence * fresnel * _TideRimIntensity;
-                color += specular;
-
-                return color;
+                return float4(col * alpha, alpha);   // 预乘 alpha
             }
 
             // ==================== 主函数 ====================
@@ -351,11 +410,10 @@ Shader "PAO/BubbleTide"
                 // 项目的三个 URP 资产里 m_RequireDepthTexture 都是 0，
                 // 意味着 _CameraDepthTexture 可能根本没被渲染 ——
                 // 那时 SampleSceneDepth 拿到的是垃圾值，整条射线都会是错的，
-                // 表现就是潮水完全看不见（而且不会报任何错，极难查）。
+                // 表现就是潮水完全看不见（而且不报任何错，极难查）。
                 //
                 // 所以方向用相机矩阵现算：屏幕上一点对应的方向，
-                // 等于相机右/上/前三个轴按视锥比例加权。
-                // 这个做法不依赖任何深度纹理，永远正确。
+                // 等于相机右/上/前三个轴按视锥比例加权。不依赖任何深度纹理，永远正确。
                 float2 uv = input.uv;
                 float2 ndc = uv * 2.0 - 1.0;
 
@@ -364,81 +422,74 @@ Shader "PAO/BubbleTide"
                 float3 camFwd   = -UNITY_MATRIX_V[2].xyz;
 
                 float3 rayOrigin = _WorldSpaceCameraPos;
-                float3 rayDir = normalize(
-                    camFwd
-                    + camRight * (ndc.x * unity_CameraProjection[0][0])
-                    + camUp    * (ndc.y * unity_CameraProjection[1][1]));
+
+                float3 rayDir;
+                if (unity_OrthoParams.w > 0.0)
+                {
+                    // 正交相机：所有光线同向
+                    rayDir = camFwd;
+                }
+                else
+                {
+                    rayDir = normalize(
+                        camFwd
+                        + camRight * (ndc.x * unity_CameraProjection[0][0])
+                        + camUp    * (ndc.y * unity_CameraProjection[1][1]));
+                }
 
                 // ---- 场景深度当遮挡（可选）----
-                // 潮水面如果在实心墙后面就不该被看见。
+                // 潮水面在实心墙后面就不该被看见。
                 // 拿不到有效深度时自动退化：不做遮挡，画面照常，只是泡泡会透过墙。
-                float maxDistance = 1e5;
+                float maxDistance = PAO_TIDE_MAX_DIST;
                 if (_TideUseDepthOcclusion > 0.5)
                 {
                     float rawDepth = SampleSceneDepth(uv);
-
-                    // 天空 / 未渲染的深度：不做遮挡
                     bool isSkybox = rawDepth >= UNITY_RAW_FAR_CLIP_VALUE - 1e-5;
+
                     if (!isSkybox)
                     {
                         float eyeDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
-
-                        // 除以与相机前向的夹角余弦，得到沿这条射线允许走的距离
                         float cosAngle = max(0.05, dot(rayDir, camFwd));
                         maxDistance = eyeDepth / cosAngle + 0.05;
                     }
                 }
 
-                // ---- 相机在潮水里还是外面 ----
-                // 决定我们看到的是潮水的**外表面**（找「没淹→被淹」）还是**内壁**
-                // （找「被淹→没淹」）。玩家被潮水淹掉之后，如果只做前者，
-                // 画面里的潮水会整个消失 —— 因为起点就已经满足「被淹」了。
-                bool cameraFlooded =
-                    (TideArrivalWorld(rayOrigin) - _BubbleTideElapsed) <= 0.0;
-
                 float3 hitPos;
-                float hitDepth;
-                bool hit = MarchTide(rayOrigin, rayDir, maxDistance, cameraFlooded, hitPos, hitDepth);
+                float hitReveal;
+                bool hit = MarchTide(rayOrigin, rayDir, maxDistance, hitPos, hitReveal);
 
-                // 相机被埋在潮水深处时，这条光线可能一路走到边界都没找到出口
+                // 相机被埋在泡泡堆深处时，这条光线可能一路走到边界都没找到壳面
                 // （前方几十米全是泡泡）。这时如果什么都不画，画面会突然变干净，
                 // 看着像潮水消失了。所以退化成一层均匀的「泡在海里」的颜色。
-                if (!hit && cameraFlooded)
-                {
-                    float3 immersed = _TideShallowColor.rgb * 0.55;
-                    float immersedAlpha = saturate(_TideOpacity) * 0.85;
-                    return float4(immersed * immersedAlpha, immersedAlpha);
-                }
-
                 if (!hit)
                 {
+                    float immersedReveal = TideRevealAlpha(rayOrigin);
+
+                    if (immersedReveal > 0.01)
+                    {
+                        float immersed = 0.70 * immersedReveal;
+                        float3 immersedColor = _TideShallowColor.rgb * 0.25;
+                        return float4(immersedColor * immersed, immersed);
+                    }
+
                     return float4(0, 0, 0, 0);
                 }
 
                 // ---- 调试可视化 ----
                 if (_TideDebug > 0.5)
                 {
-                    // 模式 1：画出命中距离（近 = 蓝，远 = 红）
-                    float d = saturate(hitDepth / 40.0);
+                    float d = saturate(distance(hitPos, rayOrigin) / 40.0);
                     return float4(d, 0.2, 1.0 - d, 1.0);
                 }
 
                 // ---- 着色 ----
-                float3 normal = TideNormal(hitPos);
+                float3 n = TideNormal(hitPos);
+                float3 V = -rayDir;
 
-                // 从潮水内部看内壁时反一下法线，亮边才会出现在正确的一侧
-                if (cameraFlooded)
-                {
-                    normal = -normal;
-                }
+                float4 shaded = TideShade(hitPos, n, V);
 
-                float3 viewDir = -rayDir;
-                float3 color = TideShade(hitPos, normal, viewDir);
-
-                // 相机在水里时整体压低一点不透明度，让玩家能看清被淹没的场面，
-                // 而不是被糊成一片白。
-                float alpha = saturate(_TideOpacity) * (cameraFlooded ? 0.55 : 1.0);
-                return float4(color * alpha, alpha);
+                // 前沿淡入：让潮水面是一条干净的线，而不是按格子跳的方块边
+                return shaded * hitReveal;
             }
 
             ENDHLSL
@@ -481,14 +532,16 @@ Shader "PAO/BubbleTide"
 
             float4 FragComposite(Varyings input) : SV_Target
             {
-                float4 scene = SAMPLE_TEXTURE2D(_BlitTexture, sampler_BlitTexture, input.uv);
-                float4 tide  = SAMPLE_TEXTURE2D(_BubbleTideTexture, sampler_BubbleTideTexture, input.uv);
+                // _BlitTexture: 相机当前画面
+                // _BubbleTideTexture: Pass 0 的结果（预乘 alpha）
+                float4 src  = SAMPLE_TEXTURE2D(_BlitTexture, sampler_BlitTexture, input.uv);
+                float4 tide = SAMPLE_TEXTURE2D(_BubbleTideTexture, sampler_BubbleTideTexture, input.uv);
 
-                // 潮水那张图里已经乘过 alpha（预乘），直接叠加即可
-                scene.rgb += tide.rgb;
-                scene.a = max(scene.a, tide.a);
+                // 标准的 over 合成：tide.rgb 已预乘，所以直接加 + 背景乘 (1-a)
+                float a = saturate(tide.a);
+                float3 col = tide.rgb + src.rgb * (1.0 - a);
 
-                return scene;
+                return float4(col, 1.0);
             }
 
             ENDHLSL

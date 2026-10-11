@@ -25,24 +25,22 @@ namespace PAO.BubbleTide
         private static readonly int s_Field          = Shader.PropertyToID("_BubbleTideField");
         private static readonly int s_Origin         = Shader.PropertyToID("_BubbleTideOrigin");
         private static readonly int s_Size           = Shader.PropertyToID("_BubbleTideSize");
-        private static readonly int s_NormalizeScale = Shader.PropertyToID("_BubbleTideNormalizeScale");
 
         // ---- 本 Pass 每帧写的 ----
-        private static readonly int s_Texture       = Shader.PropertyToID("_BubbleTideTexture");
-        private static readonly int s_MaxSteps      = Shader.PropertyToID("_TideMaxSteps");
-        private static readonly int s_StepScale     = Shader.PropertyToID("_TideStepScale");
-        private static readonly int s_Opacity       = Shader.PropertyToID("_TideOpacity");
-        private static readonly int s_RimPower      = Shader.PropertyToID("_TideRimPower");
-        private static readonly int s_RimIntensity  = Shader.PropertyToID("_TideRimIntensity");
-        private static readonly int s_Iridescence   = Shader.PropertyToID("_TideIridescence");
-        private static readonly int s_IridScale     = Shader.PropertyToID("_TideIridescenceScale");
-        private static readonly int s_NoiseScale    = Shader.PropertyToID("_TideNoiseScale");
-        private static readonly int s_NoiseStrength = Shader.PropertyToID("_TideNoiseStrength");
-        private static readonly int s_UseDepth      = Shader.PropertyToID("_TideUseDepthOcclusion");
-        private static readonly int s_Debug         = Shader.PropertyToID("_TideDebug");
-        private static readonly int s_ShallowColor  = Shader.PropertyToID("_TideShallowColor");
-        private static readonly int s_DeepColor     = Shader.PropertyToID("_TideDeepColor");
-        private static readonly int s_LightDir      = Shader.PropertyToID("_TideLightDir");
+        private static readonly int s_Texture           = Shader.PropertyToID("_BubbleTideTexture");
+        private static readonly int s_MaxSteps          = Shader.PropertyToID("_TideMaxSteps");
+        private static readonly int s_StepScale         = Shader.PropertyToID("_TideStepScale");
+        private static readonly int s_Opacity           = Shader.PropertyToID("_TideOpacity");
+        private static readonly int s_RimPower          = Shader.PropertyToID("_TideRimPower");
+        private static readonly int s_SpecularIntensity = Shader.PropertyToID("_TideSpecularIntensity");
+        private static readonly int s_SpecularPower     = Shader.PropertyToID("_TideSpecularPower");
+        private static readonly int s_Iridescence       = Shader.PropertyToID("_TideIridescence");
+        private static readonly int s_IridScale         = Shader.PropertyToID("_TideIridescenceScale");
+        private static readonly int s_UseDepth          = Shader.PropertyToID("_TideUseDepthOcclusion");
+        private static readonly int s_Debug             = Shader.PropertyToID("_TideDebug");
+        private static readonly int s_ShallowColor      = Shader.PropertyToID("_TideShallowColor");
+        private static readonly int s_DeepColor         = Shader.PropertyToID("_TideDeepColor");
+        private static readonly int s_LightDir          = Shader.PropertyToID("_TideLightDir");
 
         private readonly BubbleTideRenderFeature.BubbleTideSettings m_Settings;
         private readonly Material m_Material;
@@ -171,17 +169,16 @@ namespace PAO.BubbleTide
         /// </summary>
         private void ApplySettings(CommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(s_MaxSteps,      Mathf.Clamp(m_Settings.maxSteps, 16, 512));
-            cmd.SetGlobalFloat(s_StepScale,     Mathf.Clamp(m_Settings.stepScale, 0.25f, 2f));
-            cmd.SetGlobalFloat(s_Opacity,       Mathf.Clamp01(m_Settings.opacity));
-            cmd.SetGlobalFloat(s_RimPower,      m_Settings.rimPower);
-            cmd.SetGlobalFloat(s_RimIntensity,  m_Settings.rimIntensity);
-            cmd.SetGlobalFloat(s_Iridescence,   m_Settings.iridescence);
-            cmd.SetGlobalFloat(s_IridScale,     m_Settings.iridescenceScale);
-            cmd.SetGlobalFloat(s_NoiseScale,    m_Settings.noiseScale);
-            cmd.SetGlobalFloat(s_NoiseStrength, Mathf.Clamp01(m_Settings.noiseStrength));
-            cmd.SetGlobalFloat(s_UseDepth,      m_Settings.useDepthOcclusion ? 1f : 0f);
-            cmd.SetGlobalFloat(s_Debug,         (float)(int)m_Settings.debugMode);
+            cmd.SetGlobalFloat(s_MaxSteps,          Mathf.Clamp(m_Settings.maxSteps, 16, 512));
+            cmd.SetGlobalFloat(s_StepScale,         Mathf.Clamp(m_Settings.stepScale, 0.15f, 2f));
+            cmd.SetGlobalFloat(s_Opacity,           Mathf.Clamp(m_Settings.opacity, 0f, 3f));
+            cmd.SetGlobalFloat(s_RimPower,          m_Settings.rimPower);
+            cmd.SetGlobalFloat(s_SpecularIntensity, m_Settings.specularIntensity);
+            cmd.SetGlobalFloat(s_SpecularPower,     Mathf.Max(1f, m_Settings.specularPower));
+            cmd.SetGlobalFloat(s_Iridescence,       m_Settings.iridescence);
+            cmd.SetGlobalFloat(s_IridScale,         m_Settings.iridescenceScale);
+            cmd.SetGlobalFloat(s_UseDepth,          m_Settings.useDepthOcclusion ? 1f : 0f);
+            cmd.SetGlobalFloat(s_Debug,             (float)(int)m_Settings.debugMode);
 
             cmd.SetGlobalVector(s_ShallowColor, (Vector4)m_Settings.shallowColor);
             cmd.SetGlobalVector(s_DeepColor,    (Vector4)m_Settings.deepColor);
