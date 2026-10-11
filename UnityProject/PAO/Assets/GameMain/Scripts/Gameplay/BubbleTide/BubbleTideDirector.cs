@@ -82,6 +82,17 @@ namespace PAO.BubbleTide
         [Tooltip("包围盒外扩（米）。八个角通常正好嵌在墙角，留一点余量免得第一格就是实心。")]
         [SerializeField, Range(0f, 3f)] private float m_BoundsPadding = 0.5f;
 
+        [Header("泡泡外观")]
+        [Tooltip("潮水里每颗泡泡的基准半径（米）。\n" +
+                 "**这是潮水观感最要紧的一个数**：太小看不出是一颗颗的，太大就糊成一坨。\n" +
+                 "0.3~0.45 在 43 米的房间里比较像一堆真泡泡。")]
+        [SerializeField, Range(0.08f, 1.2f)] private float m_BubbleRadius = 0.35f;
+
+        [Tooltip("泡泡球心之间的间距（米）。\n" +
+                 "**必须小于 2×半径**，球才会互相重叠、连成一片；\n" +
+                 "等于或大于 2×半径就会出现明显的空隙，看起来像一堆散开的球。")]
+        [SerializeField, Range(0.15f, 2f)] private float m_BubbleSpacing = 0.5f;
+
         [Tooltip("手动指定潮水覆盖的范围，而不是由八个角自动推算。\n" +
                  "**建议开启**：自动推算要等八个角摆好才有意义，而且房间不是标准长方体时容易偏。")]
         [SerializeField] private bool m_UseExplicitBounds = true;
@@ -399,6 +410,8 @@ namespace PAO.BubbleTide
                 maxSpeedScale = m_MaxSpeedScale,
                 allowDiagonal = m_AllowDiagonal,
                 obstaclePadding = m_ObstaclePadding,
+                bubbleRadius = m_BubbleRadius,
+                bubbleSpacing = m_BubbleSpacing,
             };
 
             float beginTime = Time.realtimeSinceStartup;
@@ -541,11 +554,13 @@ namespace PAO.BubbleTide
                 m_Texture = null;
             }
 
-            // R8：单通道字节。配合 NormalizeScale 已经够表达「第几秒被淹」，
-            // 而且 15 万格只占 150 KB —— 值得为它省下显存。
+            // RG16：两个半精度通道。
+            //   R = 归一化的被淹时间（潮水的范围）
+            //   G = 到最近泡泡球面的距离场（潮水的形状）
+            // 15 万格约 600 KB —— 比多传一张纹理省事得多，也让两个通道天然对齐。
             m_Texture = new Texture3D(
                 m_Field.SizeX, m_Field.SizeY, m_Field.SizeZ,
-                TextureFormat.R8, false);
+                TextureFormat.RG16, false);
 
             m_Texture.name = "BubbleTideField";
             m_Texture.wrapMode = TextureWrapMode.Clamp;
@@ -562,6 +577,10 @@ namespace PAO.BubbleTide
             Shader.SetGlobalVector(Shader.PropertyToID("_BubbleTideOrigin"), m_Field.Origin);
             Shader.SetGlobalVector(Shader.PropertyToID("_BubbleTideSize"),
                 new Vector4(m_Field.SizeX, m_Field.SizeY, m_Field.SizeZ, m_CellSize));
+
+            // 距离场的解码尺度。C# 与 shader 必须一致，否则泡泡会整体胀大或缩小。
+            Shader.SetGlobalFloat(Shader.PropertyToID("_BubbleTideDistScale"), m_Field.BubbleDistanceScale);
+            Shader.SetGlobalFloat(Shader.PropertyToID("_BubbleTideBubbleRadius"), m_Field.BubbleRadius);
         }
 
         /// <summary>

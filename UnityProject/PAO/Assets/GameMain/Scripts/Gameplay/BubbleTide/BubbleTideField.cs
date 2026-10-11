@@ -67,6 +67,7 @@ namespace PAO.BubbleTide
         private byte[] m_State;             // 实心 / 空 / 封闭
         private float[] m_ArrivalTime;      // 单位：秒。NeverFlood 表示不会被淹
         private int[] m_OwnerSeed;          // 被哪个角淹的（-1 = 没有）
+        private float[] m_BubbleField;      // 到最近泡泡球面的距离（米）。这是泡泡"长得像泡泡"的根本
 
         private float[] m_SortedTimes;      // 上面那堆时间的升序副本，用来做 O(1) 的分帧推进
         private int[] m_SortedCells;
@@ -126,6 +127,34 @@ namespace PAO.BubbleTide
 
         /// <summary>烤制诊断信息，出问题时看这个。</summary>
         public string BakeReport { get; private set; }
+
+        /// <summary>
+        /// 泡泡的基准半径（米）。渲染端用它换算距离场的量程，
+        /// 所以必须和烤制时用的是同一个值。
+        /// </summary>
+        public float BubbleRadius { get { return m_BubbleRadius; } }
+
+        /// <summary>
+        /// 距离场的编码除数（米）。C# 与 shader 必须一致，否则泡泡会整体胀大或缩小。
+        /// </summary>
+        public float BubbleDistanceScale
+        {
+            get { return Mathf.Max(0.05f, m_BubbleRadius * 3f); }
+        }
+
+        /// <summary>
+        /// 距离场的「势场宽度」系数（米），只在烤制时用来生成球：
+        /// value = -exp(-|d| / (radius * k))，k = 0.5 表示势场宽度是半径的一半。
+        ///
+        /// 写成常量而不是可调参数，是因为它是**数值编码**而不是观感参数：
+        /// shader 侧解码时要按它来还原距离，两边不一致泡泡就会整体胀大或缩小。
+        /// 想调泡泡大小请调 bubbleRadius，不要动这个。
+        /// </summary>
+        private const float kBubbleFalloffRatio = 0.5f;
+
+        /// <summary>距离场的「势场宽度」系数（米），只在烤制时用来生成球。</summary>
+        private float m_BubbleRadius = 0.35f;
+        private float m_BubbleSpacing = 0.5f;
 
         // ==================================================================
         // 索引换算
@@ -198,6 +227,18 @@ namespace PAO.BubbleTide
 
             /// <summary>把障碍物膨胀一圈再判定。能避免泡泡贴着薄墙「渗」进隔壁。</summary>
             public float obstaclePadding;
+
+            /// <summary>
+            /// 泡泡的基准半径（米）。潮水观感最要紧的一个数。
+            /// 太大就成了一坨塑料，太小则看不出是一颗颗的。
+            /// </summary>
+            public float bubbleRadius;
+
+            /// <summary>
+            /// 泡泡球心之间的间距（米）。要比 2×半径小一点，球才会互相重叠、连成一片；
+            /// 等于或大于 2×半径就会出现空隙。
+            /// </summary>
+            public float bubbleSpacing;
         }
 
         /// <summary>
@@ -221,6 +262,9 @@ namespace PAO.BubbleTide
             float cell = Mathf.Max(0.1f, settings.cellSize);
             m_CellSize = cell;
 
+            m_BubbleRadius = Mathf.Max(0.05f, settings.bubbleRadius);
+            m_BubbleSpacing = Mathf.Max(cell, settings.bubbleSpacing);
+
             m_SizeX = Mathf.Max(1, Mathf.CeilToInt(bounds.size.x / cell));
             m_SizeY = Mathf.Max(1, Mathf.CeilToInt(bounds.size.y / cell));
             m_SizeZ = Mathf.Max(1, Mathf.CeilToInt(bounds.size.z / cell));
@@ -235,9 +279,22 @@ namespace PAO.BubbleTide
                 m_State = new byte[m_CellCount];
                 m_ArrivalTime = new float[m_CellCount];
                 m_OwnerSeed = new int[m_CellCount];
+                m_BubbleField = new float[m_CellCount];
             }
 
             int solidCount = MarkSolidCells(settings.obstacleMask, settings.obstaclePadding);
+
+            // 在空腔里铺一层泡泡球，并烤出「到最近泡泡球面的距离」。
+            //
+            // 【为什么必须这么做】
+            // 潮水面如果只有「第几秒被淹」这一张表，那它只能告诉光线「这里算不算被淹」，
+            // 拿不到球面法线 —— 而泡泡的观感几乎全部来自球面法线：
+            // 菲涅尔边缘、薄膜干涉彩虹、两颗高光，全都建立在法线是对的球面的前提上。
+            // 没有它，画出来就只能是一层膜，不是泡泡。
+            //
+            // 所以这里额外铺一层球，把距离场烤进同一张纹理的第二个通道，
+            // 让 shader 能做真正的 SDF 步进、用梯度重建法线。
+            int bubbleCount = BuildBubbleField(cell);
             int airCount = m_CellCount - solidCount;
 
             // ---- 算八个角各自的速度 ----
@@ -325,10 +382,12 @@ namespace PAO.BubbleTide
             BakeReport = string.Format(
                 "泡泡潮场：{0}×{1}×{2} = {3} 格（格距 {4} 米）\n" +
                 "  实心 {5}，可达空腔 {6}，封闭空腔 {7}\n" +
-                "  各角速度 {8} 米/秒\n" +
-                "  终点被淹于 {9:F1} 秒，整个房间淹满于 {10:F1} 秒",
+                "  泡泡球 {8} 颗（半径 {9:F2} 米，间距 {10:F2} 米）\n" +
+                "  各角速度 {11} 米/秒\n" +
+                "  终点被淹于 {12:F1} 秒，整个房间淹满于 {13:F1} 秒",
                 m_SizeX, m_SizeY, m_SizeZ, m_CellCount, cell,
                 solidCount, m_SortedCount, airCount - m_SortedCount,
+                bubbleCount, m_BubbleRadius, m_BubbleSpacing,
                 FormatSpeeds(speeds), Deadline, last);
 
             Debug.Log("[泡泡潮] " + BakeReport);
@@ -348,6 +407,164 @@ namespace PAO.BubbleTide
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// 在空腔里确定性地铺一层泡泡球，并把「到最近球面的距离」烤进 m_BubbleField。
+        ///
+        /// 【球的分布】
+        /// 用「抖动栅格」而不是纯随机：把房间切成 bubbleSpacing 米的格子，
+        /// 每格放一颗球，球心在格内随机偏移、半径在区间内随机。
+        /// 好处是**必然不会出现大片空洞**，也不会两张球叠在一起 ——
+        /// 纯随机会同时出现这两种情况，表现就是潮水里有一块块没泡泡的斑。
+        ///
+        /// 用确定性哈希而不是 Random，是为了每次烤出来的场完全一样：
+        /// 调试时「换个参数」和「换了个随机种子」不会混在一起，出问题好复现。
+        ///
+        /// 【距离场的定义】
+        /// 这里烤的是 <c>-exp(-|d| / k)</c>，是一个**衰减场**而不是纯欧氏距离场：
+        ///   · 球面上 = -1
+        ///   · 离球面越远越快趋近 0
+        ///   · 球内部是负的，外部是正的
+        /// 它在球面附近的梯度幅值约等于 1/k，所以 shader 里的步进照样收敛；
+        /// 而衰减的特性让「离所有球都很远」的格子自然趋近 0，
+        /// 不需要额外的哨兵值，也不会在球与球之间的缝隙里留下过深的坑。
+        /// </summary>
+        private int BuildBubbleField(float cell)
+        {
+            if (m_BubbleField == null)
+            {
+                return 0;
+            }
+
+            // 影响半径：超过这个距离的球对格子没有可见贡献。
+            // 由「势场衰减到可忽略」定出来：|value| = exp(-d/k)，
+            // 取 d = 3k 时衰减到 0.05，已经低于 8 位纹理的精度。
+            // 按 k = 半径 × 0.5 就是 1.5 倍半径 —— 比直觉上小，但完全够用，
+            // 而且直接把搜索范围从 7³ 压到 5³（125/343，省 64%）。
+            float influence = m_BubbleRadius * kBubbleFalloffRatio * 3f;
+
+            int reach = Mathf.Max(1, Mathf.CeilToInt(influence / cell));
+            int spacingCells = Mathf.Max(1, Mathf.RoundToInt(m_BubbleSpacing / cell));
+
+            int bubbleCount = 0;
+
+            // 影响半径的平方。用它做一次「太远就直接跳过」的早退，
+            // 省掉绝大多数无用的 Exp 调用 —— 这是这次烤制里最值钱的优化。
+            float influenceSq = influence * influence;
+
+            // 球心按 spacingCells 的步长铺，格内抖动
+            for (int bz = 0; bz < m_SizeZ; bz += spacingCells)
+            {
+                for (int by = 0; by < m_SizeY; by += spacingCells)
+                {
+                    for (int bx = 0; bx < m_SizeX; bx += spacingCells)
+                    {
+                        int seedCell = Index(bx, by, bz);
+
+                        // 实心格里不放球（泡泡不长在墙里）
+                        if (m_State[seedCell] == StateSolid)
+                        {
+                            continue;
+                        }
+
+                        // 抖动：球心在原点格子中心附近随机偏移
+                        float jx = Hash01(bx, by, bz, 1) - 0.5f;
+                        float jy = Hash01(bx, by, bz, 2) - 0.5f;
+                        float jz = Hash01(bx, by, bz, 3) - 0.5f;
+
+                        Vector3 center = CellCenter(bx, by, bz)
+                            + new Vector3(jx, jy, jz) * (cell * spacingCells * 0.9f);
+
+                        // 半径抖动：大球小球混着才有泡泡堆的层次感
+                        float radius = Mathf.Lerp(m_BubbleRadius * 0.6f,
+                                                  m_BubbleRadius * 1.25f,
+                                                  Hash01(bx, by, bz, 4));
+
+                        // 和实际球半径匹配的 k。用实际半径而不是基准半径，
+                        // 否则大小球的距离场宽度不一样，接缝处会出现硬边。
+                        float ik = 1f / Mathf.Max(0.01f, radius * kBubbleFalloffRatio);
+
+                        bubbleCount++;
+
+                        int cx = Mathf.RoundToInt((center.x - m_Origin.x) / cell);
+                        int cy = Mathf.RoundToInt((center.y - m_Origin.y) / cell);
+                        int cz = Mathf.RoundToInt((center.z - m_Origin.z) / cell);
+
+                        int minX = Mathf.Max(0, cx - reach);
+                        int maxX = Mathf.Min(m_SizeX - 1, cx + reach);
+                        int minY = Mathf.Max(0, cy - reach);
+                        int maxY = Mathf.Min(m_SizeY - 1, cy + reach);
+                        int minZ = Mathf.Max(0, cz - reach);
+                        int maxZ = Mathf.Min(m_SizeZ - 1, cz + reach);
+
+                        for (int z = minZ; z <= maxZ; z++)
+                        {
+                            float wz = m_Origin.z + z * cell - center.z;
+                            float wzSq = wz * wz;
+
+                            for (int y = minY; y <= maxY; y++)
+                            {
+                                float wy = m_Origin.y + y * cell - center.y;
+                                float wzySq = wzSq + wy * wy;
+
+                                for (int x = minX; x <= maxX; x++)
+                                {
+                                    float wx = m_Origin.x + x * cell - center.x;
+                                    float distSq = wzySq + wx * wx;
+
+                                    // 超出影响半径：这颗球对这个格子没有可见贡献，直接跳过。
+                                    // 密集区域里绝大多数格子都会在这里被挡掉。
+                                    if (distSq > influenceSq)
+                                    {
+                                        continue;
+                                    }
+
+                                    int index = x + m_SizeX * (y + m_SizeY * z);
+
+                                    // 实心格不存势场：shader 靠状态判断
+                                    if (m_State[index] == StateSolid)
+                                    {
+                                        continue;
+                                    }
+
+                                    float distance = Mathf.Sqrt(distSq);
+                                    float signedDistance = distance - radius;
+
+                                    // -exp(-|d|/k)：球面上 = -1，远处趋近 0
+                                    float value = -Mathf.Exp(-Mathf.Abs(signedDistance) * ik);
+
+                                    // 取更负的那个（更靠近球面）
+                                    if (value < m_BubbleField[index])
+                                    {
+                                        m_BubbleField[index] = value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 没被任何球影响到的格子留 0（= 离所有球都很远），这是正确的语义，不用补值
+            return bubbleCount;
+        }
+
+        /// <summary>
+        /// 确定性哈希 → 0~1。
+        /// 用它而不是 Random，是为了每次烤出来的泡泡分布完全一样：
+        /// 调试时「改了参数」和「换了个随机种子」不会混在一起。
+        /// </summary>
+        private static float Hash01(int x, int y, int z, int salt)
+        {
+            unchecked
+            {
+                uint h = (uint)(x * 73856093) ^ (uint)(y * 19349663) ^ (uint)(z * 83492791) ^ (uint)(salt * 2654435761u);
+                h ^= h >> 13;
+                h *= 1274126177u;
+                h ^= h >> 16;
+                return (h & 0xFFFFFF) / 16777215f;
+            }
         }
 
         /// <summary>
@@ -828,11 +1045,24 @@ namespace PAO.BubbleTide
         }
 
         /// <summary>
-        /// 把场导出成一张 0~1 的字节表，直接喂给 Texture3D。
+        /// 把场导出成一张 RG16 的半精度表，直接喂给 Texture3D。
         /// 索引顺序与 Texture3D 一致：x 变化最快。
         ///
-        /// 这里之所以不直接存秒，是因为传给 GPU 的必须是和墙钟时间无关的归一化值 ——
-        /// 关卡的截止时间一改，纹理不用重烤。
+        /// 两个通道各管一件事，缺一不可：
+        ///
+        ///   R = 归一化的「第几秒被淹」   → 决定哪里已经漫到（潮水的**范围**）
+        ///   G = 到最近泡泡球面的距离      → 决定泡泡长什么样（潮水的**形状**）
+        ///
+        /// 【为什么必须带上 G】
+        /// 只用 R 的话，光线只能知道「这里算不算被淹」，
+        /// 重建不出球面法线 —— 而泡泡的观感（菲涅尔边缘、薄膜彩虹、双高光）
+        /// 全部建立在「法线是一个球面的法线」这个前提上。少了 G，
+        /// 画出来就只能是一层膜，玩家会直接说「这根本不是泡泡」。
+        ///
+        /// 【为什么用 byte[] 而不是 ushort[]】
+        /// Texture3D.SetPixelData 接受原始字节缓冲。RG16 每像素 4 字节，
+        /// 所以这里按字节填：每格写 4 个 byte = R 低字节、R 高字节、G 低字节、G 高字节。
+        /// 分配一次字节数组比让 Unity 做泛型重载更可控，也避免不同平台上的重载解析差异。
         /// </summary>
         public byte[] BuildNormalizedVolume()
         {
@@ -841,28 +1071,87 @@ namespace PAO.BubbleTide
                 return null;
             }
 
-            byte[] volume = new byte[m_CellCount];
-            float scale = NormalizeScale > 1e-4f ? 1f / NormalizeScale : 0f;
+            byte[] volume = new byte[m_CellCount * 4];
 
+            float timeScale = NormalizeScale > 1e-4f ? 1f / NormalizeScale : 0f;
+
+            // 距离场的编码：把 [-1, +1] 映射到 [-1, +1]。
+            // 势场 value = -exp(-|d|/k) 本身就已经落在 [-1, 0]，
+            // 球面处正好是 -1，所以这里不需要再乘任何尺度 —— 直接存。
+            // shader 侧解码成「粗略距离」时乘 BubbleDistanceScale（= 3×球半径），
+            // 那份尺度由 Shader.SetGlobalFloat 单独传过去，两边不会漂。
             for (int i = 0; i < m_CellCount; i++)
             {
+                int offset = i * 4;
+
+                // ---- G 通道：到最近泡泡球面的距离场 ----
+                // 球面 ≈ -1，离球越远越趋近 0，球内部也是负的。
+                float bubble = m_BubbleField != null ? m_BubbleField[i] : 0f;
+                ushort g = FloatToHalf(Mathf.Clamp(bubble, -1f, 1f));
+
+                // 实心格：当成「离泡泡无限远」，这样光线不会在墙里碰到球面
+                if (m_State[i] == StateSolid)
+                {
+                    g = FloatToHalf(1f);
+                }
+
+                // ---- R 通道：归一化的被淹时间 ----
+                ushort r;
+
                 if (m_State[i] != StateAir)
                 {
-                    volume[i] = 255;   // 实心与封闭空腔：永远不淹
-                    continue;
+                    r = FloatToHalf(1f);          // 实心与封闭空腔：永远不淹
                 }
-
-                float t = m_ArrivalTime[i];
-                if (float.IsPositiveInfinity(t))
+                else
                 {
-                    volume[i] = 255;
-                    continue;
+                    float t = m_ArrivalTime[i];
+                    r = float.IsPositiveInfinity(t)
+                        ? FloatToHalf(1f)
+                        : FloatToHalf(Mathf.Clamp01(t * timeScale));
                 }
 
-                volume[i] = (byte)Mathf.Clamp(Mathf.RoundToInt(t * scale * 255f), 0, 254);
+                volume[offset + 0] = (byte)(r & 0xFF);
+                volume[offset + 1] = (byte)((r >> 8) & 0xFF);
+                volume[offset + 2] = (byte)(g & 0xFF);
+                volume[offset + 3] = (byte)((g >> 8) & 0xFF);
             }
 
             return volume;
+        }
+
+        /// <summary>
+        /// 单精度 float → IEEE 754 半精度（16 位）。
+        ///
+        /// 自己实现而不是用 <c>Mathf.FloatToHalf</c>：那个 API 在 Unity 2021.2 才有，
+        /// 而这个工程要保证在 2022.3 之外也能编译。实现很短，没必要为它压版本。
+        /// 只支持普通数值（我们的输入都在 [-1, 1] 内），不处理 NaN / Inf 的特殊编码 ——
+        /// 调用方在传入前已经把无穷大替换成 1 了。
+        /// </summary>
+        private static ushort FloatToHalf(float value)
+        {
+            // 用 BitConverter 拿 float 的位模式，避免依赖不安全的指针运算
+            uint bits = (uint)System.BitConverter.SingleToInt32Bits(value);
+
+            uint sign = (bits >> 16) & 0x8000u;
+            int exponent = (int)((bits >> 23) & 0xFFu) - 127;
+            uint mantissa = bits & 0x7FFFFFu;
+
+            // 太小的数直接当 0
+            if (exponent < -14)
+            {
+                return (ushort)sign;
+            }
+
+            // 太大了就饱和到最大值（我们不应该走到这里）
+            if (exponent > 15)
+            {
+                return (ushort)(sign | 0x7BFFu);
+            }
+
+            uint halfExponent = (uint)(exponent + 15) << 10;
+            uint halfMantissa = mantissa >> 13;
+
+            return (ushort)(sign | halfExponent | halfMantissa);
         }
 
         // ==================================================================

@@ -46,13 +46,13 @@ namespace PAO.BubbleTide
             [Range(1, 4)] public int resolutionDivisor = 2;
 
             [Tooltip("每条光线最多走多少步。这是性能的**主要旋钮**。\n" +
-                     "96 步在 0.5 米格距下能走 48 米，覆盖大部分室内视角；\n" +
-                     "出现「潮水在某些角度看是断的」就往上加。")]
+                     "96 步在大步长下足够走很远；\n" +
+                     "出现「泡泡在某些角度看是断的」就往上加。")]
             [Range(16, 512)] public int maxSteps = 96;
 
-            [Tooltip("步长相对格距的倍率。小于 1 更精细但更慢。\n" +
-                     "调大可以让远处更早收敛（配合 maxSteps 一起调）。")]
-            [Range(0.25f, 2f)] public float stepScale = 0.8f;
+            [Tooltip("步长倍率。距离场给的步长会乘上它再走。\n" +
+                     "小于 1 更保守（更精细、更慢）；大于 1 走得更快但可能蹭过薄处。")]
+            [Range(0.15f, 2f)] public float stepScale = 0.8f;
 
             [Header("遮挡")]
             [Tooltip("用场景深度遮挡潮水：实心墙挡在前面时潮水会被正确遮住。\n" +
@@ -60,32 +60,34 @@ namespace PAO.BubbleTide
                      "画面照常，只是泡泡会透过墙被看到。")]
             public bool useDepthOcclusion = true;
 
-            [Header("外观")]
-            [Range(0f, 1f)] public float opacity = 0.85f;
+            // ---- 以下参数与 BubbleSDF 的同名参数一一对应 ----
+            // 想让潮水和真泡泡看起来是同一种东西，两边的这几个数就保持一致。
+            // 默认值直接照抄 URP-Balanced-Renderer 上 BubbleSDFRenderFeature 的现值。
 
-            [Tooltip("贴着潮水面那一层的颜色。")]
-            public Color shallowColor = new Color(0.68f, 0.92f, 1f, 1f);
+            [Header("外观（与泡泡 SDF 对应）")]
+            [Tooltip("泡泡固有色。中心几乎透明，主要影响掠射边缘的着色。")]
+            public Color shallowColor = new Color(0.72f, 0.88f, 1f, 1f);
 
-            [Tooltip("潮水内部的颜色。越深越偏这个色。")]
+            [Tooltip("泡泡内部颜色（备用：将来做「越深越暗」）。")]
             public Color deepColor = new Color(0.42f, 0.72f, 1f, 1f);
 
-            [Tooltip("菲涅尔亮边的聚拢程度。越大亮边越窄越贴边。")]
-            [Range(0.5f, 8f)] public float rimPower = 2.4f;
+            [Tooltip("不透明度。0.65 左右最像肥皂泡，调高会变成实心玻璃球。")]
+            [Range(0f, 3f)] public float opacity = 0.65f;
 
-            [Tooltip("菲涅尔亮边的强度。")]
-            [Range(0f, 4f)] public float rimIntensity = 1.5f;
+            [Tooltip("边缘聚拢程度（菲涅尔指数）。越大，亮边越窄越贴边。")]
+            [Range(0.5f, 8f)] public float rimPower = 2.2f;
+
+            [Tooltip("高光强度。")]
+            [Range(0f, 4f)] public float specularIntensity = 1.1f;
+
+            [Tooltip("高光锐度。越大高光点越小越亮。")]
+            [Range(1f, 512f)] public float specularPower = 96f;
 
             [Tooltip("薄膜干涉彩虹的强度。")]
-            [Range(0f, 2f)] public float iridescence = 0.6f;
+            [Range(0f, 4f)] public float iridescence = 1.2f;
 
-            [Tooltip("彩虹的密集程度。越大色环越多。")]
+            [Tooltip("彩虹的密集程度。越大，从泡泡中心到边缘扫过的色环越多。")]
             [Range(0.1f, 6f)] public float iridescenceScale = 1.6f;
-
-            [Tooltip("泡泡颗粒纹理的密集程度。")]
-            [Range(0.1f, 10f)] public float noiseScale = 1.5f;
-
-            [Tooltip("泡泡颗粒纹理的明显程度。0 = 光滑表面，1 = 明显的颗粒感。")]
-            [Range(0f, 1f)] public float noiseStrength = 0.55f;
 
             [Header("高光方向")]
             [Tooltip("用固定方向作为主光，而不是跟随场景里的平行光。")]
