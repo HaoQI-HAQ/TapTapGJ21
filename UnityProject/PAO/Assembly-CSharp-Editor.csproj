@@ -64,8 +64,10 @@
     <Compile Include="Assets\GameMain\Scripts\Editor\BubbleTideSceneSetup.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\BubbleSDFInstaller.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\PauseHudSetup.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\BubbleSDFVerify.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LevelWhiteboxSetup.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\LevelHudBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LoadPanelBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\PausePanelBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LevelSelectBuilder.cs" />

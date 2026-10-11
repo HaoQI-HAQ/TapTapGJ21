@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +22,7 @@ namespace PAO
     ///   鼠标滚轮上下    循环切换
     ///
     /// UI：左下角显示当前泡泡名。没指定 Label 时会在运行时自动建一个。
+    /// HUD 的亮圈订阅 <see cref="TypeChanged"/> 来跟着切换。
     /// </summary>
     public class BubbleTypeSwitcher : MonoBehaviour
     {
@@ -43,6 +45,10 @@ namespace PAO
 
         [SerializeField] private int m_FontSize = 30;
 
+        [Header("输入开关")]
+        [Tooltip("暂停菜单打开时由外部设为 false，避免在菜单里误切类型")]
+        [SerializeField] private bool m_InputEnabled = true;
+
         private static readonly string[] s_DisplayNames = { "浮粘泡泡", "弹力泡泡", "炸弹泡泡" };
 
         private static readonly Color[] s_TypeColors =
@@ -52,8 +58,38 @@ namespace PAO
             new Color(1f, 0.62f, 0.42f)     // 炸弹：橙红
         };
 
+        /// <summary>类型数量（HUD 建按钮时用）。</summary>
+        public const int TypeCount = 3;
+
+        /// <summary>场景里当前活动的切换器。</summary>
+        public static BubbleTypeSwitcher Instance { get; private set; }
+
+        /// <summary>类型被切换时抛出，参数是新类型。HUD 靠它刷新亮圈。</summary>
+        public event Action<BubbleType> TypeChanged;
+
+        /// <summary>某个类型的显示名，不需要实例也能取。</summary>
+        public static string DisplayNameOf(BubbleType type)
+        {
+            int i = Mathf.Clamp((int)type, 0, s_DisplayNames.Length - 1);
+            return s_DisplayNames[i];
+        }
+
+        /// <summary>某个类型的代表色，不需要实例也能取。</summary>
+        public static Color ColorOf(BubbleType type)
+        {
+            int i = Mathf.Clamp((int)type, 0, s_TypeColors.Length - 1);
+            return s_TypeColors[i];
+        }
+
         /// <summary>当前选中的泡泡类型。</summary>
         public BubbleType Current { get; private set; }
+
+        /// <summary>输入是否启用。暂停菜单打开时设为 false。</summary>
+        public bool InputEnabled
+        {
+            get { return m_InputEnabled; }
+            set { m_InputEnabled = value; }
+        }
 
         /// <summary>当前类型的代表色，发射器用它给泡泡上色。</summary>
         public Color CurrentColor
@@ -69,12 +105,26 @@ namespace PAO
 
         private void Awake()
         {
+            Instance = this;
             EnsureLabel();
             Refresh();
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         private void Update()
         {
+            if (!m_InputEnabled)
+            {
+                return;
+            }
+
             if (m_EnableHotkeys)
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1)) { SetType(BubbleType.Sticky); return; }
@@ -102,6 +152,12 @@ namespace PAO
 
             Current = type;
             Refresh();
+
+            // 通知外界（HUD 的亮圈就靠这一句跟着变）
+            if (TypeChanged != null)
+            {
+                TypeChanged(Current);
+            }
         }
 
         /// <summary>按方向循环切换：+1 下一个，-1 上一个。</summary>
