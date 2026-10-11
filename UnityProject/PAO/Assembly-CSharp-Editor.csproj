@@ -70,7 +70,9 @@
     <Compile Include="Assets\GameMain\Scripts\Editor\LevelHudBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LoadPanelBuilder.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\PausePanelBuilder.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\LevelPathSetup.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\LevelSelectBuilder.cs" />
+    <Compile Include="Assets\GameMain\Scripts\Editor\FontSwapTool.cs" />
     <Compile Include="Assets\GameMain\Scripts\Editor\UnderwaterSceneSetup.cs" />
   </ItemGroup>
   <ItemGroup>
