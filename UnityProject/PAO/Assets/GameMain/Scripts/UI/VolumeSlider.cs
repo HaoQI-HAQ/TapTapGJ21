@@ -91,8 +91,30 @@ namespace PAO.UI
         {
             Apply(value);
 
+            // 拖动时先写内存缓存，真正的落盘交给 PlayerPrefs.Save()。
+            // 面板上的「完成」按钮会调 CommitSettings() 强制落盘，
+            // 这样「改到一半直接退出」也不会把值留在缓存里丢掉。
             PlayerPrefs.SetFloat(PrefsKey, value);
-            PlayerPrefs.Save();
+        }
+
+        /// <summary>
+        /// 把当前值写进磁盘并立即生效。「完成」按钮调它。
+        /// 返回是否成功（PlayerPrefs 基本不会失败，留返回值是为了以后换存储时有地方接）。
+        /// </summary>
+        public bool CommitSettings()
+        {
+            if (m_Slider == null)
+            {
+                return false;
+            }
+
+            float value = m_Slider.value;
+
+            Apply(value);
+            PlayerPrefs.SetFloat(PrefsKey, value);
+            PlayerPrefs.Save();     // 强制落盘
+
+            return true;
         }
 
         /// <summary>恢复默认值（同时写盘）。</summary>
@@ -114,6 +136,10 @@ namespace PAO.UI
             {
                 Apply(value);
             }
+
+            // 程序化设定同样要落盘：OnSliderChanged 只写缓存，
+            // 不补这一句，恢复默认在退出后会丢。
+            CommitSettings();
         }
 
         /// <summary>把线性音量写进混音器。</summary>
