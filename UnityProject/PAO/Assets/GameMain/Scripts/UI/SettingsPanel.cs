@@ -84,6 +84,9 @@ namespace PAO.UI
 
         private bool m_IsOpen;
 
+        /// <summary>场景里当前活动的设置面板。用于与其它全屏面板互斥。</summary>
+        public static SettingsPanel Instance { get; private set; }
+
         /// <summary>面板当前是否打开。</summary>
         public bool IsOpen
         {
@@ -97,7 +100,16 @@ namespace PAO.UI
 
         private void Awake()
         {
+            Instance = this;
             EnsureInitialized();
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
         }
 
         /// <summary>
@@ -123,8 +135,8 @@ namespace PAO.UI
 
             if (m_DoneButton != null)
             {
-                m_DoneButton.onClick.RemoveListener(Close);
-                m_DoneButton.onClick.AddListener(Close);
+                m_DoneButton.onClick.RemoveListener(ConfirmAndClose);
+                m_DoneButton.onClick.AddListener(ConfirmAndClose);
             }
 
             if (m_BackButton != null)
@@ -178,6 +190,42 @@ namespace PAO.UI
             SelectFirstControl();
 
             RaiseChanged();
+        }
+
+        /// <summary>
+        /// 「完成」按钮：先把当前设置落盘，再关闭面板回主菜单。
+        /// 面板上的「返回」(←) 与 Esc 只关闭不保存，方便反悔。
+        /// </summary>
+        public void ConfirmAndClose()
+        {
+            SaveCurrentSettings();
+            Close();
+        }
+
+        /// <summary>
+        /// 把所有设置项显式写盘。
+        ///
+        /// 每根滑条在 OnSliderChanged 里只写 PlayerPrefs 的缓存，
+        /// 真正的落盘（PlayerPrefs.Save）由这里统一触发，
+        /// 这样「中途退出」不会把值留在缓存里丢掉。
+        /// </summary>
+        public void SaveCurrentSettings()
+        {
+            int saved = 0;
+
+            if (m_VolumeSliders != null)
+            {
+                for (int i = 0; i < m_VolumeSliders.Length; i++)
+                {
+                    VolumeSlider slider = m_VolumeSliders[i];
+                    if (slider != null && slider.CommitSettings())
+                    {
+                        saved++;
+                    }
+                }
+            }
+
+            Debug.Log("[SettingsPanel] 设置已保存（音量项 " + saved + " 项）。");
         }
 
         /// <summary>关闭面板。</summary>
