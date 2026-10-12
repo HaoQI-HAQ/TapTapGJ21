@@ -156,8 +156,12 @@ namespace PAO
         {
             if (Current == type)
             {
+                Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ") 被忽略：已经是当前类型。", this);
                 return;
             }
+
+            Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ")，原类型 " + Current +
+                      "，InputEnabled=" + m_InputEnabled + "，enabled=" + enabled, this);
 
             Current = type;
             Refresh();

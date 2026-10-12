@@ -71,20 +71,9 @@ namespace PAO
         private BubbleTypeSwitcher m_InitedSwitcher;
         private float[] m_CurrentScale;
         private float[] m_CurrentAlpha;
-        private bool m_VisualsVisible = true;
-
-        // 设计稿中的原始三角布局，整体固定在屏幕右下角。
-        private static readonly Vector2[] s_OriginalSlotPositions =
-        {
-            new Vector2(109.3f, -42f),
-            new Vector2(12.7f, -192f),
-            new Vector2(202f, -192f)
-        };
 
         private void Awake()
         {
-            RestoreBottomRightLayout();
-
             int count = (m_Slots != null) ? m_Slots.Length : 0;
             m_CurrentScale = new float[count];
             m_CurrentAlpha = new float[count];
@@ -104,47 +93,8 @@ namespace PAO
                 }
 
                 int index = i;   // 闭包捕获
+                m_Slots[i].button.onClick.RemoveAllListeners();
                 m_Slots[i].button.onClick.AddListener(delegate { SelectSlot(index); });
-            }
-        }
-
-        /// <summary>
-        /// 场景实例可能保留旧的 RectTransform 覆盖值，运行时统一恢复为原始右下角布局。
-        /// 左下角的当前泡泡名称由 BubbleTypeSwitcher 独立显示。
-        /// </summary>
-        private void RestoreBottomRightLayout()
-        {
-            RectTransform root = transform as RectTransform;
-            if (root == null)
-            {
-                return;
-            }
-
-            root.anchorMin = new Vector2(1f, 0f);
-            root.anchorMax = new Vector2(1f, 0f);
-            root.pivot = new Vector2(1f, 0f);
-            root.anchoredPosition = new Vector2(-30f, 30f);
-            root.sizeDelta = new Vector2(540f, 540f);
-
-            int count = Mathf.Min(m_Slots != null ? m_Slots.Length : 0, s_OriginalSlotPositions.Length);
-            for (int i = 0; i < count; i++)
-            {
-                if (m_Slots[i] == null || m_Slots[i].root == null)
-                {
-                    continue;
-                }
-
-                RectTransform slot = m_Slots[i].root.transform as RectTransform;
-                if (slot == null)
-                {
-                    continue;
-                }
-
-                slot.anchorMin = new Vector2(0.5f, 0.5f);
-                slot.anchorMax = new Vector2(0.5f, 0.5f);
-                slot.pivot = new Vector2(0.5f, 0.5f);
-                slot.anchoredPosition = s_OriginalSlotPositions[i];
-                slot.sizeDelta = new Vector2(150f, 150f);
             }
         }
 
@@ -159,29 +109,6 @@ namespace PAO
             }
 
             HandleEscape();
-        }
-
-        /// <summary>只隐藏 HUD 图形，控制器本身继续运行以接收 Esc。</summary>
-        public void SetVisualsVisible(bool visible)
-        {
-            if (m_VisualsVisible == visible)
-            {
-                return;
-            }
-
-            m_VisualsVisible = visible;
-            if (m_Slots == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < m_Slots.Length; i++)
-            {
-                if (m_Slots[i] != null && m_Slots[i].root != null)
-                {
-                    m_Slots[i].root.SetActive(visible);
-                }
-            }
         }
 
         /// <summary>把三个圆的显示刷新成「type 亮起、其它暗下去」。</summary>
@@ -263,15 +190,36 @@ namespace PAO
             ApplyVisuals((BubbleType)index);
         }
 
-        /// <summary>Esc 开关暂停菜单。刚绑定时先用场景里的实际状态对齐一次。</summary>
+        /// <summary>
+        /// Esc 打开暂停菜单。
+        ///
+        /// 这里**只负责打开**，关闭交给 PauseMenu 自己的 Update ——
+        /// 两边都无条件 Toggle 的话，同一次按 Esc 会先开后关，界面一闪就没了。
+        /// 而且暂停时本组件通常已被冻结，本来也管不到关闭。
+        /// </summary>
         private void HandleEscape()
         {
-            if (m_PauseMenu == null)
+            if (!Input.GetKeyDown(KeyCode.Escape))
             {
                 return;
             }
 
-            UiEscapeRouter.Handle(m_PauseMenu);
+            // 诊断用：把这条链路上每一环的实际状态打出来，
+            // 免得再靠猜（"按了 Esc 但没界面"可能是这里面任意一环断了）
+            Debug.Log("[BubbleTypeHud] 收到 Esc。PauseMenu=" +
+                      (m_PauseMenu == null ? "null" : m_PauseMenu.name + "(IsOpen=" + m_PauseMenu.IsOpen + ", active=" +
+                       m_PauseMenu.gameObject.activeSelf + ")") +
+                      "  HUD自身 enabled=" + enabled, this);
+
+            if (m_PauseMenu == null || m_PauseMenu.IsOpen)
+            {
+                return;
+            }
+
+            bool nowOpen = m_PauseMenu.Open();
+
+            Debug.Log("[BubbleTypeHud] 已请求打开暂停界面，返回 " + nowOpen +
+                      "，面板 activeInHierarchy=" + m_PauseMenu.gameObject.activeInHierarchy, this);
         }
 
         /// <summary>
@@ -288,20 +236,22 @@ namespace PAO
                 m_PauseMenu = FindPauseMenu();
             }
 
-            if (m_InitedSwitcher == switcher)
-            {
-                return;
-            }
-
-            m_InitedSwitcher = switcher;
-
             if (switcher == null || !m_DisableSwitcherWhenPaused)
             {
                 return;
             }
 
+            // 每帧都按面板的真实状态同步 —— 不能只同步一次。
+            //
+            // 之前的写法是「首次拿到 switcher 时设一次」，结果：
+            //   HandleEscape 打开面板时把 InputEnabled 设成 false，
+            //   退出面板后没有任何地方把它设回 true，
+            //   于是切泡泡永久失效（表现就是"暂停过一次以后再也不能切类型"）。
+            // 现在以 m_PauseMenu.IsOpen 为唯一依据，暂停/恢复都能自动对齐。
             bool paused = (m_PauseMenu != null) && m_PauseMenu.IsOpen;
             switcher.InputEnabled = !paused;
+
+            m_InitedSwitcher = switcher;
         }
 
         /// <summary>
