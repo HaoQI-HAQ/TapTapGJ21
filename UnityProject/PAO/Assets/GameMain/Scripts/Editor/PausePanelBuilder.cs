@@ -27,13 +27,13 @@ namespace PAO.EditorTools
         private static readonly string[] kMenuLabels = { "地图", "重开", "读档", "设置", "主菜单" };
 
         // 文字按钮：常态只有文字，悬停/手柄选中时浮出一块青色底
-        private static readonly Color kNormalText = new Color(0.20f, 0.20f, 0.20f, 1f);
-        private static readonly Color kActiveText = new Color(0.10f, 0.35f, 0.40f, 1f);
+        private static readonly Color kNormalText = new Color(0.29f, 0.37f, 0.43f, 1f);
+        private static readonly Color kActiveText = new Color(0.12f, 0.43f, 0.49f, 1f);
 
         // 背景天蓝
-        private static readonly Color kBackground = new Color(0.62f, 0.88f, 0.97f, 1f);
-        private static readonly Color kHighlight = new Color(0.45f, 0.83f, 0.87f, 1f);
-        private static readonly Color kSubText = new Color(0.35f, 0.52f, 0.56f, 1f);
+        private static readonly Color kBackground = new Color(0.975f, 0.965f, 0.94f, 0.96f);
+        private static readonly Color kHighlight = new Color(0.34f, 0.68f, 0.73f, 1f);
+        private static readonly Color kSubText = new Color(0.42f, 0.52f, 0.56f, 1f);
 
         [MenuItem("PAO/UI/构建暂停界面", false, 21)]
         public static void BuildFromMenu()
@@ -150,11 +150,17 @@ namespace PAO.EditorTools
             SetPrivate(menu, "m_SettingsPanel", settingsPanel);
             SetPrivate(menu, "m_LastSaveLabel", lastSave);
 
+            SerializedObject pauseSettings = new SerializedObject(menu);
+            pauseSettings.FindProperty("m_PauseTimeOnEnable").boolValue = false;
+            pauseSettings.FindProperty("m_PauseTimeOnOpen").boolValue = true;
+            pauseSettings.ApplyModifiedPropertiesWithoutUndo();
+            root.SetActive(false);
+
             // 手柄/键盘进来就有落点
             EventSystem es = Object.FindObjectOfType<EventSystem>();
             if (es != null)
             {
-                es.firstSelectedGameObject = menuButtons[0].gameObject;
+                es.firstSelectedGameObject = null;
             }
 
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -163,8 +169,8 @@ namespace PAO.EditorTools
             string summary = string.Format(
                 "暂停界面已建好并保存。\n\n按钮：{0} 个\n读档面板：{1}\n设置面板：{2}\n画布缩放：1920x1080 按宽度匹配",
                 menuButtons.Count,
-                loadPanel != null ? "已接上" : "场景里没有，按钮暂只打日志",
-                settingsPanel != null ? "已接上" : "场景里没有，按钮暂只打日志");
+                loadPanel != null ? "已接上" : "场景里没有，按钮禁用",
+                settingsPanel != null ? "已接上" : "场景里没有，按钮禁用");
 
             Debug.Log("[PausePanelBuilder] " + summary.Replace("\n", " "));
             Report(auto, summary);
