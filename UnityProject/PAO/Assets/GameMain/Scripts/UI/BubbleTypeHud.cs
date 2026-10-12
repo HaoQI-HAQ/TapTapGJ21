@@ -190,25 +190,36 @@ namespace PAO
             ApplyVisuals((BubbleType)index);
         }
 
-        /// <summary>Esc 开关暂停菜单。刚绑定时先用场景里的实际状态对齐一次。</summary>
+        /// <summary>
+        /// Esc 打开暂停菜单。
+        ///
+        /// 这里**只负责打开**，关闭交给 PauseMenu 自己的 Update ——
+        /// 两边都无条件 Toggle 的话，同一次按 Esc 会先开后关，界面一闪就没了。
+        /// 而且暂停时本组件通常已被冻结，本来也管不到关闭。
+        /// </summary>
         private void HandleEscape()
         {
-            if (m_PauseMenu == null)
-            {
-                return;
-            }
-
             if (!Input.GetKeyDown(KeyCode.Escape))
             {
                 return;
             }
 
-            bool nowOpen = m_PauseMenu.Toggle();
+            // 诊断用：把这条链路上每一环的实际状态打出来，
+            // 免得再靠猜（"按了 Esc 但没界面"可能是这里面任意一环断了）
+            Debug.Log("[BubbleTypeHud] 收到 Esc。PauseMenu=" +
+                      (m_PauseMenu == null ? "null" : m_PauseMenu.name + "(IsOpen=" + m_PauseMenu.IsOpen + ", active=" +
+                       m_PauseMenu.gameObject.activeSelf + ")") +
+                      "  HUD自身 enabled=" + enabled, this);
 
-            if (m_DisableSwitcherWhenPaused && BubbleTypeSwitcher.Instance != null)
+            if (m_PauseMenu == null || m_PauseMenu.IsOpen)
             {
-                BubbleTypeSwitcher.Instance.InputEnabled = !nowOpen;
+                return;
             }
+
+            bool nowOpen = m_PauseMenu.Open();
+
+            Debug.Log("[BubbleTypeHud] 已请求打开暂停界面，返回 " + nowOpen +
+                      "，面板 activeInHierarchy=" + m_PauseMenu.gameObject.activeInHierarchy, this);
         }
 
         /// <summary>
@@ -225,20 +236,22 @@ namespace PAO
                 m_PauseMenu = FindPauseMenu();
             }
 
-            if (m_InitedSwitcher == switcher)
-            {
-                return;
-            }
-
-            m_InitedSwitcher = switcher;
-
             if (switcher == null || !m_DisableSwitcherWhenPaused)
             {
                 return;
             }
 
+            // 每帧都按面板的真实状态同步 —— 不能只同步一次。
+            //
+            // 之前的写法是「首次拿到 switcher 时设一次」，结果：
+            //   HandleEscape 打开面板时把 InputEnabled 设成 false，
+            //   退出面板后没有任何地方把它设回 true，
+            //   于是切泡泡永久失效（表现就是"暂停过一次以后再也不能切类型"）。
+            // 现在以 m_PauseMenu.IsOpen 为唯一依据，暂停/恢复都能自动对齐。
             bool paused = (m_PauseMenu != null) && m_PauseMenu.IsOpen;
             switcher.InputEnabled = !paused;
+
+            m_InitedSwitcher = switcher;
         }
 
         /// <summary>

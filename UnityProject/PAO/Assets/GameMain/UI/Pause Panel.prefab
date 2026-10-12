@@ -303,8 +303,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 44
-  m_fontSizeBase: 44
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1176,6 +1176,7 @@ GameObject:
   - component: {fileID: 8538641705281285183}
   - component: {fileID: 99096196919189622}
   - component: {fileID: 4849572597922560343}
+  - component: {fileID: 6508507688562069191}
   m_Layer: 5
   m_Name: Pause Panel
   m_TagString: Untagged
@@ -1266,6 +1267,18 @@ MonoBehaviour:
   m_LoadPanel: {fileID: 0}
   m_SettingsPanel: {fileID: 0}
   m_LastSaveLabel: {fileID: 0}
+--- !u!225 &6508507688562069191
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4728996206675476925}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &4923146514692869488
 GameObject:
   m_ObjectHideFlags: 0
