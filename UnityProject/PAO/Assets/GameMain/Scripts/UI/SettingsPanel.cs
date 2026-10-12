@@ -28,7 +28,7 @@ namespace PAO.UI
         public class TabItem
         {
             [Tooltip("顶部标签文字")]
-            public Text label;
+            public TMPro.TMP_Text label;
 
             [Tooltip("该标签对应的内容根物体，切换时整体开关")]
             public GameObject content;
@@ -97,6 +97,7 @@ namespace PAO.UI
         public event Action<bool> OpenStateChanged;
 
         private bool m_Initialized;
+        private Button[] m_TabButtons;
 
         private void Awake()
         {
@@ -133,6 +134,8 @@ namespace PAO.UI
                 m_Root = gameObject;
             }
 
+            BindSceneTabs();
+
             if (m_DoneButton != null)
             {
                 m_DoneButton.onClick.RemoveListener(ConfirmAndClose);
@@ -141,8 +144,17 @@ namespace PAO.UI
 
             if (m_BackButton != null)
             {
-                m_BackButton.onClick.RemoveListener(Close);
-                m_BackButton.onClick.AddListener(Close);
+                bool persistentClose = false;
+                for (int i = 0; i < m_BackButton.onClick.GetPersistentEventCount(); i++)
+                {
+                    if (m_BackButton.onClick.GetPersistentTarget(i) == this &&
+                        m_BackButton.onClick.GetPersistentMethodName(i) == nameof(Close))
+                    {
+                        persistentClose = true;
+                        break;
+                    }
+                }
+                if (!persistentClose) m_BackButton.onClick.AddListener(Close);
 
                 if (m_HideBackButton)
                 {
@@ -157,11 +169,42 @@ namespace PAO.UI
             }
         }
 
+        private void BindSceneTabs()
+        {
+            string[] buttonNames = { "Sound button", "Screen Button", "Operating Button", "Modifier Button" };
+            string[] contentNames = { "Content Sound", "Content Video", "Content Control", "Content Other" };
+            if (m_Tabs == null || m_Tabs.Length != buttonNames.Length) m_Tabs = new TabItem[buttonNames.Length];
+            m_TabButtons = new Button[buttonNames.Length];
+
+            Transform[] children = m_Root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < buttonNames.Length; i++)
+            {
+                if (m_Tabs[i] == null) m_Tabs[i] = new TabItem();
+                for (int j = 0; j < children.Length; j++)
+                {
+                    if (children[j].name == buttonNames[i])
+                    {
+                        m_TabButtons[i] = children[j].GetComponent<Button>();
+                        if (m_Tabs[i].label == null)
+                            m_Tabs[i].label = children[j].GetComponentInChildren<TMPro.TMP_Text>(true);
+                    }
+                    else if (children[j].name == contentNames[i] && m_Tabs[i].content == null)
+                    {
+                        m_Tabs[i].content = children[j].gameObject;
+                    }
+                }
+
+                if (m_TabButtons[i] == null) continue;
+                int index = i;
+                m_TabButtons[i].onClick.AddListener(delegate { SelectTab(index); });
+            }
+        }
+
         private void Update()
         {
-            if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (m_IsOpen)
             {
-                Close();
+                UiEscapeRouter.Handle();
             }
         }
 
@@ -174,6 +217,10 @@ namespace PAO.UI
             {
                 return;
             }
+
+            if (LoadPanel.Instance != null && LoadPanel.Instance.IsOpen) LoadPanel.Instance.Close();
+            if (LevelPathPanel.Instance != null && LevelPathPanel.Instance.IsOpen) LevelPathPanel.Instance.Close();
+            if (LevelSelectPanel.Instance != null && LevelSelectPanel.Instance.IsOpen) LevelSelectPanel.Instance.Close();
 
             m_IsOpen = true;
 
@@ -244,6 +291,7 @@ namespace PAO.UI
             // 收掉所有主菜单按钮的高亮，并遗忘「用过方向键」的状态。
             // 否则关闭面板后，之前手柄选中的那颗按钮会一直亮着。
             MenuButton.ResetNavigationState();
+            UiEscapeRouter.SelectMenuButton(m_MenuButtons);
 
             RaiseChanged();
         }

@@ -33,14 +33,14 @@ namespace PAO.EditorTools
             "Modifier Button", "restore default Button", "finish Button"
         };
 
-        private static readonly Color kDim     = new Color(0.42f, 0.72f, 0.78f, 1f);
-        private static readonly Color kPanel   = new Color(0.90f, 0.97f, 0.97f, 1f);
-        private static readonly Color kCard    = new Color(0.84f, 0.93f, 0.94f, 1f);
-        private static readonly Color kTeal    = new Color(0.45f, 0.83f, 0.87f, 1f);
-        private static readonly Color kDark    = new Color(0.20f, 0.20f, 0.20f, 1f);
-        private static readonly Color kMid     = new Color(0.42f, 0.55f, 0.58f, 1f);
-        private static readonly Color kPill    = new Color(0.72f, 0.88f, 0.90f, 1f);
-        private static readonly Color kLoadBtn = new Color(0.45f, 0.83f, 0.87f, 0.55f);
+        private static readonly Color kDim     = new Color(0.35f, 0.46f, 0.50f, 0.42f);
+        private static readonly Color kPanel   = new Color(0.975f, 0.965f, 0.94f, 1f);
+        private static readonly Color kCard    = new Color(0.93f, 0.95f, 0.94f, 1f);
+        private static readonly Color kTeal    = new Color(0.34f, 0.68f, 0.73f, 1f);
+        private static readonly Color kDark    = new Color(0.29f, 0.37f, 0.43f, 1f);
+        private static readonly Color kMid     = new Color(0.42f, 0.52f, 0.56f, 1f);
+        private static readonly Color kPill    = new Color(0.76f, 0.88f, 0.88f, 1f);
+        private static readonly Color kLoadBtn = new Color(0.34f, 0.68f, 0.73f, 0.88f);
 
         [MenuItem("PAO/UI/构建读档面板", false, 20)]
         public static void BuildFromMenu()

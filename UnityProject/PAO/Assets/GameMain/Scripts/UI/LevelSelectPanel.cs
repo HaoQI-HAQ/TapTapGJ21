@@ -116,9 +116,9 @@ namespace PAO.UI
 
         private void Update()
         {
-            if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (m_IsOpen)
             {
-                Close();
+                UiEscapeRouter.Handle();
             }
         }
 
@@ -180,7 +180,6 @@ namespace PAO.UI
                 }
 
                 int index = i;   // 闭包捕获：不能用循环变量本身
-                entry.button.onClick.RemoveAllListeners();
                 entry.button.onClick.AddListener(delegate { SelectLevel(index); });
             }
         }
@@ -206,6 +205,7 @@ namespace PAO.UI
             {
                 LoadPanel.Instance.Close();
             }
+            if (LevelPathPanel.Instance != null && LevelPathPanel.Instance.IsOpen) LevelPathPanel.Instance.Close();
 
             m_IsOpen = true;
             m_Root.SetActive(true);
@@ -213,6 +213,8 @@ namespace PAO.UI
             EnsureInitialized();
             SetMenuButtonsEnabled(false);
             RefreshLevels();
+            if (m_Levels != null && m_Levels.Length > 0 && m_Levels[0] != null)
+                UiEscapeRouter.Select(m_Levels[0].button);
 
             Debug.Log("[LevelSelectPanel] 关卡选择面板已打开。", this);
         }
@@ -234,6 +236,7 @@ namespace PAO.UI
 
             SetMenuButtonsEnabled(true);
             MenuButton.ResetNavigationState();
+            UiEscapeRouter.SelectMenuButton(m_MenuButtons);
 
             if (OpenStateChanged != null)
             {

@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace PAO.UI
 {
@@ -10,8 +12,7 @@ namespace PAO.UI
     ///   1. 暂停/恢复游戏时间（Time.timeScale），进入页面时暂停
     ///   2. 承接各个按钮的点击（继续 / 地图 / 重开 / 读档 / 设置 / 主菜单）
     ///
-    /// 「读档」和「设置」是可选接线：场景里如果放了 LoadPanel / SettingsPanel，
-    /// 构建脚本会把它们接上；没有就只打一条提示，不影响其它按钮。
+    /// 「读档」和「设置」是可选接线；没有面板时，对应按钮不可交互。
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("PAO/UI/Pause Menu")]
@@ -48,6 +49,10 @@ namespace PAO.UI
         private float m_PreviousTimeScale = 1f;
         private bool m_PausedTime;
         private bool m_IsOpen;
+        private CursorLockMode m_PreviousCursorLock;
+        private bool m_PreviousCursorVisible;
+        private bool m_PreviousSwitcherInput = true;
+        private BubbleTypeHud m_GameplayHud;
 
         /// <summary>
         /// 暂停界面当前是否显示。
@@ -62,6 +67,9 @@ namespace PAO.UI
         private void Awake()
         {
             Instance = this;
+
+            // An inactive scene instance does not run Awake until Open activates it.
+            // Do not let a prefab's legacy option pause the game on scene load.
 
             if (m_PauseTimeOnEnable)
             {
@@ -82,8 +90,13 @@ namespace PAO.UI
             // 否则回到游戏会「画面冻住」而看不出原因。
             if (m_PausedTime)
             {
-                Time.timeScale = m_ResumeTimeScale;
+                Time.timeScale = m_PreviousTimeScale > 0f ? m_PreviousTimeScale : m_ResumeTimeScale;
                 m_PausedTime = false;
+            }
+            if (m_IsOpen)
+            {
+                Cursor.lockState = m_PreviousCursorLock;
+                Cursor.visible = m_PreviousCursorVisible;
             }
         }
 
@@ -96,6 +109,11 @@ namespace PAO.UI
         /// </summary>
         public bool Open()
         {
+            if (m_IsOpen)
+            {
+                return true;
+            }
+
             m_IsOpen = true;
             gameObject.SetActive(true);
 
@@ -105,6 +123,25 @@ namespace PAO.UI
             }
 
             RefreshLastSaveLabel();
+            RefreshOptionalButtons();
+            m_PreviousCursorLock = Cursor.lockState;
+            m_PreviousCursorVisible = Cursor.visible;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            if (BubbleTypeSwitcher.Instance != null)
+            {
+                m_PreviousSwitcherInput = BubbleTypeSwitcher.Instance.InputEnabled;
+                BubbleTypeSwitcher.Instance.InputEnabled = false;
+                BubbleTypeSwitcher.Instance.SetLabelVisible(false);
+            }
+            SetGameplayHudVisible(false);
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (!buttons[i].interactable) continue;
+                UiEscapeRouter.Select(buttons[i]);
+                break;
+            }
             Debug.Log("[PauseMenu] 暂停界面已打开。", this);
             return true;
         }
@@ -112,8 +149,25 @@ namespace PAO.UI
         /// <summary>隐藏暂停界面（幂等），并把时间放回去。</summary>
         public bool Close()
         {
+            if (!m_IsOpen)
+            {
+                return false;
+            }
+
             m_IsOpen = false;
             ResumeTime();
+            Cursor.lockState = m_PreviousCursorLock;
+            Cursor.visible = m_PreviousCursorVisible;
+            if (BubbleTypeSwitcher.Instance != null)
+            {
+                BubbleTypeSwitcher.Instance.InputEnabled = m_PreviousSwitcherInput;
+                BubbleTypeSwitcher.Instance.SetLabelVisible(true);
+            }
+            SetGameplayHudVisible(true);
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
             gameObject.SetActive(false);
             return false;
         }
@@ -140,14 +194,16 @@ namespace PAO.UI
         /// <summary>重开当前关卡：恢复时间并重新加载当前场景。</summary>
         public void RestartLevel()
         {
-            ResumeTime();
+            Close();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         /// <summary>回到主菜单。</summary>
         public void GoToMainMenu()
         {
-            ResumeTime();
+            Close();
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             SceneManager.LoadScene(m_MainMenuScene);
         }
 
@@ -180,6 +236,41 @@ namespace PAO.UI
             }
 
             m_SettingsPanel.Open();
+        }
+
+        private void RefreshOptionalButtons()
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Button button = buttons[i];
+                string name = button.gameObject.name;
+                if (name.Contains("读档")) button.interactable = m_LoadPanel != null;
+                else if (name.Contains("设置")) button.interactable = m_SettingsPanel != null;
+                else if (name.Contains("地图")) button.interactable = false;
+                else continue;
+
+                TMPro.TMP_Text label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+                if (label != null)
+                {
+                    Color color = label.color;
+                    color.a = button.interactable ? 1f : 0.35f;
+                    label.color = color;
+                }
+            }
+        }
+
+        private void SetGameplayHudVisible(bool visible)
+        {
+            if (m_GameplayHud == null)
+            {
+                m_GameplayHud = FindFirstObjectByType<BubbleTypeHud>();
+            }
+
+            if (m_GameplayHud != null)
+            {
+                m_GameplayHud.SetVisualsVisible(visible);
+            }
         }
 
         // ==================== 时间 ====================
@@ -233,6 +324,65 @@ namespace PAO.UI
             }
 
             m_LastSaveLabel.text = newest != null ? newest.SavedAtText : "还没有存档";
+        }
+    }
+
+    /// <summary>Consume Escape once per frame and close the visible top panel.</summary>
+    public static class UiEscapeRouter
+    {
+        private static int s_HandledFrame = -1;
+
+        public static void Select(Button button)
+        {
+            if (button != null && button.IsActive() && button.interactable && EventSystem.current != null)
+                EventSystem.current.SetSelectedGameObject(button.gameObject);
+        }
+
+        public static void SelectMenuButton(MenuButton[] buttons)
+        {
+            if (PauseMenu.Instance != null && PauseMenu.Instance.IsOpen)
+            {
+                Button[] pauseButtons = PauseMenu.Instance.GetComponentsInChildren<Button>(true);
+                for (int i = 0; i < pauseButtons.Length; i++)
+                {
+                    if (!pauseButtons[i].interactable) continue;
+                    Select(pauseButtons[i]);
+                    return;
+                }
+            }
+
+            if (buttons == null) return;
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] == null) continue;
+                Button button = buttons[i].GetComponent<Button>();
+                if (button == null || !button.IsActive() || !button.interactable) continue;
+                Select(button);
+                return;
+            }
+        }
+
+        public static bool Handle(PauseMenu pauseMenu = null)
+        {
+            if (!Input.GetKeyDown(KeyCode.Escape) || s_HandledFrame == Time.frameCount) return false;
+
+            if (SettingsPanel.Instance != null && SettingsPanel.Instance.IsOpen)
+                SettingsPanel.Instance.Close();
+            else if (LoadPanel.Instance != null && LoadPanel.Instance.IsOpen)
+                LoadPanel.Instance.Close();
+            else if (LevelPathPanel.Instance != null && LevelPathPanel.Instance.IsOpen)
+                LevelPathPanel.Instance.Close();
+            else if (LevelSelectPanel.Instance != null && LevelSelectPanel.Instance.IsOpen)
+                LevelSelectPanel.Instance.Close();
+            else
+            {
+                PauseMenu activePause = pauseMenu != null ? pauseMenu : PauseMenu.Instance;
+                if (activePause == null) return false;
+                activePause.Toggle();
+            }
+
+            s_HandledFrame = Time.frameCount;
+            return true;
         }
     }
 }

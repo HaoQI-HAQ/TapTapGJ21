@@ -71,9 +71,20 @@ namespace PAO
         private BubbleTypeSwitcher m_InitedSwitcher;
         private float[] m_CurrentScale;
         private float[] m_CurrentAlpha;
+        private bool m_VisualsVisible = true;
+
+        // 设计稿中的原始三角布局，整体固定在屏幕右下角。
+        private static readonly Vector2[] s_OriginalSlotPositions =
+        {
+            new Vector2(109.3f, -42f),
+            new Vector2(12.7f, -192f),
+            new Vector2(202f, -192f)
+        };
 
         private void Awake()
         {
+            RestoreBottomRightLayout();
+
             int count = (m_Slots != null) ? m_Slots.Length : 0;
             m_CurrentScale = new float[count];
             m_CurrentAlpha = new float[count];
@@ -93,8 +104,47 @@ namespace PAO
                 }
 
                 int index = i;   // 闭包捕获
-                m_Slots[i].button.onClick.RemoveAllListeners();
                 m_Slots[i].button.onClick.AddListener(delegate { SelectSlot(index); });
+            }
+        }
+
+        /// <summary>
+        /// 场景实例可能保留旧的 RectTransform 覆盖值，运行时统一恢复为原始右下角布局。
+        /// 左下角的当前泡泡名称由 BubbleTypeSwitcher 独立显示。
+        /// </summary>
+        private void RestoreBottomRightLayout()
+        {
+            RectTransform root = transform as RectTransform;
+            if (root == null)
+            {
+                return;
+            }
+
+            root.anchorMin = new Vector2(1f, 0f);
+            root.anchorMax = new Vector2(1f, 0f);
+            root.pivot = new Vector2(1f, 0f);
+            root.anchoredPosition = new Vector2(-30f, 30f);
+            root.sizeDelta = new Vector2(540f, 540f);
+
+            int count = Mathf.Min(m_Slots != null ? m_Slots.Length : 0, s_OriginalSlotPositions.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (m_Slots[i] == null || m_Slots[i].root == null)
+                {
+                    continue;
+                }
+
+                RectTransform slot = m_Slots[i].root.transform as RectTransform;
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                slot.anchorMin = new Vector2(0.5f, 0.5f);
+                slot.anchorMax = new Vector2(0.5f, 0.5f);
+                slot.pivot = new Vector2(0.5f, 0.5f);
+                slot.anchoredPosition = s_OriginalSlotPositions[i];
+                slot.sizeDelta = new Vector2(150f, 150f);
             }
         }
 
@@ -109,6 +159,29 @@ namespace PAO
             }
 
             HandleEscape();
+        }
+
+        /// <summary>只隐藏 HUD 图形，控制器本身继续运行以接收 Esc。</summary>
+        public void SetVisualsVisible(bool visible)
+        {
+            if (m_VisualsVisible == visible)
+            {
+                return;
+            }
+
+            m_VisualsVisible = visible;
+            if (m_Slots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_Slots.Length; i++)
+            {
+                if (m_Slots[i] != null && m_Slots[i].root != null)
+                {
+                    m_Slots[i].root.SetActive(visible);
+                }
+            }
         }
 
         /// <summary>把三个圆的显示刷新成「type 亮起、其它暗下去」。</summary>
@@ -198,17 +271,7 @@ namespace PAO
                 return;
             }
 
-            if (!Input.GetKeyDown(KeyCode.Escape))
-            {
-                return;
-            }
-
-            bool nowOpen = m_PauseMenu.Toggle();
-
-            if (m_DisableSwitcherWhenPaused && BubbleTypeSwitcher.Instance != null)
-            {
-                BubbleTypeSwitcher.Instance.InputEnabled = !nowOpen;
-            }
+            UiEscapeRouter.Handle(m_PauseMenu);
         }
 
         /// <summary>

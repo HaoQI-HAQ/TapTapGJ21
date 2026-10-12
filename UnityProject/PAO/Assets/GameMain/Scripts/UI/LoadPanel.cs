@@ -111,6 +111,7 @@ namespace PAO.UI
 
         [Tooltip("预览区：缩略图")]
         [SerializeField] private Image m_PreviewThumbnail;
+        private TMPro.TMP_Text m_StatusLabel;
 
         [Header("按钮")]
         [Tooltip("「读取此记录」按钮")]
@@ -232,6 +233,8 @@ namespace PAO.UI
                 m_Root = gameObject;
             }
 
+            EnsurePreviewControls();
+
             if (m_LoadButton != null)
             {
                 m_LoadButton.onClick.RemoveListener(OnLoadButtonClicked);
@@ -260,7 +263,6 @@ namespace PAO.UI
                     }
 
                     int index = i;   // 闭包捕获：不能用循环变量本身
-                    slot.button.onClick.RemoveAllListeners();
                     slot.button.onClick.AddListener(delegate { SelectSlot(index); });
                 }
             }
@@ -268,9 +270,9 @@ namespace PAO.UI
 
         private void Update()
         {
-            if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (m_IsOpen)
             {
-                Close();
+                UiEscapeRouter.Handle();
             }
         }
 
@@ -298,6 +300,8 @@ namespace PAO.UI
             {
                 SettingsPanel.Instance.Close();
             }
+            if (LevelPathPanel.Instance != null && LevelPathPanel.Instance.IsOpen) LevelPathPanel.Instance.Close();
+            if (LevelSelectPanel.Instance != null && LevelSelectPanel.Instance.IsOpen) LevelSelectPanel.Instance.Close();
 
             m_IsOpen = true;
             m_Root.SetActive(true);
@@ -332,6 +336,7 @@ namespace PAO.UI
 
             SetMenuButtonsEnabled(true);
             MenuButton.ResetNavigationState();
+            UiEscapeRouter.SelectMenuButton(m_MenuButtons);
 
             RaiseChanged();
         }
@@ -382,7 +387,7 @@ namespace PAO.UI
                 {
                     view.nameLabel.text = hasData
                         ? (string.IsNullOrEmpty(data.displayName) ? SaveSystem.DefaultNameForSlot(i) : data.displayName)
-                        : m_EmptySlotName;
+                        : (SaveSystem.HasSlot(i) ? "损坏记录" : m_EmptySlotName);
                 }
 
                 if (view.thumbnail != null)
@@ -464,10 +469,17 @@ namespace PAO.UI
 
         private void RefreshLoadButton()
         {
+            string error;
+            bool canLoad = SaveSystem.CanRestore(m_SelectedData, out error);
             if (m_LoadButton != null)
             {
-                // 空槽不能读取
-                m_LoadButton.interactable = m_SelectedData != null;
+                m_LoadButton.interactable = canLoad;
+            }
+            if (m_StatusLabel != null)
+            {
+                m_StatusLabel.text = m_SelectedData == null
+                    ? (m_SelectedSlot >= 0 && SaveSystem.HasSlot(m_SelectedSlot) ? "存档无效或已损坏" : "选择一条存档")
+                    : (canLoad ? string.Empty : error);
             }
         }
 
@@ -483,31 +495,84 @@ namespace PAO.UI
         }
 
         /// <summary>
-        /// 读取当前选中的槽。成功返回 true。
-        /// 读取会把数据抛给 <see cref="SlotLoaded"/> 与 <see cref="SaveSystem.SlotLoaded"/>，
-        /// 具体「进游戏 / 传送玩家」由游戏侧订阅后处理，这里不越权。
+        /// 读取当前选中的槽。先校验，再切换场景并恢复玩家位置。
+        /// 成功接受读档请求时返回 true；场景加载后 SaveSystem 会发出全局事件。
         /// </summary>
         public bool LoadSelected()
         {
-            if (m_SelectedData == null)
+            string error;
+            if (!SaveSystem.CanRestore(m_SelectedData, out error))
             {
-                Debug.LogWarning("[LoadPanel] 选中的是空槽，无法读取。");
+                ShowError(error);
                 return false;
             }
 
             SaveSlotData data = m_SelectedData;
             Debug.Log("[LoadPanel] 读取存档：" + data.displayName + " / " + data.SavedAtText);
 
-            if (SlotLoaded != null)
-            {
-                SlotLoaded(data);
-            }
-
-            SaveSystem.NotifyLoaded(data);
-
-            // 读完先回主菜单；是否立即加载场景由订阅方决定
+            if (SlotLoaded != null) SlotLoaded(data);
             Close();
+            if (!SaveSystem.Restore(data, out error))
+            {
+                Open();
+                ShowError(error);
+                return false;
+            }
             return true;
+        }
+
+        private void ShowError(string error)
+        {
+            if (m_StatusLabel != null) m_StatusLabel.text = error;
+            Debug.LogWarning("[LoadPanel] " + error, this);
+        }
+
+        // The current Menu scene contains slots but no preview labels or confirmation button.
+        // Fill those controls at runtime so its existing layout can actually load a record.
+        private void EnsurePreviewControls()
+        {
+            if (m_PreviewName == null) m_PreviewName = CreateText("存档名称", new Vector2(650f, 120f));
+            if (m_PreviewTime == null) m_PreviewTime = CreateText("保存时间", new Vector2(650f, 45f));
+            if (m_PreviewPosition == null) m_PreviewPosition = CreateText("恢复位置", new Vector2(650f, -30f));
+            if (m_StatusLabel == null) m_StatusLabel = CreateText("读档提示", new Vector2(650f, -195f));
+
+            if (m_LoadButton != null) return;
+            GameObject go = new GameObject("读取此记录", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(m_Root.transform, false);
+            RectTransform rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(300f, 76f);
+            rect.anchoredPosition = new Vector2(650f, -350f);
+            Image background = go.GetComponent<Image>();
+            background.color = new Color(0.65f, 0.88f, 0.91f, 1f);
+            m_LoadButton = go.GetComponent<Button>();
+            m_LoadButton.targetGraphic = background;
+            TMPro.TMP_Text label = CreateText("读取按钮文字", Vector2.zero, go.transform);
+            label.text = "读取此记录";
+            label.alignment = TMPro.TextAlignmentOptions.Center;
+            ((RectTransform)label.transform).anchorMin = Vector2.zero;
+            ((RectTransform)label.transform).anchorMax = Vector2.one;
+            ((RectTransform)label.transform).offsetMin = Vector2.zero;
+            ((RectTransform)label.transform).offsetMax = Vector2.zero;
+            label.raycastTarget = false;
+        }
+
+        private TMPro.TMP_Text CreateText(string name, Vector2 position, Transform parent = null)
+        {
+            GameObject go = new GameObject(name, typeof(RectTransform), typeof(TMPro.TextMeshProUGUI));
+            go.transform.SetParent(parent != null ? parent : m_Root.transform, false);
+            RectTransform rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(500f, 60f);
+            rect.anchoredPosition = position;
+            TMPro.TMP_Text text = go.GetComponent<TMPro.TextMeshProUGUI>();
+            text.font = m_Slots != null && m_Slots.Length > 0 && m_Slots[0] != null && m_Slots[0].nameLabel != null
+                ? m_Slots[0].nameLabel.font : TMPro.TMP_Settings.defaultFontAsset;
+            text.fontSize = 32f;
+            text.color = new Color(0.15f, 0.35f, 0.4f, 1f);
+            text.alignment = TMPro.TextAlignmentOptions.MidlineLeft;
+            text.raycastTarget = false;
+            return text;
         }
 
         // ==================== 内部 ====================

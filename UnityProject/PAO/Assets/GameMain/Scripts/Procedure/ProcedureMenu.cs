@@ -5,8 +5,8 @@ using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedure
 namespace PAO
 {
     /// <summary>
-    /// 主菜单流程。
-    /// 等待玩家点击「开始游戏」。
+    /// GameFramework 流程脚手架。当前实际主菜单由 Menu.unity 与 StartGameBtn 驱动。
+    /// 若以后切换到框架流程，需要先迁移场景按钮入口，避免两个入口并存。
     /// </summary>
     public class ProcedureMenu : ProcedureBase
     {
@@ -16,19 +16,14 @@ namespace PAO
 
             Log.Info("[ProcedureMenu] 进入主菜单");
 
-            // TODO 打开主菜单界面：
-            // GameEntry.GetComponent<UIComponent>().OpenUIForm("MenuForm", "MainMenu");
+            // Menu.unity is the current UI owner. Do not open a second menu here.
         }
 
         protected override void OnUpdate(ProcedureOwner procedureOwner, float elapseSeconds, float realElapseSeconds)
         {
             base.OnUpdate(procedureOwner, elapseSeconds, realElapseSeconds);
 
-            // TODO 玩家点击「开始游戏」后切换到游戏流程：
-            // ChangeState<ProcedureMain>(procedureOwner);
-            //
-            // 也可以在这里监听框架事件，例如：
-            // GameEntry.GetComponent<EventComponent>().Subscribe(StartGameEventArgs.EventId, OnStartGame);
+            // Scene buttons perform the current transition to cs.unity.
         }
     }
 }

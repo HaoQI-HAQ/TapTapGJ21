@@ -103,6 +103,15 @@ namespace PAO
             get { return s_DisplayNames[(int)Current]; }
         }
 
+        /// <summary>暂停菜单打开时隐藏左下角的当前类型提示，关闭后恢复。</summary>
+        public void SetLabelVisible(bool visible)
+        {
+            if (m_Label != null)
+            {
+                m_Label.gameObject.SetActive(visible);
+            }
+        }
+
         private void Awake()
         {
             Instance = this;
