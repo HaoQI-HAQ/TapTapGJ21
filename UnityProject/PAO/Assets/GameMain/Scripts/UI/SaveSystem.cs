@@ -134,9 +134,10 @@ namespace PAO.UI
         /// <summary>读取一个槽位。不存在或损坏时返回 null。</summary>
         public static SaveSlotData LoadSlot(int slot)
         {
+            string path = PathForSlot(slot);
+
             try
             {
-                string path = PathForSlot(slot);
                 if (!File.Exists(path))
                 {
                     return null;
@@ -225,12 +226,6 @@ namespace PAO.UI
         /// </summary>
         public static bool SaveCurrentState(int slot, Transform player, string progress = null)
         {
-            if (player == null)
-            {
-                Debug.LogError("[SaveSystem] 没有玩家对象，无法保存可恢复的位置。");
-                return false;
-            }
-
             SaveSlotData data = new SaveSlotData
             {
                 slot = slot,
@@ -240,10 +235,13 @@ namespace PAO.UI
                 progress = progress ?? string.Empty
             };
 
-            Vector3 p = player.position;
-            data.posX = p.x;
-            data.posY = p.y;
-            data.posZ = p.z;
+            if (player != null)
+            {
+                Vector3 p = player.position;
+                data.posX = p.x;
+                data.posY = p.y;
+                data.posZ = p.z;
+            }
 
             return SaveSlot(data);
         }
@@ -267,108 +265,6 @@ namespace PAO.UI
             {
                 SlotLoaded(data);
             }
-        }
-
-        /// <summary>Validate a saved record before changing scenes.</summary>
-        public static bool CanRestore(SaveSlotData data, out string error)
-        {
-            if (data == null || !data.IsValid || string.IsNullOrEmpty(data.sceneName))
-            {
-                error = "存档缺少场景或保存时间，无法读取。";
-                return false;
-            }
-
-            if (float.IsNaN(data.posX) || float.IsInfinity(data.posX) ||
-                float.IsNaN(data.posY) || float.IsInfinity(data.posY) ||
-                float.IsNaN(data.posZ) || float.IsInfinity(data.posZ))
-            {
-                error = "存档位置数据无效，无法读取。";
-                return false;
-            }
-
-            if (!Application.CanStreamedLevelBeLoaded(data.sceneName))
-            {
-                error = "存档场景“" + data.sceneName + "”不在构建列表中。";
-                return false;
-            }
-
-            error = null;
-            return true;
-        }
-
-        /// <summary>Load the saved scene, then move its player after the scene has loaded.</summary>
-        public static bool Restore(SaveSlotData data, out string error)
-        {
-            if (!CanRestore(data, out error)) return false;
-
-            SceneManager.sceneLoaded -= OnRestoreSceneLoaded;
-            m_PendingRestore = data;
-            SceneManager.sceneLoaded += OnRestoreSceneLoaded;
-            float previousTimeScale = Time.timeScale;
-            Time.timeScale = 1f;
-
-            try
-            {
-                SceneManager.LoadScene(data.sceneName);
-                return true;
-            }
-            catch (Exception e)
-            {
-                SceneManager.sceneLoaded -= OnRestoreSceneLoaded;
-                m_PendingRestore = null;
-                Time.timeScale = previousTimeScale;
-                error = "加载存档场景失败：" + e.Message;
-                return false;
-            }
-        }
-
-        private static SaveSlotData m_PendingRestore;
-
-        private static void OnRestoreSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            if (m_PendingRestore == null || scene.name != m_PendingRestore.sceneName) return;
-
-            SceneManager.sceneLoaded -= OnRestoreSceneLoaded;
-            SaveSlotData data = m_PendingRestore;
-            m_PendingRestore = null;
-
-            PlayerController player = UnityEngine.Object.FindObjectOfType<PlayerController>();
-            if (player == null)
-            {
-                Debug.LogError("[SaveSystem] 场景“" + scene.name + "”没有 PlayerController，无法恢复玩家位置。");
-                RestoreNotice.Show("已加载“" + scene.name + "”，但场景中没有玩家，位置无法恢复。");
-                return;
-            }
-
-            CharacterController controller = player.GetComponent<CharacterController>();
-            if (controller != null) controller.enabled = false;
-            player.transform.position = new Vector3(data.posX, data.posY, data.posZ);
-            if (controller != null) controller.enabled = true;
-            NotifyLoaded(data);
-        }
-    }
-
-    public sealed class RestoreNotice : MonoBehaviour
-    {
-        private string m_Message;
-        private float m_ExpiresAt;
-
-        public static void Show(string message)
-        {
-            GameObject go = new GameObject("读档提示");
-            RestoreNotice notice = go.AddComponent<RestoreNotice>();
-            notice.m_Message = message;
-            notice.m_ExpiresAt = Time.unscaledTime + 8f;
-        }
-
-        private void Update()
-        {
-            if (Time.unscaledTime >= m_ExpiresAt) Destroy(gameObject);
-        }
-
-        private void OnGUI()
-        {
-            GUI.Box(new Rect(Screen.width * 0.2f, 24f, Screen.width * 0.6f, 64f), m_Message);
         }
     }
 }

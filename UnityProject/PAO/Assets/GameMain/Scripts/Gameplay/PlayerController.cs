@@ -198,7 +198,11 @@ namespace PAO
             UpdateLookInput();
             UpdateMove();
 
-            // Esc and cursor state are owned by the pause UI.
+            // Esc 解锁光标，方便在编辑器里退出 Play
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                SetCursorLocked(false);
+            }
         }
 
         /// <summary>

@@ -103,19 +103,19 @@ namespace PAO.UI
         [SerializeField] private float m_IdleScale = 1f;
 
         [Tooltip("当前节点的底图颜色")]
-        [SerializeField] private Color m_FocusDiscColor = new Color(0.38f, 0.71f, 0.75f, 0.96f);
+        [SerializeField] private Color m_FocusDiscColor = new Color(0.55f, 0.85f, 0.90f, 0.95f);
 
         [Tooltip("普通节点的底图颜色")]
-        [SerializeField] private Color m_IdleDiscColor = new Color(0.80f, 0.88f, 0.89f, 0.88f);
+        [SerializeField] private Color m_IdleDiscColor = new Color(0.72f, 0.87f, 0.92f, 0.85f);
 
         [Tooltip("内圈小圆的颜色")]
-        [SerializeField] private Color m_InnerColor = new Color(0.24f, 0.61f, 0.67f, 1f);
+        [SerializeField] private Color m_InnerColor = new Color(0.16f, 0.59f, 0.66f, 1f);
 
         [Tooltip("当前节点的文字颜色")]
-        [SerializeField] private Color m_FocusLabelColor = new Color(0.18f, 0.48f, 0.54f, 1f);
+        [SerializeField] private Color m_FocusLabelColor = new Color(0.16f, 0.59f, 0.66f, 1f);
 
         [Tooltip("普通节点的文字颜色")]
-        [SerializeField] private Color m_IdleLabelColor = new Color(0.39f, 0.49f, 0.54f, 0.88f);
+        [SerializeField] private Color m_IdleLabelColor = new Color(0.25f, 0.45f, 0.50f, 0.85f);
 
         [Tooltip("距离中心多远开始完全淡出（按节点格数算）")]
         [SerializeField] private float m_FadeDistance = 3.2f;
@@ -236,16 +236,19 @@ namespace PAO.UI
 
             if (m_PrevButton != null)
             {
+                m_PrevButton.onClick.RemoveAllListeners();
                 m_PrevButton.onClick.AddListener(Previous);
             }
 
             if (m_NextButton != null)
             {
+                m_NextButton.onClick.RemoveAllListeners();
                 m_NextButton.onClick.AddListener(Next);
             }
 
             if (m_StartButton != null)
             {
+                m_StartButton.onClick.RemoveAllListeners();
                 m_StartButton.onClick.AddListener(EnterCurrent);
             }
 
@@ -257,6 +260,7 @@ namespace PAO.UI
                 }
 
                 int index = i;
+                m_Nodes[i].button.onClick.RemoveAllListeners();
                 m_Nodes[i].button.onClick.AddListener(delegate { OnNodeClicked(index); });
             }
         }
@@ -281,7 +285,6 @@ namespace PAO.UI
             {
                 LoadPanel.Instance.Close();
             }
-            if (LevelSelectPanel.Instance != null && LevelSelectPanel.Instance.IsOpen) LevelSelectPanel.Instance.Close();
 
             m_IsOpen = true;
             m_Root.SetActive(true);
@@ -292,8 +295,6 @@ namespace PAO.UI
             // 直接跳到「上次玩过的那一关」，没有就停在默认格
             m_Index = ResolveStartIndex();
             SnapToIndex();
-            if (m_Nodes != null && m_Index < m_Nodes.Length && m_Nodes[m_Index] != null)
-                UiEscapeRouter.Select(m_Nodes[m_Index].button);
         }
 
         public void Close()
@@ -312,7 +313,6 @@ namespace PAO.UI
 
             SetMenuButtonsEnabled(true);
             MenuButton.ResetNavigationState();
-            UiEscapeRouter.SelectMenuButton(m_MenuButtons);
 
             if (OpenStateChanged != null)
             {
@@ -463,7 +463,6 @@ namespace PAO.UI
             }
 
             HandleInput();
-            if (!m_IsOpen) return;
 
             float dt = Time.unscaledDeltaTime * m_LerpSpeed;
 
@@ -601,7 +600,7 @@ namespace PAO.UI
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                UiEscapeRouter.Handle();
+                Close();
                 return;
             }
 

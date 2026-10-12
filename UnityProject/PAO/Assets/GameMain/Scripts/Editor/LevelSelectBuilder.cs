@@ -28,10 +28,10 @@ namespace PAO.EditorTools
         private const string kSceneFolder = "Assets/GameMain/Scenes/";
         private const string kAutoBuildKey = "PAO.LevelSelect.AutoBuilt.v1";
 
-        private static readonly Color kPanelBg = new Color(0.975f, 0.965f, 0.94f, 1f);
-        private static readonly Color kCardBg = new Color(1f, 1f, 1f, 0.86f);
-        private static readonly Color kTextDark = new Color(0.29f, 0.37f, 0.43f, 1f);
-        private static readonly Color kHighlight = new Color(0.34f, 0.68f, 0.73f, 0.9f);
+        private static readonly Color kPanelBg = new Color(0.62f, 0.88f, 0.97f, 1f);
+        private static readonly Color kCardBg = new Color(1f, 1f, 1f, 0.85f);
+        private static readonly Color kTextDark = new Color(0.20f, 0.20f, 0.20f, 1f);
+        private static readonly Color kHighlight = new Color(0.45f, 0.83f, 0.87f, 0.9f);
 
         [MenuItem("PAO/UI/构建关卡选择面板", false, 22)]
         public static void BuildFromMenu()
