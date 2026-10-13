@@ -25,7 +25,7 @@ namespace PAO.UI.V2
         {
             if (config == null || UISettings.Current == null) return;
             Text label = GetComponent<Text>(); label.fontSize = Mathf.RoundToInt(baseSize * UISettings.Current.textScale);
-            if (themed) label.color = UISettings.Current.highContrast ? Color.black : config.ink;
+            if (themed) label.color = UISettings.Current.highContrast ? Color.black : config.text;
             LayoutElement layout = GetComponent<LayoutElement>();
             if (layout != null) layout.minHeight = label.fontSize * 1.6f;
         }

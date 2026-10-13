@@ -20,7 +20,7 @@ namespace PAO.UI.V2
     public static class UIAbilityColor
     {
         private static readonly Color32[][] palettes = {
-                new[] { new Color32(47, 111, 120, 255), new Color32(47, 111, 120, 255), new Color32(47, 111, 120, 255) },
+                new[] { new Color32(111, 235, 241, 255), new Color32(171, 157, 255, 255), new Color32(255, 153, 197, 255) },
                 new[] { new Color32(0, 114, 178, 255), new Color32(230, 159, 0, 255), new Color32(204, 121, 167, 255) },
                 new[] { new Color32(0, 114, 178, 255), new Color32(213, 94, 0, 255), new Color32(204, 121, 167, 255) },
                 new[] { new Color32(0, 158, 115, 255), new Color32(213, 94, 0, 255), new Color32(204, 121, 167, 255) }

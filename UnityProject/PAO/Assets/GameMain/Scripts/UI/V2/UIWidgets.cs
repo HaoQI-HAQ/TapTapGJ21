@@ -10,7 +10,22 @@ namespace PAO.UI.V2
     {
         public readonly UIConfig Config;
         public UIWidgets(UIConfig config) { Config = config; }
-        public Color Ink { get { return UISettings.Current.highContrast ? Color.black : Config.ink; } }
+        public Color Ink { get { return UISettings.Current.highContrast ? Color.black : Config.text; } }
+        private static Font interfaceFont;
+        private Font InterfaceFont
+        {
+            get
+            {
+                if (interfaceFont == null)
+                {
+                    string[] available = Font.GetOSInstalledFontNames();
+                    string name = Array.Find(available, n => n == "Microsoft YaHei UI") ?? Array.Find(available, n => n == "Microsoft YaHei") ??
+                        Array.Find(available, n => n == "Noto Sans CJK SC") ?? Array.Find(available, n => n == "PingFang SC");
+                    if (name != null) interfaceFont = Font.CreateDynamicFontFromOSFont(name, 32);
+                }
+                return interfaceFont != null ? interfaceFont : Config.font;
+            }
+        }
 
         public RectTransform Rect(string name, Transform parent)
         {
@@ -39,7 +54,7 @@ namespace PAO.UI.V2
             TextAnchor alignment = TextAnchor.MiddleLeft)
         {
             Text label = Rect("Text", parent).gameObject.AddComponent<Text>();
-            label.font = Config.font != null ? Config.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = size >= 36 && Config.font != null ? Config.font : InterfaceFont != null ? InterfaceFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.text = text; label.fontSize = Mathf.RoundToInt(size * UISettings.Current.textScale);
             label.color = color ?? Ink; label.alignment = alignment;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -83,8 +98,15 @@ namespace PAO.UI.V2
 
         public Button Button(Transform parent, string text, Action click, bool primary = false, bool enabled = true, bool danger = false)
         {
-            Color emphasis = danger ? (UISettings.Current.highContrast ? Color.black : new Color32(148, 75, 54, 255)) : Config.teal;
-            Image surface = Surface(text, parent, primary ? emphasis : Config.mist, true);
+            Image surface = Surface(text, parent, Color.white, true);
+            var gradient = surface.gameObject.AddComponent<UIFluidGradient>();
+            gradient.top = danger ? new Color32(255, 225, 209, 255) : primary ? UIDesignPalette.PrimaryTop : UIDesignPalette.ControlTop;
+            gradient.bottom = danger ? new Color32(247, 182, 151, 255) : primary ? UIDesignPalette.PrimaryBottom : UIDesignPalette.ControlBottom;
+            gradient.focusTint = new Color32(208, 237, 221, 255);
+            gradient.contrastDark = false;
+            var edge = surface.gameObject.AddComponent<Outline>();
+            edge.effectColor = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .16f);
+            edge.effectDistance = new Vector2(1, -1);
             Button button = surface.gameObject.AddComponent<Button>();
             button.targetGraphic = surface; button.interactable = enabled;
             ColorBlock colors = button.colors;
@@ -94,15 +116,51 @@ namespace PAO.UI.V2
             colors.pressedColor = new Color(0.93f, 0.93f, 0.93f);
             colors.disabledColor = new Color(1, 1, 1, 0.55f);
             colors.fadeDuration = 0.1f; button.colors = colors;
-            Text label = Label(surface.transform, text, 24, primary ? Color.white : Ink, TextAnchor.MiddleCenter);
+            Text label = Label(surface.transform, text, 24, Config.ink, TextAnchor.MiddleCenter);
             Stretch(label.rectTransform); label.rectTransform.offsetMin = new Vector2(20, 4);
             label.rectTransform.offsetMax = new Vector2(-20, -4);
             Size(surface.transform, 72, -1, 1);
             button.onClick.AddListener(() => { if (click != null) click(); });
-            surface.gameObject.AddComponent<UIFocusRing>().Configure(emphasis);
+            surface.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
             surface.gameObject.AddComponent<UIAdaptiveButton>();
-            surface.gameObject.AddComponent<UIButtonFeedback>();
+            surface.gameObject.AddComponent<UIButtonFeedback>().Configure(Config, gradient);
             return button;
+        }
+
+        public Button IconButton(Transform parent, string text, UIGuideSymbol symbol, Action click, bool primary = false, bool enabled = true, bool danger = false)
+        {
+            Button button = Button(parent, text, click, primary, enabled, danger);
+            UIGuideGraphic icon = Rect("Action symbol", button.transform).gameObject.AddComponent<UIGuideGraphic>();
+            icon.Symbol = symbol; icon.color = Ink; icon.raycastTarget = false;
+            icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0, .5f);
+            icon.rectTransform.anchoredPosition = new Vector2(34, 0); icon.rectTransform.sizeDelta = new Vector2(30, 30);
+            Text label = button.GetComponentInChildren<Text>(); label.alignment = TextAnchor.MiddleLeft;
+            label.rectTransform.offsetMin = new Vector2(66, 8); label.rectTransform.offsetMax = new Vector2(-24, -8);
+            return button;
+        }
+
+        public RectTransform Grid(string name, Transform parent, int columns = 2, float minimumWidth = 400)
+        {
+            RectTransform rect = Rect(name, parent);
+            UIFlowLayout layout = rect.gameObject.AddComponent<UIFlowLayout>(); layout.maxColumns = columns; layout.minimumCellWidth = minimumWidth;
+            return rect;
+        }
+
+        public RectTransform Card(string name, Transform parent, bool highlighted = false)
+        {
+            RectTransform rect = Column(name, parent, 24, 12);
+            Image image = rect.gameObject.AddComponent<Image>(); image.sprite = Config.round; image.type = Image.Type.Sliced;
+            image.color = highlighted ? UIDesignPalette.Cream : UIDesignPalette.ControlTop; image.raycastTarget = false;
+            Outline edge = rect.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(.5f, .38f, .2f, .12f); edge.effectDistance = new Vector2(1, -1);
+            return rect;
+        }
+
+        public void Emblem(Transform parent, UIGuideSymbol symbol, string caption, Color? accent = null)
+        {
+            RectTransform row = Row("Card emblem", parent, 12); Size(row, 48);
+            UIGuideGraphic icon = Rect("Card symbol", row).gameObject.AddComponent<UIGuideGraphic>();
+            icon.Symbol = symbol; icon.color = accent ?? Config.teal; icon.raycastTarget = false; Size(icon.transform, 40, 40);
+            Label(row, caption, 20, accent ?? Config.teal);
         }
 
         public RectTransform Scroll(Transform parent)
@@ -110,6 +168,7 @@ namespace PAO.UI.V2
             RectTransform root = Rect("Scroll", parent);
             var scroll = root.gameObject.AddComponent<ScrollRect>();
             scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 60;
             Image background = root.gameObject.AddComponent<Image>(); background.color = new Color(1, 1, 1, 0.001f);
             RectTransform viewport = Rect("Viewport", root); Stretch(viewport);
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -135,7 +194,7 @@ namespace PAO.UI.V2
             Image fill = Surface("Fill", fillArea, Config.teal, true); Stretch(fill.rectTransform);
             RectTransform handleArea = Rect("Handle area", track); Stretch(handleArea);
             handleArea.offsetMin = new Vector2(14, 0); handleArea.offsetMax = new Vector2(-14, 0);
-            Image handle = Surface("Handle", handleArea, Config.ink, true);
+            Image handle = Surface("Handle", handleArea, Config.text, true);
             // Slider drives the handle's horizontal anchor and stretches its vertical anchors.
             handle.rectTransform.anchorMin = Vector2.zero; handle.rectTransform.anchorMax = new Vector2(0, 1);
             handle.rectTransform.sizeDelta = new Vector2(28, 0);
@@ -207,15 +266,38 @@ namespace PAO.UI.V2
         public Action BeforeClose;
         public Action Rebuild;
         public bool CanClose = true;
+        public UIPageDesign Design;
         private CanvasGroup group;
         private Sequence transition;
+        private UIMotionProfile profile = new UIMotionProfile();
+        public void Configure(UIMotionProfile motion) { profile = motion ?? new UIMotionProfile(); }
 
         public void Show()
         {
             Kill(); group = GetComponent<CanvasGroup>();
             group.alpha = 0; group.blocksRaycasts = true; group.interactable = true;
             transition = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
-            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? 0.12f : 0.22f));
+            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? .12f : profile.pageEnter));
+            transition.OnKill(() => transition = null);
+            if (!UISettings.Current.reducedMotion && Content != null)
+            {
+                CanvasGroup contentGroup = Content.GetComponent<CanvasGroup>();
+                if (contentGroup == null) contentGroup = Content.gameObject.AddComponent<CanvasGroup>();
+                contentGroup.alpha = 0;
+                transition.Join(contentGroup.DOFade(1, profile.pageEnter * .75f).SetDelay(.04f));
+                if (Footer != null)
+                {
+                    CanvasGroup footerGroup = Footer.GetComponent<CanvasGroup>();
+                    if (footerGroup == null) footerGroup = Footer.gameObject.AddComponent<CanvasGroup>();
+                    footerGroup.alpha = 0;
+                    transition.Join(footerGroup.DOFade(1, profile.pageEnter * .65f).SetDelay(.08f));
+                }
+            }
+        }
+        public void Resonate(bool pressed = false)
+        {
+            UIMenuResonance hero = GetComponentInChildren<UIMenuResonance>();
+            if (hero != null) hero.Respond(pressed);
         }
         public void Hide() { Kill(); gameObject.SetActive(false); }
         public void Refresh() { Canvas.ForceUpdateCanvases(); }
@@ -235,7 +317,12 @@ namespace PAO.UI.V2
             foreach (Selectable control in GetComponentsInChildren<Selectable>())
                 if (control.IsActive() && control.IsInteractable()) { control.Select(); return; }
         }
-        private void Kill() { if (transition != null) transition.Kill(); transition = null; }
+        private void Kill()
+        {
+            if (transition != null) transition.Kill(); transition = null;
+            if (Content != null && Content.GetComponent<CanvasGroup>() != null) Content.GetComponent<CanvasGroup>().alpha = 1;
+            if (Footer != null && Footer.GetComponent<CanvasGroup>() != null) Footer.GetComponent<CanvasGroup>().alpha = 1;
+        }
         private void OnDisable() { Kill(); }
         private void OnDestroy() { Kill(); }
     }

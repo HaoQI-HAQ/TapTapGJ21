@@ -25,14 +25,17 @@ namespace PAO.UI.V2
         public void ShowPause()
         {
             if (!IsGameplay || IsBlockingGameplay) return;
-            UIPage page = Push(T("在这里，停留片刻", "Take a moment"), ChapterName(lastScene));
+            UIPage page = Push(T("在这里，停留片刻", "Take a moment"), ChapterName(lastScene), false, UIPageDesign.Pause);
             page.Rebuild = ShowPause;
-            ui.Button(page.Content, T("继续探索", "Resume"), Pop, true);
-            ui.Button(page.Content, T("章节路径", "Chapter path"), ShowChapters);
-            ui.Button(page.Content, T("保存与读取记录", "Save & load records"), ShowSaves);
-            ui.Button(page.Content, T("游戏设置", "Settings"), ShowSettings);
-            ui.Button(page.Content, T("意识碎片", "Memory journal"), ShowJournal);
-            ui.Button(page.Content, T("操作与教学", "Controls & tutorials"), ShowHelp);
+            RectTransform rest = ui.Card("Resting current", page.Content, true);
+            ui.Emblem(rest, UIGuideSymbol.Pause, T("水流在此停留", "THE CURRENT RESTS"));
+            ui.IconButton(rest, T("继续探索", "Resume"), UIGuideSymbol.Arrow, Pop, true);
+            RectTransform destinations = ui.Grid("Pause destinations", page.Content, 2, 360);
+            ui.IconButton(destinations, T("章节路径", "Chapter path"), UIGuideSymbol.Goal, ShowChapters);
+            ui.IconButton(destinations, T("保存与读取记录", "Save & load records"), UIGuideSymbol.Journal, ShowSaves);
+            ui.IconButton(destinations, T("游戏设置", "Settings"), UIGuideSymbol.Steer, ShowSettings);
+            ui.IconButton(destinations, T("意识碎片", "Memory journal"), UIGuideSymbol.Memory, ShowJournal);
+            ui.IconButton(destinations, T("操作与教学", "Controls & tutorials"), UIGuideSymbol.Move, ShowHelp);
             ui.Button(page.Footer, T("重试本章", "Retry chapter"), () => Confirm(
                 T("重新开始本章？", "Restart this chapter?"),
                 T("本章尚未保存的变化会重置。", "Unsaved changes in this chapter will be reset."), () => LoadScene(lastScene)));
@@ -46,14 +49,14 @@ namespace PAO.UI.V2
         public void ShowChapters()
         {
             UIPage page = Push(T("章节路径", "Chapter path"),
-                T("沿着水流，一次抵达一个新的意识层。", "Follow the current, one layer of consciousness at a time."));
+                T("沿着水流，一次抵达一个新的意识层。", "Follow the current, one layer of consciousness at a time."), false, UIPageDesign.Chapters);
             page.Rebuild = ShowChapters;
             if (Config.chapters.Length == 0) ui.Label(page.Content, T("暂无章节", "No chapters yet"));
             SaveSlotData latest = !IsGameplay ? ReadMenuRecords().latest : null;
             string currentScene = IsGameplay ? lastScene : latest != null ? latest.sceneName : "";
             int completedCount = 0;
             foreach (ChapterDefinition chapter in Config.chapters) if (UIRunState.Progress.completed.Contains(chapter.scene)) completedCount++;
-            ui.Label(page.Content, T("已完成水域 ", "Completed waters ") + completedCount + " / " + Config.chapters.Length, 20);
+            ui.Emblem(page.Content, UIGuideSymbol.Current, T("已完成水域 ", "Completed waters ") + completedCount + " / " + Config.chapters.Length);
             for (int i = 0; i < Config.chapters.Length; i++)
             {
                 int index = i; ChapterDefinition chapter = Config.chapters[i];
@@ -63,7 +66,14 @@ namespace PAO.UI.V2
                 bool available = Application.CanStreamedLevelBeLoaded(chapter.scene);
                 string state = completed ? T("已完成", "Completed") : current ? T("当前水域", "Current") :
                     unlocked ? T("可探索", "Available") : T("未解锁", "Locked");
-                var card = ui.Column("Chapter " + i, page.Content, 20, 8);
+                RectTransform landmark = ui.Row("Chapter landmark " + i, page.Content, 24);
+                Image node = ui.Rect("Route node " + i, landmark).gameObject.AddComponent<UICircleImage>();
+                node.color = current ? UIDesignPalette.Gold : completed ? new Color32(213, 237, 222, 255) : UIDesignPalette.Cream;
+                UIWidgets.Size(node.transform, 104, 104);
+                Text number = ui.Label(node.transform, (i + 1).ToString("00"), 36, Config.ink, TextAnchor.MiddleCenter);
+                UIWidgets.Stretch(number.rectTransform);
+                var card = ui.Card("Chapter " + i, landmark, current);
+                UIWidgets.Size(card, -1, -1, 1);
                 StyleRecordCard(card, current);
                 ui.Label(card, (i + 1).ToString("00") + "  ·  " + chapter.title + "  /  " + state, 28);
                 ui.Label(card, chapter.description, 23);
@@ -74,7 +84,13 @@ namespace PAO.UI.V2
                     Action enter = () => { SaveOnNextEntry = true; LoadScene(Config.chapters[index].scene); };
                     Confirm(chapter.title, T("进入后从本章起点开始。当前探索中的变化会重置。", "Enter from the chapter's starting point. Changes in the current exploration will be reset."), enter);
                 }, current, unlocked && available);
-                if (i < Config.chapters.Length - 1) ui.Label(page.Content, "↓", 28, Config.teal, TextAnchor.MiddleCenter);
+                if (i < Config.chapters.Length - 1)
+                {
+                    RectTransform connector = ui.Rect("Route connector", page.Content); UIWidgets.Size(connector, 24);
+                    Image line = ui.Surface("Current line", connector, Config.teal); line.raycastTarget = false;
+                    line.rectTransform.anchorMin = line.rectTransform.anchorMax = new Vector2(0, .5f);
+                    line.rectTransform.anchoredPosition = new Vector2(52, 0); line.rectTransform.sizeDelta = new Vector2(2, 24);
+                }
             }
             ui.Button(page.Footer, T("返回", "Back"), Pop); Finish(page);
         }
@@ -82,23 +98,24 @@ namespace PAO.UI.V2
         public void ShowSaves()
         {
             UIPage page = Push(T("旅程记录", "Journey records"),
-                T("记录章节、位置与意识碎片。读取后将重新建立本章场景。", "Records keep chapters, position and memories. Loading rebuilds the chapter scene."));
+                T("记录章节、位置与意识碎片。", "Keep a chapter, a place and a memory."), false, UIPageDesign.Records);
             page.Rebuild = ShowSaves;
+            RectTransform records = ui.Grid("Record shelf", page.Content, 2, 440);
             for (int i = 0; i <= UIRunState.AutoSlot; i++)
             {
                 int slot = i; SaveSlotData data = SaveSystem.LoadSlot(i);
                 bool exists = SaveSystem.HasSlot(i), automatic = i == UIRunState.AutoSlot;
                 string name = automatic ? T("自动记录", "Automatic record") : T("记录 ", "Record ") + (i + 1);
-                RectTransform card = ui.Column(name, page.Content, 16, 8);
+                RectTransform card = ui.Card(name, records, automatic);
                 StyleRecordCard(card, automatic);
-                ui.Label(card, name, 28);
+                ui.Emblem(card, automatic ? UIGuideSymbol.Current : UIGuideSymbol.Journal, name);
                 ui.Label(card, data == null ? (exists ? T("记录无法读取，可尝试恢复备份。", "This record is unreadable. Try restoring its backup.") :
                     T("这里还没有留下记录。", "No record here yet.")) : ChapterName(data.sceneName) + "  ·  " + data.SavedAtText, 22);
                 if (data != null) ui.Label(card, T("意识碎片 ", "Memories ") + (data.runProgress != null ? data.runProgress.memories.Count : 0), 21);
                 if (data != null && !Application.CanStreamedLevelBeLoaded(data.sceneName))
                     ui.Label(card, T("记录所在的水域暂不可用。记录仍会保留。", "The recorded waters are unavailable. Your record is preserved."), 21);
                 if (automatic) ui.Label(card, T("章节开始、完成及返回主菜单时会更新。", "Updated when entering or completing a chapter and returning to the menu."), 18);
-                RectTransform actions = ui.Row("Record actions", card, 12);
+                RectTransform actions = ui.Grid("Record actions", card, 2, 140);
                 ui.Button(actions, T("读取", "Load"), () => Confirm(T("读取这份记录？", "Load this record?"),
                     T("当前尚未保存的探索会重置。", "Your unsaved exploration will be reset."), () => LoadScene(data.sceneName, data)),
                     false, data != null && Application.CanStreamedLevelBeLoaded(data.sceneName));
@@ -130,10 +147,11 @@ namespace PAO.UI.V2
 
         private void StyleRecordCard(RectTransform card, bool highlighted)
         {
-            Image surface = card.gameObject.AddComponent<Image>(); surface.color = highlighted ? Config.mist : Color.Lerp(Config.paper, Color.white, 0.45f);
+            Image surface = card.GetComponent<Image>(); if (surface == null) surface = card.gameObject.AddComponent<Image>();
+            surface.color = highlighted ? Config.mist : UIDesignPalette.ControlTop;
             surface.sprite = Config.round; surface.type = Image.Type.Sliced; surface.raycastTarget = false;
             if (!highlighted) return;
-            Image accent = ui.Surface("Current record accent", card, UISettings.Current.highContrast ? Color.black : Config.teal);
+            Image accent = ui.Surface("Current record accent", card, Config.teal);
             accent.raycastTarget = false; accent.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
             accent.rectTransform.anchorMin = Vector2.zero; accent.rectTransform.anchorMax = Vector2.up;
             accent.rectTransform.offsetMin = new Vector2(0, 16); accent.rectTransform.offsetMax = new Vector2(4, -16);
@@ -174,11 +192,10 @@ namespace PAO.UI.V2
 
         private void ShowCredits()
         {
-            UIPage page = Push(T("制作人员", "Credits"), T("每一段水流，都来自共同的创作。", "Every current begins with a shared creation."));
+            UIPage page = Push(T("制作人员", "Credits"), T("每一段水流，都来自共同的创作。", "Every current begins with a shared creation."), false, UIPageDesign.Credits);
             page.Rebuild = ShowCredits;
-            RectTransform card = ui.Column("Credits card", page.Content, 32, 16);
-            Image surface = card.gameObject.AddComponent<Image>(); surface.color = Config.mist;
-            surface.sprite = Config.round; surface.type = Image.Type.Sliced; surface.raycastTarget = false;
+            RectTransform card = ui.Card("Credits card", page.Content);
+            ui.Emblem(card, UIGuideSymbol.Current, T("共同留下的回响", "CREATED TOGETHER"));
             ui.Label(card, string.IsNullOrWhiteSpace(Config.credits) ?
                 T("感谢每一位参与创作与体验的朋友。", "Thank you to everyone who created and explored this world.") : Config.credits, 26);
             ui.Label(page.Content, T("感谢你在意识之海留下涟漪。", "Thank you for leaving a ripple in the sea of consciousness."), 22);

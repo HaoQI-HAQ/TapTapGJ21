@@ -175,6 +175,17 @@ namespace PAO
 
         private void LateUpdate()
         {
+            if (PAO.UI.V2.UIInput.UsesV2 && PAO.UI.V2.UIRuntime.Instance != null)
+            {
+                Bubble target = m_IsRiding || m_IsControlling ? m_RidingBubble : m_NearbyBubble;
+                if (target != null) PAO.UI.V2.UIRuntime.Instance.RequestInteractionCue(this,
+                    target.transform.position + Vector3.up * m_HintHeightOffset,
+                    m_IsRiding || m_IsControlling ? PAO.UI.V2.UIGuideSymbol.Exit :
+                        target.CanLaunchWithBomb ? PAO.UI.V2.UIGuideSymbol.Charge : PAO.UI.V2.UIGuideSymbol.Ride,
+                    m_IsControlling ? PAO.UI.V2.UIInput.Interact : PAO.UI.V2.UIInput.Ride,
+                    !m_IsRiding && !m_IsControlling && target.CanControl ? PAO.UI.V2.UIInput.Interact : -1,
+                    target.transform, m_IsRiding || m_IsControlling);
+            }
             // 只有 F 模式（人真的钻进泡泡）才把人钉过去。
             // E 模式人留在原地，相机自己会跟到泡泡上。
             if (!m_IsRiding || m_IsControlling || m_RidingBubble == null)
@@ -302,6 +313,7 @@ namespace PAO
         /// </summary>
         private void OnGUI()
         {
+            if (PAO.UI.V2.UIInput.UsesV2 && !PAO.UI.V2.UISettings.Current.detailedHints) return;
             Bubble target = m_IsRiding ? m_RidingBubble : m_NearbyBubble;
             if (target == null)
             {

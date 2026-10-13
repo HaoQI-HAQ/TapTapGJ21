@@ -23,19 +23,26 @@ namespace PAO.UI.V2
             if (other.GetComponentInParent<PlayerController>() == null) return;
             nearby = true;
             if (!requireInteract) Collect();
-            else if (!IsCollected && UIRuntime.Instance != null)
+            else if (!IsCollected && UIRuntime.Instance != null && UISettings.Current.detailedHints)
                 UIRuntime.Instance.Toast(UISettings.Text("拾起意识碎片 · ", "Collect a memory · ") + UIInput.Prompt(UIInput.Interact), false);
         }
         private void OnTriggerExit(Collider other)
-        { if (other.GetComponentInParent<PlayerController>() != null) nearby = false; }
+        { if (other.GetComponentInParent<PlayerController>() != null) { nearby = false; if (UIRuntime.Instance != null) UIRuntime.Instance.RemoveInteractionCue(this); } }
         private void Update()
-        { if (nearby && requireInteract && UIInput.Down(UIInput.Interact)) Collect(); }
+        {
+            if (!nearby || !requireInteract || IsCollected) return;
+            if (UIRuntime.Instance != null) UIRuntime.Instance.RequestInteractionCue(this, GetComponent<BoxCollider>().bounds.center + Vector3.up * .6f,
+                UIGuideSymbol.Memory, UIInput.Interact);
+            if (UIInput.Down(UIInput.Interact)) Collect();
+        }
+        private void OnDisable() { nearby = false; if (UIRuntime.Instance != null) UIRuntime.Instance.RemoveInteractionCue(this); }
         private bool IsCollected { get { return consumed || UIRunState.Progress.memories.Exists(m => m != null &&
             m.id == (dialogue != null ? dialogue.id + (dialogue.choices != null && dialogue.choices.Length > 0 ? ":choice" : "") : memory.id)); } }
         public void Collect()
         {
             UIRuntime runtime = UIRuntime.Instance;
             if (IsCollected || runtime == null || runtime.IsBlockingGameplay) return;
+            runtime.RemoveInteractionCue(this);
             consumed = dialogue == null;
             if (dialogue != null) runtime.ShowDialogue(dialogue);
             else runtime.CollectMemory(memory);

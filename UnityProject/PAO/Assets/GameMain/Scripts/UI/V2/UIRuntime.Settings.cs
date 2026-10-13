@@ -33,7 +33,7 @@ namespace PAO.UI.V2
             var session = new SettingsSession { original = UISettings.Current.Copy(), draft = UISettings.Current.Copy(),
                 quality = QualitySettings.GetQualityLevel(), width = Screen.width, height = Screen.height, mode = Screen.fullScreenMode };
             settingsSession = session;
-            session.page = Push(T("游戏设置", "Settings"), T("即时预览 · 应用后保存 · 返回撤销未保存的调整", "Live preview · Apply to save · Back discards unsaved changes"));
+            session.page = Push(T("游戏设置", "Settings"), T("即时预览 · 应用后保存 · 返回撤销未保存的调整", "Live preview · Apply to save · Back discards unsaved changes"), false, UIPageDesign.Settings);
             session.page.BeforeClose = () =>
             {
                 CancelBindingCapture(false);
@@ -50,7 +50,7 @@ namespace PAO.UI.V2
             session.tabs = ui.Row("Settings tabs", scroll.transform.parent, 10);
             session.tabs.SetSiblingIndex(scroll.transform.GetSiblingIndex());
             UIWidgets.Size(session.tabs, 80).preferredHeight = -1;
-            session.body = ui.Column("Settings body", session.page.Content, 6, 16);
+            session.body = ui.Card("Settings workbench", session.page.Content);
             for (int i = 0; i < 6; i++)
             {
                 int index = i;
@@ -80,9 +80,10 @@ namespace PAO.UI.V2
             for (int i = 0; i < session.tabs.childCount; i++)
             {
                 Transform tab = session.tabs.GetChild(i);
-                tab.GetComponent<Image>().color = i == session.tab ? Config.teal : Config.mist;
+                tab.GetComponent<Image>().color = Color.white;
+                tab.GetComponent<UIButtonFeedback>().SetEmphasized(i == session.tab);
                 Text label = tab.GetComponentInChildren<Text>(); label.text = TabName(i);
-                label.color = i == session.tab ? Color.white : ui.Ink;
+                label.color = ui.Ink;
             }
             var d = session.draft;
             Text[] pageLabels = session.page.GetComponentsInChildren<Text>(true);
@@ -92,6 +93,7 @@ namespace PAO.UI.V2
             for (int i = 0; i < session.page.Footer.childCount && i < footer.Length; i++)
                 session.page.Footer.GetChild(i).GetComponentInChildren<Text>().text = footer[i];
             Action preview = () => PreviewSettings(session);
+            ui.Emblem(session.body, session.tab == 2 || session.tab == 3 ? UIGuideSymbol.Move : UIGuideSymbol.Steer, TabName(session.tab));
             if (session.tab == 0)
             {
                 ui.Slider(session.body, T("总音量", "Master volume"), d.master, 0, 1, v => { d.master = v; preview(); });
@@ -197,6 +199,7 @@ namespace PAO.UI.V2
                 Text subtitle = ui.Label(sample.transform, T("字幕预览：水流正在引领你前行。", "Subtitle preview: the current guides you forward."), 24, Color.white, TextAnchor.MiddleCenter);
                 UIWidgets.Stretch(subtitle.rectTransform, 12);
                 ui.Toggle(session.body, T("情境教学", "Context tutorials"), d.tutorials, v => { d.tutorials = v; preview(); });
+                ui.Toggle(session.body, T("详细文字提示", "Detailed text hints"), d.detailedHints, v => { d.detailedHints = v; preview(); });
                 ui.Button(session.body, T("重置已读教学", "Reset tutorials"), () => Confirm(T("重新显示教学？", "Show tutorials again?"),
                     T("后续探索中会再次显示首次提示。", "First-time hints will appear again during exploration."),
                     () => { UIRunState.Progress.tutorialsSeen.Clear(); Toast(T("教学提示已重置", "Tutorial hints reset")); }));
@@ -225,7 +228,7 @@ namespace PAO.UI.V2
 
         private void ShowInputDiagram(bool controller)
         {
-            UIPage page = Push(controller ? T("手柄按键示意", "Controller layout") : T("键鼠按键示意", "Keyboard and mouse layout"), "", true);
+            UIPage page = Push(controller ? T("手柄按键示意", "Controller layout") : T("键鼠按键示意", "Keyboard and mouse layout"), "", true, UIPageDesign.Controls);
             DrawDeviceDiagram(page.Content, controller);
             ui.Label(page.Content, controller ? T("LS / RS 是摇杆按下；LT / RT 是扳机。玩法按键可在手柄页修改，菜单始终使用 A 确认、B 返回、Menu 暂停。",
                 "LS / RS are stick presses; LT / RT are triggers. Rebind gameplay controls on the Controller page. Menus always use A to confirm, B to go back and Menu to pause.") :
@@ -239,7 +242,7 @@ namespace PAO.UI.V2
             CancelBindingCapture(false);
             capturePage = Push(T("设置绑定 · ", "Bind · ") + UIInput.ActionName(action), controller ?
                 T("松开所有按钮后，按下新按钮或扳机。Menu / Esc 取消。", "Release all controls, then press a button or trigger. Menu / Esc cancels.") :
-                T("松开当前按键后，按下新按键或鼠标按钮。Esc 取消。", "Release the current key, then press a key or mouse button. Esc cancels."), true);
+                T("松开当前按键后，按下新按键或鼠标按钮。Esc 取消。", "Release the current key, then press a key or mouse button. Esc cancels."), true, UIPageDesign.Controls);
             captureMessage = ui.Label(capturePage.Content, T("等待输入", "Waiting for input"), 28);
             captureDeadline = Time.unscaledTime + 12; captureNeutral = false; rebindOpenedFrame = Time.frameCount;
             if (navigationResumeFrame == 0) previousNavigation = EventSystem.current != null && EventSystem.current.sendNavigationEvents;

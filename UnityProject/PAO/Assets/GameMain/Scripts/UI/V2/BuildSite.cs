@@ -33,15 +33,18 @@ namespace PAO.UI.V2
         {
             if (other.GetComponentInParent<PlayerController>() == null) return;
             nearby = true;
-            if (UIRuntime.Instance != null) UIRuntime.Instance.Toast(UISettings.Text("查看建构 · ", "Inspect construction · ") + UIInput.Prompt(UIInput.Interact), false);
+            if (UIRuntime.Instance != null && UISettings.Current.detailedHints) UIRuntime.Instance.Toast(UISettings.Text("查看建构 · ", "Inspect construction · ") + UIInput.Prompt(UIInput.Interact), false);
         }
         private void OnTriggerExit(Collider other)
-        { if (other.GetComponentInParent<PlayerController>() != null) nearby = false; }
+        { if (other.GetComponentInParent<PlayerController>() != null) { nearby = false; if (UIRuntime.Instance != null) UIRuntime.Instance.RemoveInteractionCue(this); } }
         private void Update()
         {
+            if (nearby && UIRuntime.Instance != null) UIRuntime.Instance.RequestInteractionCue(this, GetComponent<BoxCollider>().bounds.center + Vector3.up * .6f,
+                UIGuideSymbol.Build, UIInput.Interact);
             if (nearby && UIInput.Down(UIInput.Interact) && UIRuntime.Instance != null && !UIRuntime.Instance.IsBlockingGameplay)
                 UIRuntime.Instance.ShowConstruction(this);
         }
+        private void OnDisable() { nearby = false; if (UIRuntime.Instance != null) UIRuntime.Instance.RemoveInteractionCue(this); }
         public string CanPlace(BuildRecipe recipe)
         {
             if (instance != null) return UISettings.Text("这里已经完成建构。", "This site is already occupied.");

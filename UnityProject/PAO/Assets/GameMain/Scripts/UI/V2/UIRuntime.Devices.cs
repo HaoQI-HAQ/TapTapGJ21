@@ -68,7 +68,7 @@ namespace PAO.UI.V2
             if (controller)
             {
                 var outline = ui.Rect("Controller outline", diagram.transform).gameObject.AddComponent<UIControllerOutline>();
-                UIWidgets.Stretch(outline.rectTransform, 6); outline.color = Config.ink; outline.raycastTarget = false;
+                UIWidgets.Stretch(outline.rectTransform, 6); outline.color = Config.text; outline.raycastTarget = false;
                 DiagramBadge(diagram.transform, "LB / LT", new Vector2(-135, 48), new Vector2(92, 30));
                 DiagramBadge(diagram.transform, "RB / RT", new Vector2(135, 48), new Vector2(92, 30));
                 DiagramBadge(diagram.transform, "LS", new Vector2(-110, 12), new Vector2(56, 56), true);
@@ -97,7 +97,7 @@ namespace PAO.UI.V2
             Image badge = round ? ui.Rect(label, parent).gameObject.AddComponent<UICircleImage>() : ui.Surface(label, parent, Config.paper, true);
             badge.color = Config.paper; badge.raycastTarget = false;
             Anchor(badge.rectTransform, new Vector2(0.5f, 0.5f), position, size, new Vector2(0.5f, 0.5f));
-            Text text = ui.Label(badge.transform, label, 18, Config.ink, TextAnchor.MiddleCenter); UIWidgets.Stretch(text.rectTransform, 2);
+            Text text = ui.Label(badge.transform, label, 18, Config.text, TextAnchor.MiddleCenter); UIWidgets.Stretch(text.rectTransform, 2);
         }
     }
 

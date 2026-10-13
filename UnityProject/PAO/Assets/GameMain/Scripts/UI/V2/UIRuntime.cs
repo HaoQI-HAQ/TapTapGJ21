@@ -19,6 +19,7 @@ namespace PAO.UI.V2
         private int resumeInputFrame = -1;
         public bool IsGameplay { get; private set; }
         private UIWidgets ui;
+        private UIConfig gameplayTheme, menuTheme;
         private RectTransform safeRoot;
         private RectTransform hud;
         private Canvas canvas;
@@ -58,7 +59,17 @@ namespace PAO.UI.V2
 
         public void Initialize(UIConfig config)
         {
-            Instance = this; Config = config; ui = new UIWidgets(config);
+            UIHandDrawn.Apply(config);
+            Instance = this; gameplayTheme = config;
+            menuTheme = Instantiate(config); menuTheme.name = "Document menu theme";
+            menuTheme.paperStyle = true;
+            menuTheme.paper = config.paper;
+            menuTheme.ink = menuTheme.text = config.text;
+            menuTheme.mist = config.mist;
+            menuTheme.teal = config.teal;
+            menuTheme.menuArt = config.menuPaperArt != null ? config.menuPaperArt : config.menuArt;
+            menuTheme.chapters = config.chapters; menuTheme.endings = config.endings;
+            Config = config; ui = new UIWidgets(config);
             RectTransform canvasRect = ui.Rect("UI Canvas V2", transform);
             canvas = canvasRect.gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 1000;
@@ -84,6 +95,7 @@ namespace PAO.UI.V2
             canvas.gameObject.SetActive(Config.Supports(scene.name));
             if (!Config.Supports(scene.name)) { IsGameplay = false; return; }
             IsGameplay = scene.name != Config.menuScene;
+            Config = IsGameplay ? gameplayTheme : menuTheme; ui = new UIWidgets(Config);
             objectiveOverride = null;
             if (UIRunState.PendingLoad != null) UIRunState.Apply(UIRunState.PendingLoad);
             EnsureEventSystem(scene);
@@ -133,7 +145,11 @@ namespace PAO.UI.V2
             BuildHud();
             foreach (AudioSource audio in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
                 if (audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
-            if (pending != null) Toast(T("记录已恢复", "Record restored"));
+            if (pending != null)
+            {
+                if (UISettings.Current.detailedHints) Toast(T("记录已恢复", "Record restored"));
+                else PulseVisualCue(UIGuideSymbol.Check);
+            }
             else ShowTutorial("movement", T("向水流深处", "Follow the current"),
                 UIInput.MovementHint() + T(" 移动 · 跳跃 ", " Move · Jump ") + UIInput.Prompt(UIInput.Jump) +
                 T("\n蓄力 ", "\nCharge ") + UIInput.Prompt(UIInput.Charge) + T(" · Esc / Menu 暂停 · ", " · Esc / Menu Pause · ") + UIInput.Prompt(UIInput.Help) + T(" 查看教学", " for help"));
@@ -188,6 +204,7 @@ namespace PAO.UI.V2
         private void LateUpdate()
         {
             if (IsBlockingGameplay || !IsGameplay) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+            UpdateVisualGuidance();
         }
 
         public void Back()
@@ -199,7 +216,7 @@ namespace PAO.UI.V2
             Pop();
         }
 
-        private UIPage Push(string title, string subtitle = "", bool compact = false)
+        private UIPage Push(string title, string subtitle = "", bool compact = false, UIPageDesign design = UIPageDesign.Plain)
         {
             GameObject focus = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             if (pages.Count > 0)
@@ -209,20 +226,43 @@ namespace PAO.UI.V2
             }
             Image background = ui.Surface(title, safeRoot, compact ? new Color(Config.ink.r, Config.ink.g, Config.ink.b, 0.35f) :
                 Config.paper);
+            if (!compact) background.color = Color.white;
             UIWidgets.Stretch(background.rectTransform);
             background.gameObject.AddComponent<CanvasGroup>();
             UIPage page = background.gameObject.AddComponent<UIPage>(); page.ReturnFocus = focus;
-            RectTransform body = ui.Column("Page", background.transform, compact ? 40 : 56, 20);
+            page.Design = design;
+            page.Configure(Config.motion);
+            if (!compact)
+            {
+                var gradient = background.gameObject.AddComponent<UIFluidGradient>();
+                gradient.top = UIDesignPalette.Paper;
+                gradient.bottom = Color.Lerp(UIDesignPalette.Paper, UIDesignPalette.Accent(design), .09f);
+                UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
+                artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
+                artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
+            }
+            UIHandDrawn.Backdrop(ui, background.transform);
+            RectTransform body = ui.Column("Page", background.transform, compact ? 32 : 24, 16);
             UIWidgets.Stretch(body);
+            if (!compact)
+            {
+                body.anchorMin = new Vector2(.05f, .04f); body.anchorMax = new Vector2(.95f, .96f);
+                body.offsetMin = body.offsetMax = Vector2.zero;
+            }
             if (compact)
             {
                 Image card = body.gameObject.AddComponent<Image>(); card.color = Config.paper;
                 card.sprite = Config.round; card.type = Image.Type.Sliced;
                 body.anchorMin = new Vector2(0.2f, 0.15f); body.anchorMax = new Vector2(0.8f, 0.85f);
                 body.offsetMin = body.offsetMax = Vector2.zero;
+                if (design == UIPageDesign.Dialogue)
+                {
+                    body.anchorMin = new Vector2(.08f, .055f); body.anchorMax = new Vector2(.92f, .58f);
+                }
             }
-            Text heading = ui.Label(body, title, 44); UIWidgets.Size(heading.transform, 72);
-            if (!string.IsNullOrEmpty(subtitle)) ui.Label(body, subtitle, 21);
+            Color? headingColor = Config.paperStyle ? (Color?)null : Config.ink;
+            Text heading = ui.Label(body, title, 44, headingColor); heading.name = "Page title"; UIWidgets.Size(heading.transform, 72);
+            if (!string.IsNullOrEmpty(subtitle)) ui.Label(body, subtitle, 21, headingColor);
             page.Content = ui.Scroll(body);
             page.NoticeArea = ui.Column("Page notice", body, 12, 0);
             Image notice = page.NoticeArea.gameObject.AddComponent<Image>();
@@ -363,6 +403,7 @@ namespace PAO.UI.V2
             { player.LookSensitivityMultiplier = UISettings.Current.sensitivity; player.InvertVerticalLook = UISettings.Current.invertLook; }
             if (launcher != null) launcher.ToggleChargeInput = UISettings.Current.toggleCharge;
             if (canvas != null) canvas.GetComponent<CanvasScaler>().referenceResolution = new Vector2(1600, 900) / UISettings.Current.uiScale;
+            ApplyHintPresentation();
         }
         private void UnbindGameplay()
         {
@@ -375,6 +416,7 @@ namespace PAO.UI.V2
             SceneManager.sceneLoaded -= OnSceneLoaded; SaveSystem.SlotLoaded -= OnLegacyLoad;
             UISettings.Changed -= ApplyGameplaySettings;
             ReleasePause(); UnbindGameplay(); if (Instance == this) Instance = null;
+            if (menuTheme != null) Destroy(menuTheme);
         }
         private static string T(string chinese, string english) { return UISettings.Text(chinese, english); }
     }

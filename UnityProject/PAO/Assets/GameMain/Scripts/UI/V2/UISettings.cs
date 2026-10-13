@@ -17,6 +17,7 @@ namespace PAO.UI.V2
         public bool subtitles = true;
         public bool soundCaptions;
         public bool tutorials = true;
+        public bool detailedHints;
         public bool toggleCharge;
         public bool invertLook;
         public int version = 3;

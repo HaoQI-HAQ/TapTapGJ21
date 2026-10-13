@@ -9,17 +9,20 @@ namespace PAO.UI.V2
         {
             if (site == null || IsBlockingGameplay) return;
             UIPage page = Push(T("让水流成为路径", "Shape a path through the current"),
-                T("意识能量 ", "Consciousness energy ") + UIRunState.Progress.buildTokens);
+                T("意识能量 ", "Consciousness energy ") + UIRunState.Progress.buildTokens, false, UIPageDesign.Construction);
             if (site.recipes.Length == 0) ui.Label(page.Content, T("这个建构点暂无可用配方。", "No recipes are available at this site."));
+            RectTransform recipes = ui.Grid("Construction blueprints", page.Content, 2, 440);
             foreach (BuildRecipe recipe in site.recipes)
             {
                 if (recipe == null) continue;
                 BuildRecipe selected = recipe;
                 string reason = site.CanPlace(recipe);
-                ui.Label(page.Content, recipe.title + "  ·  " + T("消耗 ", "Cost ") + recipe.cost, 28);
-                ui.Label(page.Content, recipe.description, 24);
-                if (reason != null) ui.Label(page.Content, reason, 22);
-                ui.Button(page.Content, T("预览建构", "Preview construction"), () => ShowBuildPreview(site, selected), false, reason == null);
+                RectTransform blueprint = ui.Card("Blueprint " + recipe.title, recipes);
+                ui.Emblem(blueprint, UIGuideSymbol.Build, T("消耗 ", "ENERGY ") + recipe.cost);
+                ui.Label(blueprint, recipe.title, 30);
+                ui.Label(blueprint, recipe.description, 24);
+                if (reason != null) ui.Label(blueprint, reason, 22, UIDesignPalette.Coral);
+                ui.Button(blueprint, T("预览建构", "Preview construction"), () => ShowBuildPreview(site, selected), false, reason == null);
             }
             ui.Button(page.Footer, T("返回", "Back"), Pop);
             ui.Button(page.Footer, T("拆除并回收", "Remove & recover"), () => Confirm(T("拆除这段路径？", "Remove this path?"),
@@ -32,7 +35,7 @@ namespace PAO.UI.V2
         {
             if (site == null || site.CanPlace(recipe) != null) return;
             UIPage catalogue = pages[pages.Count - 1];
-            UIPage page = Push(recipe.title, T("预览不会消耗能量。确认后完成建构。", "Preview uses no energy. Confirm to build."), true);
+            UIPage page = Push(recipe.title, T("预览不会消耗能量。确认后完成建构。", "Preview uses no energy. Confirm to build."), true, UIPageDesign.Construction);
             catalogue.SetVisible(false);
             RectTransform panel = page.transform.Find("Page") as RectTransform;
             panel.anchorMin = new Vector2(0.63f, 0.08f); panel.anchorMax = new Vector2(0.98f, 0.92f);
@@ -82,7 +85,11 @@ namespace PAO.UI.V2
                 string reason = site.CanPlace(recipe);
                 if (reason != null) { Toast(reason); return; }
                 if (site.Place(recipe, rotation))
-                { Pop(); Pop(); Toast(T("路径已建立 · ", "Path created · ") + recipe.description); }
+                {
+                    Pop(); Pop();
+                    if (UISettings.Current.detailedHints) Toast(T("路径已建立 · ", "Path created · ") + recipe.description);
+                    else PulseVisualCue(UIGuideSymbol.Build);
+                }
             }, true); Finish(page);
         }
     }

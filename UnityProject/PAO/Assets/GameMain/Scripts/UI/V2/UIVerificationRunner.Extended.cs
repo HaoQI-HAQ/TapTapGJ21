@@ -168,17 +168,21 @@ namespace PAO.UI.V2
 
         private IEnumerator CaptureWorld(UIRuntime runtime, string name)
         {
-            Shader shader = Shader.Find("Standard");
+            Shader shader = Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
             var replacements = new System.Collections.Generic.List<Material>();
+            var renderers = new System.Collections.Generic.List<Renderer>();
+            var originals = new System.Collections.Generic.List<Material[]>();
             foreach (Renderer renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
                 Material[] materials = renderer.sharedMaterials;
+                renderers.Add(renderer); originals.Add((Material[])materials.Clone());
                 for (int i = 0; i < materials.Length; i++)
                 {
                     Material source = materials[i]; var diagnostic = new Material(shader);
                     diagnostic.color = source != null && source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor") :
                         source != null && source.HasProperty("_Color") ? source.color : Color.gray;
-                    diagnostic.SetFloat("_Glossiness", 0); materials[i] = diagnostic; replacements.Add(diagnostic);
+                    if (diagnostic.HasProperty("_Glossiness")) diagnostic.SetFloat("_Glossiness", 0);
+                    materials[i] = diagnostic; replacements.Add(diagnostic);
                 }
                 renderer.sharedMaterials = materials;
             }
@@ -193,7 +197,7 @@ namespace PAO.UI.V2
             RenderTexture.active = previous; camera.targetTexture = null; canvas.worldCamera = null; canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             Destroy(target); Destroy(screenshot);
             passed.Add("Rendered diagnostic world and HUD: " + name + ".");
-            // Materials are released on the immediately following scene reload.
+            for (int i = 0; i < renderers.Count; i++) if (renderers[i] != null) renderers[i].sharedMaterials = originals[i];
             foreach (Material material in replacements) Destroy(material);
         }
     }

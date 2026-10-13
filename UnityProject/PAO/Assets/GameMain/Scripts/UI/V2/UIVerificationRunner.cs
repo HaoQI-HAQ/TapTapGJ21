@@ -132,9 +132,10 @@ namespace PAO.UI.V2
                 creditsBounds.min.y >= menuScroll.viewport.rect.yMin - 1 && creditsBounds.max.y <= menuScroll.viewport.rect.yMax + 1,
                 "The continued-run menu keeps every action visible on an ultrawide display.");
             RectTransform artwork = Top(runtime).GetComponentInChildren<UIMenuAmbience>().transform as RectTransform;
-            Text introduction = Array.Find(Top(runtime).GetComponentsInChildren<Text>(), text => text.text.StartsWith("让每一次微小的涌动"));
-            Check(artwork.rect.height >= 200 && introduction.rectTransform.rect.height >= introduction.preferredHeight - 1,
-                "The continued-run menu retains its artwork and both lines of introduction.");
+            Text title = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
+            Check(artwork.rect.height >= 200 && title.alignment == TextAnchor.MiddleCenter &&
+                title.rectTransform.rect.height >= title.preferredHeight - 1,
+                "The simplified menu retains the background and a readable centred title.");
 
             runtime.LoadScene("Map0", SaveSystem.LoadSlot(0));
             while (SceneManager.GetActiveScene().name != "Map0") yield return null;
@@ -152,6 +153,7 @@ namespace PAO.UI.V2
             float master = UISettings.Current.master;
             Top(runtime).GetComponentInChildren<Slider>().value = 0.1f;
             Check(Mathf.Abs(UISettings.Current.master - 0.1f) < 0.01f, "Settings preview applies immediately.");
+            runtime.Toast("验证保存反馈"); yield return null;
             yield return Capture(runtime, "settings", 1600, 900);
             Check(!runtime.transform.Find("UI Canvas V2/Safe Area/Context notice").gameObject.activeSelf &&
                 Top(runtime).NoticeArea.gameObject.activeSelf,
@@ -182,6 +184,8 @@ namespace PAO.UI.V2
             runtime.Back(); UISettings.Apply(new UISettingsData { fullscreen = false });
 
             UIPrototypeLab lab = FindFirstObjectByType<UIPrototypeLab>();
+            yield return MotionScenarios(runtime);
+            yield return GuidanceScenarios(runtime);
             yield return SettingsScenarios(runtime);
             yield return ExtendedScenarios(runtime, lab);
             runtime.ShowDialogue(lab.dialogue); yield return Capture(runtime, "dialogue", 1600, 900);

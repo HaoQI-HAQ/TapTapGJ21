@@ -83,6 +83,12 @@ namespace PAO.UI.V2
             for (int i = 0; i < 8; i++) yield return null;
             UIRuntime runtime = UIRuntime.Instance;
             Check(runtime != null && SceneManager.GetActiveScene().path == "Assets/GameMain/UI/Menu.unity", "The real Menu scene bootstraps the new UI.");
+            Check(runtime.Config.paperStyle && runtime.Config.paper.r > .9f && runtime.Config.text.r < .2f,
+                "The document menu uses warm paper, dark blue text and a dedicated light theme.");
+            Text title = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
+            Check(title.alignment == TextAnchor.MiddleCenter && title.fontSize >= 72 &&
+                Top(runtime).GetComponentInChildren<UIMenuResonance>() == null,
+                "The title is the visual centre and the menu background has no rotating character or orbit.");
             Check(Button(runtime, "继续游戏", false) == null && EventSystem.current.currentSelectedGameObject == Button(runtime, "新的旅程").gameObject,
                 "An empty journey hides Continue and focuses New journey.");
             foreach (string label in new[] { "新的旅程", "章节路径", "读取记录", "游戏设置", "制作人员", "操作与教学", "离开意识之海" })
@@ -94,13 +100,16 @@ namespace PAO.UI.V2
             Button(runtime, "新的旅程").Select();
             var move = new AxisEventData(EventSystem.current) { moveDir = MoveDirection.Down, moveVector = Vector2.down };
             ExecuteEvents.Execute(EventSystem.current.currentSelectedGameObject, move, ExecuteEvents.moveHandler);
-            Check(EventSystem.current.currentSelectedGameObject == Button(runtime, "章节路径").gameObject && HasText(runtime, "回看已抵达的水域"),
-                "Directional navigation advances to Chapter path and updates its action description.");
+            Check(EventSystem.current.currentSelectedGameObject == Button(runtime, "章节路径").gameObject,
+                "Directional navigation advances through the single column to Chapter path.");
             Button feedbackButton = Button(runtime, "章节路径");
             var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+            EventSystem inputSystem = EventSystem.current;
+            inputSystem.enabled = false; // Keep physical pointer events out of this injected press.
             feedbackButton.GetComponent<UIButtonFeedback>().OnPointerDown(pointer); yield return new WaitForSecondsRealtime(0.09f);
-            Check(feedbackButton.transform.localScale.x < 1, "Press feedback responds while the menu is open.");
+            Check(feedbackButton.transform.localScale.x < 1, "Press feedback responds while the menu is open. Scale=" + feedbackButton.transform.localScale.x + ", reduced=" + UISettings.Current.reducedMotion);
             feedbackButton.GetComponent<UIButtonFeedback>().OnPointerUp(pointer);
+            inputSystem.enabled = true;
 
             Button credits = Button(runtime, "制作人员"); credits.Select(); credits.onClick.Invoke();
             Check(HasText(runtime, "TapTap Game Jam 21"), "Credits display the configured production information.");
@@ -120,13 +129,25 @@ namespace PAO.UI.V2
             var data = new SaveSlotData { slot = 0, sceneName = "Map1", savedAtUtc = DateTime.UtcNow.ToString("o"), runProgress = progress };
             Check(SaveSystem.SaveSlot(data), "A returning journey is stored in the isolated directory.");
             Rebuild(runtime); yield return null;
-            Check(Button(runtime, "继续游戏").IsInteractable() && HasText(runtime, "水域 02") && HasText(runtime, "意识碎片 1") && HasText(runtime, "1 小时 6 分钟"),
-                "Continue and the overview reflect the latest valid record.");
+            Check(Button(runtime, "继续游戏").IsInteractable() && !HasText(runtime, "意识碎片 1") && !HasText(runtime, "1 小时 6 分钟") && !HasText(runtime, data.SavedAtText),
+                "A valid record enables Continue while statistics and duplicate save details stay off the main menu.");
             Button(runtime, "章节路径").onClick.Invoke(); yield return Capture(runtime, "chapter-cards", 1600, 900); runtime.Back();
             Button(runtime, "读取记录").onClick.Invoke(); yield return Capture(runtime, "record-cards", 1600, 900); runtime.Back();
             Button(runtime, "继续游戏").Select();
-            foreach (Vector2Int size in new[] { new Vector2Int(1600, 900), new Vector2Int(1920, 820), new Vector2Int(800, 900) })
+            foreach (Vector2Int size in new[] { new Vector2Int(1600, 900), new Vector2Int(1920, 820), new Vector2Int(934, 534), new Vector2Int(800, 900) })
                 yield return Capture(runtime, "menu-returning-" + size.x + "x" + size.y, size.x, size.y, true);
+
+            UISettingsData readable = UISettings.Current.Copy(); readable.highContrast = true; UISettings.Apply(readable, false); Rebuild(runtime);
+            yield return Capture(runtime, "menu-high-contrast-934x534", 934, 534, true);
+            Button contrastContinue = Button(runtime, "继续游戏");
+            Color contrastSurface = contrastContinue.GetComponent<UIFluidGradient>().top;
+            Color contrastLabel = contrastContinue.GetComponentInChildren<Text>().color;
+            Check((contrastSurface == Color.black && contrastLabel == Color.white ||
+                contrastSurface == Color.white && contrastLabel == Color.black) &&
+                EventSystem.current.currentSelectedGameObject == contrastContinue.gameObject &&
+                Array.Exists(contrastContinue.GetComponents<Outline>(), edge => edge.enabled && edge.effectDistance.x >= 3),
+                "High contrast gives Continue opposing black/white text and a visible default focus.");
+            readable.highContrast = false; UISettings.Apply(readable, false); Rebuild(runtime);
 
             Button(runtime, "新的旅程").onClick.Invoke();
             Check(EventSystem.current.currentSelectedGameObject == Button(runtime, "取消").gameObject, "New journey confirms replacing the automatic record.");
@@ -194,7 +215,17 @@ namespace PAO.UI.V2
                 }
                 RectTransform art = Top(runtime).GetComponentInChildren<UIMenuAmbience>().transform as RectTransform;
                 Check(art.rect.height >= 200, "The water illustration remains visible at " + width + "x" + height + ".");
-                if (width == 800) Check(Top(runtime).GetComponentInChildren<UIMenuLayout>().Stacked, "The narrow window switches to a single-column menu.");
+                if (width == 800) Check(Top(runtime).GetComponentInChildren<UIMenuLayout>().Stacked, "The single menu column adapts to a narrow window.");
+                if (!Top(runtime).GetComponentInChildren<UIMenuLayout>().Stacked && UISettings.Current.textScale == 1 && UISettings.Current.uiScale == 1)
+                {
+                    ScrollRect scroll = Top(runtime).Content.GetComponentInParent<ScrollRect>();
+                    foreach (Button entry in Top(runtime).Content.GetComponentsInChildren<Button>())
+                    {
+                        Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport, entry.transform);
+                        Check(bounds.min.y >= scroll.viewport.rect.yMin - 1 && bounds.max.y <= scroll.viewport.rect.yMax + 1,
+                            "Main entry is visible without scrolling at " + width + "x" + height + ": " + entry.GetComponentInChildren<Text>().text + ".");
+                    }
+                }
             }
             camera.Render(); RenderTexture previous = RenderTexture.active; RenderTexture.active = target;
             var image = new Texture2D(width, height, TextureFormat.RGB24, false); image.ReadPixels(new Rect(0, 0, width, height), 0, 0); image.Apply();
@@ -202,11 +233,13 @@ namespace PAO.UI.V2
             passed.Add("Rendered " + name + ".");
             if (menu)
             {
+                CheckMenuSeparation(runtime, width, height);
                 // Check focus visibility in the capture's dimensions before returning to the real screen dimensions.
                 GameObject originalFocus = EventSystem.current.currentSelectedGameObject;
                 foreach (Button button in Top(runtime).GetComponentsInChildren<Button>())
                 {
                     button.Select(); yield return null; yield return null; Canvas.ForceUpdateCanvases();
+                    CheckMenuSeparation(runtime, width, height);
                     ScrollRect scroll = button.GetComponentInParent<ScrollRect>();
                     if (scroll == null) continue;
                     Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport, button.transform);
@@ -217,6 +250,46 @@ namespace PAO.UI.V2
             }
             canvas.worldCamera = null; canvas.renderMode = RenderMode.ScreenSpaceOverlay; camera.targetTexture = null;
             Destroy(image); Destroy(target); Destroy(go);
+        }
+
+        private void CheckMenuSeparation(UIRuntime runtime, int width, int height)
+        {
+            UIPage page = Top(runtime);
+            var controls = new List<RectTransform>();
+            foreach (Button button in page.GetComponentsInChildren<Button>()) controls.Add((RectTransform)button.transform);
+            controls.Add((RectTransform)page.transform.Find("Page/Menu title"));
+            controls.Add((RectTransform)page.transform.Find("Page/Menu subtitle"));
+            Transform recordStatus = page.Content.Find("Record status");
+            if (recordStatus != null) controls.Add((RectTransform)recordStatus);
+            if (page.NoticeArea.gameObject.activeInHierarchy) controls.Add(page.NoticeArea);
+            ScrollRect scroll = page.Content.GetComponentInParent<ScrollRect>();
+            for (int i = 0; i < controls.Count; i++)
+                for (int j = i + 1; j < controls.Count; j++)
+                {
+                    Bounds a = RectBounds(page.transform, controls[i]);
+                    Bounds b = RectBounds(page.transform, controls[j]);
+                    // Compare visible rectangles: clipped content cannot cover the fixed header or footer.
+                    if (controls[i].IsChildOf(scroll.content)) a = ClipToViewport(a, page, scroll);
+                    if (controls[j].IsChildOf(scroll.content)) b = ClipToViewport(b, page, scroll);
+                    bool overlap = a.size.x > 0 && a.size.y > 0 && b.size.x > 0 && b.size.y > 0 &&
+                        Mathf.Min(a.max.x, b.max.x) - Mathf.Max(a.min.x, b.min.x) > 1 &&
+                        Mathf.Min(a.max.y, b.max.y) - Mathf.Max(a.min.y, b.min.y) > 1;
+                    if (overlap) throw new Exception("Menu overlap at " + width + "x" + height + ": " + controls[i].name + " " + a + " / " + controls[j].name + " " + b + "; viewport=" + scroll.viewport.rect);
+                }
+            passed.Add("Menu controls and title do not overlap at " + width + "x" + height + ".");
+        }
+        private static Bounds ClipToViewport(Bounds bounds, UIPage page, ScrollRect scroll)
+        {
+            Bounds viewport = RectBounds(page.transform, scroll.viewport);
+            Vector3 min = Vector3.Max(bounds.min, viewport.min), max = Vector3.Min(bounds.max, viewport.max);
+            return new Bounds((min + max) * .5f, Vector3.Max(Vector3.zero, max - min));
+        }
+        private static Bounds RectBounds(Transform relativeTo, RectTransform rect)
+        {
+            Vector3[] corners = new Vector3[4]; rect.GetWorldCorners(corners);
+            Bounds bounds = new Bounds(relativeTo.InverseTransformPoint(corners[0]), Vector3.zero);
+            for (int i = 1; i < corners.Length; i++) bounds.Encapsulate(relativeTo.InverseTransformPoint(corners[i]));
+            return bounds;
         }
     }
 }
