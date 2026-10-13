@@ -59,6 +59,9 @@ namespace PAO.UI
         private float m_PreviousTimeScale = 1f;
         private bool m_PausedTime;
         private bool m_IsOpen;
+        private BubbleTypeHud m_GameplayHud;
+
+        private static int s_OverlayEscapeFrame = -1;
 
         /// <summary>被冻结的玩法组件，恢复时逐个还原。</summary>
         private readonly List<MonoBehaviour> m_DisabledComponents = new List<MonoBehaviour>();
@@ -122,6 +125,8 @@ namespace PAO.UI
                 // 万一 timeScale 被别的路径改过，这里兜个底
                 UnfreezeGameplay();
             }
+
+            SetGameplayUiVisible(true);
         }
 
         /// <summary>
@@ -136,8 +141,21 @@ namespace PAO.UI
         {
             if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
             {
+                if (s_OverlayEscapeFrame == Time.frameCount ||
+                    (m_SettingsPanel != null && m_SettingsPanel.IsOpen) ||
+                    (m_LoadPanel != null && m_LoadPanel.IsOpen))
+                {
+                    return;
+                }
+
                 Close();
             }
+        }
+
+        /// <summary>子面板消费 Esc 后，阻止暂停菜单在同一帧也被关闭。</summary>
+        public static void MarkOverlayEscapeHandled()
+        {
+            s_OverlayEscapeFrame = Time.frameCount;
         }
 
         // ==================== 开关 ====================
@@ -158,6 +176,7 @@ namespace PAO.UI
             ActivateSelfAndParents();
 
             SetVisible(true);
+            SetGameplayUiVisible(false);
 
             Debug.Log("[PauseMenu] Open() 被调用。本物体=" + gameObject.name +
                       " activeSelf=" + gameObject.activeSelf +
@@ -226,6 +245,7 @@ namespace PAO.UI
         {
             m_IsOpen = false;
             ResumeTime();
+            SetGameplayUiVisible(true);
 
             // 用 CanvasGroup 藏起来，而不是 gameObject.SetActive(false)。
             //
@@ -280,6 +300,28 @@ namespace PAO.UI
             if (gameObject.activeSelf != visible)
             {
                 gameObject.SetActive(visible);
+            }
+        }
+
+        private void SetGameplayUiVisible(bool visible)
+        {
+            if (m_GameplayHud == null)
+            {
+#if UNITY_2022_2_OR_NEWER
+                m_GameplayHud = UnityEngine.Object.FindFirstObjectByType<BubbleTypeHud>(FindObjectsInactive.Include);
+#else
+                m_GameplayHud = UnityEngine.Object.FindObjectOfType<BubbleTypeHud>();
+#endif
+            }
+
+            if (m_GameplayHud != null)
+            {
+                m_GameplayHud.SetVisualsVisible(visible);
+            }
+
+            if (BubbleTypeSwitcher.Instance != null)
+            {
+                BubbleTypeSwitcher.Instance.SetLabelVisible(visible);
             }
         }
 
@@ -463,6 +505,15 @@ namespace PAO.UI
         private static bool IsUiComponent(MonoBehaviour mb)
         {
             System.Type type = mb.GetType();
+
+            // Canvas 下的 Button、Slider、TMP 等 Unity 组件也必须继续运行，
+            // 否则暂停菜单看得见却无法点击，设置页的滑条也不能操作。
+            if (mb.GetComponentInParent<Canvas>(true) != null ||
+                mb is UnityEngine.EventSystems.EventSystem ||
+                mb is UnityEngine.EventSystems.BaseInputModule)
+            {
+                return true;
+            }
 
             // 暂停菜单自己必须保持运行，否则「继续」按钮失效
             if (type == typeof(PauseMenu))
