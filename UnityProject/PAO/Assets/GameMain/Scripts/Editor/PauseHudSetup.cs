@@ -261,7 +261,9 @@ namespace PAO.EditorTools
             buttons.Add(NewMenuButton("继续", root.transform, new Vector2(700f, 370f),
                 new Vector2(640f, 110f), 56, true, round));
 
-            string[] secondary = { "地图", "重开", "读档", "设置", "主菜单" };
+            // 竖排次级条目。顺序只影响视觉排版和上下导航顺序，不再决定接哪个回调
+            // （回调按按钮名字接，见下面 WireByName）
+            string[] secondary = { "地图", "重开", "存档", "读档", "设置", "主菜单" };
             for (int i = 0; i < secondary.Length; i++)
             {
                 float y = 250f - i * 100f;
@@ -274,21 +276,40 @@ namespace PAO.EditorTools
 
             PauseMenu menu = root.AddComponent<PauseMenu>();
 
-            // 按钮回调
-            string[] methods = { "Resume", "OpenMap", "RestartLevel", "OpenLoadPanel", "OpenSettingsPanel", "GoToMainMenu" };
-            for (int i = 0; i < methods.Length && i < buttons.Count; i++)
-            {
-                Wire(buttons[i].GetComponent<Button>(), menu, methods[i]);
-            }
+            // 按钮回调：按**按钮名字**接，不按位置。
+            //
+            // 【为什么要这样】
+            // 原来写法是 methods[i] 对应 buttons[i]，靠位置对齐。但按钮的实际顺序
+            // 取决于 Objects 的层级顺序，一旦建按钮的顺序和数组顺序不一致
+            // （加了一个「存档」就会这样），回调就会整体错位 ——
+            // 表现为"点存档却弹读档"，而且**不会报任何编译错误**，极难发现。
+            // 按名字接就没有这个隐患。
+            WireByName(buttons, "继续", menu, "Resume");
+            WireByName(buttons, "地图", menu, "OpenMap");
+            WireByName(buttons, "重开", menu, "RestartLevel");
+            WireByName(buttons, "存档", menu, "OpenSavePanel");
+            WireByName(buttons, "读档", menu, "OpenLoadPanel");
+            WireByName(buttons, "设置", menu, "OpenSettingsPanel");
+            WireByName(buttons, "主菜单", menu, "GoToMainMenu");
 
-            // 竖排导航环绕
-            for (int i = 0; i < buttons.Count; i++)
+            // 竖排导航环绕。
+            // 排序基准是按钮的视觉高度（anchoredPosition.y），不是列表顺序 ——
+            // 列表顺序取决于建按钮的先后，和玩家看到的上下顺序不一定一致。
+            var navOrder = new List<MenuButton>(buttons);
+            navOrder.Sort(delegate (MenuButton a, MenuButton b)
             {
-                Button b = buttons[i].GetComponent<Button>();
+                float ay = a != null ? a.GetComponent<RectTransform>().anchoredPosition.y : 0f;
+                float by = b != null ? b.GetComponent<RectTransform>().anchoredPosition.y : 0f;
+                return by.CompareTo(ay);   // 从高到低
+            });
+
+            for (int i = 0; i < navOrder.Count; i++)
+            {
+                Button b = navOrder[i].GetComponent<Button>();
                 Navigation nav = b.navigation;
                 nav.mode = Navigation.Mode.Explicit;
-                nav.selectOnDown = buttons[(i + 1) % buttons.Count].GetComponent<Button>();
-                nav.selectOnUp = buttons[(i - 1 + buttons.Count) % buttons.Count].GetComponent<Button>();
+                nav.selectOnDown = navOrder[(i + 1) % navOrder.Count].GetComponent<Button>();
+                nav.selectOnUp = navOrder[(i - 1 + navOrder.Count) % navOrder.Count].GetComponent<Button>();
                 b.navigation = nav;
             }
 
@@ -496,6 +517,39 @@ namespace PAO.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
 
             return mb;
+        }
+
+        /// <summary>
+        /// 按按钮名字接回调（名字形如「存档 Button」）。
+        ///
+        /// 【为什么不用位置】
+        /// 位置接线要求"建按钮的顺序"和"方法数组的顺序"严格一致，
+        /// 任何一处增删都会整体错位，而且**不报编译错误** ——
+        /// 表现就是"点存档却弹读档"。按名字匹配从根上避免这个问题。
+        /// </summary>
+        private static void WireByName(List<MenuButton> buttons, string label, PauseMenu menu, string method)
+        {
+            if (buttons == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                MenuButton mb = buttons[i];
+                if (mb == null)
+                {
+                    continue;
+                }
+
+                if (mb.gameObject.name.StartsWith(label, System.StringComparison.Ordinal))
+                {
+                    Wire(mb.GetComponent<Button>(), menu, method);
+                    return;
+                }
+            }
+
+            Debug.LogWarning("[PauseHudSetup] 没找到「" + label + "」按钮，回调 " + method + " 未绑定。");
         }
 
         private static void Wire(Button button, PauseMenu menu, string method)

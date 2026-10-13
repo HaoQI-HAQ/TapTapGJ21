@@ -419,6 +419,31 @@ namespace PAO.UI
             m_LoadPanel.Open();
         }
 
+        /// <summary>
+        /// 打开存档面板。
+        ///
+        /// 存档界面（SaveLoadPanel）不做成预制体引用，而是由 SaveLoadManager 在运行时
+        /// 建出来 —— 所以这里不直接持有它，交给管理器按模式打开。
+        /// 如果管理器不在（理论上不会），退回打开读档面板，至少有个入口。
+        /// </summary>
+        public void OpenSavePanel()
+        {
+            SaveLoadManager manager = SaveLoadManager.Instance;
+
+            if (manager != null)
+            {
+                manager.OpenSavePanel();
+                return;
+            }
+
+            Debug.LogWarning("[PauseMenu] SaveLoadManager 不在场景里，「存档」按钮只能退回读档面板。", this);
+
+            if (m_LoadPanel != null)
+            {
+                m_LoadPanel.Open();
+            }
+        }
+
         /// <summary>打开设置面板。</summary>
         public void OpenSettingsPanel()
         {

@@ -32,6 +32,22 @@ namespace PAO.UI
     [AddComponentMenu("PAO/UI/Save Load Panel")]
     public sealed class SaveLoadPanel : MonoBehaviour
     {
+        /// <summary>
+        /// 面板模式。存档入口和读档入口共用这张面板，
+        /// 靠模式把另一边锁掉 —— 防止手滑把存档点覆盖了，或者点了读档才发现想存。
+        /// </summary>
+        public enum PanelMode
+        {
+            /// <summary>只显示「存档」按钮。</summary>
+            SaveOnly = 0,
+
+            /// <summary>只显示「读档」按钮。</summary>
+            LoadOnly = 1,
+
+            /// <summary>两个按钮都显示（调试 / 以后要做存读一体入口时用）。</summary>
+            Both = 2,
+        }
+
         private const int kSortingOrder = 800;
         private static readonly Vector2 kReferenceResolution = new Vector2(1920f, 1080f);
 
@@ -46,6 +62,9 @@ namespace PAO.UI
 
         /// <summary>面板是否正在显示。</summary>
         public bool IsOpen { get; private set; }
+
+        /// <summary>当前模式。Open() 时设定。</summary>
+        public PanelMode Mode { get; private set; }
 
         /// <summary>请求关闭时触发（「返回」按钮或 Esc）。</summary>
         public event Action Closed;
@@ -256,9 +275,13 @@ namespace PAO.UI
             }
         }
 
-        /// <summary>显示面板。</summary>
-        public void Open()
+        /// <summary>显示面板。mode 决定锁定成"只能存"还是"只能读"。</summary>
+        public void Open(PanelMode mode = PanelMode.Both)
         {
+            Mode = mode;
+            SetTitleForMode();
+            ApplyMode();
+
             if (IsOpen)
             {
                 RefreshSlots();
@@ -267,6 +290,108 @@ namespace PAO.UI
 
             gameObject.SetActive(true);
             ApplyVisible(true, false);
+        }
+
+        /// <summary>标题随模式变化，让玩家一眼知道现在是干什么的。</summary>
+        private void SetTitleForMode()
+        {
+            if (m_Title == null)
+            {
+                return;
+            }
+
+            switch (Mode)
+            {
+                case PanelMode.SaveOnly:
+                    m_Title.text = "存档";
+                    break;
+
+                case PanelMode.LoadOnly:
+                    m_Title.text = "读档";
+                    break;
+
+                default:
+                    m_Title.text = "存档 / 读档";
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 按模式把不相关的按钮藏起来。
+        ///
+        /// 存档模式下只留「存档」，读档模式下只留「读档」——
+        /// 这样就不会手滑把想读的存档点覆盖掉。
+        /// 藏的是按钮所在的那个 GameObject，不影响卡片上其它内容。
+        /// </summary>
+        private void ApplyMode()
+        {
+            bool showSave = Mode == PanelMode.SaveOnly || Mode == PanelMode.Both;
+            bool showLoad = Mode == PanelMode.LoadOnly || Mode == PanelMode.Both;
+
+            for (int i = 0; i < m_Slots.Count; i++)
+            {
+                SlotUi slot = m_Slots[i];
+
+                if (slot.saveButton != null)
+                {
+                    slot.saveButton.gameObject.SetActive(showSave);
+                }
+
+                if (slot.loadButton != null)
+                {
+                    slot.loadButton.gameObject.SetActive(showLoad);
+                }
+
+                LayOutSlotButtons(slot, showSave, showLoad);
+            }
+        }
+
+        /// <summary>
+        /// 只剩一个按钮时，让它占满整行宽度 —— 否则会偏在一边看起来像坏了。
+        /// </summary>
+        private static void LayOutSlotButtons(SlotUi slot, bool showSave, bool showLoad)
+        {
+            if (slot.saveButton == null || slot.loadButton == null)
+            {
+                return;
+            }
+
+            RectTransform saveRect = slot.saveButton.GetComponent<RectTransform>();
+            RectTransform loadRect = slot.loadButton.GetComponent<RectTransform>();
+
+            if (showSave && showLoad)
+            {
+                // 两个并排：各占一半
+                saveRect.anchorMin = new Vector2(0f, 0f);
+                saveRect.anchorMax = new Vector2(0.5f, 0f);
+                saveRect.anchoredPosition = new Vector2(-8f, 28f);
+                saveRect.sizeDelta = new Vector2(-28f, 76f);
+
+                loadRect.anchorMin = new Vector2(0.5f, 0f);
+                loadRect.anchorMax = new Vector2(1f, 0f);
+                loadRect.anchoredPosition = new Vector2(8f, 28f);
+                loadRect.sizeDelta = new Vector2(-28f, 76f);
+                return;
+            }
+
+            if (showSave)
+            {
+                // 只有「存档」：占满整行
+                saveRect.anchorMin = new Vector2(0f, 0f);
+                saveRect.anchorMax = new Vector2(1f, 0f);
+                saveRect.anchoredPosition = new Vector2(0f, 28f);
+                saveRect.sizeDelta = new Vector2(-28f, 76f);
+                return;
+            }
+
+            if (showLoad)
+            {
+                // 只有「读档」：占满整行
+                loadRect.anchorMin = new Vector2(0f, 0f);
+                loadRect.anchorMax = new Vector2(1f, 0f);
+                loadRect.anchoredPosition = new Vector2(0f, 28f);
+                loadRect.sizeDelta = new Vector2(-28f, 76f);
+            }
         }
 
         /// <summary>隐藏面板。</summary>
@@ -310,7 +435,22 @@ namespace PAO.UI
                 return;
             }
 
-            Button first = m_Slots[0].loadButton != null ? m_Slots[0].loadButton : m_Slots[0].saveButton;
+            Button first = null;
+
+            // 手柄/键盘进来要有落点，而且必须落在**当前模式可见**的按钮上 ——
+            // 指向一个被 SetActive(false) 的物体，导航会直接失灵
+            if (m_Slots[0] != null)
+            {
+                if (m_Slots[0].saveButton != null && m_Slots[0].saveButton.gameObject.activeSelf)
+                {
+                    first = m_Slots[0].saveButton;
+                }
+                else if (m_Slots[0].loadButton != null && m_Slots[0].loadButton.gameObject.activeSelf)
+                {
+                    first = m_Slots[0].loadButton;
+                }
+            }
+
             if (first != null)
             {
                 es.SetSelectedGameObject(first.gameObject);

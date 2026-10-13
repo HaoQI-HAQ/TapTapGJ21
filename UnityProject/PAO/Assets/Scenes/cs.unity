@@ -3403,6 +3403,66 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1933659666}
     m_Modifications:
+    - target: {fileID: 77633263105579057, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 77633263105579057, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2577535419965401002, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2577535419965401002, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2577535419965401002, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524585164445228990, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524585164445228990, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5834973889335503279, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5834973889335503279, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7959094030341356731, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7959094030341356731, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7959094030341356731, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7966839751026521812, guid: fe58d6eda77996b479286b652fa8ad4b,
         type: 3}
       propertyPath: m_Pivot.x
@@ -3508,6 +3568,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: Settings Panel
       objectReference: {fileID: 0}
+    - target: {fileID: 8247830864618632641, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8681445579234068138, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8681445579234068138, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8681445579234068138, guid: fe58d6eda77996b479286b652fa8ad4b,
+        type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3529,8 +3609,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7d1e4c9a2b3f40518672a5c8d9e0f1b2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1711128136
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3552,7 +3632,7 @@ PrefabInstance:
     - target: {fileID: 4849572597922560343, guid: 5afe821f89760f1498c331d1675252a1,
         type: 3}
       propertyPath: m_SettingsPanel
-      value:
+      value: 
       objectReference: {fileID: 1672684022}
     - target: {fileID: 8506046459831905417, guid: 5afe821f89760f1498c331d1675252a1,
         type: 3}
@@ -4192,7 +4272,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0

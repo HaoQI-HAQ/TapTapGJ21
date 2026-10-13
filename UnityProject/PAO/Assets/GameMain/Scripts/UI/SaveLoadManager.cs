@@ -75,8 +75,11 @@ namespace PAO.UI
             SaveSystem.SlotLoaded += OnSlotLoaded;          // 兜住别的面板（如 Menu 里的 LoadPanel）
             SceneManager.sceneLoaded += OnSceneLoaded;
 
-            // 面板先建好并收起来，避免第一次打开时有建 UI 的卡顿
-            Panel.Close();
+            // 面板先建好，避免第一次打开时有建 UI 的卡顿
+            SaveLoadPanel panel = Panel;
+            panel.Close();
+
+            Debug.Log("[SaveLoadManager] 存档系统已启动。", this);
         }
 
         private void OnDestroy()
@@ -111,10 +114,22 @@ namespace PAO.UI
 
         // ==================== 对外接口 ====================
 
-        /// <summary>打开存档 / 读档面板。暂停菜单的按钮走这里。</summary>
+        /// <summary>打开面板（两个按钮都显示）。调试用。</summary>
         public void OpenPanel()
         {
-            Panel.Open();
+            Panel.Open(SaveLoadPanel.PanelMode.Both);
+        }
+
+        /// <summary>以「只能存档」模式打开。暂停菜单的「存档」按钮走这里。</summary>
+        public void OpenSavePanel()
+        {
+            Panel.Open(SaveLoadPanel.PanelMode.SaveOnly);
+        }
+
+        /// <summary>以「只能读档」模式打开。暂停菜单的「读档」按钮走这里。</summary>
+        public void OpenLoadPanel()
+        {
+            Panel.Open(SaveLoadPanel.PanelMode.LoadOnly);
         }
 
         /// <summary>关掉面板。</summary>
@@ -150,38 +165,65 @@ namespace PAO.UI
         }
 
         /// <summary>
-        /// 把暂停菜单里「读档」按钮的点击改成打开本系统。
+        /// 把暂停菜单里「存档」「读档」两个按钮分别接到对应的模式上。
         ///
         /// PauseMenu.OpenLoadPanel() 依赖一个 LoadPanel 引用，而 cs 场景里没有 LoadPanel，
-        /// 所以那个按钮原本只会打一条日志。这里直接改写按钮的 onClick。
+        /// 所以那些按钮原本只会打一条日志。这里按按钮名改写它们的 onClick：
+        ///   「存档」→ 只存档模式
+        ///   「读档」→ 只读档模式
+        /// 两者互斥，防止手滑覆盖存档点。
         /// </summary>
         private void HookPauseMenu(PauseMenu pauseMenu)
         {
             Button[] buttons = pauseMenu.GetComponentsInChildren<Button>(true);
+
+            int hooked = 0;
 
             for (int i = 0; i < buttons.Length; i++)
             {
                 Button button = buttons[i];
                 string name = button.gameObject.name;
 
-                // 允许开发者改名，两种写法都认
-                if (name.IndexOf("读档", System.StringComparison.Ordinal) >= 0 ||
-                    name.IndexOf("Load", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (name.IndexOf("存档", System.StringComparison.Ordinal) >= 0)
                 {
                     button.onClick.RemoveAllListeners();
-                    button.onClick.AddListener(OpenPanel);
-                    Debug.Log("[SaveLoadManager] 已把暂停菜单的「" + name + "」接到存档/读档面板。", this);
+                    button.onClick.AddListener(OpenSavePanel);
+                    hooked++;
+                    Debug.Log("[SaveLoadManager] 暂停菜单「" + name + "」→ 只能存档。", this);
                     continue;
                 }
 
-                // 「存档」按钮如果存在（新加的），也接上
-                if (name.IndexOf("存档", System.StringComparison.Ordinal) >= 0 ||
-                    name.IndexOf("Save", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (name.IndexOf("读档", System.StringComparison.Ordinal) >= 0)
                 {
                     button.onClick.RemoveAllListeners();
-                    button.onClick.AddListener(OpenPanel);
-                    Debug.Log("[SaveLoadManager] 已把暂停菜单的「" + name + "」接到存档/读档面板。", this);
+                    button.onClick.AddListener(OpenLoadPanel);
+                    hooked++;
+                    Debug.Log("[SaveLoadManager] 暂停菜单「" + name + "」→ 只能读档。", this);
+                    continue;
                 }
+
+                // 英文命名的兼容（Load / Save）。注意 Save 要放在 Load 之后判断，
+                // 否则 "Save" 会先被 "Load" 之外的分支漏掉；这里两个都独立判断所以没问题。
+                if (name.IndexOf("Load", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(OpenLoadPanel);
+                    hooked++;
+                    continue;
+                }
+
+                if (name.IndexOf("Save", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(OpenSavePanel);
+                    hooked++;
+                }
+            }
+
+            if (hooked == 0)
+            {
+                Debug.LogWarning("[SaveLoadManager] 暂停菜单里没找到「存档」或「读档」按钮，" +
+                                 "存档功能暂时没有入口。", this);
             }
         }
 
