@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a321bbe568bc4c39b4bce7213f722027, type: 3}
+  m_Name: PAOUIConfig
+  m_EditorClassIdentifier: 
+  enabledInBuild: 1
+  menuScene: Menu
+  additionalGameplayScenes:
+  - cs
+  - Control UI
+  - UI Preview
+  font: {fileID: 12800000, guid: de3370e671e14324f862fc20e980764f, type: 3}
+  round: {fileID: 21300000, guid: 126018d86ef84af3b8b07e3076b36496, type: 3}
+  ring: {fileID: 21300000, guid: c1d2e3f4a5b60718293a4b5c6d7e8f90, type: 3}
+  menuArt: {fileID: 21300000, guid: a18807a3a5c847148178ac0a5edc85b4, type: 3}
+  abilityIcons:
+  - {fileID: 21300000, guid: d2e3f4a5b6c708192a3b4c5d6e7f8091, type: 3}
+  - {fileID: 21300000, guid: e3f4a5b6c7d8091a2b3c4d5e6f708192, type: 3}
+  - {fileID: 21300000, guid: f4a5b6c7d8e9012a3b4c5d6e7f8091a2, type: 3}
+  paper: {r: 0.9607843, g: 0.9411765, b: 0.9098039, a: 1}
+  ink: {r: 0.0901961, g: 0.2196078, b: 0.3019608, a: 1}
+  teal: {r: 0.1843137, g: 0.4352941, b: 0.4705882, a: 1}
+  mist: {r: 0.9176471, g: 0.9529412, b: 0.9450980, a: 1}
+  chapters:
+  - scene: Map0
+    title: 水域 01
+    description: 从第一段水流开始，认识泡泡与环境之间的关系。
+    objective: 探索水域，寻找通向下一章的路径。
+  - scene: Map1
+    title: 水域 02
+    description: 将泡泡组合成新的路径，抵达水流更深处。
+    objective: 运用泡泡能力，抵达下一处出口。
+  - scene: Map2
+    title: 水域 03
+    description: 留意环境的变化，让每一次选择产生回响。
+    objective: 观察地形，寻找可以前进的路线。
+  - scene: Map3
+    title: 水域 04
+    description: 在层层涌动中继续探索，寻找散落的意识碎片。
+    objective: 继续探索，抵达本章终点。
+  - scene: Map4
+    title: 水域 05
+    description: 回看已经抵达的水域，尝试新的泡泡组合。
+    objective: 运用已掌握的能力抵达终点。
+  - scene: Map5
+    title: 水域 06
+    description: 抵达最后一段水流，回看旅程留下的回声。
+    objective: 抵达终点，回看你的旅程。
+  credits: "泡涌 · 意识之海\nTapTap Game Jam 21\n\n感谢每一位参与创作与体验的朋友。"

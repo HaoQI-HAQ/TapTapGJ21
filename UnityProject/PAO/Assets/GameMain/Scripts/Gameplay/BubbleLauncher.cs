@@ -78,8 +78,27 @@ namespace PAO
             get { return m_Charging; }
         }
 
+        public bool InputBlocked { get; set; }
+        public bool ToggleChargeInput { get; set; }
+
         private void Update()
         {
+            if (InputBlocked) return;
+            if (UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+            if (ToggleChargeInput)
+            {
+                if (m_HeldBubble != null)
+                {
+                    if (Input.GetMouseButtonDown(0)) LaunchHeldBubble();
+                }
+                else if (Input.GetMouseButtonDown(0))
+                {
+                    if (m_Charging) Release(); else BeginCharge();
+                }
+                if (m_Charging) UpdateCharge();
+                return;
+            }
             // 有泡泡滞留在发射口时，左键不再是蓄力，而是「发射它」
             if (m_HeldBubble != null)
             {
@@ -101,7 +120,7 @@ namespace PAO
                 UpdateCharge();
             }
 
-            if (m_Charging && Input.GetMouseButtonUp(0))
+            if (m_Charging && (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0)))
             {
                 Release();
             }

@@ -136,9 +136,9 @@ namespace PAO
 
             if (m_EnableHotkeys)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { SetType(BubbleType.Sticky); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha2)) { SetType(BubbleType.Bouncy); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha3)) { SetType(BubbleType.Bomb); return; }
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(0, KeyCode.Alpha1))) { SetType(BubbleType.Sticky); return; }
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(1, KeyCode.Alpha2))) { SetType(BubbleType.Bouncy); return; }
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(2, KeyCode.Alpha3))) { SetType(BubbleType.Bomb); return; }
             }
 
             if (m_EnableScrollWheel)

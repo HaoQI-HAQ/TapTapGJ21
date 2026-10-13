@@ -53,7 +53,8 @@ namespace PAO
         private GUIStyle m_HintStyle;
         private GUIStyle m_HintShadowStyle;
 
-        private const string kControlHintText = "[E] 操控泡泡";
+        private KeyCode ControlKey { get { return PAO.UI.V2.UISettings.Key(3, m_ControlKey); } }
+        private string kControlHintText { get { return "[" + ControlKey + "] 操控泡泡"; } }
 
         /// <summary>是否正在泡泡里。</summary>
         public bool IsRiding
@@ -91,7 +92,7 @@ namespace PAO
                 }
 
                 // 再按一次 E 退出操控
-                if (Input.GetKeyDown(m_ControlKey))
+                if (Input.GetKeyDown(ControlKey))
                 {
                     ExitControl(false);
                     return;
@@ -145,7 +146,7 @@ namespace PAO
 
             // E 键：进入操控模式，相机跟到泡泡上，WASD 主动驾驶
             if (m_NearbyBubble != null && m_NearbyBubble.CanControl
-                && Input.GetKeyDown(m_ControlKey))
+                && Input.GetKeyDown(ControlKey))
             {
                 EnterControl(m_NearbyBubble);
                 return;

@@ -11,6 +11,9 @@ namespace PAO.UI
     [Serializable]
     public class SaveSlotData
     {
+        public int version;
+        public bool hasPosition;
+        public PAO.UI.V2.RunProgress runProgress;
         /// <summary>槽位序号，从 0 开始。</summary>
         public int slot;
 
@@ -92,6 +95,10 @@ namespace PAO.UI
         public const int DefaultSlotCount = 3;
 
         private const string kFolderName = "PAO_Saves";
+#if UNITY_EDITOR
+        // Verification uses an isolated directory and never touches a player's actual records.
+        public static string EditorVerificationDirectory;
+#endif
 
         /// <summary>一个槽位被读取时抛出，参数是那份数据。</summary>
         public static event Action<SaveSlotData> SlotLoaded;
@@ -102,6 +109,9 @@ namespace PAO.UI
             get
             {
                 string dir = Path.Combine(Application.persistentDataPath, kFolderName);
+#if UNITY_EDITOR
+                if (!string.IsNullOrEmpty(EditorVerificationDirectory)) dir = EditorVerificationDirectory;
+#endif
                 if (!Directory.Exists(dir))
                 {
                     Directory.CreateDirectory(dir);
@@ -134,26 +144,27 @@ namespace PAO.UI
         /// <summary>读取一个槽位。不存在或损坏时返回 null。</summary>
         public static SaveSlotData LoadSlot(int slot)
         {
-            string path = PathForSlot(slot);
-
             try
             {
+                string path = PathForSlot(slot);
                 if (!File.Exists(path))
                 {
                     return null;
                 }
 
-                string json = File.ReadAllText(path);
+                string json = PAO.UI.V2.AtomicJsonFile.Read(path);
                 if (string.IsNullOrEmpty(json))
                 {
                     return null;
                 }
 
                 SaveSlotData data = JsonUtility.FromJson<SaveSlotData>(json);
-                if (data == null || !data.IsValid)
+                if (!ValidateData(data))
                 {
                     return null;
                 }
+
+                if (data.version == 0) data.hasPosition = true;
 
                 data.slot = slot;
                 if (string.IsNullOrEmpty(data.displayName))
@@ -190,7 +201,9 @@ namespace PAO.UI
 
             try
             {
-                File.WriteAllText(PathForSlot(data.slot), JsonUtility.ToJson(data, true));
+                data.version = 2;
+                if (!ValidateData(data)) return false;
+                PAO.UI.V2.AtomicJsonFile.Write(PathForSlot(data.slot), JsonUtility.ToJson(data, true));
                 return true;
             }
             catch (Exception e)
@@ -212,6 +225,8 @@ namespace PAO.UI
                 }
 
                 File.Delete(path);
+                if (File.Exists(path + ".bak")) File.Delete(path + ".bak");
+                if (File.Exists(path + ".tmp")) File.Delete(path + ".tmp");
                 return true;
             }
             catch (Exception e)
@@ -232,7 +247,10 @@ namespace PAO.UI
                 displayName = DefaultNameForSlot(slot),
                 savedAtUtc = DateTime.UtcNow.ToString("o"),
                 sceneName = SceneManager.GetActiveScene().name,
-                progress = progress ?? string.Empty
+                progress = progress ?? string.Empty,
+                version = 2,
+                hasPosition = player != null,
+                runProgress = PAO.UI.V2.UIRunState.Progress
             };
 
             if (player != null)
@@ -244,6 +262,43 @@ namespace PAO.UI
             }
 
             return SaveSlot(data);
+        }
+
+        public static bool ValidateData(SaveSlotData data)
+        {
+            return data != null && data.IsValid && data.SavedAtLocal.HasValue &&
+                   !string.IsNullOrEmpty(data.sceneName) && data.version >= 0 && data.version <= 2 &&
+                   !float.IsNaN(data.posX) && !float.IsInfinity(data.posX) &&
+                   !float.IsNaN(data.posY) && !float.IsInfinity(data.posY) &&
+                   !float.IsNaN(data.posZ) && !float.IsInfinity(data.posZ);
+        }
+
+        public static bool HasBackup(int slot)
+        {
+            try
+            {
+                string path = PathForSlot(slot) + ".bak";
+                return File.Exists(path) && ValidateData(JsonUtility.FromJson<SaveSlotData>(PAO.UI.V2.AtomicJsonFile.Read(path)));
+            }
+            catch (Exception) { return false; }
+        }
+
+        public static bool RestoreBackup(int slot)
+        {
+            try
+            {
+                if (!HasBackup(slot)) return false;
+                string path = PathForSlot(slot);
+                // Keep damaged bytes available for diagnosis; never replace the good backup with them.
+                if (File.Exists(path)) File.Copy(path, path + ".damaged", true);
+                File.Copy(path + ".bak", path, true);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[SaveSystem] 恢复备份失败: " + e.Message);
+                return false;
+            }
         }
 
         /// <summary>槽位的默认显示名：「记录一 / 记录二 / 记录三」…</summary>

@@ -125,6 +125,11 @@ public class tiaozhuan : MonoBehaviour
             return;
         }
 
+        if (PAO.UI.V2.UIRuntime.Instance != null && PAO.UI.V2.UIRuntime.Instance.IsGameplay)
+        {
+            PAO.UI.V2.UIRuntime.Instance.CompleteChapter(sceneName);
+            return;
+        }
         Debug.Log("[tiaozhuan] 加载场景：" + sceneName, this);
         SceneManager.LoadScene(sceneName);
     }

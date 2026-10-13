@@ -122,6 +122,9 @@ namespace PAO
         /// <summary>被提着时的垂直速度（米/秒），由泡泡写入。</summary>
         public float LiftSpeed { get; set; }
 
+        public float LookSensitivityMultiplier { get; set; } = 1f;
+        public bool InvertVerticalLook { get; set; }
+
         /// <summary>
         /// 当前有没有移动输入（WASD 是否按着）。
         /// 弹力泡泡靠它判断玩家「松手了」，好把攒下的弹力放出去。
@@ -232,8 +235,9 @@ namespace PAO
                 return;
             }
 
-            m_Yaw += Input.GetAxis("Mouse X") * m_MouseSensitivity;
-            m_Pitch = Mathf.Clamp(m_Pitch - Input.GetAxis("Mouse Y") * m_MouseSensitivity, m_MinPitch, m_MaxPitch);
+            m_Yaw += Input.GetAxis("Mouse X") * m_MouseSensitivity * LookSensitivityMultiplier;
+            m_Pitch = Mathf.Clamp(m_Pitch - Input.GetAxis("Mouse Y") * m_MouseSensitivity *
+                LookSensitivityMultiplier * (InvertVerticalLook ? -1f : 1f), m_MinPitch, m_MaxPitch);
         }
 
         /// <summary>
