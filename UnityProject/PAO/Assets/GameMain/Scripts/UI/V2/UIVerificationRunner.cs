@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
-    public sealed class UIVerificationRunner : MonoBehaviour
+    public sealed partial class UIVerificationRunner : MonoBehaviour
     {
         private static string output;
         private const string Requested = "PAO.UI.V2.VerificationRequested";
@@ -40,8 +40,10 @@ namespace PAO.UI.V2
         private IEnumerator Start()
         {
             Application.logMessageReceived += OnLog;
-            var stack = new Stack<IEnumerator>(); stack.Push(Scenarios());
-            float deadline = Time.realtimeSinceStartup + 150;
+            bool formal = SessionState.GetBool("PAO.UI.V2.VerificationFormal", false);
+            SessionState.SetBool("PAO.UI.V2.VerificationFormal", false);
+            var stack = new Stack<IEnumerator>(); stack.Push(formal ? FormalScenarios() : Scenarios());
+            float deadline = Time.realtimeSinceStartup + 240;
             while (stack.Count > 0)
             {
                 object current = null; bool moved = false;
@@ -91,6 +93,7 @@ namespace PAO.UI.V2
                 "Runtime bootstraps with the existing Chinese font and artwork.");
             Check(Top(runtime) != null && !runtime.IsGameplay, "Fresh menu opens with an actionable default focus.");
             Check(EventSystem.current.currentSelectedGameObject != null, "Menu has a default selection.");
+            VerifyProgressAndBindings();
             foreach (Vector2Int resolution in new[] { new Vector2Int(1600, 900), new Vector2Int(1280, 800), new Vector2Int(1920, 820), new Vector2Int(960, 540) })
                 yield return Capture(runtime, "menu-" + resolution.x + "x" + resolution.y, resolution.x, resolution.y);
 
@@ -128,8 +131,8 @@ namespace PAO.UI.V2
             Check(FindButton(runtime, "继续游戏").IsInteractable() &&
                 creditsBounds.min.y >= menuScroll.viewport.rect.yMin - 1 && creditsBounds.max.y <= menuScroll.viewport.rect.yMax + 1,
                 "The continued-run menu keeps every action visible on an ultrawide display.");
-            RectTransform artwork = Top(runtime).transform.Find("Page/Scroll/Viewport/Content/Menu and illustration/Jellyfish paper art") as RectTransform;
-            Text introduction = Top(runtime).transform.Find("Page/Scroll/Viewport/Content/Menu and illustration/Menu actions/Text").GetComponent<Text>();
+            RectTransform artwork = Top(runtime).GetComponentInChildren<UIMenuAmbience>().transform as RectTransform;
+            Text introduction = Array.Find(Top(runtime).GetComponentsInChildren<Text>(), text => text.text.StartsWith("让每一次微小的涌动"));
             Check(artwork.rect.height >= 200 && introduction.rectTransform.rect.height >= introduction.preferredHeight - 1,
                 "The continued-run menu retains its artwork and both lines of introduction.");
 
@@ -179,6 +182,8 @@ namespace PAO.UI.V2
             runtime.Back(); UISettings.Apply(new UISettingsData { fullscreen = false });
 
             UIPrototypeLab lab = FindFirstObjectByType<UIPrototypeLab>();
+            yield return SettingsScenarios(runtime);
+            yield return ExtendedScenarios(runtime, lab);
             runtime.ShowDialogue(lab.dialogue); yield return Capture(runtime, "dialogue", 1600, 900);
             FindButton(runtime, "继续").onClick.Invoke(); FindButton(runtime, "继续").onClick.Invoke();
             Check(UIRunState.Progress.memories.Exists(m => m.id == lab.dialogue.id), "Read dialogue is archived in the memory journal.");

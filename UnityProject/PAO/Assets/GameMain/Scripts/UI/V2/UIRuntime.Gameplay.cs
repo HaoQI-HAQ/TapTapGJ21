@@ -12,12 +12,18 @@ namespace PAO.UI.V2
         private Text chargeLabel;
         private Image chargeFill;
         private readonly List<Image> abilityRings = new List<Image>();
+        private readonly List<Text> abilityLabels = new List<Text>();
+        private Text journalShortcut;
+        private Text goalLabel;
         private readonly Queue<string> notices = new Queue<string>();
         private readonly Queue<string> contextNotices = new Queue<string>();
         private bool noticeIsForeground;
         private RectTransform noticeRoot;
         private Text noticeText;
         private float noticeRemaining;
+        private RectTransform subtitleRoot;
+        private Text subtitleText;
+        private float subtitleUntil;
         private string objectiveOverride;
         private bool resultShown;
         private bool wasCharging;
@@ -26,13 +32,16 @@ namespace PAO.UI.V2
         {
             hud = ui.Rect("Gameplay HUD", safeRoot); UIWidgets.Stretch(hud);
             int chapter = Config.IndexOf(lastScene);
-            RectTransform objective = ui.Column("Objective", hud, 0, 8);
-            Anchor(objective, new Vector2(0, 1), new Vector2(32, -28), new Vector2(760, 100), new Vector2(0, 1));
+            RectTransform objective = ui.Column("Objective", hud, 16, 8);
+            AddHudBacking(objective);
+            Anchor(objective, new Vector2(0, 1), new Vector2(32, -28), new Vector2(760, 156), new Vector2(0, 1));
             ui.Label(objective, ChapterName(lastScene), 21, Config.mist);
             objectiveLabel = ui.Label(objective, objectiveOverride ?? (chapter >= 0 ? Config.chapters[chapter].objective :
                 T("探索水域，寻找下一段水流。", "Explore the waters and find the next current.")), 24, Color.white);
+            goalLabel = ui.Label(objective, "", 20, Config.mist);
 
-            RectTransform type = ui.Column("Current ability", hud, 0, 8);
+            RectTransform type = ui.Column("Current ability", hud, 16, 8);
+            AddHudBacking(type);
             Anchor(type, Vector2.zero, new Vector2(32, 32), new Vector2(600, 192), Vector2.zero);
             currentAbility = ui.Label(type, "", 28, Color.white);
             chargeLabel = ui.Label(type, T("按住左键蓄力 · E 与泡泡交互", "Hold left click to charge · E to interact"), 20, Color.white);
@@ -62,11 +71,12 @@ namespace PAO.UI.V2
                     UIWidgets.Stretch(icon.rectTransform, 25); icon.sprite = Config.abilityIcons[i]; icon.raycastTarget = false;
                 }
                 Text name = ui.Label(circle.transform, (i + 1) + " · " + AbilityName(i), 20, Color.white, TextAnchor.MiddleCenter);
+                abilityLabels.Add(name);
                 Anchor(name.rectTransform, new Vector2(0.5f, 0), new Vector2(0, -28), new Vector2(180, 48), new Vector2(0.5f, 0.5f));
             }
             RectTransform buttons = ui.Row("HUD actions", hud, 12);
             Anchor(buttons, Vector2.one, new Vector2(-32, -28), new Vector2(340, 64), Vector2.one);
-            ui.Button(buttons, T("日志 J", "Journal J"), ShowJournal);
+            journalShortcut = ui.Button(buttons, "", ShowJournal).GetComponentInChildren<Text>();
             ui.Button(buttons, T("暂停 Esc", "Pause Esc"), ShowPause);
             RefreshHud();
         }
@@ -76,10 +86,20 @@ namespace PAO.UI.V2
             rect.anchorMin = rect.anchorMax = anchor; rect.pivot = pivot; rect.anchoredPosition = position; rect.sizeDelta = size;
         }
 
+        private void AddHudBacking(RectTransform rect)
+        {
+            Image backing = rect.gameObject.AddComponent<Image>();
+            backing.sprite = Config.round; backing.type = Image.Type.Sliced;
+            backing.color = new Color(Config.ink.r, Config.ink.g, Config.ink.b, 0.9f);
+            backing.raycastTarget = false;
+        }
+
         private void ClearHud()
         {
+            if (subtitleRoot != null) Destroy(subtitleRoot.gameObject);
+            subtitleRoot = null; subtitleText = null;
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
-            hud = null; abilityRings.Clear(); currentAbility = null;
+            hud = null; abilityRings.Clear(); abilityLabels.Clear(); currentAbility = null;
             if (noticeRoot != null) Destroy(noticeRoot.gameObject);
             noticeRoot = null; notices.Clear(); contextNotices.Clear(); noticeRemaining = 0;
             resultShown = false; wasCharging = false;
@@ -106,22 +126,30 @@ namespace PAO.UI.V2
             int type = (int)switcher.Current;
             string name = AbilityName(type);
             if (currentAbility.text != name) currentAbility.text = name;
+            if (journalShortcut != null) journalShortcut.text = T("日志 ", "Journal ") + UIInput.Prompt(UIInput.Journal);
+            if (goalLabel != null)
+                goalLabel.text = chapterGoal != null && player != null ? T("终点距离 ", "Goal distance ") +
+                    Mathf.RoundToInt(Vector3.Distance(player.transform.position, chapterGoal.position)) + " m" :
+                    tide != null ? T("潮水抵达终点 ", "Tide reaches goal in ") + Mathf.Max(0, Mathf.CeilToInt(tide.TimeUntilGoalFlooded)) + " s" : "";
             for (int i = 0; i < abilityRings.Count; i++)
             {
+                abilityRings[i].color = UIAbilityColor.ColorFor(i);
+                abilityLabels[i].text = UIInput.Prompt(i) + " · " + AbilityName(i);
                 bool selected = i == type;
                 abilityRings[i].enabled = selected;
                 abilityRings[i].transform.parent.localScale = Vector3.one * (selected && !UISettings.Current.reducedMotion ? 1.08f : 1);
             }
             if (launcher != null && chargeLabel != null)
             {
+                string charge = UIInput.Prompt(UIInput.Charge), interact = UIInput.Prompt(UIInput.Interact);
                 string status = launcher.IsCharging ? T("正在蓄力 ", "Charging ") + Mathf.RoundToInt(launcher.ChargeProgress * 100) + "%" :
-                    launcher.HasHeldBubble ? T("泡泡已就绪 · 点击左键发射", "Bubble ready · Click to launch") :
-                    UISettings.Current.toggleCharge ? T("点击蓄力 · 再次点击释放", "Click to charge · Click again to release") :
-                    T("按住左键蓄力 · E 与泡泡交互", "Hold left click to charge · E to interact");
+                    launcher.HasHeldBubble ? T("泡泡已就绪 · ", "Bubble ready · ") + charge + T(" 发射", " to launch") :
+                    UIInput.ToggleCharge ? charge + T(" 点击蓄力 · 再次点击释放", " to charge · Press again to release") :
+                    T("按住 ", "Hold ") + charge + T(" 蓄力 · ", " to charge · ") + interact + T(" 交互", " to interact");
                 if (chargeLabel.text != status) chargeLabel.text = status;
                 chargeFill.rectTransform.anchorMax = new Vector2(launcher.IsCharging ? launcher.ChargeProgress : 0, 1);
                 if (wasCharging && !launcher.IsCharging) ShowTutorial("first-cast", T("让泡泡成为你的路径", "Let bubbles become your path"),
-                    T("留意泡泡与地形的关系。靠近泡泡，尝试 E 交互。", "Watch how bubbles interact with the terrain. Approach one and try E."));
+                    T("留意泡泡与地形的关系。交互按键：", "Watch how bubbles interact with the terrain. Interaction key: ") + interact);
                 wasCharging = launcher.IsCharging;
             }
         }
@@ -134,7 +162,19 @@ namespace PAO.UI.V2
 
         public void ShowSubtitle(string speaker, string text)
         {
-            if (UISettings.Current.subtitles) Toast(speaker + "\n" + text, false);
+            if (!UISettings.Current.subtitles) return;
+            if (subtitleRoot == null)
+            {
+                Image background = ui.Surface("Subtitles", safeRoot, Config.ink, true);
+                subtitleRoot = background.rectTransform;
+                Anchor(subtitleRoot, new Vector2(0.5f, 0), new Vector2(0, 36), new Vector2(760, 100), new Vector2(0.5f, 0));
+                background.raycastTarget = false;
+                background.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.ink);
+                subtitleText = ui.Label(subtitleRoot, "", 24, Color.white, TextAnchor.MiddleCenter);
+                UIWidgets.Stretch(subtitleText.rectTransform, 16);
+            }
+            subtitleText.text = string.IsNullOrEmpty(speaker) ? text : speaker + "\n" + text;
+            subtitleUntil = Time.unscaledTime + Mathf.Max(5, text.Length * 0.12f);
         }
 
         public void Toast(string message, bool showOverModals = true)
@@ -145,11 +185,16 @@ namespace PAO.UI.V2
 
         private void UpdateTransientUI()
         {
+            if (subtitleRoot != null)
+            {
+                subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
+                subtitleRoot.sizeDelta = new Vector2(760, Mathf.Max(90, subtitleText.preferredHeight + 40));
+            }
             if (noticeRoot == null)
             {
                 Image paper = ui.Surface("Context notice", safeRoot, Config.mist, true);
                 noticeRoot = paper.rectTransform;
-                Anchor(noticeRoot, new Vector2(0.5f, 1), new Vector2(0, -130), new Vector2(840, 72), new Vector2(0.5f, 1));
+                Anchor(noticeRoot, new Vector2(0.5f, 1), new Vector2(0, -208), new Vector2(840, 72), new Vector2(0.5f, 1));
                 paper.raycastTarget = false;
                 noticeText = ui.Label(noticeRoot, "", 23, Config.ink, TextAnchor.MiddleCenter);
                 UIWidgets.Stretch(noticeText.rectTransform, 20);
@@ -183,10 +228,16 @@ namespace PAO.UI.V2
             UIPage page = Push(T("操作与教学", "Controls & tutorials"), T("任何时候都可以回到这里复习。", "Return here at any time for a refresher."));
             page.Rebuild = ShowHelp;
             string[,] topics = {
-                { T("探索", "Explore"), T("WASD 移动，空格跳跃。鼠标改变视角，按住 Shift 加速。", "WASD to move, Space to jump. Mouse to look, hold Shift to sprint.") },
-                { T("泡泡", "Bubbles"), T("1 / 2 / 3 或滚轮切换泡泡。按住左键蓄力，松开释放。较大的泡泡会停留在发射口，再次点击发射。", "1 / 2 / 3 or wheel to switch. Hold left click to charge and release. Large bubbles wait at the muzzle; click again to launch.") },
-                { T("交互", "Interact"), T("靠近泡泡后按 E 交互。根据环境组合黏附、弹跳与爆破。", "Approach a bubble and press E. Combine adhesion, bouncing and explosions with the environment.") },
-                { T("记录", "Records"), T("Esc 打开暂停，保存到三个手动槽位。完成章节会留下自动记录。J 打开意识碎片日志。", "Esc to pause and save to three manual slots. Completing a chapter creates an automatic record. J opens the memory journal.") },
+                { T("探索", "Explore"), UIInput.MovementHint() + T(" 移动 · 跳跃 ", " Move · Jump ") + UIInput.Prompt(UIInput.Jump) +
+                    T(" · 加速 ", " · Sprint ") + UIInput.Prompt(UIInput.Sprint) + T("。鼠标或右摇杆改变视角。", ". Mouse or right stick to look.") },
+                { T("泡泡", "Bubbles"), UIInput.Prompt(0) + "/" + UIInput.Prompt(1) + "/" + UIInput.Prompt(2) +
+                    T(" 或滚轮切换。蓄力与发射：", " or wheel to switch. Charge and launch: ") + UIInput.Prompt(UIInput.Charge) +
+                    (UIInput.ToggleCharge ? T("。点击蓄力，再按一次释放。", ". Press to charge, then press again to release.") :
+                    T("。按住蓄力，松开释放。", ". Hold to charge, release to cast.")) + T("较大的泡泡停在发射口，再按一次发射。", " Large bubbles wait at the muzzle; press again to launch.") },
+                { T("交互", "Interact"), T("靠近泡泡或互动点。交互：", "Approach a bubble or interaction site. Interact: ") + UIInput.Prompt(UIInput.Interact) +
+                    T(" · 乘坐与跳出：", " · Ride and exit: ") + UIInput.Prompt(UIInput.Ride) },
+                { T("记录", "Records"), T("Esc 暂停并保存。完成章节会自动记录。日志：", "Esc to pause and save. Chapters save automatically. Journal: ") + UIInput.Prompt(UIInput.Journal) },
+                { T("引爆", "Detonate"), UIInput.Prompt(UIInput.Detonate) + T(" 引爆泡泡", " detonates bubbles") },
                 { T("导航", "Navigation"), T("方向键或 Tab 移动焦点，Enter 确认，Esc 返回。手柄 A 确认、B 返回、菜单键暂停。", "Arrows or Tab move focus, Enter submits, Esc returns. Controller A submits, B returns, Menu pauses.") } };
             for (int i = 0; i < topics.GetLength(0); i++)
             { ui.Label(page.Content, topics[i, 0], 30); ui.Label(page.Content, topics[i, 1], 24); }
@@ -262,7 +313,8 @@ namespace PAO.UI.V2
         }
 
         private void OnLevelWon() { CompleteChapter(); }
-        private void OnLevelLost()
+        private void OnLevelLost() { ShowFailure(); }
+        public void ShowFailure()
         {
             if (resultShown) return; resultShown = true;
             UIPage page = Push(T("水流暂时淹没了路径", "The current covered the path"),
@@ -292,6 +344,14 @@ namespace PAO.UI.V2
             ui.Button(page.Content, T("回看意识碎片", "Review memories"), ShowJournal);
             ui.Button(page.Footer, T("章节路径", "Chapter path"), ShowChapters);
             ui.Button(page.Footer, T("主菜单", "Main menu"), () => LoadScene(Config.menuScene)); Finish(page); return true;
+        }
+
+        public void ConfirmChapterGoal(string nextScene)
+        {
+            if (IsBlockingGameplay || resultShown || loading) return;
+            Confirm(T("完成这一章？", "Complete this chapter?"),
+                T("确认后保存章节进度并打开结算。取消可继续探索。", "Confirm to save chapter progress and open the results. Cancel to keep exploring."),
+                () => CompleteChapter(nextScene));
         }
 
         public void ShowEnding()

@@ -26,32 +26,45 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d2e3f4a5b6c708192a3b4c5d6e7f8091, type: 3}
   - {fileID: 21300000, guid: e3f4a5b6c7d8091a2b3c4d5e6f708192, type: 3}
   - {fileID: 21300000, guid: f4a5b6c7d8e9012a3b4c5d6e7f8091a2, type: 3}
+  defaultPlayer: {fileID: 7353932536753380807, guid: c8c72f6b23ce2334dae9db64d6e83b08, type: 3}
   paper: {r: 0.9607843, g: 0.9411765, b: 0.9098039, a: 1}
   ink: {r: 0.0901961, g: 0.2196078, b: 0.3019608, a: 1}
   teal: {r: 0.1843137, g: 0.4352941, b: 0.4705882, a: 1}
   mist: {r: 0.9176471, g: 0.9529412, b: 0.9450980, a: 1}
   chapters:
   - scene: Map0
+    spawnAnchor: Ground_FrontOpenSpace
+    goalAnchor: FarLandmark_Base
     title: 水域 01
     description: 从第一段水流开始，认识泡泡与环境之间的关系。
     objective: 探索水域，寻找通向下一章的路径。
   - scene: Map1
+    spawnAnchor: Island_Start
+    goalAnchor:
     title: 水域 02
     description: 将泡泡组合成新的路径，抵达水流更深处。
     objective: 运用泡泡能力，抵达下一处出口。
   - scene: Map2
+    spawnAnchor: Start_Salvage_Court
+    goalAnchor: Memory_Beacon_Lower_Platform
     title: 水域 03
     description: 留意环境的变化，让每一次选择产生回响。
     objective: 观察地形，寻找可以前进的路线。
   - scene: Map3
+    spawnAnchor: West_Start_Camp
+    goalAnchor: Map3_Corkscrew_Upper_Exit_Shelf
     title: 水域 04
     description: 在层层涌动中继续探索，寻找散落的意识碎片。
     objective: 继续探索，抵达本章终点。
   - scene: Map4
+    spawnAnchor: Start_Memory_Beach
+    goalAnchor: Resonance_Core_Plinth
     title: 水域 05
     description: 回看已经抵达的水域，尝试新的泡泡组合。
     objective: 运用已掌握的能力抵达终点。
   - scene: Map5
+    spawnAnchor: Start_Outer_Courtyard
+    goalAnchor: Memory_Garden_Plinth
     title: 水域 06
     description: 抵达最后一段水流，回看旅程留下的回声。
     objective: 抵达终点，回看你的旅程。

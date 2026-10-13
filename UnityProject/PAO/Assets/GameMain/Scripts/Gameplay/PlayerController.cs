@@ -198,6 +198,7 @@ namespace PAO
 
         private void Update()
         {
+            if (PAO.UI.V2.UIInput.Blocked) return;
             UpdateLookInput();
             UpdateMove();
 
@@ -235,9 +236,15 @@ namespace PAO
                 return;
             }
 
-            m_Yaw += Input.GetAxis("Mouse X") * m_MouseSensitivity * LookSensitivityMultiplier;
-            m_Pitch = Mathf.Clamp(m_Pitch - Input.GetAxis("Mouse Y") * m_MouseSensitivity *
-                LookSensitivityMultiplier * (InvertVerticalLook ? -1f : 1f), m_MinPitch, m_MaxPitch);
+            float lookX = Input.GetAxis("Mouse X"), lookY = Input.GetAxis("Mouse Y");
+            Vector2 stick = Vector2.zero;
+            if (PAO.UI.V2.UIInput.UsesV2)
+            {
+                stick = PAO.UI.V2.UIInput.Look() * (120f * Time.unscaledDeltaTime);
+            }
+            m_Yaw += lookX * m_MouseSensitivity * LookSensitivityMultiplier + stick.x;
+            m_Pitch = Mathf.Clamp(m_Pitch - lookY * m_MouseSensitivity *
+                LookSensitivityMultiplier * (InvertVerticalLook ? -1f : 1f) - stick.y, m_MinPitch, m_MaxPitch);
         }
 
         /// <summary>
@@ -268,6 +275,10 @@ namespace PAO
 
             float inputX = Input.GetAxisRaw("Horizontal");
             float inputY = Input.GetAxisRaw("Vertical");
+            if (PAO.UI.V2.UIInput.UsesV2)
+            {
+                Vector2 move = PAO.UI.V2.UIInput.Move(); inputX = move.x; inputY = move.y;
+            }
 
             // 把摄像机的朝向压平到水平面，作为移动参考系
             Vector3 referenceForward;
@@ -360,7 +371,8 @@ namespace PAO
 
 
             float speed = m_MoveSpeed;
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            if (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.Held(PAO.UI.V2.UIInput.Sprint) :
+                Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
             {
                 speed *= m_SprintMultiplier;
             }
@@ -374,7 +386,7 @@ namespace PAO
                     m_VerticalSpeed = -2f;
                 }
 
-                if (Input.GetButtonDown("Jump"))
+                if (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Jump) : Input.GetButtonDown("Jump"))
                 {
                     // 由目标高度反推初速度：v = sqrt(2 * g * h)
                     m_VerticalSpeed = Mathf.Sqrt(m_JumpHeight * -2f * m_Gravity);

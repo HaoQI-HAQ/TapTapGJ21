@@ -23,17 +23,19 @@ namespace PAO.UI.V2
             if (other.GetComponentInParent<PlayerController>() == null) return;
             nearby = true;
             if (!requireInteract) Collect();
-            else if (!consumed && UIRuntime.Instance != null)
-                UIRuntime.Instance.Toast(UISettings.Text("拾起意识碎片 · ", "Collect a memory · ") + UISettings.Key(3, KeyCode.E), false);
+            else if (!IsCollected && UIRuntime.Instance != null)
+                UIRuntime.Instance.Toast(UISettings.Text("拾起意识碎片 · ", "Collect a memory · ") + UIInput.Prompt(UIInput.Interact), false);
         }
         private void OnTriggerExit(Collider other)
         { if (other.GetComponentInParent<PlayerController>() != null) nearby = false; }
         private void Update()
-        { if (nearby && requireInteract && Input.GetKeyDown(UISettings.Key(3, KeyCode.E))) Collect(); }
+        { if (nearby && requireInteract && UIInput.Down(UIInput.Interact)) Collect(); }
+        private bool IsCollected { get { return consumed || UIRunState.Progress.memories.Exists(m => m != null &&
+            m.id == (dialogue != null ? dialogue.id + (dialogue.choices != null && dialogue.choices.Length > 0 ? ":choice" : "") : memory.id)); } }
         public void Collect()
         {
             UIRuntime runtime = UIRuntime.Instance;
-            if (consumed || runtime == null || runtime.IsBlockingGameplay) return;
+            if (IsCollected || runtime == null || runtime.IsBlockingGameplay) return;
             consumed = dialogue == null;
             if (dialogue != null) runtime.ShowDialogue(dialogue);
             else runtime.CollectMemory(memory);

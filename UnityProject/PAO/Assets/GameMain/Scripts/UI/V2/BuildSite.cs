@@ -33,20 +33,20 @@ namespace PAO.UI.V2
         {
             if (other.GetComponentInParent<PlayerController>() == null) return;
             nearby = true;
-            if (UIRuntime.Instance != null) UIRuntime.Instance.Toast(UISettings.Text("查看建构 · ", "Inspect construction · ") + UISettings.Key(3, KeyCode.E), false);
+            if (UIRuntime.Instance != null) UIRuntime.Instance.Toast(UISettings.Text("查看建构 · ", "Inspect construction · ") + UIInput.Prompt(UIInput.Interact), false);
         }
         private void OnTriggerExit(Collider other)
         { if (other.GetComponentInParent<PlayerController>() != null) nearby = false; }
         private void Update()
         {
-            if (nearby && Input.GetKeyDown(UISettings.Key(3, KeyCode.E)) && UIRuntime.Instance != null && !UIRuntime.Instance.IsBlockingGameplay)
+            if (nearby && UIInput.Down(UIInput.Interact) && UIRuntime.Instance != null && !UIRuntime.Instance.IsBlockingGameplay)
                 UIRuntime.Instance.ShowConstruction(this);
         }
         public string CanPlace(BuildRecipe recipe)
         {
             if (instance != null) return UISettings.Text("这里已经完成建构。", "This site is already occupied.");
             if (string.IsNullOrEmpty(id)) return UISettings.Text("这个建构点尚未准备好。", "This construction site is not ready.");
-            if (recipe == null || recipe.prefab == null || string.IsNullOrEmpty(recipe.id)) return UISettings.Text("这个配方尚未准备好。", "This recipe is not ready.");
+            if (recipe == null || recipe.prefab == null || string.IsNullOrEmpty(recipe.id) || recipe.cost < 0) return UISettings.Text("这个配方尚未准备好。", "This recipe is not ready.");
             if (!validPlacement) return invalidReason;
             if (UIRunState.Progress.buildTokens < recipe.cost) return UISettings.Text("意识能量不足。", "Not enough consciousness energy.");
             return null;

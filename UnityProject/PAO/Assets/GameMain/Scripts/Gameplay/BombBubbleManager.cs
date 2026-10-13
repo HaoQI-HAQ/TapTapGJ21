@@ -58,8 +58,14 @@ namespace PAO
         {
             CleanupDestroyed();
 
-            if (Input.GetMouseButtonDown(m_DetonateMouseButton)
-                || (m_AlsoUseRKey && Input.GetKeyDown(KeyCode.R)))
+            if (IsGameplayUIBlocked())
+            {
+                return;
+            }
+
+            bool pressed = UI.V2.UIInput.UsesV2 ? UI.V2.UIInput.Down(UI.V2.UIInput.Detonate) :
+                Input.GetMouseButtonDown(m_DetonateMouseButton) || (m_AlsoUseRKey && Input.GetKeyDown(KeyCode.R));
+            if (pressed)
             {
                 DetonateOldest();
             }
@@ -165,7 +171,7 @@ namespace PAO
         /// </summary>
         private void OnGUI()
         {
-            if (!m_ShowIndexLabel || m_Bombs.Count == 0)
+            if (!isActiveAndEnabled || !m_ShowIndexLabel || m_Bombs.Count == 0 || IsGameplayUIBlocked())
             {
                 return;
             }
@@ -217,6 +223,15 @@ namespace PAO
                 GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), text, m_LabelShadowStyle);
                 GUI.Label(rect, text, m_LabelStyle);
             }
+        }
+
+        private static bool IsGameplayUIBlocked()
+        {
+            // IMGUI draws independently of the HUD canvas, including while time is paused.
+            UI.V2.UIRuntime runtime = UI.V2.UIRuntime.Instance;
+            UI.PauseMenu pauseMenu = UI.PauseMenu.Instance;
+            return (runtime != null && runtime.BlocksInputThisFrame) ||
+                   (pauseMenu != null && pauseMenu.IsOpen) || Time.timeScale <= 0f;
         }
     }
 }

@@ -81,25 +81,27 @@ namespace PAO.UI.V2
             return element;
         }
 
-        public Button Button(Transform parent, string text, Action click, bool primary = false, bool enabled = true)
+        public Button Button(Transform parent, string text, Action click, bool primary = false, bool enabled = true, bool danger = false)
         {
-            Image surface = Surface(text, parent, primary ? Config.teal : Config.mist, true);
+            Color emphasis = danger ? (UISettings.Current.highContrast ? Color.black : new Color32(148, 75, 54, 255)) : Config.teal;
+            Image surface = Surface(text, parent, primary ? emphasis : Config.mist, true);
             Button button = surface.gameObject.AddComponent<Button>();
             button.targetGraphic = surface; button.interactable = enabled;
             ColorBlock colors = button.colors;
             colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(0.78f, 0.91f, 0.88f);
+            colors.highlightedColor = new Color(1.06f, 1.06f, 1.06f);
             colors.selectedColor = colors.highlightedColor;
-            colors.pressedColor = new Color(0.64f, 0.8f, 0.78f);
-            colors.disabledColor = new Color(0.7f, 0.7f, 0.7f, 0.52f);
+            colors.pressedColor = new Color(0.93f, 0.93f, 0.93f);
+            colors.disabledColor = new Color(1, 1, 1, 0.55f);
             colors.fadeDuration = 0.1f; button.colors = colors;
             Text label = Label(surface.transform, text, 24, primary ? Color.white : Ink, TextAnchor.MiddleCenter);
             Stretch(label.rectTransform); label.rectTransform.offsetMin = new Vector2(20, 4);
             label.rectTransform.offsetMax = new Vector2(-20, -4);
             Size(surface.transform, 72, -1, 1);
             button.onClick.AddListener(() => { if (click != null) click(); });
-            surface.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
+            surface.gameObject.AddComponent<UIFocusRing>().Configure(emphasis);
             surface.gameObject.AddComponent<UIAdaptiveButton>();
+            surface.gameObject.AddComponent<UIButtonFeedback>();
             return button;
         }
 
@@ -124,16 +126,22 @@ namespace PAO.UI.V2
         public Slider Slider(Transform parent, string title, float value, float min, float max, Action<float> changed)
         {
             RectTransform column = Column(title, parent, 0, 6);
-            Text label = Label(column, title + "  " + value.ToString("0.0"), 22);
+            Text label = Label(column, title + "  " + value.ToString("0.00"), 22);
             RectTransform track = Rect("Slider", column); Size(track, 38);
             Image background = track.gameObject.AddComponent<Image>(); background.color = Config.mist;
             Slider slider = track.gameObject.AddComponent<Slider>(); slider.minValue = min; slider.maxValue = max;
-            Image fill = Surface("Fill", track, Config.teal, true); Stretch(fill.rectTransform);
-            Image handle = Surface("Handle", track, Config.ink, true);
-            handle.rectTransform.sizeDelta = new Vector2(28, 38);
+            RectTransform fillArea = Rect("Fill area", track); Stretch(fillArea);
+            fillArea.offsetMin = new Vector2(14, 6); fillArea.offsetMax = new Vector2(-14, -6);
+            Image fill = Surface("Fill", fillArea, Config.teal, true); Stretch(fill.rectTransform);
+            RectTransform handleArea = Rect("Handle area", track); Stretch(handleArea);
+            handleArea.offsetMin = new Vector2(14, 0); handleArea.offsetMax = new Vector2(-14, 0);
+            Image handle = Surface("Handle", handleArea, Config.ink, true);
+            // Slider drives the handle's horizontal anchor and stretches its vertical anchors.
+            handle.rectTransform.anchorMin = Vector2.zero; handle.rectTransform.anchorMax = new Vector2(0, 1);
+            handle.rectTransform.sizeDelta = new Vector2(28, 0);
             slider.fillRect = fill.rectTransform; slider.handleRect = handle.rectTransform;
             slider.targetGraphic = handle; slider.SetValueWithoutNotify(value);
-            slider.onValueChanged.AddListener(v => { label.text = title + "  " + v.ToString("0.0"); changed(v); });
+            slider.onValueChanged.AddListener(v => { label.text = title + "  " + v.ToString("0.00"); changed(v); });
             track.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
             return slider;
         }
@@ -163,6 +171,18 @@ namespace PAO.UI.V2
         public void OnSelect(BaseEventData data)
         {
             if (outline != null) outline.enabled = true;
+            RevealSelection();
+            StartCoroutine(RevealAfterLayout());
+        }
+        private System.Collections.IEnumerator RevealAfterLayout()
+        {
+            // Dynamic settings rebuild their content in this frame; reveal after the layout settles.
+            yield return null;
+            if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject)
+                RevealSelection();
+        }
+        private void RevealSelection()
+        {
             ScrollRect scroll = GetComponentInParent<ScrollRect>();
             if (scroll == null || scroll.content == null) return;
             Canvas.ForceUpdateCanvases();
@@ -171,6 +191,7 @@ namespace PAO.UI.V2
             Rect view = scroll.viewport.rect;
             float shift = bounds.min.y < view.yMin ? view.yMin - bounds.min.y :
                           bounds.max.y > view.yMax ? view.yMax - bounds.max.y : 0;
+            scroll.StopMovement();
             scroll.content.anchoredPosition += Vector2.up * shift;
         }
         public void OnDeselect(BaseEventData data) { if (outline != null) outline.enabled = false; }

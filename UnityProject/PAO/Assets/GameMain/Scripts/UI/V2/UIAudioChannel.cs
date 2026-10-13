@@ -13,6 +13,8 @@ namespace PAO.UI.V2
         private void Awake() { source = GetComponent<AudioSource>(); baseVolume = source.volume; }
         private void OnEnable() { UISettings.Changed += Apply; Apply(); }
         private void OnDisable() { UISettings.Changed -= Apply; }
+        public void InferChannel()
+        { music = source != null && source.loop && source.spatialBlend < 0.01f; Apply(); }
         private void Apply()
         {
             if (source != null && UISettings.Current != null)

@@ -10,6 +10,10 @@ namespace PAO.UI.V2
         public string title;
         [TextArea] public string description;
         public string objective;
+        [Tooltip("玩家缺失时，在此命名物体的上表面生成默认玩家。")]
+        public string spawnAnchor;
+        [Tooltip("已有终点时忽略；否则在此命名物体上创建互动终点。")]
+        public string goalAnchor;
     }
 
     [Serializable]
@@ -32,6 +36,7 @@ namespace PAO.UI.V2
         public Sprite ring;
         public Sprite menuArt;
         public Sprite[] abilityIcons;
+        public GameObject defaultPlayer;
         public Color paper = new Color32(245, 240, 232, 255);
         public Color ink = new Color32(23, 56, 77, 255);
         public Color teal = new Color32(47, 111, 120, 255);

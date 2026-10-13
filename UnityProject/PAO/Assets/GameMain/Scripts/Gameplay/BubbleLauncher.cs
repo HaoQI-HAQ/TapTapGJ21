@@ -80,19 +80,24 @@ namespace PAO
 
         public bool InputBlocked { get; set; }
         public bool ToggleChargeInput { get; set; }
+        private bool ChargePressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButtonDown(0); } }
+        private bool ChargeHeld { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Held(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButton(0); } }
 
         private void Update()
         {
-            if (InputBlocked) return;
-            if (UnityEngine.EventSystems.EventSystem.current != null &&
+            if (InputBlocked || PAO.UI.V2.UIInput.Blocked) return;
+            bool mouseCharge = !PAO.UI.V2.UIInput.UsesV2 || PAO.UI.V2.UIInput.Binding(PAO.UI.V2.UIInput.Charge) >= KeyCode.Mouse0;
+            if (mouseCharge && !PAO.UI.V2.UIInput.ControllerHeld(PAO.UI.V2.UIInput.PadBinding(PAO.UI.V2.UIInput.Charge)) && UnityEngine.EventSystems.EventSystem.current != null &&
                 UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
-            if (ToggleChargeInput)
+            if (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.ToggleCharge : ToggleChargeInput)
             {
                 if (m_HeldBubble != null)
                 {
-                    if (Input.GetMouseButtonDown(0)) LaunchHeldBubble();
+                    if (ChargePressed) LaunchHeldBubble();
                 }
-                else if (Input.GetMouseButtonDown(0))
+                else if (ChargePressed)
                 {
                     if (m_Charging) Release(); else BeginCharge();
                 }
@@ -102,7 +107,7 @@ namespace PAO
             // 有泡泡滞留在发射口时，左键不再是蓄力，而是「发射它」
             if (m_HeldBubble != null)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (ChargePressed)
                 {
                     LaunchHeldBubble();
                 }
@@ -110,17 +115,17 @@ namespace PAO
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (ChargePressed)
             {
                 BeginCharge();
             }
 
-            if (m_Charging && Input.GetMouseButton(0))
+            if (m_Charging && ChargeHeld)
             {
                 UpdateCharge();
             }
 
-            if (m_Charging && (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0)))
+            if (m_Charging && !ChargeHeld)
             {
                 Release();
             }

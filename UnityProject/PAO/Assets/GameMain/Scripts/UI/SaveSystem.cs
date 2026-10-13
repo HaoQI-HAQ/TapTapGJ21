@@ -250,7 +250,7 @@ namespace PAO.UI
                 progress = progress ?? string.Empty,
                 version = 2,
                 hasPosition = player != null,
-                runProgress = PAO.UI.V2.UIRunState.Progress
+                runProgress = PAO.UI.V2.UIRunState.Progress.Copy()
             };
 
             if (player != null)
@@ -266,11 +266,13 @@ namespace PAO.UI
 
         public static bool ValidateData(SaveSlotData data)
         {
-            return data != null && data.IsValid && data.SavedAtLocal.HasValue &&
+            bool valid = data != null && data.IsValid && data.SavedAtLocal.HasValue &&
                    !string.IsNullOrEmpty(data.sceneName) && data.version >= 0 && data.version <= 2 &&
                    !float.IsNaN(data.posX) && !float.IsInfinity(data.posX) &&
                    !float.IsNaN(data.posY) && !float.IsInfinity(data.posY) &&
                    !float.IsNaN(data.posZ) && !float.IsInfinity(data.posZ);
+            if (valid && data.runProgress != null) data.runProgress.Validate();
+            return valid;
         }
 
         public static bool HasBackup(int slot)

@@ -54,6 +54,10 @@ namespace PAO
         private GUIStyle m_HintShadowStyle;
 
         private KeyCode ControlKey { get { return PAO.UI.V2.UISettings.Key(3, m_ControlKey); } }
+        private bool ControlPressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Interact) : Input.GetKeyDown(m_ControlKey); } }
+        private bool RidePressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Ride) : Input.GetKeyDown(m_RideKey); } }
         private string kControlHintText { get { return "[" + ControlKey + "] 操控泡泡"; } }
 
         /// <summary>是否正在泡泡里。</summary>
@@ -92,7 +96,7 @@ namespace PAO
                 }
 
                 // 再按一次 E 退出操控
-                if (Input.GetKeyDown(ControlKey))
+                if (ControlPressed)
                 {
                     ExitControl(false);
                     return;
@@ -111,7 +115,7 @@ namespace PAO
                     return;
                 }
 
-                if (Input.GetKeyDown(m_RideKey))
+                if (RidePressed)
                 {
                     // 弹力泡泡：第一次按 F 是连人带泡一起弹射出去，人还坐在里面；
                     // 已经弹射过、或者是浮粘泡泡，按 F 就是正常跳出来
@@ -146,7 +150,7 @@ namespace PAO
 
             // E 键：进入操控模式，相机跟到泡泡上，WASD 主动驾驶
             if (m_NearbyBubble != null && m_NearbyBubble.CanControl
-                && Input.GetKeyDown(ControlKey))
+                && ControlPressed)
             {
                 EnterControl(m_NearbyBubble);
                 return;
@@ -155,7 +159,7 @@ namespace PAO
             // 装了炸弹的弹力泡泡：按 F 不是进去，而是把它弹射出去。
             // 方向取「玩家 → 泡泡」，也就是往玩家面朝的那一侧推出去。
             if (m_NearbyBubble != null && m_NearbyBubble.CanLaunchWithBomb
-                && Input.GetKeyDown(m_RideKey))
+                && RidePressed)
             {
                 Vector3 launchDirection = m_NearbyBubble.transform.position - transform.position;
                 launchDirection.y = 0f;
@@ -163,7 +167,7 @@ namespace PAO
                 return;
             }
 
-            if (m_NearbyBubble != null && Input.GetKeyDown(m_RideKey))
+            if (m_NearbyBubble != null && RidePressed)
             {
                 EnterBubble(m_NearbyBubble);
             }
@@ -349,6 +353,7 @@ namespace PAO
             // 只有在「还没进去」的时候才显示 E 的提示，画在 F 的正下方
             // 弹力泡泡没有 E 功能，所以它的提示只显示 F 那一行
             bool showHintE = !m_IsRiding && target.CanControl;
+            if (PAO.UI.V2.UIInput.UsesV2) textF = textF.Replace("[F]", "[" + PAO.UI.V2.UIInput.Prompt(PAO.UI.V2.UIInput.Ride) + "]");
 
             Vector2 sizeF = m_HintStyle.CalcSize(new GUIContent(textF));
             Vector2 sizeE = showHintE ? m_HintStyle.CalcSize(new GUIContent(kControlHintText)) : Vector2.zero;

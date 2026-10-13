@@ -5,6 +5,17 @@ namespace PAO.UI.V2
 {
     public sealed class UIAdaptiveButton : MonoBehaviour, ILayoutElement
     {
+        private float lastWidth = -1;
+        private int lastFontSize;
+        private void LateUpdate()
+        {
+            Text label = GetComponentInChildren<Text>();
+            float width = ((RectTransform)transform).rect.width;
+            if (label == null || (Mathf.Abs(lastWidth - width) < 0.1f && lastFontSize == label.fontSize)) return;
+            lastWidth = width; lastFontSize = label.fontSize;
+            // Wrapped height is only reliable after the parent has assigned the final width.
+            LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
+        }
         public void CalculateLayoutInputHorizontal() { }
         public void CalculateLayoutInputVertical() { }
         public float minWidth { get { return 96; } }

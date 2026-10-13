@@ -15,6 +15,8 @@ namespace PAO.UI.V2
         public static UIRuntime Instance { get; private set; }
         public UIConfig Config { get; private set; }
         public bool IsBlockingGameplay { get { return pages.Count > 0 || loading; } }
+        public bool BlocksInputThisFrame { get { return IsBlockingGameplay || Time.frameCount <= resumeInputFrame; } }
+        private int resumeInputFrame = -1;
         public bool IsGameplay { get; private set; }
         private UIWidgets ui;
         private RectTransform safeRoot;
@@ -35,6 +37,7 @@ namespace PAO.UI.V2
         private float nextHudUpdate;
         private string lastScene;
         private Action<KeyCode> rebind;
+        private int rebindOpenedFrame;
         private readonly KeyCode[] keyboardKeys = (KeyCode[])Enum.GetValues(typeof(KeyCode));
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -83,20 +86,18 @@ namespace PAO.UI.V2
             IsGameplay = scene.name != Config.menuScene;
             objectiveOverride = null;
             if (UIRunState.PendingLoad != null) UIRunState.Apply(UIRunState.PendingLoad);
-            if (EventSystem.current == null)
-            {
-                var events = new GameObject("UI EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
-                SceneManager.MoveGameObjectToScene(events, scene);
-            }
+            EnsureEventSystem(scene);
             StartCoroutine(InitializeScene(scene));
         }
 
         private IEnumerator InitializeScene(Scene scene)
         {
+            if (IsGameplay) PrepareChapter(scene);
             // Let existing gameplay Start methods initialize their camera and dynamically created labels.
             yield return null;
             if (scene != SceneManager.GetActiveScene()) yield break;
             HideLegacyUI();
+            EnsureEventSystem(scene);
             player = FindFirstObjectByType<PlayerController>();
             launcher = FindFirstObjectByType<BubbleLauncher>();
             switcher = BubbleTypeSwitcher.Instance;
@@ -131,12 +132,19 @@ namespace PAO.UI.V2
             }
             BuildHud();
             foreach (AudioSource audio in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
-                if (audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>();
+                if (audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
             if (pending != null) Toast(T("记录已恢复", "Record restored"));
             else ShowTutorial("movement", T("向水流深处", "Follow the current"),
-                T("WASD 移动 · 鼠标观察 · 空格跳跃\n1 / 2 / 3 或滚轮切换泡泡，按住左键蓄力。Esc 暂停。",
-                  "WASD to move · Mouse to look · Space to jump\n1 / 2 / 3 or wheel to switch. Hold left click to charge. Esc to pause."));
+                UIInput.MovementHint() + T(" 移动 · 跳跃 ", " Move · Jump ") + UIInput.Prompt(UIInput.Jump) +
+                T("\n蓄力 ", "\nCharge ") + UIInput.Prompt(UIInput.Charge) + T(" · Esc / Menu 暂停 · ", " · Esc / Menu Pause · ") + UIInput.Prompt(UIInput.Help) + T(" 查看教学", " for help"));
             if (SaveOnNextEntry) { SaveOnNextEntry = false; SaveSnapshot(UIRunState.AutoSlot); }
+        }
+
+        private static void EnsureEventSystem(Scene scene)
+        {
+            if (EventSystem.current != null && EventSystem.current.isActiveAndEnabled) return;
+            var events = new GameObject("UI EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+            SceneManager.MoveGameObjectToScene(events, scene);
         }
 
         private void HideLegacyUI()
@@ -158,26 +166,17 @@ namespace PAO.UI.V2
         private void Update()
         {
             if (Config == null || !canvas.gameObject.activeSelf) return;
-            if (rebind != null)
-            {
-                if (Input.GetKeyDown(KeyCode.Escape)) { rebind = null; Pop(); return; }
-                foreach (KeyCode key in keyboardKeys)
-                {
-                    if (key <= KeyCode.None || key >= KeyCode.Mouse0 || key == KeyCode.Return || key == KeyCode.Tab ||
-                        key == KeyCode.UpArrow || key == KeyCode.DownArrow || key == KeyCode.LeftArrow || key == KeyCode.RightArrow) continue;
-                    if (Input.GetKeyDown(key)) { Action<KeyCode> callback = rebind; rebind = null; Pop(); callback(key); return; }
-                }
-                return;
-            }
-            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.JoystickButton1) || Input.GetKeyDown(KeyCode.JoystickButton7)) Back();
+            UIInput.Poll();
+            HandleDeviceDisconnect();
+            if (UpdateBindingCapture()) return;
+            UpdateControllerTabs();
+            if (Input.GetKeyDown(KeyCode.Escape) || (pages.Count > 0 && UIInput.ControllerDown(ControllerControl.B)) || UIInput.ControllerDown(ControllerControl.Menu)) Back();
             if (Input.GetKeyDown(KeyCode.Tab)) MoveFocus(Input.GetKey(KeyCode.LeftShift) ? -1 : 1);
-            if (IsGameplay && !IsBlockingGameplay)
+            if (IsGameplay && !BlocksInputThisFrame)
             {
                 UIRunState.Progress.playSeconds += Time.deltaTime;
-                if (Input.GetKeyDown(UISettings.Key(4, KeyCode.J))) ShowJournal();
-                else if (Input.GetKeyDown(UISettings.Key(5, KeyCode.F1))) ShowHelp();
-                if (Input.GetKeyDown(KeyCode.JoystickButton4) && switcher != null) switcher.Cycle(-1);
-                if (Input.GetKeyDown(KeyCode.JoystickButton5) && switcher != null) switcher.Cycle(1);
+                if (UIInput.Down(UIInput.Journal)) ShowJournal();
+                else if (UIInput.Down(UIInput.Help)) ShowHelp();
             }
             if (IsGameplay && Time.unscaledTime >= nextHudUpdate)
             {
@@ -256,9 +255,11 @@ namespace PAO.UI.V2
                 if (EventSystem.current != null && page.ReturnFocus != null && page.ReturnFocus.activeInHierarchy)
                     EventSystem.current.SetSelectedGameObject(page.ReturnFocus);
                 else parent.RestoreFocus();
+                RefreshMenuOnReturn(parent);
             }
             else
             {
+                resumeInputFrame = Time.frameCount;
                 if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
                 if (hud != null) hud.gameObject.SetActive(true);
                 ReleasePause();
@@ -287,8 +288,10 @@ namespace PAO.UI.V2
             if (launcher != null) { previousLauncherBlocked = launcher.InputBlocked; launcher.InputBlocked = true; }
             foreach (Behaviour input in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
             {
+                // Bomb labels use OnGUI, so pausing time or hiding the HUD cannot hide them.
                 if (input.enabled && (input is PlayerController ||
-                    input is BubbleTypeSwitcher || input is BubbleRideInteractor || input is tiaozhuan))
+                    input is BubbleTypeSwitcher || input is BubbleRideInteractor ||
+                    input is BombBubbleManager || input is tiaozhuan))
                 { input.enabled = false; frozenInputs.Add(input); }
             }
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
@@ -314,12 +317,12 @@ namespace PAO.UI.V2
             targets[(index + direction + targets.Count) % targets.Count].Select();
         }
 
-        private void Confirm(string title, string explanation, Action action)
+        private void Confirm(string title, string explanation, Action action, bool danger = false)
         {
             UIPage page = Push(title, "", true);
             ui.Label(page.Content, explanation, 26);
             ui.Button(page.Footer, T("取消", "Cancel"), Pop);
-            ui.Button(page.Footer, T("确认", "Confirm"), () => { Pop(); action(); }, true);
+            ui.Button(page.Footer, T("确认", "Confirm"), () => { Pop(); action(); }, true, true, danger);
             Finish(page); // The safe option receives initial focus.
         }
 
@@ -359,6 +362,7 @@ namespace PAO.UI.V2
             if (player != null)
             { player.LookSensitivityMultiplier = UISettings.Current.sensitivity; player.InvertVerticalLook = UISettings.Current.invertLook; }
             if (launcher != null) launcher.ToggleChargeInput = UISettings.Current.toggleCharge;
+            if (canvas != null) canvas.GetComponent<CanvasScaler>().referenceResolution = new Vector2(1600, 900) / UISettings.Current.uiScale;
         }
         private void UnbindGameplay()
         {
