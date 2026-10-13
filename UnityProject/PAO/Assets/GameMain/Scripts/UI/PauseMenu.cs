@@ -63,6 +63,14 @@ namespace PAO.UI
 
         private static int s_OverlayEscapeFrame = -1;
 
+        /// <summary>
+        /// 最近一次「开/关」状态发生变化的帧号。
+        ///
+        /// 用来防「同一次按 Esc 被 BubbleTypeHud 和 PauseMenu 各处理一遍」——
+        /// 那会导致一开一关撞在同一帧，界面完全不显示。
+        /// </summary>
+        private static int s_StateChangeFrame = -1;
+
         /// <summary>被冻结的玩法组件，恢复时逐个还原。</summary>
         private readonly List<MonoBehaviour> m_DisabledComponents = new List<MonoBehaviour>();
 
@@ -136,26 +144,54 @@ namespace PAO.UI
         /// （比如冻结逻辑误伤），玩家就再也退不出暂停 —— 只能重启 Play。
         /// 面板一旦显示，这个 Update 一定在跑（PauseMenu 永远不会被冻结），
         /// 所以这里再收一次做保险。
+        ///
+        /// 【为什么要有 s_StateChangeFrame 这道闸】
+        /// Update 的执行顺序是 BubbleTypeHud 在前、PauseMenu 在后，而
+        /// Input.GetKeyDown 在**同一帧内对所有组件都为 true**。于是同一次按 Esc 会被处理两遍：
+        ///   BubbleTypeHud.Update() → 看到 IsOpen=false → Open()   面板打开
+        ///   PauseMenu.Update()     → 看到 m_IsOpen=true → Close()  面板关闭
+        /// 一开一关都在同一帧，玩家看到的是「按 Esc 完全没反应」。
+        /// 所以凡是本帧刚被 Open() 打开过，就跳过本帧的关闭判定。
         /// </summary>
         private void Update()
         {
-            if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (!m_IsOpen || !Input.GetKeyDown(KeyCode.Escape))
             {
-                if (s_OverlayEscapeFrame == Time.frameCount ||
-                    (m_SettingsPanel != null && m_SettingsPanel.IsOpen) ||
-                    (m_LoadPanel != null && m_LoadPanel.IsOpen))
-                {
-                    return;
-                }
-
-                Close();
+                return;
             }
+
+            // 本帧刚由 BubbleTypeHud 打开的，同一次按键不再当成"关闭"
+            if (s_StateChangeFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            if (s_OverlayEscapeFrame == Time.frameCount ||
+                (m_SettingsPanel != null && m_SettingsPanel.IsOpen) ||
+                (m_LoadPanel != null && m_LoadPanel.IsOpen))
+            {
+                return;
+            }
+
+            Close();
         }
 
         /// <summary>子面板消费 Esc 后，阻止暂停菜单在同一帧也被关闭。</summary>
         public static void MarkOverlayEscapeHandled()
         {
             s_OverlayEscapeFrame = Time.frameCount;
+        }
+
+        /// <summary>
+        /// 本帧是否刚刚开/关过暂停界面。
+        ///
+        /// BubbleTypeHud 在打开前会问这一句：如果 PauseMenu 本帧已经处理过这次
+        /// 按键（比如刚被别的路径关掉），就不要再打开，否则会出现
+        /// 「关了又开」或「开了又关」的抖动。
+        /// </summary>
+        public static bool StateChangedThisFrame
+        {
+            get { return s_StateChangeFrame == Time.frameCount; }
         }
 
         // ==================== 开关 ====================
@@ -168,6 +204,10 @@ namespace PAO.UI
         public bool Open()
         {
             m_IsOpen = true;
+
+            // 记下本帧刚开过 —— PauseMenu.Update 里靠它跳过同帧的关闭判定，
+            // 否则同一次按 Esc 会被开关一遍（见 Update 的注释）
+            s_StateChangeFrame = Time.frameCount;
 
             // 只 SetActive(true) 自己是不够的：如果父链上任何一层是关的，
             // activeInHierarchy 仍然是 false，界面就渲染不出来 ——
@@ -244,6 +284,8 @@ namespace PAO.UI
         public bool Close()
         {
             m_IsOpen = false;
+            s_StateChangeFrame = Time.frameCount;   // 对称：本帧刚关过，别再开
+
             ResumeTime();
             SetGameplayUiVisible(true);
 

@@ -243,6 +243,13 @@ namespace PAO
                 return;
             }
 
+            // 本帧 PauseMenu 已经处理过这次按键（比如刚被关掉）—— 不要再打开，
+            // 否则同一次按 Esc 会「关了又开」，来回抖
+            if (PauseMenu.StateChangedThisFrame)
+            {
+                return;
+            }
+
             bool nowOpen = m_PauseMenu.Open();
 
             Debug.Log("[BubbleTypeHud] 已请求打开暂停界面，返回 " + nowOpen +
