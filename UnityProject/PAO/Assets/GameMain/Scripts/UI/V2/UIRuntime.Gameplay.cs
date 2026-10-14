@@ -90,6 +90,7 @@ namespace PAO.UI.V2
             journalShortcut = HudIconButton(buttons, UIGuideSymbol.Journal, ShowJournal);
             pauseShortcut = HudIconButton(buttons, UIGuideSymbol.Pause, ShowPause);
             BuildVisualGuidance();
+            BuildResourceHud();
             RefreshHud();
         }
 
@@ -113,6 +114,7 @@ namespace PAO.UI.V2
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
             hud = null; abilityMotion = null; abilityRings.Clear(); currentAbility = null;
             ClearVisualGuidance();
+            ClearResourceHud();
             if (noticeRoot != null) Destroy(noticeRoot.gameObject);
             noticeRoot = null; notices.Clear(); contextNotices.Clear(); tutorialNotices.Clear(); noticeRemaining = 0;
             resultShown = false; wasCharging = false;
@@ -135,6 +137,7 @@ namespace PAO.UI.V2
 
         private void RefreshHud()
         {
+            RefreshResourceHud();
             if (hud == null || currentAbility == null || switcher == null) return;
             int type = (int)switcher.Current;
             string name = AbilityName(type);
@@ -264,9 +267,13 @@ namespace PAO.UI.V2
                 { T("引爆", "Detonate"), UIInput.Prompt(UIInput.Detonate) + T(" 引爆泡泡", " detonates bubbles") },
                 { T("能力特性", "Ability behavior"), T("浮粘泡泡彼此黏附，组成向上的路径。弹力泡泡在碰撞中反弹。炸弹泡泡改变周围环境，留意安全距离。",
                     "Sticky bubbles attach to build upward paths. Bouncy bubbles rebound on impact. Bomb bubbles change the environment; keep a safe distance.") },
+                { T("泡泡值与回收", "Energy & recovery"), T("三种泡泡共用泡泡值。蓄力越大，消耗越多；不足时停止变大，仍可释放。蓄力中锁定类型。炸掉浮粘泡泡可返还其消耗，破坏泡泡地形也可获得泡泡值。",
+                    "All types share energy. Larger bubbles cost more. Low energy stops growth but still allows release. Type switching locks while charging. Bombs reclaim energy from sticky bubbles; breaking bubble terrain also rewards energy.") },
+                { T("泡泡地形", "Bubble terrain"), T("弹力泡泡可以填充泡泡地形，填满后自动破坏。普通破坏后地形会重生，炸弹破坏则永久消失。低泡泡值也会影响角色表情。",
+                    "Bouncy bubbles fill bubble terrain until it can be broken. Normally it respawns; bomb destruction is permanent. Low energy also changes the character's expression.") },
                 { T("导航", "Navigation"), T("方向键或 Tab 移动焦点，Enter 确认，Esc 返回。手柄 A 确认、B 返回、菜单键暂停。", "Arrows or Tab move focus, Enter submits, Esc returns. Controller A submits, B returns, Menu pauses.") } };
             RectTransform lessons = ui.Grid("Illustrated field guide", page.Content, 2, 430);
-            UIGuideSymbol[] symbols = { UIGuideSymbol.Goal, UIGuideSymbol.Move, UIGuideSymbol.Charge, UIGuideSymbol.Ride, UIGuideSymbol.Journal, UIGuideSymbol.Bomb, UIGuideSymbol.Sticky, UIGuideSymbol.Arrow };
+            UIGuideSymbol[] symbols = { UIGuideSymbol.Goal, UIGuideSymbol.Move, UIGuideSymbol.Charge, UIGuideSymbol.Ride, UIGuideSymbol.Journal, UIGuideSymbol.Bomb, UIGuideSymbol.Sticky, UIGuideSymbol.Charge, UIGuideSymbol.Bouncy, UIGuideSymbol.Arrow };
             for (int i = 0; i < topics.GetLength(0); i++)
             {
                 RectTransform lesson = ui.Card("Lesson " + i, lessons);

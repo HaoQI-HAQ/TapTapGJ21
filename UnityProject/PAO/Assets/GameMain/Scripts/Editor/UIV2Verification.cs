@@ -19,6 +19,7 @@ namespace PAO.EditorTools
             RequireVerificationProject();
             PlayerSettings.companyName = "CodexVerification";
             PlayerSettings.productName = "PAOUIV2Verification";
+            RemapCompiledPackageScripts();
             UIV2Tools.CreatePreview();
             var scenes = new EditorBuildSettingsScene[8];
             for (int i = 0; i < 6; i++)
@@ -35,6 +36,21 @@ namespace PAO.EditorTools
             scenes[7] = new EditorBuildSettingsScene(UIV2Tools.PreviewPath, true);
             EditorBuildSettings.scenes = scenes;
             SessionState.SetBool(Requested, true); SessionState.SetBool(Headless, true);
+            EditorApplication.isPlaying = true;
+        }
+
+        public static void RunMechanicsCLI()
+        {
+            RequireVerificationProject();
+            PlayerSettings.companyName = "CodexVerification";
+            PlayerSettings.productName = "PAOMechanicsVerification";
+            RemapCompiledPackageScripts();
+            EditorBuildSettings.scenes = new[] {
+                new EditorBuildSettingsScene("Assets/Scenes/cs.unity", true),
+                new EditorBuildSettingsScene("Assets/GameMain/Scenes/Map5.unity", true) };
+            EditorSceneManager.OpenScene("Assets/Scenes/cs.unity");
+            SessionState.SetBool(Requested, true); SessionState.SetBool(Headless, true);
+            SessionState.SetBool("PAO.UI.V2.VerificationMechanics", true);
             EditorApplication.isPlaying = true;
         }
 
@@ -82,7 +98,7 @@ namespace PAO.EditorTools
                 string[] pair = line.Split(' ');
                 if (pair.Length == 2 && references.TryGetValue(pair[1], out string reference)) substitutions[pair[0]] = reference;
             }
-            foreach (string file in Directory.GetFiles("Assets/GameMain", "*", SearchOption.AllDirectories))
+            foreach (string file in Directory.GetFiles("Assets", "*", SearchOption.AllDirectories))
             {
                 if (!file.EndsWith(".unity") && !file.EndsWith(".prefab") && !file.EndsWith(".asset")) continue;
                 string content = File.ReadAllText(file);

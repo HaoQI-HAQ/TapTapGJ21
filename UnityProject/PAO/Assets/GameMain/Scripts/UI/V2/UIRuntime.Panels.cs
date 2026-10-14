@@ -36,6 +36,7 @@ namespace PAO.UI.V2
             ui.IconButton(destinations, T("游戏设置", "Settings"), UIGuideSymbol.Steer, ShowSettings);
             ui.IconButton(destinations, T("意识碎片", "Memory journal"), UIGuideSymbol.Memory, ShowJournal);
             ui.IconButton(destinations, T("操作与教学", "Controls & tutorials"), UIGuideSymbol.Move, ShowHelp);
+            BuildMechanicsTestTools(page.Content);
             ui.Button(page.Footer, T("重试本章", "Retry chapter"), () => Confirm(
                 T("重新开始本章？", "Restart this chapter?"),
                 T("本章尚未保存的变化会重置。", "Unsaved changes in this chapter will be reset."), () => LoadScene(lastScene)));
@@ -186,6 +187,7 @@ namespace PAO.UI.V2
 
         private string ChapterName(string scene)
         {
+            if (scene == "cs") return T("机制测试场", "Mechanics test ground");
             int index = Config.IndexOf(scene);
             return index >= 0 ? Config.chapters[index].title : T("探索中的水域", "Exploration waters");
         }

@@ -112,6 +112,7 @@ namespace PAO.UI.V2
             EnsureEventSystem(scene);
             player = FindFirstObjectByType<PlayerController>();
             launcher = FindFirstObjectByType<BubbleLauncher>();
+            BindBubbleResource();
             switcher = BubbleTypeSwitcher.Instance;
             if (IsGameplay && switcher == null) switcher = new GameObject("Bubble Type State").AddComponent<BubbleTypeSwitcher>();
             if (switcher != null)
@@ -176,6 +177,8 @@ namespace PAO.UI.V2
                 if (ownsLegacyUI) oldCanvas.gameObject.SetActive(false);
             }
             foreach (BubbleTypeHud oldHud in FindObjectsByType<BubbleTypeHud>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                oldHud.enabled = false;
+            foreach (BubbleResourceHud oldHud in FindObjectsByType<BubbleResourceHud>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 oldHud.enabled = false;
         }
 
@@ -428,6 +431,7 @@ namespace PAO.UI.V2
         }
         private void UnbindGameplay()
         {
+            UnbindBubbleResource();
             if (switcher != null) switcher.TypeChanged -= OnAbilityChanged;
             if (tide != null) { tide.Won -= OnLevelWon; tide.Lost -= OnLevelLost; }
             switcher = null; tide = null; player = null; launcher = null;

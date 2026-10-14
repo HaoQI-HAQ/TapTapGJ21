@@ -66,6 +66,12 @@ namespace PAO
             get { return m_IsRiding; }
         }
 
+        public void EndInteraction()
+        {
+            if (m_IsControlling) ExitControl(false);
+            else if (m_IsRiding) ExitBubble();
+        }
+
         private void Awake()
         {
             m_PlayerController = GetComponent<PlayerController>();

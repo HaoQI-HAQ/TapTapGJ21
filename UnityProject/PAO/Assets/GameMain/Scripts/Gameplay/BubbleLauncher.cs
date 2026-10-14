@@ -81,6 +81,10 @@ namespace PAO
         }
 
         public bool InputBlocked { get; set; }
+        public int MinimumCost { get { return GetCostAt(0f); } }
+        public int MaximumCost { get { return GetCostAt(1f); } }
+        public int PaidCost { get { return m_PaidCost; } }
+        public bool IsResourceLimited { get; private set; }
         public bool ToggleChargeInput { get; set; }
         private bool ChargePressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
             PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButtonDown(0); } }
@@ -150,6 +154,7 @@ namespace PAO
             }
 
             m_Charging = false;
+            IsResourceLimited = false;
             LockTypeSwitch(false);
             m_ChargeTime = 0f;
         }
@@ -160,6 +165,7 @@ namespace PAO
         private void BeginCharge()
         {
             CacheResource();
+            IsResourceLimited = false;
 
             // 值不够连最小的都吹不出来。
             // TryConsume 失败时会触发 OnInsufficient，UI 那边负责弹提示。
@@ -197,6 +203,7 @@ namespace PAO
             // 这就是「值不够吹不到那么大」。
             float nextTime = m_ChargeTime + Time.deltaTime;
             float nextProgress = m_MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / m_MaxChargeTime) : 1f;
+            IsResourceLimited = false;
 
             if (m_Resource != null)
             {
@@ -206,6 +213,7 @@ namespace PAO
                     int delta = nextCost - m_PaidCost;
                     if (!m_Resource.TryConsume(delta))
                     {
+                        IsResourceLimited = true;
                         // 值不够继续变大了：保持当前尺寸，泡泡仍然跟着玩家
                         m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
                         return;
@@ -227,6 +235,7 @@ namespace PAO
         private void Release()
         {
             m_Charging = false;
+            IsResourceLimited = false;
 
             // 蓄力结束，放开类型切换
             LockTypeSwitch(false);

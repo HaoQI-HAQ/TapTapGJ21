@@ -162,6 +162,18 @@ namespace PAO
             m_DashTimeLeft = Mathf.Max(0f, duration);
         }
 
+        public void Teleport(Vector3 position, Quaternion rotation)
+        {
+            bool controllerEnabled = m_Controller != null && m_Controller.enabled;
+            if (m_Controller != null) m_Controller.enabled = false;
+            transform.SetPositionAndRotation(position, rotation);
+            m_VerticalSpeed = 0f;
+            m_DashTimeLeft = 0f;
+            m_DashSpeed = 0f;
+            m_Yaw = rotation.eulerAngles.y;
+            if (m_Controller != null) m_Controller.enabled = controllerEnabled;
+        }
+
         private void Awake()
         {
             m_Controller = GetComponent<CharacterController>();

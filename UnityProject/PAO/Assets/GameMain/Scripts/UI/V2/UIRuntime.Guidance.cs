@@ -167,7 +167,8 @@ namespace PAO.UI.V2
             {
                 abilityPanel.gameObject.SetActive(detailed);
             }
-            if (tutorialCue != null) tutorialCue.anchoredPosition = new Vector2(32, 32);
+            PositionResourceHud();
+            if (tutorialCue != null) tutorialCue.anchoredPosition = new Vector2(32, resourcePanel != null ? resourcePanel.rect.height + 52 : 32);
             if (visualHud != null) visualHud.gameObject.SetActive(!detailed);
         }
 
@@ -260,6 +261,10 @@ namespace PAO.UI.V2
                     if (abilityCard != null && abilityCard.gameObject.activeInHierarchy && position.y < -visualHud.rect.height * .5f + abilityCard.rect.height + 64 &&
                         position.x < -visualHud.rect.width * .5f + abilityCard.rect.width + 64)
                         position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + abilityCard.rect.width + 64);
+                    if (resourcePanel != null && resourcePanel.gameObject.activeInHierarchy &&
+                        position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
+                        position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)
+                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + resourcePanel.rect.width + 64);
                 }
                 goalCue.anchoredPosition = position; goalSymbol.Symbol = clear ? UIGuideSymbol.Goal : UIGuideSymbol.Arrow;
                 goalSymbol.rectTransform.localRotation = clear ? Quaternion.identity : Quaternion.Euler(0, 0, heading);

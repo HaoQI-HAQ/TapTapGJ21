@@ -42,7 +42,9 @@ namespace PAO.UI.V2
             Application.logMessageReceived += OnLog;
             bool formal = SessionState.GetBool("PAO.UI.V2.VerificationFormal", false);
             SessionState.SetBool("PAO.UI.V2.VerificationFormal", false);
-            var stack = new Stack<IEnumerator>(); stack.Push(formal ? FormalScenarios() : Scenarios());
+            bool mechanics = SessionState.GetBool("PAO.UI.V2.VerificationMechanics", false);
+            SessionState.SetBool("PAO.UI.V2.VerificationMechanics", false);
+            var stack = new Stack<IEnumerator>(); stack.Push(mechanics ? MechanicsScenarios() : formal ? FormalScenarios() : Scenarios());
             float deadline = Time.realtimeSinceStartup + 240;
             while (stack.Count > 0)
             {

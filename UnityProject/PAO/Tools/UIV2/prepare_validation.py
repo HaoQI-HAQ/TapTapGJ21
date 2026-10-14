@@ -74,6 +74,7 @@ for meta in (root / 'Library/PackageCache').rglob('*.cs.meta'):
 queue = [root / f'Assets/GameMain/Scenes/Map{i}.unity' for i in range(6)]
 queue.append(root / 'Assets/GameMain/Resources/PAOUIConfig.asset')
 queue.append(root / 'Assets/GameMain/UI/Menu.unity')
+queue.append(root / 'Assets/Scenes/cs.unity')
 queue.append(root / 'Assets/GameMain/Art/Fonts/TextMesh Pro/Resources/TMP Settings.asset')
 visited = set()
 while queue:
@@ -87,7 +88,7 @@ while queue:
     if meta.is_file():
         copy(meta); texts.append(meta.read_text(encoding='utf-8-sig'))
     if source.suffix.lower() in {'.unity', '.prefab', '.asset', '.mat', '.controller', '.anim'}:
-        texts.append(source.read_text(encoding='utf-8-sig'))
+        texts.append(source.read_text(encoding='utf-8-sig', errors='ignore'))
     for content in texts:
         for guid in re.findall(r'guid: ([a-f0-9]{32})', content):
             if guid in guids:
@@ -117,7 +118,9 @@ rsp_path = next((root / 'Library/Bee/artifacts').glob('*.dag/Assembly-CSharp.rsp
 rsp = rsp_path.read_text(encoding='utf-8-sig')
 lines = [line for line in rsp.splitlines() if not line.startswith(('-out:', '-refout:', '/out:', '/refout:', '-analyzer:', '/analyzer:', '/additionalfile:'))]
 lines.insert(0, '-out:"' + str(dest / 'CompileCheck.dll') + '"')
-for source in (root / 'Assets/GameMain/Scripts/UI/V2').glob('*.cs'):
+for source in (root / 'Assets/GameMain/Scripts').rglob('*.cs'):
+    if 'Editor' in source.parts:
+        continue
     relative = source.relative_to(root).as_posix()
     if relative not in rsp:
         lines.append('"' + relative + '"')

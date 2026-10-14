@@ -185,6 +185,8 @@ GameObject:
   - component: {fileID: 3295932112560120694}
   - component: {fileID: 1978911633032434617}
   - component: {fileID: 5122362358621721097}
+  - component: {fileID: 9000000000000000200}
+  - component: {fileID: 9000000000000000201}
   m_Layer: 0
   m_Name: takoyaki
   m_TagString: Untagged
@@ -577,3 +579,42 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 8840244447658543665}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9000000000000000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4001224688086030769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbc2f3c08b508da4285afb6a69795616, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_MaxResource: 100
+  m_StartResource: -1
+--- !u!114 &9000000000000000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4001224688086030769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87a44da4c4546824cb734c74b481abcf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Switcher: {fileID: 7340384814760928497}
+  m_AnimatorDriver: {fileID: 5122362358621721097}
+  m_Launcher: {fileID: 8926061071837945914}
+  m_RideInteractor: {fileID: 3295932112560120694}
+  m_Resource: {fileID: 9000000000000000200}
+  m_Character: {fileID: 3704080788282222486}
+  m_FallFace: 6
+  m_BlowFace: 3
+  m_JumpFace: 1
+  m_RideFace: 2
+  m_LowResourceThreshold: 20
+  m_LowResourceFaces: 0500000006000000
+  m_IdleFaces: 00000000020000000100000004000000
