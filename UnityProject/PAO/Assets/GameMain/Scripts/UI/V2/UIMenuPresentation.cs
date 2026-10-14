@@ -62,14 +62,14 @@ namespace PAO.UI.V2
 
     public sealed class UIMenuAmbience : MonoBehaviour
     {
-        private Image art;
-        private void Awake() { art = GetComponent<Image>(); }
+        private UILowPolyOcean art;
+        private void Awake() { art = GetComponent<UILowPolyOcean>(); }
         private void Update()
         {
-            if (art == null || art.sprite == null) return;
+            if (art == null) return;
             // A slow opacity breath on the illustration only. Text and controls stay stationary.
-            Color color = new Color(1, .96f, .87f, .82f);
-            color.a = UISettings.Current.reducedMotion || UISettings.Current.highContrast ? .82f : .8f + .02f * Mathf.Sin(Time.unscaledTime * 0.35f);
+            Color color = Color.white;
+            color.a = UISettings.Current.reducedMotion || UISettings.Current.highContrast ? 1 : .98f + .02f * Mathf.Sin(Time.unscaledTime * 0.35f);
             art.color = color;
         }
     }

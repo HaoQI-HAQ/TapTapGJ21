@@ -5,19 +5,19 @@ namespace PAO.UI.V2
 {
     public enum UIPageDesign { Plain, Menu, Pause, Chapters, Records, Settings, Guide, Journal, Dialogue, Construction, Completion, Ending, Credits, Failure, Loading, Controls, Confirmation }
 
-    // One palette for both menu and gameplay pages. Accent colours carry state; paper carries content.
+    // One palette for both menu and gameplay pages. Accent colours carry state; quiet facets carry content.
     public static class UIDesignPalette
     {
-        public static readonly Color Paper = new Color32(255, 249, 235, 255);
-        public static readonly Color Cream = new Color32(255, 242, 212, 255);
-        public static readonly Color Ink = new Color32(40, 65, 65, 255);
-        public static readonly Color Teal = new Color32(48, 117, 112, 255);
-        public static readonly Color Coral = new Color32(177, 82, 60, 255);
-        public static readonly Color Gold = new Color32(241, 185, 81, 255);
-        public static readonly Color ControlTop = new Color32(255, 252, 242, 255);
-        public static readonly Color ControlBottom = new Color32(255, 235, 195, 255);
-        public static readonly Color PrimaryTop = new Color32(255, 222, 135, 255);
-        public static readonly Color PrimaryBottom = new Color32(245, 184, 86, 255);
+        public static readonly Color Paper = new Color32(239, 246, 243, 255);
+        public static readonly Color Cream = new Color32(218, 237, 230, 255);
+        public static readonly Color Ink = new Color32(28, 62, 74, 255);
+        public static readonly Color Teal = new Color32(37, 112, 118, 255);
+        public static readonly Color Coral = new Color32(174, 70, 50, 255);
+        public static readonly Color Gold = new Color32(223, 160, 65, 255);
+        public static readonly Color ControlTop = new Color32(249, 253, 250, 255);
+        public static readonly Color ControlBottom = new Color32(219, 237, 231, 255);
+        public static readonly Color PrimaryTop = new Color32(249, 211, 141, 255);
+        public static readonly Color PrimaryBottom = new Color32(234, 177, 91, 255);
         public static Color Accent(UIPageDesign design)
         {
             switch (design)
@@ -176,9 +176,9 @@ namespace PAO.UI.V2
                     for (int i = 0; i < 7; i++)
                     {
                         float x = -.5f + i / 6f;
-                        for (int j = 0; j < 36; j++)
+                        for (int j = 0; j < 4; j++)
                         {
-                            float a = j / 36f, b = (j + 1) / 36f;
+                            float a = j / 4f, b = (j + 1) / 4f;
                             Stroke(new Vector2(x + Mathf.Sin(a * 6 + i) * .09f, .3f - a * 1.3f), new Vector2(x + Mathf.Sin(b * 6 + i) * .09f, .3f - b * 1.3f), 1.6f);
                         }
                     }
@@ -191,9 +191,9 @@ namespace PAO.UI.V2
                     }
                     Arc(new Vector2(0, -.5f), .88f, 18, 162, 2.5f); break;
                 case UIPageDesign.Chapters:
-                    for (int i = 0; i < 70; i++)
+                    for (int i = 0; i < 8; i++)
                     {
-                        float a = i / 70f, b = (i + 1) / 70f;
+                        float a = i / 8f, b = (i + 1) / 8f;
                         Stroke(new Vector2(Mathf.Sin(a * 8) * .4f, .85f - a * 1.7f), new Vector2(Mathf.Sin(b * 8) * .4f, .85f - b * 1.7f), 2);
                     }
                     for (int i = 0; i < 5; i++) Arc(new Vector2(Mathf.Sin(i * 2) * .4f, .85f - i * .425f), .07f, 0, 360, 3);
@@ -290,31 +290,32 @@ namespace PAO.UI.V2
         }
         private void Curve(Vector2 a, Vector2 b, float amplitude, float width)
         {
-            for (int i = 0; i < 40; i++)
+            for (int i = 0; i < 5; i++)
             {
-                float t = i / 40f, next = (i + 1) / 40f;
+                float t = i / 5f, next = (i + 1) / 5f;
                 Stroke(Vector2.Lerp(a, b, t) + Vector2.up * Mathf.Sin(t * Mathf.PI * 3) * amplitude,
                     Vector2.Lerp(a, b, next) + Vector2.up * Mathf.Sin(next * Mathf.PI * 3) * amplitude, width);
             }
         }
         private void Arc(Vector2 center, float radius, float start, float end, float width)
         {
-            for (int i = 0; i < 64; i++)
+            for (int i = 0; i < 12; i++)
             {
-                float a = Mathf.Lerp(start, end, i / 64f) * Mathf.Deg2Rad, b = Mathf.Lerp(start, end, (i + 1) / 64f) * Mathf.Deg2Rad;
+                float a = Mathf.Lerp(start, end, i / 12f) * Mathf.Deg2Rad, b = Mathf.Lerp(start, end, (i + 1) / 12f) * Mathf.Deg2Rad;
                 Stroke(center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius, center + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * radius, width);
             }
         }
         private void Disc(Vector2 center, float radius, Color tint)
         {
-            int first = mesh.currentVertCount;
-            mesh.AddVert(origin + center * unit, tint, Vector2.zero);
-            for (int i = 0; i <= 64; i++)
+            for (int i = 0; i < 8; i++)
             {
-                float a = i * Mathf.PI / 32; mesh.AddVert(origin + (center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius) * unit, tint, Vector2.zero);
-                if (i > 0) mesh.AddTriangle(first, first + i, first + i + 1);
+                Color face = tint; face.a *= .65f + (i % 3) * .18f;
+                UILowPolyMesh.Triangle(mesh, origin + center * unit,
+                    origin + (center + UILowPolyMesh.Direction(i * 45 + 22.5f) * radius) * unit,
+                    origin + (center + UILowPolyMesh.Direction((i + 1) * 45 + 22.5f) * radius) * unit, face);
             }
         }
+
         private void Stroke(Vector2 a, Vector2 b, float width)
         {
             a = origin + a * unit; b = origin + b * unit;

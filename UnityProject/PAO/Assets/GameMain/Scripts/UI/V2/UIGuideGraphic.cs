@@ -79,13 +79,12 @@ namespace PAO.UI.V2
             Vector2 a = Point(new Vector2(x1, y1)), b = Point(new Vector2(x2, y2));
             Vector2 normal = new Vector2(-(b - a).y, (b - a).x).normalized;
             float width = Mathf.Min(rectTransform.rect.width, rectTransform.rect.height) * thickness * .5f;
-            int segments = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(a, b) / 6));
+            int segments = 1;
             for (int i = 0; i < segments; i++)
             {
                 float from = (float)i / segments, to = (i + 1f) / segments;
-                Vector2 p = Vector2.Lerp(a, b, from) + normal * Mathf.Sin(from * Mathf.PI * 2) * .2f;
-                Vector2 q = Vector2.Lerp(a, b, to) + normal * Mathf.Sin(to * Mathf.PI * 2) * .2f;
-                Vector2 offset = normal * width * (1 + Mathf.Sin((from + x1) * 9) * .07f);
+                Vector2 p = Vector2.Lerp(a, b, from), q = Vector2.Lerp(a, b, to);
+                Vector2 offset = normal * width;
                 int start = mesh.currentVertCount;
                 mesh.AddVert(p - offset, color, Vector2.zero); mesh.AddVert(p + offset, color, Vector2.zero);
                 mesh.AddVert(q + offset, color, Vector2.zero); mesh.AddVert(q - offset, color, Vector2.zero);
@@ -94,13 +93,13 @@ namespace PAO.UI.V2
         }
         private void Arc(Vector2 center, float radius, float from, float to)
         {
-            int segments = Mathf.CeilToInt((to - from) / 12);
+            int segments = Mathf.CeilToInt((to - from) / 45);
             for (int i = 0; i < segments; i++)
             {
                 float a = Mathf.Lerp(from, to, (float)i / segments) * Mathf.Deg2Rad;
                 float b = Mathf.Lerp(from, to, (float)(i + 1) / segments) * Mathf.Deg2Rad;
-                Vector2 p = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (radius + Mathf.Sin(a * 7) * .004f),
-                    q = center + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * (radius + Mathf.Sin(b * 7) * .004f);
+                Vector2 p = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius,
+                    q = center + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * radius;
                 Line(p.x, p.y, q.x, q.y);
             }
         }
@@ -114,11 +113,11 @@ namespace PAO.UI.V2
         protected override void OnPopulateMesh(VertexHelper mesh)
         {
             mesh.Clear(); Rect rect = rectTransform.rect; float radius = Mathf.Min(rect.width, rect.height) * .5f;
-            int count = Mathf.CeilToInt(64 * progress);
+            int count = Mathf.CeilToInt(12 * progress);
             for (int i = 0; i < count; i++)
             {
-                float a = (90 - Mathf.Min(i / 64f, progress) * 360) * Mathf.Deg2Rad;
-                float b = (90 - Mathf.Min((i + 1) / 64f, progress) * 360) * Mathf.Deg2Rad;
+                float a = (90 - Mathf.Min(i / 12f, progress) * 360) * Mathf.Deg2Rad;
+                float b = (90 - Mathf.Min((i + 1) / 12f, progress) * 360) * Mathf.Deg2Rad;
                 Vector2 p = new Vector2(Mathf.Cos(a), Mathf.Sin(a)), q = new Vector2(Mathf.Cos(b), Mathf.Sin(b)); int start = mesh.currentVertCount;
                 mesh.AddVert(rect.center + p * (radius - 4), color, Vector2.zero); mesh.AddVert(rect.center + p * radius, color, Vector2.zero);
                 mesh.AddVert(rect.center + q * radius, color, Vector2.zero); mesh.AddVert(rect.center + q * (radius - 4), color, Vector2.zero);

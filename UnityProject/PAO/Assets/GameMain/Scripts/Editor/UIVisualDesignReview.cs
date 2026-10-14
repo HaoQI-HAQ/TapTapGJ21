@@ -180,7 +180,7 @@ namespace PAO.EditorTools
             UIRunState.Progress.memories.Add(new MemoryEntry { id = "sample-1", chapter = "Map0", title = "第一片水域", body = "沿着浮粘泡泡组成的路径，水流将你带向高处。" });
             UIRunState.Progress.memories.Add(new MemoryEntry { id = "sample-2", chapter = "Map0", title = "留下的涟漪", body = "每一次相遇，都在意识之海留下了新的回声。" });
             UIConfig theme = Object.Instantiate(Resources.Load<UIConfig>("PAOUIConfig")); UIHandDrawnForPreview(theme);
-            theme.paperStyle = !gameplay; if (!gameplay) theme.menuArt = theme.menuPaperArt;
+            theme.paperStyle = false;
             var stage = new GameObject("Visual review stage");
             UIRuntime runtime = stage.AddComponent<UIRuntime>();
             Set(runtime, "<Config>k__BackingField", theme); Set(runtime, "<IsGameplay>k__BackingField", gameplay);

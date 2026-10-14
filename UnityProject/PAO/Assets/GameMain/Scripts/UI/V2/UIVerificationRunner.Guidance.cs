@@ -70,7 +70,7 @@ namespace PAO.UI.V2
             yield return new WaitForSecondsRealtime(.25f);
             Check(launcher.IsCharging && GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf &&
                 Mathf.Abs(GuideField<UIChargeArc>(runtime, "reticleArc").Progress - launcher.ChargeProgress) < .05f,
-                "The reticle ring reflects actual gameplay charge without a percentage sentence.");
+                "The corner charge badge reflects actual gameplay charge without covering the character.");
             yield return CaptureWorld(runtime, "guidance-world-charge");
             runtime.ShowPause(); yield return null;
             Check(!GuideField<RectTransform>(runtime, "visualHud").gameObject.activeInHierarchy,

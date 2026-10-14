@@ -44,9 +44,9 @@ namespace PAO.UI.V2
         public Image Surface(string name, Transform parent, Color color, bool rounded = false)
         {
             RectTransform rect = Rect(name, parent);
-            Image image = rect.gameObject.AddComponent<Image>();
+            Image image = rounded ? rect.gameObject.AddComponent<UILowPolyImage>() : rect.gameObject.AddComponent<Image>();
             image.color = color;
-            if (rounded && Config.round != null) { image.sprite = Config.round; image.type = Image.Type.Sliced; }
+
             return image;
         }
 
@@ -54,7 +54,7 @@ namespace PAO.UI.V2
             TextAnchor alignment = TextAnchor.MiddleLeft)
         {
             Text label = Rect("Text", parent).gameObject.AddComponent<Text>();
-            label.font = size >= 36 && Config.font != null ? Config.font : InterfaceFont != null ? InterfaceFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = InterfaceFont != null ? InterfaceFont : Config.font != null ? Config.font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.text = text; label.fontSize = Mathf.RoundToInt(size * UISettings.Current.textScale);
             label.color = color ?? Ink; label.alignment = alignment;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -100,9 +100,9 @@ namespace PAO.UI.V2
         {
             Image surface = Surface(text, parent, Color.white, true);
             var gradient = surface.gameObject.AddComponent<UIFluidGradient>();
-            gradient.top = danger ? new Color32(255, 225, 209, 255) : primary ? UIDesignPalette.PrimaryTop : UIDesignPalette.ControlTop;
-            gradient.bottom = danger ? new Color32(247, 182, 151, 255) : primary ? UIDesignPalette.PrimaryBottom : UIDesignPalette.ControlBottom;
-            gradient.focusTint = new Color32(208, 237, 221, 255);
+            gradient.top = danger ? new Color32(252, 219, 209, 255) : primary ? UIDesignPalette.PrimaryTop : UIDesignPalette.ControlTop;
+            gradient.bottom = danger ? new Color32(238, 190, 177, 255) : primary ? UIDesignPalette.PrimaryBottom : UIDesignPalette.ControlBottom;
+            gradient.focusTint = new Color32(184, 223, 219, 255);
             gradient.contrastDark = false;
             var edge = surface.gameObject.AddComponent<Outline>();
             edge.effectColor = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .16f);
@@ -149,9 +149,9 @@ namespace PAO.UI.V2
         public RectTransform Card(string name, Transform parent, bool highlighted = false)
         {
             RectTransform rect = Column(name, parent, 24, 12);
-            Image image = rect.gameObject.AddComponent<Image>(); image.sprite = Config.round; image.type = Image.Type.Sliced;
+            Image image = rect.gameObject.AddComponent<UILowPolyImage>();
             image.color = highlighted ? UIDesignPalette.Cream : UIDesignPalette.ControlTop; image.raycastTarget = false;
-            Outline edge = rect.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(.5f, .38f, .2f, .12f); edge.effectDistance = new Vector2(1, -1);
+            Outline edge = rect.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(.1f, .3f, .35f, .12f); edge.effectDistance = new Vector2(1, -1);
             return rect;
         }
 
@@ -200,7 +200,7 @@ namespace PAO.UI.V2
             RectTransform column = Column(title, parent, 0, 6);
             Text label = Label(column, title + "  " + value.ToString("0.00"), 22);
             RectTransform track = Rect("Slider", column); Size(track, 38);
-            Image background = track.gameObject.AddComponent<Image>(); background.color = Config.mist;
+            Image background = track.gameObject.AddComponent<UILowPolyImage>(); background.color = Config.mist;
             Slider slider = track.gameObject.AddComponent<Slider>(); slider.minValue = min; slider.maxValue = max;
             RectTransform fillArea = Rect("Fill area", track); Stretch(fillArea);
             fillArea.offsetMin = new Vector2(14, 6); fillArea.offsetMax = new Vector2(-14, -6);

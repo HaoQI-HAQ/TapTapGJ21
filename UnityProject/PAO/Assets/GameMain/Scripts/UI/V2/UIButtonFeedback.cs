@@ -78,8 +78,8 @@ namespace PAO.UI.V2
             if (UISettings.Current.reducedMotion && pulse != null)
             { pulse.Kill(); pulse = null; ripple.color = Color.clear; ripple.rectTransform.localScale = Vector3.one; }
             bool contrast = UISettings.Current.highContrast;
-            Color contrastTop = film.contrastDark ? Color.black : new Color32(255, 247, 225, 255);
-            Color contrastBottom = film.contrastDark ? Color.black : new Color32(255, 229, 190, 255);
+            Color contrastTop = film.contrastDark ? Color.black : Color.white;
+            Color contrastBottom = film.contrastDark ? Color.black : new Color32(239, 246, 243, 255);
             film.top = contrast ? contrastTop : emphasized ? UIDesignPalette.PrimaryTop : top;
             film.bottom = contrast ? contrastBottom : emphasized ? UIDesignPalette.PrimaryBottom : bottom;
             film.GetComponent<Graphic>().SetVerticesDirty();

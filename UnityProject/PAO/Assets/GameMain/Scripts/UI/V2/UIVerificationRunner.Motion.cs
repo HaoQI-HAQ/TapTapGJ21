@@ -47,7 +47,7 @@ namespace PAO.UI.V2
             UIFluidGradient gradient = back.GetComponent<UIFluidGradient>();
             feedback.OnPointerEnter(new PointerEventData(EventSystem.current));
             yield return new WaitForSecondsRealtime(.14f);
-            Check(gradient.Warmth > .95f && Time.timeScale == 0, "Buttons turn lilac on hover while the pause menu freezes gameplay.");
+            Check(gradient.Warmth > .95f && Time.timeScale == 0, "Buttons show a clear focus tint while the pause menu freezes gameplay.");
             runtime.Back(); yield return new WaitForSecondsRealtime(.14f);
             Check(motion.MovingOrbitCount == 1, "Returning to gameplay restarts exactly one orbit.");
 

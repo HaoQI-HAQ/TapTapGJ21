@@ -93,8 +93,8 @@ namespace PAO.UI.V2
         {
             for (int i = 0; i < 5; i++) yield return null;
             UIRuntime runtime = UIRuntime.Instance;
-            Check(runtime != null && runtime.Config.font != null && runtime.Config.round != null && runtime.Config.menuArt != null,
-                "Runtime bootstraps with the existing Chinese font and artwork.");
+            Check(runtime != null && runtime.Config.font != null && runtime.GetComponentInChildren<UILowPolyOcean>() != null,
+                "Runtime bootstraps with Chinese text and lowpoly ocean artwork.");
             Check(Top(runtime) != null && !runtime.IsGameplay, "Fresh menu opens with an actionable default focus.");
             Check(EventSystem.current.currentSelectedGameObject != null, "Menu has a default selection.");
             VerifyProgressAndBindings();

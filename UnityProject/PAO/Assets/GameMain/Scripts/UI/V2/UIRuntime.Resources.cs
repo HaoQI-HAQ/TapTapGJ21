@@ -16,6 +16,7 @@ namespace PAO.UI.V2
         private RectTransform terrainPanel;
         private Text terrainAmount;
         private Image terrainFill;
+        private Renderer[] playerHudRenderers;
         private readonly RaycastHit[] terrainHits = new RaycastHit[32];
 
         private void BindBubbleResource()
@@ -23,6 +24,7 @@ namespace PAO.UI.V2
             UnbindBubbleResource();
             resourceBombs = player != null ? player.GetComponent<BombBubbleManager>() : null;
             resource = player != null ? player.GetComponent<BubbleResourceManager>() : null;
+            playerHudRenderers = player != null ? player.GetComponentsInChildren<Renderer>() : null;
             if (resource == null) return;
             lastResourceAmount = resource.Current;
             resource.OnChanged += OnResourceChanged;
@@ -37,6 +39,7 @@ namespace PAO.UI.V2
                 resource.OnInsufficient -= OnResourceInsufficient;
             }
             resource = null; resourceBombs = null;
+            playerHudRenderers = null;
             resourceFeedbackChange = 0; resourceFeedbackUntil = 0;
         }
 
@@ -62,22 +65,31 @@ namespace PAO.UI.V2
         private void BuildResourceHud()
         {
             if (resource == null) return;
-            resourcePanel = ui.Column("Bubble resource", hud, 16, 6);
+            resourcePanel = ui.Column("Bubble resource", hud, 12, 5);
             AddHudBacking(resourcePanel);
-            resourceAmount = ui.Label(resourcePanel, "", 24, Config.ink);
+            RectTransform header = ui.Row("Energy summary", resourcePanel, 8);
+            UIWidgets.Size(header, -1).minHeight = 35;
+            resourceAmount = ui.Label(header, "", 22, Config.ink);
+            UIWidgets.Size(resourceAmount.transform, -1, -1, 1);
             Image track = ui.Surface("Resource track", resourcePanel, Config.mist, true);
-            track.raycastTarget = false; UIWidgets.Size(track.transform, 10);
+            track.raycastTarget = false; UIWidgets.Size(track.transform, 8);
             resourceFill = ui.Surface("Resource fill", track.transform, Config.teal, true);
             resourceFill.raycastTarget = false;
             resourceFill.rectTransform.anchorMin = Vector2.zero;
             resourceFill.rectTransform.offsetMin = resourceFill.rectTransform.offsetMax = Vector2.zero;
-            resourceCost = ui.Label(resourcePanel, "", 20, Config.ink);
-            resourceStatus = ui.Label(resourcePanel, "", 19, Config.text);
+            resourceCost = ui.Label(resourcePanel, "", 18, Config.ink);
+            resourceStatus = ui.Label(resourcePanel, "", 18, Config.text);
+            // The charge badge belongs to the energy panel, away from the player model.
+            if (reticleCue != null)
+            {
+                reticleCue.SetParent(header, false);
+                UIWidgets.Size(reticleCue, 34, 34);
+            }
             PositionResourceHud();
             ApplyHintPresentation();
             terrainPanel = ui.Column("Terrain fill", hud, 10, 4);
             AddHudBacking(terrainPanel);
-            Anchor(terrainPanel, new Vector2(.5f, .42f), Vector2.zero, new Vector2(300, 76), new Vector2(.5f, 1));
+            Anchor(terrainPanel, new Vector2(.5f, .5f), new Vector2(0, 160), new Vector2(300, 76), new Vector2(.5f, 0));
             terrainAmount = ui.Label(terrainPanel, "", 20, Config.ink, TextAnchor.MiddleCenter);
             Image terrainTrack = ui.Surface("Terrain track", terrainPanel, Config.mist, true);
             terrainTrack.raycastTarget = false; UIWidgets.Size(terrainTrack.transform, 6);
@@ -91,13 +103,14 @@ namespace PAO.UI.V2
         private void PositionResourceHud()
         {
             if (resourcePanel == null) return;
-            float height = 60 + ResourceTextHeight(resourceAmount) + ResourceTextHeight(resourceCost) + ResourceTextHeight(resourceStatus);
+            float height = 37 + ResourceTextHeight(resourceAmount) + ResourceTextHeight(resourceCost) + ResourceTextHeight(resourceStatus);
             Anchor(resourcePanel, Vector2.zero, new Vector2(32, UISettings.Current.detailedHints ? 244 : 32),
-                new Vector2(360, Mathf.Max(184, height)), Vector2.zero);
+                new Vector2(300, height), Vector2.zero);
         }
 
         private static float ResourceTextHeight(Text label)
         {
+            if (label == null || !label.gameObject.activeSelf) return 0;
             LayoutElement layout = label.GetComponent<LayoutElement>();
             layout.preferredHeight = Mathf.Max(layout.minHeight, label.preferredHeight);
             return layout.preferredHeight;
@@ -112,31 +125,35 @@ namespace PAO.UI.V2
             Color color = insufficient || resource.Normalized < .2f ? UIDesignPalette.Coral : Config.teal;
             resourceAmount.color = color; resourceFill.color = color;
             resourceFill.rectTransform.anchorMax = new Vector2(resource.Normalized, 1);
-            if (launcher == null) { resourceCost.text = ""; resourceStatus.text = ""; return; }
-            resourceCost.text = AbilityName((int)launcher.DisplayType) + T(" · 消耗 ", " · Cost ") +
-                launcher.MinimumCost + "–" + launcher.MaximumCost;
-            string charge = UIInput.Prompt(UIInput.Charge);
-            if (launcher.IsCharging)
+            bool charging = launcher != null && (launcher.IsCharging || launcher.HasHeldBubble);
+            if (reticleCue != null)
             {
-                resourceStatus.text = T("已用 ", "Spent ") + launcher.PaidCost +
-                    (launcher.IsResourceLimited ? T(" · 泡泡值不足，停止变大", " · Energy limited; growth stopped") : T(" · 蓄力中", " · Charging")) +
-                    "\n" + (UIInput.ToggleCharge ? charge + T(" 再按释放", " to release") : T("松开 ", "Release ") + charge) +
-                    T(" · 类型锁定", " · Type locked");
+                reticleCue.gameObject.SetActive(charging);
+                if (charging) reticleArc.Progress = launcher.HasHeldBubble ? 1 : launcher.ChargeProgress;
             }
-            else if (launcher.HasHeldBubble)
-                resourceStatus.text = T("已用 ", "Spent ") + launcher.PaidCost + T(" · 泡泡已就绪\n", " · Bubble ready\n") +
-                    charge + T(" 发射 · 不再扣值", " to launch · No extra cost");
-            else if (Time.unscaledTime < resourceFeedbackUntil)
-                resourceStatus.text = resourceFeedbackChange > 0 ? T("泡泡值恢复 +", "Recovered +") + resourceFeedbackChange :
-                    T("泡泡值不足 · 还差 ", "Not enough · Need ") + -resourceFeedbackChange;
-            else if (resourceBombs != null && resourceBombs.PendingCount > 0)
-                resourceStatus.text = T("待引爆 ", "Bombs ready ") + resourceBombs.PendingCount + " · " +
-                    UIInput.Prompt(UIInput.Detonate) + T(" 依次引爆", " to detonate in order");
-            else if (insufficient)
-                resourceStatus.text = T("不足以吹泡 · 还差 ", "Cannot charge · Need ") + (launcher.MinimumCost - resource.Current) +
-                    T("\n破坏地形或回收浮粘泡泡", "\nBreak terrain or reclaim sticky bubbles");
-            else resourceStatus.text = UIInput.ToggleCharge ? charge + T(" 点击蓄力 · 再按释放", " to charge · Again to release") :
-                T("按住 ", "Hold ") + charge + T(" 蓄力 · 越大消耗越多", " to charge · Larger costs more");
+            if (launcher == null) { resourceCost.text = resourceStatus.text = ""; }
+            else
+            {
+                resourceCost.text = charging ? AbilityName((int)launcher.DisplayType) + T(" · 已用 ", " · Spent ") + launcher.PaidCost :
+                    UISettings.Current.detailedHints ? AbilityName((int)launcher.DisplayType) + T(" · 消耗 ", " · Cost ") + launcher.MinimumCost + "–" + launcher.MaximumCost : "";
+                string charge = GuideInputPrompt(UIInput.Charge);
+                if (launcher.IsCharging)
+                    resourceStatus.text = launcher.IsResourceLimited ? T("泡泡值不足 · 停止变大", "Energy limited · Growth stopped") :
+                        UIInput.ToggleCharge ? charge + T(" 再按释放", " again to release") : T("松开 ", "Release ") + charge;
+                else if (launcher.HasHeldBubble)
+                    resourceStatus.text = T("就绪 · ", "Ready · ") + charge + T(" 发射", " to launch");
+                else if (Time.unscaledTime < resourceFeedbackUntil)
+                    resourceStatus.text = resourceFeedbackChange > 0 ? T("恢复 +", "Recovered +") + resourceFeedbackChange :
+                        T("泡泡值不足 · 还差 ", "Not enough · Need ") + -resourceFeedbackChange;
+                else if (resourceBombs != null && resourceBombs.PendingCount > 0)
+                    resourceStatus.text = T("待引爆 ", "Bombs ready ") + resourceBombs.PendingCount + " · " + GuideInputPrompt(UIInput.Detonate);
+                else if (insufficient)
+                    resourceStatus.text = T("泡泡值不足 · 还差 ", "Not enough · Need ") + (launcher.MinimumCost - resource.Current);
+                else resourceStatus.text = "";
+            }
+            resourceCost.gameObject.SetActive(!string.IsNullOrEmpty(resourceCost.text));
+            resourceStatus.gameObject.SetActive(!string.IsNullOrEmpty(resourceStatus.text));
+            PositionResourceHud();
         }
 
         private void ClearResourceHud()
@@ -168,6 +185,40 @@ namespace PAO.UI.V2
             if (terrain == null) return;
             terrainAmount.text = T("地形填充  ", "Terrain fill  ") + terrain.CurrentFill + " / " + terrain.Capacity;
             terrainFill.rectTransform.anchorMax = new Vector2(terrain.FillProgress, 1);
+            PositionTerrainHud(view);
+        }
+
+        private void PositionTerrainHud(Camera view)
+        {
+            float height = 30 + ResourceTextHeight(terrainAmount);
+            terrainPanel.sizeDelta = new Vector2(300, height);
+            Rect space = hud.rect;
+            Vector2 position = new Vector2(0, space.height * .18f);
+            // Project the authored player meshes; temporary gameplay bubbles do not expand this bound.
+            Rect actor = new Rect(); bool found = false;
+            if (view != null && playerHudRenderers != null) foreach (Renderer renderer in playerHudRenderers)
+            {
+                if (renderer == null || !renderer.enabled) continue;
+                Bounds bounds = renderer.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = bounds.center + Vector3.Scale(bounds.extents,
+                        new Vector3((corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                    Vector3 screen = view.WorldToViewportPoint(point);
+                    if (screen.z <= 0) continue;
+                    Vector2 projected = new Vector2((screen.x - .5f) * space.width, (screen.y - .5f) * space.height);
+                    if (!found) { actor = new Rect(projected, Vector2.zero); found = true; }
+                    actor = Rect.MinMaxRect(Mathf.Min(actor.xMin, projected.x), Mathf.Min(actor.yMin, projected.y),
+                        Mathf.Max(actor.xMax, projected.x), Mathf.Max(actor.yMax, projected.y));
+                }
+            }
+            float ceiling = space.height * .5f - height - 100;
+            if (found && actor.xMin < 174 && actor.xMax > -174 && position.y < actor.yMax + 24 && position.y + height > actor.yMin - 24)
+            {
+                position.y = actor.yMax + 24 <= ceiling ? actor.yMax + 24 : actor.yMin - height - 24;
+            }
+            position.y = Mathf.Clamp(position.y, -space.height * .5f + 100, ceiling);
+            terrainPanel.anchoredPosition = position;
         }
 
         private void BuildMechanicsTestTools(Transform parent)

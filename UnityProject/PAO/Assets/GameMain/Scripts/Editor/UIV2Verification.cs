@@ -20,7 +20,6 @@ namespace PAO.EditorTools
             RemapCompiledPackageScripts();
             PlayerSettings.companyName = "CodexVerification";
             PlayerSettings.productName = "PAOUIV2Verification";
-            RemapCompiledPackageScripts();
             UIV2Tools.CreatePreview();
             var scenes = new EditorBuildSettingsScene[8];
             for (int i = 0; i < 6; i++)

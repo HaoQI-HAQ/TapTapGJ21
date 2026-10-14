@@ -131,7 +131,7 @@ namespace PAO.UI.V2
             tutorialKey = GuideKey(tutorialCue, new Vector2(30, 0));
 
             reticleCue = ui.Rect("Charge reticle", visualHud);
-            Anchor(reticleCue, new Vector2(.5f, .5f), Vector2.zero, new Vector2(64, 64), new Vector2(.5f, .5f));
+            Anchor(reticleCue, Vector2.zero, new Vector2(340, 60), new Vector2(34, 34), new Vector2(.5f, .5f));
             Image reticleBacking = ui.Rect("Charge backing", reticleCue).gameObject.AddComponent<UICircleImage>();
             UIWidgets.Stretch(reticleBacking.rectTransform, -4);
             reticleBacking.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .9f); reticleBacking.raycastTarget = false;
@@ -261,9 +261,6 @@ namespace PAO.UI.V2
                     if (abilityCard != null && abilityCard.gameObject.activeInHierarchy && position.y < -visualHud.rect.height * .5f + abilityCard.rect.height + 64 &&
                         position.x < -visualHud.rect.width * .5f + abilityCard.rect.width + 64)
                         position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + abilityCard.rect.width + 64);
-                    if (resourcePanel != null && position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
-                        position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)
-                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + resourcePanel.rect.width + 64);
                     if (resourcePanel != null && resourcePanel.gameObject.activeInHierarchy &&
                         position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
                         position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)
@@ -296,9 +293,12 @@ namespace PAO.UI.V2
                 if (chapterGoal != null && best.owner.transform == chapterGoal) goalCue.gameObject.SetActive(false);
             }
 
-            bool charging = launcher != null && (launcher.IsCharging || launcher.HasHeldBubble);
-            reticleCue.gameObject.SetActive(charging);
-            if (charging) reticleArc.Progress = launcher.HasHeldBubble ? 1 : launcher.ChargeProgress;
+            if (resourcePanel == null && reticleCue != null)
+            {
+                bool charging = launcher != null && (launcher.IsCharging || launcher.HasHeldBubble);
+                reticleCue.gameObject.SetActive(charging);
+                if (charging) reticleArc.Progress = launcher.HasHeldBubble ? 1 : launcher.ChargeProgress;
+            }
             tutorialCue.gameObject.SetActive(tutorialRemaining > 0 && (!pulseIsTutorial || UISettings.Current.tutorials));
             if (tutorialCue.gameObject.activeSelf)
             {

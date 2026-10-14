@@ -69,20 +69,13 @@ namespace PAO.UI.V2
                 Button button = circle.gameObject.AddComponent<Button>(); button.targetGraphic = circle;
                 button.onClick.AddListener(() => { if (switcher != null) switcher.SetType((BubbleType)index); });
                 circle.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
-                Image ring = ui.Surface("Selection ring", circle.transform, Config.teal);
-                UIWidgets.Stretch(ring.rectTransform, -8); ring.sprite = Config.ring; ring.raycastTarget = false;
+                Image ring = ui.Rect("Selection ring", circle.transform).gameObject.AddComponent<UILowPolyRingImage>();
+                ring.color = Config.teal;
+                UIWidgets.Stretch(ring.rectTransform, -8); ring.raycastTarget = false;
                 abilityRings.Add(ring);
                 UIGuideGraphic icon = ui.Rect("Ability symbol", circle.transform).gameObject.AddComponent<UIGuideGraphic>();
                 icon.Symbol = i == 0 ? UIGuideSymbol.Sticky : i == 1 ? UIGuideSymbol.Bouncy : UIGuideSymbol.Bomb;
                 icon.color = Config.text; icon.raycastTarget = false; UIWidgets.Stretch(icon.rectTransform, 25);
-                Sprite painted = UIHandDrawn.Ability(i);
-                if (painted != null)
-                {
-                    icon.enabled = false;
-                    Image illustration = ui.Surface("Painted ability", circle.transform, Color.white);
-                    illustration.sprite = painted; illustration.preserveAspect = true; illustration.raycastTarget = false;
-                    UIWidgets.Stretch(illustration.rectTransform, 7);
-                }
                 abilityMotion.AddNode(ui, circle, ring);
             }
             RectTransform buttons = ui.Row("HUD actions", hud, 12);
@@ -101,8 +94,7 @@ namespace PAO.UI.V2
 
         private void AddHudBacking(RectTransform rect)
         {
-            Image backing = rect.gameObject.AddComponent<Image>();
-            backing.sprite = Config.round; backing.type = Image.Type.Sliced;
+            Image backing = rect.gameObject.AddComponent<UILowPolyImage>();
             backing.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, 0.94f);
             backing.raycastTarget = false;
         }

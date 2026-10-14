@@ -59,15 +59,15 @@ namespace PAO.UI.V2
 
         public void Initialize(UIConfig config)
         {
-            UIHandDrawn.Apply(config);
+
             Instance = this; gameplayTheme = config;
-            menuTheme = Instantiate(config); menuTheme.name = "Document menu theme";
-            menuTheme.paperStyle = true;
+            menuTheme = Instantiate(config); menuTheme.name = "Lowpoly menu theme";
+            menuTheme.paperStyle = false;
             menuTheme.paper = config.paper;
             menuTheme.ink = menuTheme.text = config.text;
             menuTheme.mist = config.mist;
             menuTheme.teal = config.teal;
-            menuTheme.menuArt = config.menuPaperArt != null ? config.menuPaperArt : config.menuArt;
+            menuTheme.menuArt = config.menuArt;
             menuTheme.chapters = config.chapters; menuTheme.endings = config.endings;
             Config = config; ui = new UIWidgets(config);
             RectTransform canvasRect = ui.Rect("UI Canvas V2", transform);
@@ -240,11 +240,14 @@ namespace PAO.UI.V2
                 var gradient = background.gameObject.AddComponent<UIFluidGradient>();
                 gradient.top = UIDesignPalette.Paper;
                 gradient.bottom = Color.Lerp(UIDesignPalette.Paper, UIDesignPalette.Accent(design), .09f);
-                UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
-                artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
-                artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
+                if (design != UIPageDesign.Menu)
+                {
+                    UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
+                    artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
+                    artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
+                }
             }
-            UIHandDrawn.Backdrop(ui, background.transform);
+
             RectTransform body = ui.Column("Page", background.transform, compact ? 32 : 24, 16);
             UIWidgets.Stretch(body);
             if (!compact)
@@ -254,8 +257,7 @@ namespace PAO.UI.V2
             }
             if (compact)
             {
-                Image card = body.gameObject.AddComponent<Image>(); card.color = Config.paper;
-                card.sprite = Config.round; card.type = Image.Type.Sliced;
+                Image card = body.gameObject.AddComponent<UILowPolyImage>(); card.color = Config.paper;
                 body.anchorMin = new Vector2(0.2f, 0.15f); body.anchorMax = new Vector2(0.8f, 0.85f);
                 body.offsetMin = body.offsetMax = Vector2.zero;
                 if (design == UIPageDesign.Dialogue)
@@ -276,8 +278,8 @@ namespace PAO.UI.V2
             if (!string.IsNullOrEmpty(subtitle)) ui.Label(body, subtitle, 21, headingColor);
             page.Content = ui.Scroll(body);
             page.NoticeArea = ui.Column("Page notice", body, 12, 0);
-            Image notice = page.NoticeArea.gameObject.AddComponent<Image>();
-            notice.color = Config.mist; notice.sprite = Config.round; notice.type = Image.Type.Sliced;
+            Image notice = page.NoticeArea.gameObject.AddComponent<UILowPolyImage>();
+            notice.color = Config.mist;
             notice.raycastTarget = false;
             page.NoticeLabel = ui.Label(page.NoticeArea, "", 23, null, TextAnchor.MiddleCenter);
             page.NoticeArea.gameObject.SetActive(false);

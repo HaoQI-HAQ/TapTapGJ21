@@ -83,9 +83,15 @@ namespace PAO.UI.V2
                     if (bubble != null) Destroy(bubble);
                     yield return null;
                 }
+                typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
+                Check(panel.GetComponent<UILowPolyImage>() != null && panel.rect.width == 300 &&
+                    !BubbleField<Text>(runtime, "resourceCost").gameObject.activeSelf &&
+                    BubbleField<RectTransform>(runtime, "reticleCue").IsChildOf(panel),
+                    scene + " keeps compact lowpoly energy feedback and charging badge in the lower-left panel.");
                 if (map == -1) yield return VerifyBubbleResources(runtime, launcher, resource, switcher);
                 resource.SetCurrent(100);
                 yield return Capture(runtime, scene + "-resource-hud", 1600, 900);
+                VerifyResourceTextFits(panel);
             }
             UIInput.VerificationHeld = null; UIInput.VerificationAxis = null; UIInput.UseKeyboard();
         }
@@ -107,7 +113,9 @@ namespace PAO.UI.V2
             Check(switcher.Current == BubbleType.Sticky && BubbleField<Text>(runtime, "resourceStatus").text.Contains("停止变大") &&
                 BubbleField<System.Collections.Generic.Queue<string>>(runtime, "notices").Count == notices,
                 "Type switching stays locked and repeated insufficient events use one inline hint.");
+            yield return CaptureWorld(runtime, "cs-lowpoly-world-charging");
             yield return Capture(runtime, "cs-resource-insufficient-960", 960, 540);
+            VerifyResourceTextFits(BubbleField<RectTransform>(runtime, "resourcePanel"));
             resource.Refund(5); yield return new WaitForSecondsRealtime(.2f);
             Check(!launcher.ChargeLimited && launcher.ChargeProgress > progress, "Recovered resource resumes the existing charge.");
             runtime.ShowPause(); float pausedProgress = launcher.ChargeProgress; int pausedValue = resource.Current;
@@ -151,6 +159,7 @@ namespace PAO.UI.V2
             UISettingsData english = new UISettingsData { language = 1, textScale = 1.3f, uiScale = 1.2f, detailedHints = true, tutorials = false };
             UISettings.Apply(english, false);
             yield return Capture(runtime, "cs-resource-english-large-960", 960, 540);
+            VerifyResourceTextFits(BubbleField<RectTransform>(runtime, "resourcePanel"));
             UISettings.Apply(new UISettingsData { tutorials = false }, false);
         }
     }

@@ -33,17 +33,17 @@ namespace PAO.UI.V2
             player.enabled = false; launcher.InputBlocked = true;
             Transform panel = runtime.transform.Find("UI Canvas V2/Safe Area/Gameplay HUD/Bubble resource");
             Check(panel != null && panel.gameObject.activeInHierarchy && !UISettings.Current.detailedHints, "Resource feedback remains visible with minimal hints.");
+            UISettingsData detailedCosts = UISettings.Current.Copy(); detailedCosts.detailedHints = true; UISettings.Apply(detailedCosts);
             foreach (BubbleType type in new[] { BubbleType.Sticky, BubbleType.Bouncy, BubbleType.Bomb })
             {
                 types.SetType(type);
-                BubbleSettings settings = (BubbleSettings)typeof(BubbleLauncher).GetField(type == BubbleType.Sticky ? "m_StickySettings" :
-                    type == BubbleType.Bouncy ? "m_BouncySettings" : "m_BombSettings", Private).GetValue(launcher);
+                BubbleSettings settings = launcher.SettingsFor(type);
                 Check(settings.prefab != null && settings.minCost > 0 && settings.maxCost >= settings.minCost, "Scene bubble template and cost resolve: " + type);
-                settings.minCost += (int)type; settings.maxCost += (int)type;
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
                 Check(System.Array.Exists(panel.GetComponentsInChildren<Text>(), text => text.text.Contains(settings.minCost + "–" + settings.maxCost)),
-                    "HUD reads the selected type's configured cost: " + type);
+                    "Detailed HUD reads the selected type's shared cost: " + type);
             }
+            detailedCosts.detailedHints = false; UISettings.Apply(detailedCosts);
             types.SetType(BubbleType.Sticky);
             yield return Capture(runtime, "cs-resource-full-1600x900", 1600, 900);
             VerifyResourceTextFits(panel);
@@ -96,6 +96,13 @@ namespace PAO.UI.V2
                 "Aiming at terrain displays its actual fill count.");
             yield return Capture(runtime, "cs-terrain-fill-1600x900", 1600, 900);
             Camera.main.transform.SetPositionAndRotation(cameraPosition, cameraRotation);
+            typeof(UIRuntime).GetMethod("PositionTerrainHud", Private).Invoke(runtime, new object[] { Camera.main });
+            RectTransform terrainRect = (RectTransform)terrainHud;
+            RectTransform hudRect = (RectTransform)terrainRect.parent;
+            Vector3 playerView = Camera.main.WorldToViewportPoint(player.transform.position);
+            Vector2 playerPoint = new Vector2((playerView.x - .5f) * hudRect.rect.width, (playerView.y - .5f) * hudRect.rect.height);
+            Rect terrainBounds = new Rect(terrainRect.anchoredPosition - new Vector2(terrainRect.rect.width * .5f, 0), terrainRect.rect.size);
+            Check(!terrainBounds.Contains(playerPoint), "Terrain fill feedback avoids the actual player projection.");
             terrain.Absorb(terrain.Capacity);
             Check(energy.Current == 10 + terrain.RewardAmount, "Filling terrain rewards the actual player resource pool.");
             terrain.Break(TerrainBubble.BreakCause.Bouncy);
