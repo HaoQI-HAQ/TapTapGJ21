@@ -1163,12 +1163,13 @@ namespace PAO
         /// </summary>
         private void Update()
         {
-            if (m_AbsorbedBomb == null || !m_AbsorbedBombArmed)
+            if (UI.V2.UIInput.Blocked || Time.timeScale <= 0f || m_AbsorbedBomb == null || !m_AbsorbedBombArmed)
             {
                 return;
             }
 
-            if (Input.GetMouseButtonDown(kDetonateMouseButton))
+            if (UI.V2.UIInput.UsesV2 ? UI.V2.UIInput.Down(UI.V2.UIInput.Detonate) :
+                Input.GetMouseButtonDown(kDetonateMouseButton))
             {
                 DetonateAbsorbedBomb();
             }

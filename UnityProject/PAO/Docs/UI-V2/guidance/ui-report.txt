@@ -1,0 +1,207 @@
+Passed: 204
+Runtime bootstraps with the existing Chinese font and artwork.
+Fresh menu opens with an actionable default focus.
+Menu has a default selection.
+Six-action settings migrate to seventeen actions while retaining custom bindings.
+Invalid and duplicate bindings are repaired without stealing UI navigation keys.
+Mouse bindings are accepted and menu/controller navigation stays reserved.
+Malformed progress normalizes null entries, duplicate IDs, negative costs and non-finite time.
+Loaded progress is a deep copy; later gameplay cannot change the read snapshot.
+Collected memory content is independent of its authored source.
+Rendered menu-1600x900.
+Rendered menu-1280x800.
+Rendered menu-1920x820.
+Rendered menu-960x540.
+The next chapter is locked before completing its predecessor.
+Completing a chapter unlocks the next chapter.
+Rendered chapters.
+Empty save pages focus the available Back control instead of disabled load buttons.
+Rendered empty-records.
+First versioned save succeeds.
+Saved player position round-trips.
+Overwrite retains a valid recovery backup.
+Corrupted checksums are rejected while retaining the backup.
+Rendered damaged-record.
+Recovery preserves damaged bytes and restores the previous valid position.
+Plain V1 JSON saves remain readable.
+Future save versions are rejected.
+Non-finite player positions are rejected.
+Rendered menu-continue-1920x820.
+The continued-run menu keeps every action visible on an ultrawide display.
+The continued-run menu retains its artwork and both lines of introduction.
+Loading enters the saved scene and restores player position.
+Rendered gameplay-hud.
+Pause blocks gameplay input and preserves the launcher's state.
+Pause hides the whole gameplay HUD.
+Settings preview applies immediately.
+Rendered settings.
+Save feedback occupies the modal status area instead of covering the page header.
+Cancelling settings rolls back the draft and keeps the game paused.
+Returning restores focus to the originating control.
+Resume restores the exact previous time scale and input state.
+Rapid repeated pause/settings navigation leaves no modal or pause state behind.
+Cancelling video settings restores the actual quality level even when the saved setting is Current.
+Rendered settings-pseudo-130percent.
+Exactly one selected ability owns a moving orbit.
+Ability control Ability 0 retains its selection boundary.
+Ability control Ability 1 retains its selection boundary.
+Ability control Ability 2 retains its selection boundary.
+Sixty rapid ability changes settle to the actual ability with one selection and one orbit.
+The selected scale reaches its final state within 300 ms and is not overwritten by HUD polling.
+Independent UI time advances the orbit when game time is frozen.
+Hiding the gameplay HUD kills its ambient orbit immediately.
+Buttons turn lilac on hover while the pause menu freezes gameplay.
+Returning to gameplay restarts exactly one orbit.
+Captured sixty live DOTween frames of ability switching and its travelling pearl.
+The selected ability charge arc follows the gameplay launcher's actual charge.
+Rendered motion-charging.
+Reduced motion stops continuous orbital movement.
+Reduced motion keeps Ability 0 at a stable size.
+Reduced motion keeps Ability 1 at a stable size.
+Reduced motion keeps Ability 2 at a stable size.
+Rendered motion-reduced.
+Twelve open/close cycles leave no accumulated page, button or orbital tweens.
+Default guidance hides the persistent objective paragraph and charge instructions.
+Players can deliberately open Help to review route, ability behavior and current controls.
+An available memory displays its shape and mapped input beside the object.
+Visual interaction keycaps use the remapped action rather than a fixed E.
+Rendered diagnostic world and HUD: guidance-world-interaction.
+Rendered guidance-minimal-960.
+A solid wall suppresses interaction guidance instead of showing it through geometry.
+A destination behind the camera becomes a direction arrow inside the safe area.
+An offscreen destination cue avoids the three ability controls in the lower corner.
+The reticle ring reflects actual gameplay charge without a percentage sentence.
+Rendered diagnostic world and HUD: guidance-world-charge.
+Pause hides destination, charge and interaction graphics together with the HUD.
+Detailed text hints remain available as an explicit accessibility preference.
+Rendered guidance-detailed-opt-in.
+Switching to graphical guidance clears active and queued teaching paragraphs.
+Reduced motion retains static shape and key cues without scaling or shaking.
+Rendered diagnostic world and HUD: guidance-world-reduced-motion.
+Disabling tutorials keeps short collection, build and restore feedback visible.
+Graphical feedback waits while a modal hides the gameplay HUD.
+Leaving an interaction area immediately clears the object's cue.
+Disabling an interaction removes its marker without leaving a stale request.
+Re-enabling an object does not reuse an old nearby flag.
+A pinned ride-exit cue stays reachable outside the camera view and takes priority over nearby objects.
+An unbaked tide does not display a misleading zero-second countdown.
+The tide ring reads its real deadline even when baking finishes after HUD creation.
+After the goal floods, the clock shows the remaining grace period rather than zero.
+Rendered diagnostic world and HUD: guidance-world-tide-grace.
+Legacy and malformed settings restore controller defaults, reserved navigation and finite parameters.
+Stick drift inside the deadzone is suppressed while full movement is preserved.
+The keyboard page exposes every gameplay action, including mouse buttons and bubble cycling.
+Rendered settings-keyboard-1080p.
+Rendered settings-keyboard-bindings.
+The controller page shows stick assignment separately from button bindings.
+Rendered settings-controller-1080p.
+Rendered settings-controller-960.
+Rendered settings-controller-bindings.
+Rendered settings-controller-layout.
+Controller bindings and independent input parameters have separate subpages.
+Rendered settings-controller-options.
+A slider handle fits its track without covering the parameter label.
+A slider handle fits its track without covering the parameter label.
+A slider handle fits its track without covering the parameter label.
+A slider handle fits its track without covering the parameter label.
+Capture blocks menu submit/navigation so a captured button cannot activate another control.
+Rendered settings-controller-capture.
+Pressing a trigger in the capture prompt changes the actual controller action binding.
+Navigation is restored after the captured control is released.
+Controller conflicts show a confirmation and keep existing bindings until accepted.
+Rendered settings-binding-conflict.
+Cancelling a controller conflict preserves both actions.
+Accepting a controller conflict swaps both gameplay bindings.
+Single-action controller reset resolves conflicts without resetting unrelated bindings.
+Clearing optional direct selection is allowed, but a conflict cannot unbind mandatory jump.
+Device reset restores controller defaults without altering keyboard bindings.
+Single-action keyboard reset restores Space without changing the controller.
+Capture timeout closes cleanly and preserves the original binding.
+Switching to controller input updates prompts without rebuilding the page or losing selection.
+Applying settings persists controller mappings and independent look options for restart.
+The saved trigger activates the gameplay action and updates its on-screen prompt.
+The previous fixed Y button stops activating charge after remapping.
+Menu cancels controller capture without remapping the reserved pause button.
+Display changes wait for explicit keep/revert confirmation before saving.
+Rendered settings-display-confirmation.
+Manual display revert restores the actual previous display state and keeps settings open.
+Display confirmation automatically reverts after 15 seconds without input.
+Subtitle opacity changes the rendered subtitle backing immediately.
+Rendered settings-accessibility.
+Language preview updates tabs and the apply/back controls immediately.
+Cancelling settings restores the applied configuration and language, not factory defaults.
+Rendered settings-controller-large-pseudo.
+Large UI and text scaling keep a localized button label fully readable: ［Audio ········］
+Large UI and text scaling keep a localized button label fully readable: ［Video ········］
+Large UI and text scaling keep a localized button label fully readable: ［Keyboard ········］
+Large UI and text scaling keep a localized button label fully readable: ［Controller ········］
+Large UI and text scaling keep a localized button label fully readable: ［Accessibility ········］
+Large UI and text scaling keep a localized button label fully readable: ［Language ········］
+Large UI and text scaling keep a localized button label fully readable: ［Bindings ········］
+Large UI and text scaling keep a localized button label fully readable: ［Input options ········］
+Large UI and text scaling keep a localized button label fully readable: ［Control layout ········］
+Large UI and text scaling keep a localized button label fully readable: A
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: LS
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: X
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: RT
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: RS
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: LB
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: RB
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［D-pad Left ········］
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: ［D-pad Down ········］
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: ［D-pad Right ········］
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: B
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: View
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: ［D-pad Up ········］
+Large UI and text scaling keep a localized button label fully readable: ［Reset ········］
+Large UI and text scaling keep a localized button label fully readable: ［Clear ········］
+Large UI and text scaling keep a localized button label fully readable: ［Reset controller bindings ········］
+Large UI and text scaling keep a localized button label fully readable: ［Back ········］
+Large UI and text scaling keep a localized button label fully readable: ［Restore all defaults ········］
+Large UI and text scaling keep a localized button label fully readable: ［Apply ········］
+Disconnecting the active controller opens a recovery dialog and pauses gameplay.
+Keyboard recovery returns to pause and preserves the player's modal context.
+The movement binding opens the shared capture prompt.
+Conflicting keyboard bindings require an explicit swap confirmation.
+Binding movement to an occupied key swaps the two actions.
+A rebuilt binding control remains selected and fully visible inside its scroll viewport.
+Rendered controls-all-actions.
+Leaving settings rolls back both actions in a key conflict swap.
+HUD charge and journal hints display the current bindings.
+Tutorial help reflects custom keys and the detonation action.
+A restored memory trigger does not collect its fragment twice.
+An archived dialogue with an unfinished choice remains available from its trigger.
+Repeated preview hotkeys cannot stack duplicate catalog pages.
+The preview catalog exposes failure and ending modules.
+Rendered dialogue.
+Read dialogue is archived in the memory journal.
+Rendered journal.
+Rendered construction-preview.
+Construction previews expose the world by hiding the opaque recipe page.
+Cancelling a construction preview consumes no energy.
+Cancelling a construction preview restores the recipe page.
+Confirmed construction consumes energy and records its placement.
+Removing construction returns its energy.
+Rendered chapter-complete.
+Chapter completion records progress and creates an automatic save.
+Cancelling ending confirmation does not commit an ending.
+An ending is saved only after final confirmation.
+
+Errors: 0

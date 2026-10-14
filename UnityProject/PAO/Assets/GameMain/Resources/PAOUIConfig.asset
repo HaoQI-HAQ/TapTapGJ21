@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a321bbe568bc4c39b4bce7213f722027, type: 3}
+  m_Name: PAOUIConfig
+  m_EditorClassIdentifier: 
+  enabledInBuild: 1
+  menuScene: Menu
+  additionalGameplayScenes:
+  - cs
+  - Control UI
+  - UI Preview
+  font: {fileID: 12800000, guid: de3370e671e14324f862fc20e980764f, type: 3}
+  round: {fileID: 21300000, guid: 374bcb791de34d3fbbf71f82bb7e93cc, type: 3}
+  ring: {fileID: 21300000, guid: cd0af2a71ce44c01ad927f2350313b17, type: 3}
+  menuArt: {fileID: 21300000, guid: 169436f812e74325af4aac2b38f9465c, type: 3}
+  menuPaperArt: {fileID: 21300000, guid: a18807a3a5c847148178ac0a5edc85b4, type: 3}
+  paperStyle: 0
+  abilityIcons:
+  - {fileID: 21300000, guid: d2e3f4a5b6c708192a3b4c5d6e7f8091, type: 3}
+  - {fileID: 21300000, guid: e3f4a5b6c7d8091a2b3c4d5e6f708192, type: 3}
+  - {fileID: 21300000, guid: f4a5b6c7d8e9012a3b4c5d6e7f8091a2, type: 3}
+  defaultPlayer: {fileID: 4001224688086030769, guid: 533472653752a5e42b3a814b5ef9cbac, type: 3}
+  paper: {r: 1, g: 0.9764706, b: 0.9215686, a: 1}
+  ink: {r: 0.1568627, g: 0.254902, b: 0.254902, a: 1}
+  text: {r: 0.1568627, g: 0.254902, b: 0.254902, a: 1}
+  teal: {r: 0.1882353, g: 0.4588235, b: 0.4392157, a: 1}
+  mist: {r: 1, g: 0.9490196, b: 0.8313725, a: 1}
+  motion:
+    response: 0.12
+    abilitySwitch: 0.26
+    pageEnter: 0.28
+    ripple: 0.46
+    orbitPeriod: 7
+  chapters:
+  - scene: Map0
+    spawnAnchor: Ground_FrontOpenSpace
+    goalAnchor: FarLandmark_Base
+    title: 水域 01
+    description: 从第一段水流开始，认识泡泡与环境之间的关系。
+    objective: 探索水域，寻找通向下一章的路径。
+  - scene: Map1
+    spawnAnchor: Island_Start
+    goalAnchor:
+    title: 水域 02
+    description: 将泡泡组合成新的路径，抵达水流更深处。
+    objective: 运用泡泡能力，抵达下一处出口。
+  - scene: Map2
+    spawnAnchor: Start_Salvage_Court
+    goalAnchor: Memory_Beacon_Lower_Platform
+    title: 水域 03
+    description: 留意环境的变化，让每一次选择产生回响。
+    objective: 观察地形，寻找可以前进的路线。
+  - scene: Map3
+    spawnAnchor: West_Start_Camp
+    goalAnchor: Map3_Corkscrew_Upper_Exit_Shelf
+    title: 水域 04
+    description: 在层层涌动中继续探索，寻找散落的意识碎片。
+    objective: 继续探索，抵达本章终点。
+  - scene: Map4
+    spawnAnchor: Start_Memory_Beach
+    goalAnchor: Resonance_Core_Plinth
+    title: 水域 05
+    description: 回看已经抵达的水域，尝试新的泡泡组合。
+    objective: 运用已掌握的能力抵达终点。
+  - scene: Map5
+    spawnAnchor: Start_Outer_Courtyard
+    goalAnchor: Memory_Garden_Plinth
+    title: 水域 06
+    description: 抵达最后一段水流，回看旅程留下的回声。
+    objective: 抵达终点，回看你的旅程。
+  credits: "泡涌 · 意识之海\nTapTap Game Jam 21\n\n感谢每一位参与创作与体验的朋友。"
