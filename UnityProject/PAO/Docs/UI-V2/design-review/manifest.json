@@ -1,0 +1,366 @@
+{
+  "captures": 47,
+  "source_project": "D:\\TapTapGJ21\\TapTapGJ21\\UnityProject\\PAO",
+  "unity": "2022.3.34f1",
+  "rendered_sources": [
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/AtomicJsonFile.cs",
+      "sha256": "8d6af4b78c4b2db77986f8f5ccbb0aaaec29b831379fbcc2d57c50f9ca170522"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/BuildRecipe.cs",
+      "sha256": "a0fbf4eb8f51b1e1027154415f6a0dc22dbb62cb6b7c61e1d3b36e4d10fe4a7f"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/BuildSite.cs",
+      "sha256": "0067d2abaee4da75c912440bd198d9d4dd5871301f7edffbebda8701524a06f3"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/ChapterGoalTrigger.cs",
+      "sha256": "dc8ad95b2573351b3853ddd3fecb97472b4382958c7a1e6a1f86f522dd5adf23"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/DialogueAsset.cs",
+      "sha256": "e762360019eec3c152cb2fae5b870a5604ff9755f08b773e309ed2c9f4d6c10e"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/MemoryTrigger.cs",
+      "sha256": "24798c911fb9ab3003fd569d95be33d0de57a993bd221eeaada86344f282fe5e"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIAbilityMotion.cs",
+      "sha256": "4dabf7a9d4c936ae03a495781e53db308b6e7b10d5c3d746b1bc095da0cfdbd5"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIAccessibility.cs",
+      "sha256": "d770dc3d061bca8b03d5a85868391362dc494cbdc09def58a9bc0ecb92227e71"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIAdaptiveButton.cs",
+      "sha256": "59cc03c82ac2d684e83f30493b75a5dd7a1ce19a5fa549d7034bc46c35810c17"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIAudioChannel.cs",
+      "sha256": "3fb3a33c79b9c806580eecb03f0eae6e610e23e064c7523137a384bf5b3a6860"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIButtonFeedback.cs",
+      "sha256": "ef21c0f5dce6728a25e834d411efb16be361593765e61992cc5776ab5013e163"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIChapterBeacon.cs",
+      "sha256": "ffbc4bf615997f04a0d68e9b1a2b0ea33d9b62c04d5460353173e28907ce9f58"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UICircleImage.cs",
+      "sha256": "eccbbce7921cb01f638af1c0c617d65fa6e4b22b216b38e605e6689944fe0623"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIConfig.cs",
+      "sha256": "d37345943a28c74752636f03ee65f9edb7dd22efd7af160549ab4275d50f0f2d"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIDesignSystem.cs",
+      "sha256": "4b4ce791217c7eebd4a28f33631a954e8334c68542f61857f0b3afc189087629"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIGuideGraphic.cs",
+      "sha256": "6a21d86a28096e7fb3c5cca628a138bbb872597483762589a93fa267d22b124e"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIHandDrawn.cs",
+      "sha256": "7059cebf7e3ad1f3e9d35b79b1ff067efd60202dc5653ce107ea37c5c94654ff"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIInput.cs",
+      "sha256": "a5bba387556ce3fe34bf0809535e1c53732a934fdc1b41a920a66be2eebf7115"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIMenuPresentation.cs",
+      "sha256": "2ae043dad986c99e849bf2905717bfc0fca62f7626524d1a5044a59be0e2fe84"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIMenuResonance.cs",
+      "sha256": "4af4e2ada658640c38d696513464a934e42d18af0f0818cfb5cbfb8e2547f140"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIMenuVerificationRunner.cs",
+      "sha256": "71cc6244b8e4c1de96b3dcebd0f5072ab9525ddb21e2fe486c2a9a5dd709b60c"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIOceanStyle.cs",
+      "sha256": "373dd987fe35320ea775a810a35233692953f802b57a72d84c53ffd9fe32f543"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIPrototypeLab.cs",
+      "sha256": "599820acab80b39a36a32ee44830d60115bdb21f6897297f92ab33cf2af55039"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRunState.cs",
+      "sha256": "5520808fb6bf6063a4619af3c14c267be6cf69054e0775ac09560ede75133af5"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Chapters.cs",
+      "sha256": "d31e2c8c63e2b529729269b22db24a22b4fe210c90a844bb6df28da705db1481"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Construction.cs",
+      "sha256": "8d310e813654c54c784f5786f76bf9b88e97924e3bb44e4ea6e7e605ba32b399"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.cs",
+      "sha256": "461ba9e008b23eb5d1e529752c1b9a0bf02f71f90cab95f9f304282ef7d07550"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Devices.cs",
+      "sha256": "09d23233a6dc2107b81b4d958c0580c983bb5b95c554589b917c523902a8fef1"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Gameplay.cs",
+      "sha256": "c17f4f41d01961278bc0e03b0e57c6c817cf7eeeb4bbe0ca2549421ad754891f"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Guidance.cs",
+      "sha256": "647a2798dd9ee287daf7fa8bef144948d0f73244eb96dcbae7ab9fa325daced0"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Menu.cs",
+      "sha256": "031af9b70f4f1a38a307b0b092eb4328545390252d9296cd00e9fdb20d497c09"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Panels.cs",
+      "sha256": "dac7d7b7f6162a035b032177d4df5d6516c1d261859b82743018f06183b65eb0"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Prototype.cs",
+      "sha256": "42c55f85909ef73d30f16d82f4a142edb5154c9df550c0348b664e229627b4c3"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIRuntime.Settings.cs",
+      "sha256": "8f30cc869628a9e576077278e4fef4038a1cb6815b8ff77439c99e23ebbb14c3"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UISettings.cs",
+      "sha256": "d1ff585d4055505167a8113dfad058801506a04382915c63cafe382df3cb8495"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIStyledText.cs",
+      "sha256": "5c67da86ce7921a7a58ba3c7723caf9ab6ed6e375f58cee2e4bc672082aa407a"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIVerificationRunner.cs",
+      "sha256": "07c0d04b08bc6321a3018ecd0b4f6549bd8974b54fa2e5089d751fa1c456f281"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIVerificationRunner.Extended.cs",
+      "sha256": "84bcf45e4ee8e2a55cb521abf5496e85b12b6d7604e3425bcbadad59543829a8"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIVerificationRunner.Guidance.cs",
+      "sha256": "c056d9c86472ae45eb2354bf487fcdb07eac86f9e2e05bc2c79cce4ce2678adc"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIVerificationRunner.Motion.cs",
+      "sha256": "08b277cd8214203b113b71d2226b6a0a5d3c0194f7947ff1dcd1df77ad8cff9f"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIVerificationRunner.Settings.cs",
+      "sha256": "58c385de2a2a4b7a915d745a76978fecb4d8b5f5a97d953abfc4515f357f4547"
+    },
+    {
+      "path": "Assets/GameMain/Scripts/UI/V2/UIWidgets.cs",
+      "sha256": "f0d190161c38362e9e4754bb20374bea222eadde0b13b053deeda68313e16a8a"
+    }
+  ],
+  "source_changes_since_capture": [],
+  "images": [
+    {
+      "file": "binding-conflict.png",
+      "title": "改键 · 冲突确认"
+    },
+    {
+      "file": "chapters.png",
+      "title": "章节 · 水流路径"
+    },
+    {
+      "file": "completion.png",
+      "title": "结算 · 日光统计"
+    },
+    {
+      "file": "confirmation.png",
+      "title": "危险操作 · 确认"
+    },
+    {
+      "file": "construction-preview-narrow.png",
+      "title": "建构 · 窄屏预览"
+    },
+    {
+      "file": "construction-preview.png",
+      "title": "建构 · 世界预览"
+    },
+    {
+      "file": "construction.png",
+      "title": "建构 · 配方蓝图"
+    },
+    {
+      "file": "controller-capture.png",
+      "title": "手柄 · 等待改键"
+    },
+    {
+      "file": "controller-layout-narrow.png",
+      "title": "手柄图示 · 窄屏"
+    },
+    {
+      "file": "controller-layout.png",
+      "title": "手柄 · 设备图示"
+    },
+    {
+      "file": "credits.png",
+      "title": "署名 · 共创星图"
+    },
+    {
+      "file": "dialogue-choices.png",
+      "title": "叙事 · 分支选择"
+    },
+    {
+      "file": "dialogue.png",
+      "title": "叙事 · 底部回声"
+    },
+    {
+      "file": "ending-sample-branches.png",
+      "title": "结局 · 示例分支"
+    },
+    {
+      "file": "ending.png",
+      "title": "结局 · 空状态"
+    },
+    {
+      "file": "failure.png",
+      "title": "失败 · 救生浮环"
+    },
+    {
+      "file": "guide.png",
+      "title": "教学 · 操作图鉴"
+    },
+    {
+      "file": "hud-detailed.png",
+      "title": "HUD · 详细模式"
+    },
+    {
+      "file": "hud-guidance.png",
+      "title": "HUD · 情境图形引导"
+    },
+    {
+      "file": "hud.png",
+      "title": "HUD · 简洁引导"
+    },
+    {
+      "file": "journal-empty.png",
+      "title": "日志 · 空状态"
+    },
+    {
+      "file": "journal.png",
+      "title": "日志 · 意识手账"
+    },
+    {
+      "file": "keyboard-capture.png",
+      "title": "键鼠 · 等待改键"
+    },
+    {
+      "file": "keyboard-layout-narrow.png",
+      "title": "键鼠图示 · 窄屏"
+    },
+    {
+      "file": "keyboard-layout.png",
+      "title": "键鼠 · 设备图示"
+    },
+    {
+      "file": "loading.png",
+      "title": "加载 · 水流进度"
+    },
+    {
+      "file": "menu-contrast.png",
+      "title": "主菜单 · 高对比"
+    },
+    {
+      "file": "menu-english.png",
+      "title": "主菜单 · 英文"
+    },
+    {
+      "file": "menu-wide.png",
+      "title": "主菜单 · 宽屏"
+    },
+    {
+      "file": "menu.png",
+      "title": "主菜单"
+    },
+    {
+      "file": "pause-contrast.png",
+      "title": "暂停 · 高对比"
+    },
+    {
+      "file": "pause-narrow-large-text.png",
+      "title": "暂停 · 窄屏大字号"
+    },
+    {
+      "file": "pause.png",
+      "title": "暂停 · 贝壳休憩"
+    },
+    {
+      "file": "records.png",
+      "title": "存档 · 旅程卡片"
+    },
+    {
+      "file": "settings-0.png",
+      "title": "设置 · 声音"
+    },
+    {
+      "file": "settings-1.png",
+      "title": "设置 · 画面"
+    },
+    {
+      "file": "settings-2.png",
+      "title": "设置 · 键鼠"
+    },
+    {
+      "file": "settings-3.png",
+      "title": "设置 · 手柄"
+    },
+    {
+      "file": "settings-4.png",
+      "title": "设置 · 辅助"
+    },
+    {
+      "file": "settings-5.png",
+      "title": "设置 · 语言"
+    },
+    {
+      "file": "settings-controller-options.png",
+      "title": "手柄 · 输入参数"
+    },
+    {
+      "file": "settings-controller-portrait-binding.png",
+      "title": "手柄 · 绑定行重排"
+    },
+    {
+      "file": "settings-controller-portrait.png",
+      "title": "手柄 · 竖屏大字号"
+    },
+    {
+      "file": "settings-keyboard-options.png",
+      "title": "键鼠 · 输入参数"
+    },
+    {
+      "file": "settings-narrow-large-text.png",
+      "title": "设置 · 窄屏大字号"
+    },
+    {
+      "file": "settings-pseudo.png",
+      "title": "设置 · 长文本压力"
+    },
+    {
+      "file": "subtitle-narrow.png",
+      "title": "字幕 · 窄屏避让"
+    }
+  ]
+}

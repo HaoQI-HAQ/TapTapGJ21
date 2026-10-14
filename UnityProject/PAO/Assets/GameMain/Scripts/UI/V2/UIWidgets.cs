@@ -157,10 +157,11 @@ namespace PAO.UI.V2
 
         public void Emblem(Transform parent, UIGuideSymbol symbol, string caption, Color? accent = null)
         {
-            RectTransform row = Row("Card emblem", parent, 12); Size(row, 48);
+            RectTransform row = Row("Card emblem", parent, 12); Size(row, 48).preferredHeight = -1;
             UIGuideGraphic icon = Rect("Card symbol", row).gameObject.AddComponent<UIGuideGraphic>();
             icon.Symbol = symbol; icon.color = accent ?? Config.teal; icon.raycastTarget = false; Size(icon.transform, 40, 40);
-            Label(row, caption, 20, accent ?? Config.teal);
+            Text label = Label(row, caption, 20, accent ?? Config.teal);
+            Size(label.transform, -1, -1, 1).minHeight = 32;
         }
 
         public RectTransform Scroll(Transform parent)
@@ -171,6 +172,7 @@ namespace PAO.UI.V2
             scroll.scrollSensitivity = 60;
             Image background = root.gameObject.AddComponent<Image>(); background.color = new Color(1, 1, 1, 0.001f);
             RectTransform viewport = Rect("Viewport", root); Stretch(viewport);
+            viewport.offsetMax = new Vector2(-18, 0);
             viewport.gameObject.AddComponent<RectMask2D>();
             RectTransform content = Column("Content", viewport, 4, 16);
             content.anchorMin = new Vector2(0, 1); content.anchorMax = Vector2.one;
@@ -178,6 +180,17 @@ namespace PAO.UI.V2
             var fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.viewport = viewport; scroll.content = content;
+            Image rail = Surface("Scroll rail", root, new Color(Config.teal.r, Config.teal.g, Config.teal.b, .16f), true);
+            RectTransform railRect = rail.rectTransform;
+            railRect.anchorMin = new Vector2(1, 0); railRect.anchorMax = Vector2.one;
+            railRect.pivot = new Vector2(1, .5f); railRect.sizeDelta = new Vector2(8, 0); railRect.anchoredPosition = Vector2.zero;
+            Scrollbar scrollbar = rail.gameObject.AddComponent<Scrollbar>(); scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            Navigation scrollbarNavigation = scrollbar.navigation; scrollbarNavigation.mode = Navigation.Mode.None;
+            scrollbar.navigation = scrollbarNavigation;
+            RectTransform sliding = Rect("Sliding area", railRect); Stretch(sliding);
+            Image handle = Surface("Scroll position", sliding, new Color(Config.teal.r, Config.teal.g, Config.teal.b, .78f), true);
+            Stretch(handle.rectTransform); scrollbar.handleRect = handle.rectTransform; scrollbar.targetGraphic = handle;
+            scroll.verticalScrollbar = scrollbar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
             var layout = root.gameObject.AddComponent<LayoutElement>(); layout.flexibleHeight = 1; layout.minHeight = 120;
             return content;
         }
@@ -315,7 +328,7 @@ namespace PAO.UI.V2
         public void RestoreFocus()
         {
             foreach (Selectable control in GetComponentsInChildren<Selectable>())
-                if (control.IsActive() && control.IsInteractable()) { control.Select(); return; }
+                if (!(control is Scrollbar) && control.IsActive() && control.IsInteractable()) { control.Select(); return; }
         }
         private void Kill()
         {

@@ -1,0 +1,1 @@
+Assets\GameMain\Scripts\UI\LevelPathPanel.cs(152,22): warning CS0414: The field 'LevelPathPanel.m_DragStartedByTouch' is assigned but its value is never used

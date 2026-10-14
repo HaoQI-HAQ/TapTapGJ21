@@ -44,19 +44,18 @@ namespace PAO.UI.V2
             RectTransform body = (RectTransform)page.transform.Find("Page");
             VerticalLayoutGroup layout = body.GetComponent<VerticalLayoutGroup>();
             body.anchorMin = new Vector2(.055f, .06f); body.anchorMax = new Vector2(.53f, .95f);
-            body.gameObject.AddComponent<UIMenuResponsiveDesign>();
             layout.padding = new RectOffset(24, 24, 24, 16); layout.spacing = 12;
             Text heading = body.GetChild(0).GetComponent<Text>();
             heading.name = "Menu title"; heading.alignment = TextAnchor.MiddleLeft;
             heading.GetComponent<UIStyledText>().Configure(72, true, Config);
-            UIWidgets.Size(heading.transform, 116 * UISettings.Current.textScale);
+            UIWidgets.Size(heading.transform, -1);
             Text subtitle = ui.Label(body, T("意识之海", "THE SEA OF CONSCIOUSNESS"), 21, null, TextAnchor.MiddleLeft);
             subtitle.name = "Menu subtitle"; subtitle.transform.SetSiblingIndex(1);
 
             VerticalLayoutGroup contentLayout = page.Content.GetComponent<VerticalLayoutGroup>();
-            contentLayout.padding = new RectOffset(12, 12, 12, 12);
-            contentLayout.childForceExpandWidth = true; contentLayout.childAlignment = TextAnchor.UpperLeft;
-            RectTransform actions = ui.Column("Menu actions", page.Content, 4, 10);
+            contentLayout.padding = new RectOffset(0, 0, 8, 8);
+            contentLayout.childForceExpandWidth = false; contentLayout.childAlignment = TextAnchor.UpperLeft;
+            RectTransform actions = ui.Column("Menu actions", page.Content, 0, 10);
             LayoutElement actionSize = UIWidgets.Size(actions, -1, 560);
             actions.gameObject.AddComponent<UIMenuLayout>().Configure(actionSize);
             if (state.latest != null)
@@ -76,12 +75,17 @@ namespace PAO.UI.V2
                 UIWidgets.Size(status.transform, -1, 560).layoutPriority = 3;
             }
 
-            // Secondary help stays outside the scroll viewport; no panel can draw over it.
-            ui.Button(page.Footer, T("操作图鉴", "Guide"), ShowHelp);
-            ui.Button(page.Footer, T("制作人员", "Credits"), ShowCredits);
-            ui.Button(page.Footer, T("离开", "Quit"), ConfirmQuit);
-            page.Footer.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleLeft;
-            page.Footer.GetComponent<LayoutElement>().minHeight = 72;
+            // Secondary actions reflow independently of the clipped main list.
+            RectTransform secondary = ui.Rect("Secondary menu actions", page.Footer);
+            UIWidgets.Size(secondary, -1, -1, 1);
+            UIFlowLayout footerFlow = secondary.gameObject.AddComponent<UIFlowLayout>();
+            footerFlow.maxColumns = 3; footerFlow.spacing = 12;
+            UIWidgets.Size(page.Footer, -1);
+            MenuSecondaryButton(secondary, T("操作图鉴", "Guide"), ShowHelp);
+            MenuSecondaryButton(secondary, T("制作人员", "Credits"), ShowCredits);
+            MenuSecondaryButton(secondary, T("离开", "Quit"), ConfirmQuit);
+            body.gameObject.AddComponent<UIMenuResponsiveDesign>().Configure(heading, subtitle, contentLayout, footerFlow);
+            AddMenuScrollbar(page.Content.GetComponentInParent<ScrollRect>());
             Finish(page);
         }
 
@@ -91,8 +95,40 @@ namespace PAO.UI.V2
                 click == (Action)ShowSettings ? UIGuideSymbol.Steer : UIGuideSymbol.Arrow;
             Button button = ui.IconButton(parent, title, symbol, click, primary);
             Text label = button.GetComponentInChildren<Text>(); label.alignment = TextAnchor.MiddleLeft;
-            button.gameObject.AddComponent<UIMenuButtonLayout>().Configure(label, null);
+            if (primary) label.GetComponent<UIStyledText>().Configure(26, false, Config);
+            button.gameObject.AddComponent<UIMenuButtonLayout>().Configure(label, null, primary ? 76 : 60);
+            button.gameObject.AddComponent<UIMenuEntryMotion>().Configure(button.transform.Find("Action symbol").GetComponent<UIGuideGraphic>(), Config);
             return button;
+        }
+
+        private void MenuSecondaryButton(Transform parent, string title, Action click)
+        {
+            Button button = ui.Button(parent, title, click);
+            button.GetComponent<Image>().color = new Color(1, 1, 1, .55f);
+            Text label = button.GetComponentInChildren<Text>();
+            label.GetComponent<UIStyledText>().Configure(20, false, Config);
+            button.gameObject.AddComponent<UIMenuButtonLayout>().Configure(label, null, 48);
+        }
+
+        private void AddMenuScrollbar(ScrollRect scroll)
+        {
+            if (scroll.verticalScrollbar != null)
+            {
+                Navigation existing = scroll.verticalScrollbar.navigation; existing.mode = Navigation.Mode.None;
+                scroll.verticalScrollbar.navigation = existing;
+                return;
+            }
+            // Reserve a gutter so the handle never draws over a label or focus ring.
+            scroll.viewport.offsetMax = new Vector2(-14, scroll.viewport.offsetMax.y);
+            Image track = ui.Surface("Menu scroll track", scroll.transform, new Color(Config.ink.r, Config.ink.g, Config.ink.b, .08f), true);
+            track.rectTransform.anchorMin = new Vector2(1, 0); track.rectTransform.anchorMax = Vector2.one;
+            track.rectTransform.offsetMin = new Vector2(-5, 4); track.rectTransform.offsetMax = new Vector2(-1, -4);
+            RectTransform area = ui.Rect("Sliding area", track.transform); UIWidgets.Stretch(area);
+            Image handle = ui.Surface("Scroll handle", area, Config.teal, true); UIWidgets.Stretch(handle.rectTransform);
+            Scrollbar bar = track.gameObject.AddComponent<Scrollbar>();
+            bar.handleRect = handle.rectTransform; bar.targetGraphic = handle; bar.direction = Scrollbar.Direction.BottomToTop;
+            Navigation navigation = bar.navigation; navigation.mode = Navigation.Mode.None; bar.navigation = navigation;
+            scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
         }
 
         private void ContinueJourney(int slot)

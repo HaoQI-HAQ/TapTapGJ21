@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
-    public enum UIPageDesign { Plain, Menu, Pause, Chapters, Records, Settings, Guide, Journal, Dialogue, Construction, Completion, Ending, Credits, Failure, Loading, Controls }
+    public enum UIPageDesign { Plain, Menu, Pause, Chapters, Records, Settings, Guide, Journal, Dialogue, Construction, Completion, Ending, Credits, Failure, Loading, Controls, Confirmation }
 
     // One palette for both menu and gameplay pages. Accent colours carry state; paper carries content.
     public static class UIDesignPalette
@@ -12,7 +12,7 @@ namespace PAO.UI.V2
         public static readonly Color Cream = new Color32(255, 242, 212, 255);
         public static readonly Color Ink = new Color32(40, 65, 65, 255);
         public static readonly Color Teal = new Color32(48, 117, 112, 255);
-        public static readonly Color Coral = new Color32(205, 105, 79, 255);
+        public static readonly Color Coral = new Color32(177, 82, 60, 255);
         public static readonly Color Gold = new Color32(241, 185, 81, 255);
         public static readonly Color ControlTop = new Color32(255, 252, 242, 255);
         public static readonly Color ControlBottom = new Color32(255, 235, 195, 255);
@@ -23,9 +23,89 @@ namespace PAO.UI.V2
             switch (design)
             {
                 case UIPageDesign.Chapters: case UIPageDesign.Construction: case UIPageDesign.Controls: return Teal;
-                case UIPageDesign.Journal: case UIPageDesign.Dialogue: case UIPageDesign.Ending: return Coral;
+                case UIPageDesign.Journal: case UIPageDesign.Dialogue: case UIPageDesign.Ending: case UIPageDesign.Confirmation: return Coral;
                 default: return Gold;
             }
+        }
+    }
+
+    public sealed class UICompactPageLayout : MonoBehaviour
+    {
+        private void LateUpdate()
+        {
+            RectTransform rect = (RectTransform)transform;
+            RectTransform parent = (RectTransform)rect.parent;
+            float margin = parent.rect.width < 1200 ? .06f : .2f;
+            Vector2 minimum = new Vector2(margin, .15f), maximum = new Vector2(1 - margin, .85f);
+            if (rect.anchorMin == minimum && rect.anchorMax == maximum) return;
+            rect.anchorMin = minimum; rect.anchorMax = maximum;
+            LayoutRebuilder.MarkLayoutForRebuild(rect);
+        }
+    }
+
+    public sealed class UIConstructionPreviewLayout : MonoBehaviour
+    {
+        private bool? compact;
+        private void LateUpdate()
+        {
+            RectTransform rect = (RectTransform)transform;
+            float width = ((RectTransform)rect.parent).rect.width;
+            bool narrow = width < 1100;
+            if (compact != narrow)
+            {
+                compact = narrow;
+                VerticalLayoutGroup layout = GetComponent<VerticalLayoutGroup>();
+                int padding = narrow ? 16 : 32;
+                layout.padding = new RectOffset(padding, padding, padding, padding); layout.spacing = narrow ? 12 : 16;
+                Text heading = transform.Find("Page title").GetComponent<Text>();
+                heading.GetComponent<UIStyledText>().Configure(narrow ? 32 : 44, true, GetComponentInParent<UIRuntime>().Config);
+                UIWidgets.Size(heading.transform, narrow ? 52 : 72).preferredHeight = -1;
+            }
+            Vector2 minimum = narrow ? new Vector2(.06f, .04f) : new Vector2(.63f, .08f);
+            Vector2 maximum = narrow ? new Vector2(.94f, .46f) : new Vector2(.98f, .92f);
+            if (rect.anchorMin == minimum && rect.anchorMax == maximum) return;
+            rect.anchorMin = minimum; rect.anchorMax = maximum; LayoutRebuilder.MarkLayoutForRebuild(rect);
+        }
+    }
+
+    // Keep the action name above its controls when a horizontal binding row would overflow.
+    public sealed class UIBindingRowLayout : LayoutGroup
+    {
+        private const float Gap = 16;
+        private float ControlsWidth => 280 + Mathf.Max(0, rectChildren.Count - 2) * 160 + Mathf.Max(0, rectChildren.Count - 1) * Gap;
+        private bool Stacked => rectTransform.rect.width - ControlsWidth < 220;
+        private float Height(int index) => Mathf.Max(LayoutUtility.GetMinHeight(rectChildren[index]), LayoutUtility.GetPreferredHeight(rectChildren[index]));
+        private float ControlsHeight
+        {
+            get { float height = 0; for (int i = 1; i < rectChildren.Count; i++) height = Mathf.Max(height, Height(i)); return height; }
+        }
+        public override void CalculateLayoutInputHorizontal() { base.CalculateLayoutInputHorizontal(); SetLayoutInputForAxis(0, 0, 1, 0); }
+        public override void CalculateLayoutInputVertical()
+        {
+            float height = rectChildren.Count == 0 ? 0 : Stacked ? Height(0) + Gap + ControlsHeight : Mathf.Max(Height(0), ControlsHeight);
+            SetLayoutInputForAxis(height, height, 0, 1);
+        }
+        public override void SetLayoutHorizontal()
+        {
+            if (rectChildren.Count == 0) return;
+            float width = rectTransform.rect.width;
+            float titleWidth = Stacked ? width : width - ControlsWidth;
+            SetChildAlongAxis(rectChildren[0], 0, 0, titleWidth);
+            float controlWidth = (width - Mathf.Max(0, rectChildren.Count - 2) * Gap) / Mathf.Max(1, rectChildren.Count - 1);
+            float x = Stacked ? 0 : titleWidth + Gap;
+            for (int i = 1; i < rectChildren.Count; i++)
+            {
+                float childWidth = Stacked ? controlWidth : i == 1 ? 280 : 160;
+                SetChildAlongAxis(rectChildren[i], 0, x, childWidth); x += childWidth + Gap;
+            }
+        }
+        public override void SetLayoutVertical()
+        {
+            if (rectChildren.Count == 0) return;
+            float labelHeight = Height(0), controlsHeight = ControlsHeight;
+            float rowHeight = Mathf.Max(labelHeight, controlsHeight);
+            SetChildAlongAxis(rectChildren[0], 1, 0, Stacked ? labelHeight : rowHeight);
+            for (int i = 1; i < rectChildren.Count; i++) SetChildAlongAxis(rectChildren[i], 1, Stacked ? labelHeight + Gap : 0, Stacked ? controlsHeight : rowHeight);
         }
     }
 
@@ -110,7 +190,7 @@ namespace PAO.UI.V2
                         Stroke(new Vector2(0, -.5f), new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * .82f, 2);
                     }
                     Arc(new Vector2(0, -.5f), .88f, 18, 162, 2.5f); break;
-                case UIPageDesign.Chapters: case UIPageDesign.Loading:
+                case UIPageDesign.Chapters:
                     for (int i = 0; i < 70; i++)
                     {
                         float a = i / 70f, b = (i + 1) / 70f;
@@ -118,10 +198,31 @@ namespace PAO.UI.V2
                     }
                     for (int i = 0; i < 5; i++) Arc(new Vector2(Mathf.Sin(i * 2) * .4f, .85f - i * .425f), .07f, 0, 360, 3);
                     break;
-                case UIPageDesign.Journal: case UIPageDesign.Records: case UIPageDesign.Credits:
+                case UIPageDesign.Journal:
                     Stroke(new Vector2(-.65f, .75f), new Vector2(-.65f, -.75f), 3);
                     for (int i = 0; i < 7; i++) Stroke(new Vector2(-.45f, .65f - i * .2f), new Vector2(.65f, .65f - i * .2f), 1.5f);
                     for (int i = 0; i < 5; i++) Arc(new Vector2(-.65f, .6f - i * .3f), .065f, 100, 280, 2); break;
+                case UIPageDesign.Records:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        float y = .65f - i * .52f;
+                        Stroke(new Vector2(-.7f, y), new Vector2(.66f, y), 2);
+                        Stroke(new Vector2(.66f, y), new Vector2(.66f, y - .36f), 2);
+                        Stroke(new Vector2(.66f, y - .36f), new Vector2(-.7f, y - .36f), 2);
+                        Stroke(new Vector2(-.7f, y - .36f), new Vector2(-.7f, y), 2);
+                        Arc(new Vector2(.4f, y - .18f), .085f, 0, 360, 2);
+                        Stroke(new Vector2(-.52f, y - .14f), new Vector2(.08f, y - .14f), 1.5f);
+                    }
+                    break;
+                case UIPageDesign.Credits:
+                    Vector2[] stars = { new Vector2(-.7f, .2f), new Vector2(-.2f, .68f), new Vector2(.6f, .38f),
+                        new Vector2(.4f, -.4f), new Vector2(-.38f, -.64f) };
+                    for (int i = 0; i < stars.Length; i++)
+                    {
+                        Stroke(stars[i], stars[(i + 1) % stars.Length], 1.2f);
+                        Arc(stars[i], .075f, 0, 360, 2.5f);
+                    }
+                    break;
                 case UIPageDesign.Construction:
                     for (int i = 0; i < 9; i++)
                     {
@@ -144,6 +245,36 @@ namespace PAO.UI.V2
                 case UIPageDesign.Ending:
                     for (int i = 0; i < 3; i++) Curve(new Vector2(0, -.8f), new Vector2((i - 1) * .6f, .65f), .18f, 2.5f);
                     for (int i = 0; i < 3; i++) Arc(new Vector2((i - 1) * .6f, .65f), .09f, 0, 360, 2); break;
+                case UIPageDesign.Guide:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        float angle = (90 + i * 120) * Mathf.Deg2Rad;
+                        Vector2 center = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * .6f;
+                        Arc(center, .22f, 0, 360, 2.5f);
+                        Stroke(center + new Vector2(-.08f, 0), center + new Vector2(.08f, 0), 2);
+                        Stroke(center + new Vector2(0, -.08f), center + new Vector2(0, .08f), 2);
+                    }
+                    Arc(Vector2.zero, .6f, -15, 55, 2); Arc(Vector2.zero, .6f, 110, 180, 2);
+                    Arc(Vector2.zero, .6f, 235, 305, 2); break;
+                case UIPageDesign.Failure:
+                    Arc(Vector2.zero, .6f, 0, 360, 3); Arc(Vector2.zero, .31f, 0, 360, 2);
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float angle = (45 + i * 90) * Mathf.Deg2Rad;
+                        Vector2 v = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)); Stroke(v * .31f, v * .6f, 6);
+                    }
+                    Curve(new Vector2(-1, -.7f), new Vector2(1, -.7f), .1f, 2); break;
+                case UIPageDesign.Loading:
+                    Arc(Vector2.zero, .6f, 12, 285, 3);
+                    Arc(Vector2.zero, .43f, 195, 455, 1.5f);
+                    Curve(new Vector2(-.85f, -.8f), new Vector2(.85f, -.8f), .08f, 2); break;
+                case UIPageDesign.Dialogue:
+                    for (int i = 0; i < 3; i++) Arc(Vector2.zero, .22f + i * .19f, -40, 215, 2 - i * .3f);
+                    Arc(new Vector2(-.6f, -.5f), .06f, 0, 360, 2); break;
+                case UIPageDesign.Confirmation:
+                    Arc(Vector2.zero, .62f, 0, 360, 2);
+                    Stroke(new Vector2(0, -.1f), new Vector2(0, .32f), 4);
+                    Arc(new Vector2(0, -.28f), .025f, 0, 360, 4); break;
                 case UIPageDesign.Settings: case UIPageDesign.Controls:
                     for (int i = 0; i < 3; i++)
                     {

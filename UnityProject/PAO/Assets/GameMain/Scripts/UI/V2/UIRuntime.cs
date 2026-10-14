@@ -259,9 +259,17 @@ namespace PAO.UI.V2
                 {
                     body.anchorMin = new Vector2(.08f, .055f); body.anchorMax = new Vector2(.92f, .58f);
                 }
+                else if (design != UIPageDesign.Construction) body.gameObject.AddComponent<UICompactPageLayout>();
+                RectTransform artMask = ui.Rect("Panel artwork", body); UIWidgets.Stretch(artMask);
+                artMask.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                artMask.gameObject.AddComponent<RectMask2D>();
+                UIPageArtwork artwork = ui.Rect("Panel illustration · " + design, artMask).gameObject.AddComponent<UIPageArtwork>();
+                artwork.design = design; artwork.color = UIDesignPalette.Accent(design) * new Color(1, 1, 1, .12f);
+                artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
             }
             Color? headingColor = Config.paperStyle ? (Color?)null : Config.ink;
-            Text heading = ui.Label(body, title, 44, headingColor); heading.name = "Page title"; UIWidgets.Size(heading.transform, 72);
+            Text heading = ui.Label(body, title, 44, headingColor); heading.name = "Page title";
+            UIWidgets.Size(heading.transform, 72).preferredHeight = -1;
             if (!string.IsNullOrEmpty(subtitle)) ui.Label(body, subtitle, 21, headingColor);
             page.Content = ui.Scroll(body);
             page.NoticeArea = ui.Column("Page notice", body, 12, 0);
@@ -359,7 +367,9 @@ namespace PAO.UI.V2
 
         private void Confirm(string title, string explanation, Action action, bool danger = false)
         {
-            UIPage page = Push(title, "", true);
+            UIPage page = Push(title, "", true, UIPageDesign.Confirmation);
+            ui.Emblem(page.Content, danger ? UIGuideSymbol.Bomb : UIGuideSymbol.Current,
+                danger ? T("确认后执行", "CONFIRM TO PROCEED") : T("请确认选择", "REVIEW YOUR CHOICE"), danger ? UIDesignPalette.Coral : Config.teal);
             ui.Label(page.Content, explanation, 26);
             ui.Button(page.Footer, T("取消", "Cancel"), Pop);
             ui.Button(page.Footer, T("确认", "Confirm"), () => { Pop(); action(); }, true, true, danger);
@@ -375,10 +385,20 @@ namespace PAO.UI.V2
             StartCoroutine(LoadSceneRoutine(scene));
         }
 
+        private UIPage CreateLoadingPage(out Text progress, out Image fill)
+        {
+            UIPage page = Push(T("正在进入意识之海", "Entering the sea"), T("请稍候", "Please wait"), true, UIPageDesign.Loading);
+            ui.Emblem(page.Content, UIGuideSymbol.Current, T("循着水流", "FOLLOWING THE CURRENT"));
+            Image track = ui.Surface("Loading track", page.Content, Config.mist, true); UIWidgets.Size(track.transform, 12);
+            fill = ui.Surface("Loading current", track.transform, Config.teal, true);
+            fill.rectTransform.anchorMin = Vector2.zero; fill.rectTransform.anchorMax = new Vector2(0, 1);
+            fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
+            progress = ui.Label(page.Content, "0%", 40, null, TextAnchor.MiddleCenter);
+            return page;
+        }
         private IEnumerator LoadSceneRoutine(string scene)
         {
-            UIPage page = Push(T("正在进入意识之海", "Entering the sea"), T("请稍候", "Please wait"), true);
-            Text progress = ui.Label(page.Content, "0%", 40, null, TextAnchor.MiddleCenter);
+            Text progress; Image fill; CreateLoadingPage(out progress, out fill);
             AsyncOperation operation = null;
             try { operation = SceneManager.LoadSceneAsync(scene); }
             catch (Exception error) { Debug.LogException(error); }
@@ -392,6 +412,7 @@ namespace PAO.UI.V2
             while (!operation.isDone)
             {
                 if (progress != null) progress.text = Mathf.RoundToInt(operation.progress / 0.9f * 100) + "%";
+                if (fill != null) fill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(operation.progress / .9f), 1);
                 yield return null;
             }
         }

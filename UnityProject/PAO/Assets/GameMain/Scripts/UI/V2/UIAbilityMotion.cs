@@ -32,7 +32,7 @@ namespace PAO.UI.V2
             config = ui.Config; chargeFill = bar; information = card; title = abilityTitle;
             RectTransform current = ui.Rect("Ability current", transform); UIWidgets.Stretch(current);
             var waves = current.gameObject.AddComponent<UIPearlGraphic>(); waves.shape = UIPearlShape.Current;
-            waves.color = new Color(.52f, .83f, 1, .2f); waves.raycastTarget = false; current.SetAsFirstSibling();
+            waves.color = new Color(config.teal.r, config.teal.g, config.teal.b, .16f); waves.raycastTarget = false; current.SetAsFirstSibling();
             traveller = Graphic(ui, transform, "Travelling pearl", UIPearlShape.Bubble, 14);
             traveller.color = Color.clear;
         }
@@ -45,7 +45,7 @@ namespace PAO.UI.V2
             UIPearlGraphic ripple = Graphic(ui, circle.transform, "Switch ripple", UIPearlShape.Orbit, 118);
             UIPearlGraphic charge = Graphic(ui, circle.transform, "Charge arc", UIPearlShape.Orbit, 112);
             charge.Fill = 0;
-            circle.color = new Color(config.ink.r, config.ink.g, config.ink.b, .7f);
+            circle.color = config.paper;
             circle.GetComponent<Button>().transition = Selectable.Transition.None;
             var node = new Node { root = circle.rectTransform, film = film, glow = glow, orbit = orbit, ripple = ripple, charge = charge, ring = ring };
             nodes.Add(node); circle.gameObject.AddComponent<UIAbilityHover>().Configure(film, config.motion);
@@ -117,7 +117,7 @@ namespace PAO.UI.V2
             node.root.localScale = Vector3.one * (UISettings.Current.reducedMotion ? 1 : active ? 1.03f : .88f);
             node.film.color = new Color(accent.r, accent.g, accent.b, active ? 1 : .65f);
             node.glow.color = new Color(accent.r, accent.g, accent.b, active && !UISettings.Current.highContrast ? .8f : .08f);
-            node.ring.enabled = active; node.ring.color = new Color(1, 1, 1, .9f);
+            node.ring.enabled = active; node.ring.color = config.teal;
             node.orbit.color = active ? accent : new Color(accent.r, accent.g, accent.b, .12f);
             node.orbit.Phase = 0; node.ripple.color = Color.clear;
             node.ripple.rectTransform.localScale = Vector3.one;

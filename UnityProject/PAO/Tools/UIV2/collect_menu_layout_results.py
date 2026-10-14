@@ -8,6 +8,9 @@ import zipfile
 
 root = Path(__file__).resolve().parents[2]
 test = Path(sys.argv[1]).resolve()
+stage = sys.argv[2] if len(sys.argv) > 2 else 'layout'
+if stage not in ('layout', 'polish'):
+    raise SystemExit('The optional stage must be layout or polish.')
 if not (test / 'PAO_UI_VERIFICATION_PROJECT').is_file():
     raise SystemExit('Expected an isolated UI verification project.')
 
@@ -25,7 +28,7 @@ for name, folder in [('menu', 'MenuVerificationArtifacts'), ('regression', 'Veri
             raise SystemExit('Missing verification image: ' + image)
     groups.append((name, source, count, images))
 
-dest = root / 'Docs/UI-V2/menu-layout'
+dest = root / ('Docs/UI-V2/menu-' + stage)
 for name, source, count, images in groups:
     target = dest / name
     target.mkdir(parents=True, exist_ok=True)
@@ -91,4 +94,22 @@ python Tools/UIV2/prepare_validation.py C:/PAOMenuLayoutValidation
 python Tools/UIV2/collect_menu_layout_results.py C:/PAOMenuLayoutValidation
 ```
 '''
+if stage == 'polish':
+    verification = verification.replace('主菜单精简与布局验收', '主菜单补充优化验收')
+    start = verification.index('## 布局调整')
+    end = verification.index('## 实际画面与无重叠检查')
+    details = '''## 补充优化
+
+- 延续当前左侧菜单、右侧水母插画的构图。限制菜单列宽，统一标题、副标题、菜单边界；窄窗口改为居中列，英文和长标题按空间缩放并换行。
+- 主入口使用更大的点击区域和字号，底部图鉴、制作人员与离开保持轻量外观，并按文字大小自动换行布局。
+- 菜单图标使用 140 ms DOTween 反馈，在预留范围内移动并随焦点变色；减少动态立即复位，快速悬停替换旧 Tween，隐藏或销毁时终止。
+- 复用共用滚动条，仅在内容超出视口时显示，不额外添加说明文字。滚动条不进入默认焦点与方向导航，修复危险确认可能先选中滚动条的问题。
+- 保留精简的信息结构、有效记录继续入口、异常恢复、取消确认与返回焦点。高对比主按钮文字对比度至少 7:1。
+
+专项还验证悬停图标不触碰文字、连续快速悬停回到正确终态、动态设置立即生效、标题完整可读与滚动条按内容显隐。原有主菜单布局验收保留在 `../menu-layout/`。
+
+'''
+    verification = verification[:start] + details + verification[end:]
+    verification = verification.replace('python Tools/UIV2/collect_menu_layout_results.py C:/PAOMenuLayoutValidation\n',
+                                        'python Tools/UIV2/collect_menu_layout_results.py C:/PAOMenuLayoutValidation polish\n')
 (dest / 'verification.md').write_text(verification, encoding='utf-8')

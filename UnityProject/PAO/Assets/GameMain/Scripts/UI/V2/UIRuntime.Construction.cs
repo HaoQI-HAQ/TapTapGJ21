@@ -35,10 +35,11 @@ namespace PAO.UI.V2
         {
             if (site == null || site.CanPlace(recipe) != null) return;
             UIPage catalogue = pages[pages.Count - 1];
-            UIPage page = Push(recipe.title, T("预览不会消耗能量。确认后完成建构。", "Preview uses no energy. Confirm to build."), true, UIPageDesign.Construction);
+            UIPage page = Push(recipe.title, "", true, UIPageDesign.Construction);
             catalogue.SetVisible(false);
             RectTransform panel = page.transform.Find("Page") as RectTransform;
             panel.anchorMin = new Vector2(0.63f, 0.08f); panel.anchorMax = new Vector2(0.98f, 0.92f);
+            panel.gameObject.AddComponent<UIConstructionPreviewLayout>();
             // Wireframe bounds preview avoids executing scripts, physics or audio on the source prefab.
             Bounds bounds = new Bounds(Vector3.zero, Vector3.one * 2);
             Renderer[] renderers = recipe.prefab.GetComponentsInChildren<Renderer>(true);
@@ -52,7 +53,8 @@ namespace PAO.UI.V2
             preview.transform.rotation = site.placement.rotation;
             var lines = preview.AddComponent<LineRenderer>();
             lines.useWorldSpace = false; lines.widthMultiplier = 0.04f;
-            lines.material = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+            string previewShader = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null ? "Universal Render Pipeline/Unlit" : "Sprites/Default";
+            lines.material = new Material(Shader.Find(previewShader) ?? Shader.Find("Sprites/Default"));
             lines.material.color = Config.teal; lines.positionCount = 16;
             Vector3 half = bounds.size * 0.5f;
             Vector3[] corners = {
@@ -70,15 +72,15 @@ namespace PAO.UI.V2
                 if (catalogue != null) catalogue.SetVisible(true);
             };
             float rotation = 0;
-            Text orientation = ui.Label(page.Content, T("方向 ", "Rotation ") + "0°", 28);
-            ui.Label(page.Content, T("✓  落点可用", "✓  Valid placement"), 28, Config.teal);
-            ui.Button(page.Content, T("旋转 90°", "Rotate 90°"), () =>
+            Text orientation = ui.Label(page.Content, T("预览 · 方向 ", "Preview · Rotation ") + "0°" + T(" · 消耗 ", " · Energy ") + recipe.cost, 24);
+            ui.Label(page.Content, T("✓  落点可用", "✓  Valid placement"), 24, Config.teal);
+            ui.Button(page.Footer, T("取消", "Cancel"), Pop);
+            ui.Button(page.Footer, T("旋转 90°", "Rotate 90°"), () =>
             {
                 rotation = (rotation + 90) % 360;
                 preview.transform.rotation = site.placement.rotation * Quaternion.Euler(0, rotation, 0);
-                orientation.text = T("方向 ", "Rotation ") + rotation + "°";
+                orientation.text = T("预览 · 方向 ", "Preview · Rotation ") + rotation + "°" + T(" · 消耗 ", " · Energy ") + recipe.cost;
             });
-            ui.Button(page.Footer, T("取消", "Cancel"), Pop);
             ui.Button(page.Footer, T("确认建构", "Build"), () =>
             {
                 if (site == null) { Pop(); return; }

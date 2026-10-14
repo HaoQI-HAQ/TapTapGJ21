@@ -79,7 +79,7 @@ namespace PAO.UI.V2
                 }
                 return;
             }
-            Color core = Color.Lerp(new Color32(44, 79, 91, 230), color, .4f + highlight * .18f);
+            Color core = Color.Lerp(UIDesignPalette.Paper, color, .36f + highlight * .18f);
             core.a *= color.a;
             Disc(mesh, rect.center, radius - 2, core, Color.Lerp(core, color, .32f));
             Ring(mesh, rect.center, radius - 4, radius - 1, 0, 360, color, true);

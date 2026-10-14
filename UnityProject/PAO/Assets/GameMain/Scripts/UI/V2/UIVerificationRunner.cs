@@ -125,17 +125,17 @@ namespace PAO.UI.V2
 
             typeof(UIRuntime).GetMethod("RefreshVisiblePage", Private).Invoke(runtime, null);
             yield return Capture(runtime, "menu-continue-1920x820", 1920, 820);
-            Button credits = FindButton(runtime, "制作人员");
-            ScrollRect menuScroll = credits.GetComponentInParent<ScrollRect>();
-            Bounds creditsBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(menuScroll.viewport, credits.transform);
+            Button lastMainEntry = FindButton(runtime, "游戏设置");
+            ScrollRect menuScroll = lastMainEntry.GetComponentInParent<ScrollRect>();
+            Bounds entryBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(menuScroll.viewport, lastMainEntry.transform);
             Check(FindButton(runtime, "继续游戏").IsInteractable() &&
-                creditsBounds.min.y >= menuScroll.viewport.rect.yMin - 1 && creditsBounds.max.y <= menuScroll.viewport.rect.yMax + 1,
-                "The continued-run menu keeps every action visible on an ultrawide display.");
+                entryBounds.min.y >= menuScroll.viewport.rect.yMin - 1 && entryBounds.max.y <= menuScroll.viewport.rect.yMax + 1,
+                "The continued-run menu keeps its main actions visible on an ultrawide display.");
             RectTransform artwork = Top(runtime).GetComponentInChildren<UIMenuAmbience>().transform as RectTransform;
             Text title = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
-            Check(artwork.rect.height >= 200 && title.alignment == TextAnchor.MiddleCenter &&
+            Check(artwork.rect.height >= 200 && title.fontSize >= 44 &&
                 title.rectTransform.rect.height >= title.preferredHeight - 1,
-                "The simplified menu retains the background and a readable centred title.");
+                "The simplified menu retains the background and a readable brand title.");
 
             runtime.LoadScene("Map0", SaveSystem.LoadSlot(0));
             while (SceneManager.GetActiveScene().name != "Map0") yield return null;

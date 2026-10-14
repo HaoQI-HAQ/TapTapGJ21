@@ -86,12 +86,12 @@ namespace PAO.UI.V2
             Check(runtime.Config.paperStyle && runtime.Config.paper.r > .9f && runtime.Config.text.r < .2f,
                 "The document menu uses warm paper, dark blue text and a dedicated light theme.");
             Text title = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
-            Check(title.alignment == TextAnchor.MiddleCenter && title.fontSize >= 72 &&
+            Check(title.fontSize >= 44 &&
                 Top(runtime).GetComponentInChildren<UIMenuResonance>() == null,
-                "The title is the visual centre and the menu background has no rotating character or orbit.");
+                "The brand title remains prominent and the background has no rotating character or orbit.");
             Check(Button(runtime, "继续游戏", false) == null && EventSystem.current.currentSelectedGameObject == Button(runtime, "新的旅程").gameObject,
                 "An empty journey hides Continue and focuses New journey.");
-            foreach (string label in new[] { "新的旅程", "章节路径", "读取记录", "游戏设置", "制作人员", "操作与教学", "离开意识之海" })
+            foreach (string label in new[] { "新的旅程", "章节路径", "读取记录", "游戏设置", "制作人员", "操作图鉴", "离开" })
                 Check(Button(runtime, label).IsInteractable(), "Main menu entry is available: " + label + ".");
             foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (canvas.GetComponentInChildren<MenuButton>(true) != null) Check(!canvas.gameObject.activeSelf, "Legacy menu canvas is hidden in the real scene.");
@@ -109,18 +109,33 @@ namespace PAO.UI.V2
             feedbackButton.GetComponent<UIButtonFeedback>().OnPointerDown(pointer); yield return new WaitForSecondsRealtime(0.09f);
             Check(feedbackButton.transform.localScale.x < 1, "Press feedback responds while the menu is open. Scale=" + feedbackButton.transform.localScale.x + ", reduced=" + UISettings.Current.reducedMotion);
             feedbackButton.GetComponent<UIButtonFeedback>().OnPointerUp(pointer);
+            UIMenuEntryMotion iconMotion = feedbackButton.GetComponent<UIMenuEntryMotion>();
+            RectTransform icon = (RectTransform)feedbackButton.transform.Find("Action symbol");
+            iconMotion.OnPointerExit(pointer); iconMotion.OnDeselect(new BaseEventData(inputSystem));
+            yield return new WaitForSecondsRealtime(.18f); Vector2 iconRest = icon.anchoredPosition;
+            iconMotion.OnPointerEnter(pointer); yield return new WaitForSecondsRealtime(.18f);
+            Check(icon.anchoredPosition.x > iconRest.x && icon.anchoredPosition.x + icon.rect.width * .5f <
+                feedbackButton.GetComponentInChildren<Text>().rectTransform.offsetMin.x,
+                "Hover moves the menu icon inside its reserved space without touching the label.");
+            UISettingsData movingSettings = UISettings.Current.Copy(), quietSettings = movingSettings.Copy();
+            quietSettings.reducedMotion = true; UISettings.Apply(quietSettings, false);
+            Check(icon.anchoredPosition == iconRest, "Enabling reduced motion immediately stops and resets menu icon travel.");
+            UISettings.Apply(movingSettings, false);
+            for (int i = 0; i < 20; i++) { iconMotion.OnPointerEnter(pointer); iconMotion.OnPointerExit(pointer); }
+            yield return new WaitForSecondsRealtime(.18f);
+            Check(icon.anchoredPosition == iconRest, "Rapid hover changes leave the menu icon at its final resting position.");
             inputSystem.enabled = true;
 
             Button credits = Button(runtime, "制作人员"); credits.Select(); credits.onClick.Invoke();
             Check(HasText(runtime, "TapTap Game Jam 21"), "Credits display the configured production information.");
             yield return Capture(runtime, "credits", 1600, 900); runtime.Back();
             Check(EventSystem.current.currentSelectedGameObject == credits.gameObject, "Credits return restores the originating focus.");
-            foreach (string label in new[] { "章节路径", "读取记录", "游戏设置", "操作与教学" })
+            foreach (string label in new[] { "章节路径", "读取记录", "游戏设置", "操作图鉴" })
             {
                 Button entry = Button(runtime, label); entry.Select(); entry.onClick.Invoke(); yield return null; runtime.Back();
                 Check(EventSystem.current.currentSelectedGameObject == entry.gameObject, "Nested page returns to its menu entry: " + label + ".");
             }
-            Button quit = Button(runtime, "离开意识之海"); quit.Select(); quit.onClick.Invoke();
+            Button quit = Button(runtime, "离开"); quit.Select(); quit.onClick.Invoke();
             Check(EventSystem.current.currentSelectedGameObject == Button(runtime, "取消").gameObject, "Quit opens a confirmation focused on Cancel.");
             Button(runtime, "取消").onClick.Invoke(); Check(EventSystem.current.currentSelectedGameObject == quit.gameObject, "Cancelling Quit preserves the menu focus.");
 
@@ -142,11 +157,14 @@ namespace PAO.UI.V2
             Button contrastContinue = Button(runtime, "继续游戏");
             Color contrastSurface = contrastContinue.GetComponent<UIFluidGradient>().top;
             Color contrastLabel = contrastContinue.GetComponentInChildren<Text>().color;
-            Check((contrastSurface == Color.black && contrastLabel == Color.white ||
-                contrastSurface == Color.white && contrastLabel == Color.black) &&
+            Color surfaceLinear = contrastSurface.linear, labelLinear = contrastLabel.linear;
+            float surfaceLight = .2126f * surfaceLinear.r + .7152f * surfaceLinear.g + .0722f * surfaceLinear.b;
+            float labelLight = .2126f * labelLinear.r + .7152f * labelLinear.g + .0722f * labelLinear.b;
+            float contrastRatio = (Mathf.Max(surfaceLight, labelLight) + .05f) / (Mathf.Min(surfaceLight, labelLight) + .05f);
+            Check(contrastRatio >= 7 &&
                 EventSystem.current.currentSelectedGameObject == contrastContinue.gameObject &&
                 Array.Exists(contrastContinue.GetComponents<Outline>(), edge => edge.enabled && edge.effectDistance.x >= 3),
-                "High contrast gives Continue opposing black/white text and a visible default focus.");
+                "High contrast gives Continue at least 7:1 text contrast and a visible default focus.");
             readable.highContrast = false; UISettings.Apply(readable, false); Rebuild(runtime);
 
             Button(runtime, "新的旅程").onClick.Invoke();
@@ -208,6 +226,13 @@ namespace PAO.UI.V2
             }
             if (menu)
             {
+                Text heading = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
+                Check(heading.rectTransform.rect.height + 1 >= heading.preferredHeight,
+                    "The brand title is fully readable at " + width + "x" + height + ".");
+                ScrollRect list = Top(runtime).Content.GetComponentInParent<ScrollRect>();
+                Check(list.verticalScrollbar != null && list.verticalScrollbar.gameObject.activeSelf ==
+                    (list.content.rect.height > list.viewport.rect.height + 1),
+                    "The menu scrollbar appears only when the main list overflows at " + width + "x" + height + ".");
                 foreach (Button button in Top(runtime).GetComponentsInChildren<Button>())
                 {
                     Text label = button.GetComponentInChildren<Text>();

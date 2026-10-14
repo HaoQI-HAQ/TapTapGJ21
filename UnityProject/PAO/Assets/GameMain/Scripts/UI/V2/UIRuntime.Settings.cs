@@ -76,6 +76,10 @@ namespace PAO.UI.V2
         private void RenderSettings(SettingsSession session, int focusAction = -1)
         {
             if (session != settingsSession || session.page == null) return;
+            GameObject focused = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+            Selectable[] previousControls = session.body.GetComponentsInChildren<Selectable>();
+            int previousIndex = Array.FindIndex(previousControls, item => item.gameObject == focused);
+            string previousName = previousIndex >= 0 ? focused.name : null;
             foreach (Transform child in session.body) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
             for (int i = 0; i < session.tabs.childCount; i++)
             {
@@ -158,7 +162,8 @@ namespace PAO.UI.V2
                         new[] { 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 1, 2, 3, 4, 5 };
                     foreach (int action in actions)
                     {
-                        RectTransform row = ui.Row("Binding " + action, session.body, 16); UIWidgets.Size(row, 80).preferredHeight = -1;
+                        RectTransform row = ui.Rect("Binding " + action, session.body); row.gameObject.AddComponent<UIBindingRowLayout>();
+                        UIWidgets.Size(row, 80).preferredHeight = -1;
                         Text title = ui.Label(row, UIInput.ActionName(action), 24); UIWidgets.Size(title.transform, 72, -1, 1);
                         string binding = controller ? UIInput.ControlName(d.controller[action]) : UIInput.KeyName(d.keys[action]);
                         Button key = ui.Button(row, binding, () => BeginBindingCapture(session, action, controller));
@@ -215,7 +220,17 @@ namespace PAO.UI.V2
             }
             session.page.Refresh();
             ScrollRect ownerScroll = session.body.GetComponentInParent<ScrollRect>();
-            if (focusAction < 0) ownerScroll.verticalNormalizedPosition = 1;
+            if (focusAction < 0)
+            {
+                ownerScroll.verticalNormalizedPosition = 1;
+                if (previousIndex >= 0)
+                {
+                    Selectable[] controls = session.body.GetComponentsInChildren<Selectable>();
+                    Selectable target = Array.Find(controls, item => item.name == previousName);
+                    if (target == null && controls.Length > 0) target = controls[Mathf.Min(previousIndex, controls.Length - 1)];
+                    if (target != null) target.Select();
+                }
+            }
             else foreach (Button button in session.body.GetComponentsInChildren<Button>())
                 if (button.name == "Bind " + focusAction) { button.Select(); break; }
         }
@@ -316,7 +331,7 @@ namespace PAO.UI.V2
 
         private void ChooseResolution(SettingsSession session)
         {
-            UIPage choice = Push(T("选择分辨率", "Choose resolution"), "", true);
+            UIPage choice = Push(T("选择分辨率", "Choose resolution"), "", true, UIPageDesign.Settings);
             var values = new System.Collections.Generic.List<Vector2Int> { new Vector2Int(Screen.width, Screen.height) };
             foreach (Resolution value in Screen.resolutions)
             {
@@ -336,7 +351,7 @@ namespace PAO.UI.V2
             if (!displayChanged) { CommitSettings(session); return; }
             int width = Screen.width, height = Screen.height; FullScreenMode mode = Screen.fullScreenMode;
             UISettings.ApplyDisplay(session.draft);
-            UIPage confirm = Push(T("保留画面设置？", "Keep display settings?"), "", true);
+            UIPage confirm = Push(T("保留画面设置？", "Keep display settings?"), "", true, UIPageDesign.Settings);
             Text countdown = ui.Label(confirm.Content, "", 28); bool keep = false;
             confirm.BeforeClose = () =>
             {

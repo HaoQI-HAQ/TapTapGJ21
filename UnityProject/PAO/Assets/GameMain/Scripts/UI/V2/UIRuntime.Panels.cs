@@ -134,7 +134,7 @@ namespace PAO.UI.V2
                 if (exists && !automatic) ui.Button(actions, T("删除", "Delete"), () => Confirm(
                     T("删除这份记录？", "Delete this record?"),
                     T("这份记录及其备份将被删除，此操作无法撤销。", "This record and its backup will be deleted. This cannot be undone."),
-                    () => { if (SaveSystem.DeleteSlot(slot)) RefreshSaves(page); else Toast(T("删除失败，请稍后再试。", "Deletion failed. Please retry.")); }, true));
+                    () => { if (SaveSystem.DeleteSlot(slot)) RefreshSaves(page); else Toast(T("删除失败，请稍后再试。", "Deletion failed. Please retry.")); }, true), false, true, true);
             }
             ui.Button(page.Footer, T("返回", "Back"), Pop); Finish(page);
         }

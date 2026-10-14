@@ -15,6 +15,7 @@ namespace PAO.UI.V2
         private UIConfig config;
         private Color top, bottom;
         private Text label;
+        private Image selectionMark;
         private Color labelColor;
         private bool hovered, focused, pressed, wasInteractable;
         private bool emphasized;
@@ -29,7 +30,13 @@ namespace PAO.UI.V2
             rect.gameObject.layer = 5; rect.SetParent(transform, false);
             rect.anchorMin = rect.anchorMax = Vector2.one * .5f; rect.sizeDelta = Vector2.one * 52;
             ripple = rect.gameObject.AddComponent<UIPearlGraphic>(); ripple.shape = UIPearlShape.Orbit;
-            ripple.raycastTarget = false; ripple.color = Color.clear; rect.SetAsFirstSibling(); Refresh();
+            ripple.raycastTarget = false; ripple.color = Color.clear; rect.SetAsFirstSibling();
+            var mark = new GameObject("Current category", typeof(RectTransform)).GetComponent<RectTransform>();
+            mark.gameObject.layer = 5; mark.SetParent(transform, false);
+            mark.anchorMin = new Vector2(.15f, 0); mark.anchorMax = new Vector2(.85f, 0);
+            mark.anchoredPosition = new Vector2(0, 5); mark.sizeDelta = new Vector2(0, 3);
+            selectionMark = mark.gameObject.AddComponent<Image>(); selectionMark.raycastTarget = false;
+            Refresh();
         }
         private void OnEnable() { UISettings.Changed += Refresh; Refresh(); }
         private void OnDisable()
@@ -75,6 +82,12 @@ namespace PAO.UI.V2
             Color contrastBottom = film.contrastDark ? Color.black : new Color32(255, 229, 190, 255);
             film.top = contrast ? contrastTop : emphasized ? UIDesignPalette.PrimaryTop : top;
             film.bottom = contrast ? contrastBottom : emphasized ? UIDesignPalette.PrimaryBottom : bottom;
+            film.GetComponent<Graphic>().SetVerticesDirty();
+            if (selectionMark != null)
+            {
+                selectionMark.gameObject.SetActive(emphasized);
+                selectionMark.color = contrast ? Color.black : config.teal;
+            }
             if (label != null) label.color = contrast ? (film.contrastDark ? Color.white : Color.black) : labelColor;
             float target = Available() && (hovered || focused) && !contrast ? 1 : 0;
             motion = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);

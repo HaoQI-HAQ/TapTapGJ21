@@ -68,12 +68,12 @@ namespace PAO.UI.V2
         }
         private CueKey GuideKey(Transform parent, Vector2 position)
         {
-            Image plate = ui.Surface("Input cue", parent, new Color(Config.ink.r, Config.ink.g, Config.ink.b, .88f), true);
+            Image plate = ui.Surface("Input cue", parent, new Color(Config.paper.r, Config.paper.g, Config.paper.b, .97f), true);
             plate.raycastTarget = false;
             Anchor(plate.rectTransform, new Vector2(.5f, .5f), position, new Vector2(80, 42), new Vector2(.5f, .5f));
-            Text label = ui.Label(plate.transform, "", 20, Color.white, TextAnchor.MiddleCenter); UIWidgets.Stretch(label.rectTransform, 5);
+            Text label = ui.Label(plate.transform, "", 20, null, TextAnchor.MiddleCenter); UIWidgets.Stretch(label.rectTransform, 5);
             label.resizeTextForBestFit = true; label.resizeTextMinSize = 14; label.resizeTextMaxSize = label.fontSize;
-            UIGuideGraphic mouse = GuideSymbol(plate.transform, "Mouse cue", UIGuideSymbol.MouseLeft, 30, Color.white);
+            UIGuideGraphic mouse = GuideSymbol(plate.transform, "Mouse cue", UIGuideSymbol.MouseLeft, 30, Config.ink);
             return new CueKey { root = plate.rectTransform, label = label, mouse = mouse };
         }
         private void SetGuideKey(CueKey key, int action)
@@ -89,12 +89,12 @@ namespace PAO.UI.V2
         }
         private Text HudIconButton(Transform parent, UIGuideSymbol symbol, System.Action action)
         {
-            Image plate = ui.Surface(symbol.ToString(), parent, new Color(Config.ink.r, Config.ink.g, Config.ink.b, .72f), true);
+            Image plate = ui.Surface(symbol.ToString(), parent, new Color(Config.paper.r, Config.paper.g, Config.paper.b, .97f), true);
             UIWidgets.Size(plate.transform, 56, 64);
             Button button = plate.gameObject.AddComponent<Button>(); button.targetGraphic = plate; button.onClick.AddListener(() => action());
             plate.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
-            GuideSymbol(plate.transform, symbol + " icon", symbol, 28, Color.white).rectTransform.anchoredPosition = new Vector2(0, 6);
-            Text key = ui.Label(plate.transform, "", 18, Color.white, TextAnchor.MiddleCenter);
+            GuideSymbol(plate.transform, symbol + " icon", symbol, 28, Config.ink).rectTransform.anchoredPosition = new Vector2(0, 6);
+            Text key = ui.Label(plate.transform, "", 18, null, TextAnchor.MiddleCenter);
             key.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             key.resizeTextForBestFit = true; key.resizeTextMinSize = 12; key.resizeTextMaxSize = 18;
             Anchor(key.rectTransform, new Vector2(.5f, .5f), new Vector2(0, -16), new Vector2(62, 24), new Vector2(.5f, .5f));
@@ -106,27 +106,27 @@ namespace PAO.UI.V2
             goalCue = ui.Rect("Goal cue", visualHud);
             Anchor(goalCue, new Vector2(.5f, .5f), Vector2.zero, new Vector2(48, 48), new Vector2(.5f, .5f));
             Image goalPlate = ui.Rect("Goal backing", goalCue).gameObject.AddComponent<UICircleImage>();
-            UIWidgets.Stretch(goalPlate.rectTransform); goalPlate.color = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .65f); goalPlate.raycastTarget = false;
+            UIWidgets.Stretch(goalPlate.rectTransform); goalPlate.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .96f); goalPlate.raycastTarget = false;
             goalHalo = ui.Rect("Goal halo", goalCue).gameObject.AddComponent<UIChargeArc>(); UIWidgets.Stretch(goalHalo.rectTransform, -3);
             goalHalo.Progress = 1; goalHalo.color = Config.teal; goalHalo.raycastTarget = false;
-            goalSymbol = GuideSymbol(goalCue, "Destination", UIGuideSymbol.Goal, 28, Color.white);
+            goalSymbol = GuideSymbol(goalCue, "Destination", UIGuideSymbol.Goal, 28, Config.ink);
 
             interactionCue = ui.Rect("Interaction cue", visualHud);
             Anchor(interactionCue, new Vector2(.5f, .5f), Vector2.zero, new Vector2(160, 104), new Vector2(.5f, .5f));
             Image target = ui.Rect("Interaction backing", interactionCue).gameObject.AddComponent<UICircleImage>();
             Anchor(target.rectTransform, new Vector2(.5f, .5f), new Vector2(0, 16), new Vector2(58, 58), new Vector2(.5f, .5f));
-            target.color = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .9f); target.raycastTarget = false;
-            interactionSymbol = GuideSymbol(target.transform, "Object cue", UIGuideSymbol.Memory, 34, Color.white);
+            target.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .97f); target.raycastTarget = false;
+            interactionSymbol = GuideSymbol(target.transform, "Object cue", UIGuideSymbol.Memory, 34, Config.ink);
             interactionKey = GuideKey(interactionCue, new Vector2(0, -34));
             secondaryKey = GuideKey(interactionCue, new Vector2(70, -34));
-            secondarySymbol = GuideSymbol(secondaryKey.root, "Steering cue", UIGuideSymbol.Steer, 22, Color.white);
+            secondarySymbol = GuideSymbol(secondaryKey.root, "Steering cue", UIGuideSymbol.Steer, 22, Config.ink);
             secondarySymbol.rectTransform.anchoredPosition = new Vector2(0, 40);
 
-            tutorialBacking = ui.Surface("First action cue", visualHud, new Color(Config.ink.r, Config.ink.g, Config.ink.b, .86f), true);
+            tutorialBacking = ui.Surface("First action cue", visualHud, new Color(Config.paper.r, Config.paper.g, Config.paper.b, .96f), true);
             tutorialBacking.raycastTarget = false; tutorialCue = tutorialBacking.rectTransform;
             tutorialGroup = tutorialCue.gameObject.AddComponent<CanvasGroup>(); tutorialGroup.blocksRaycasts = false;
             Anchor(tutorialCue, Vector2.zero, new Vector2(32, 32), new Vector2(174, 72), Vector2.zero);
-            tutorialSymbol = GuideSymbol(tutorialCue, "Action example", UIGuideSymbol.Move, 44, Color.white);
+            tutorialSymbol = GuideSymbol(tutorialCue, "Action example", UIGuideSymbol.Move, 44, Config.ink);
             tutorialSymbol.rectTransform.anchoredPosition = new Vector2(-51, 0);
             tutorialKey = GuideKey(tutorialCue, new Vector2(30, 0));
 
@@ -134,34 +134,40 @@ namespace PAO.UI.V2
             Anchor(reticleCue, new Vector2(.5f, .5f), Vector2.zero, new Vector2(64, 64), new Vector2(.5f, .5f));
             Image reticleBacking = ui.Rect("Charge backing", reticleCue).gameObject.AddComponent<UICircleImage>();
             UIWidgets.Stretch(reticleBacking.rectTransform, -4);
-            reticleBacking.color = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .55f); reticleBacking.raycastTarget = false;
+            reticleBacking.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .9f); reticleBacking.raycastTarget = false;
             UIChargeArc track = ui.Rect("Charge outline", reticleCue).gameObject.AddComponent<UIChargeArc>(); UIWidgets.Stretch(track.rectTransform);
-            track.Progress = 1; track.color = new Color(1, 1, 1, .22f); track.raycastTarget = false;
+            track.Progress = 1; track.color = new Color(Config.teal.r, Config.teal.g, Config.teal.b, .22f); track.raycastTarget = false;
             reticleArc = ui.Rect("Charge progress", reticleCue).gameObject.AddComponent<UIChargeArc>(); UIWidgets.Stretch(reticleArc.rectTransform);
-            reticleArc.color = Color.white; reticleArc.raycastTarget = false;
-            GuideSymbol(reticleCue, "Launch direction", UIGuideSymbol.Charge, 20, Color.white);
+            reticleArc.color = Config.teal; reticleArc.raycastTarget = false;
+            GuideSymbol(reticleCue, "Launch direction", UIGuideSymbol.Charge, 20, Config.ink);
             tideCue = ui.Rect("Tide urgency", visualHud);
             Anchor(tideCue, new Vector2(0, 1), new Vector2(32, -32), new Vector2(48, 48), new Vector2(0, 1));
             Image tideBacking = ui.Rect("Tide backing", tideCue).gameObject.AddComponent<UICircleImage>();
             UIWidgets.Stretch(tideBacking.rectTransform, -4);
-            tideBacking.color = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .85f); tideBacking.raycastTarget = false;
+            tideBacking.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .96f); tideBacking.raycastTarget = false;
             tideArc = ui.Rect("Tide remaining", tideCue).gameObject.AddComponent<UIChargeArc>(); UIWidgets.Stretch(tideArc.rectTransform);
-            tideArc.color = Color.white; tideArc.raycastTarget = false;
-            GuideSymbol(tideCue, "Tide waves", UIGuideSymbol.Current, 24, Color.white);
-            Image clockBacking = ui.Surface("Tide clock backing", tideCue, new Color(Config.ink.r, Config.ink.g, Config.ink.b, .85f), true);
+            tideArc.color = Config.teal; tideArc.raycastTarget = false;
+            GuideSymbol(tideCue, "Tide waves", UIGuideSymbol.Current, 24, Config.ink);
+            Image clockBacking = ui.Surface("Tide clock backing", tideCue, new Color(Config.paper.r, Config.paper.g, Config.paper.b, .96f), true);
             Anchor(clockBacking.rectTransform, new Vector2(1, .5f), new Vector2(10, 0), new Vector2(126, 40), new Vector2(0, .5f));
             clockBacking.raycastTarget = false;
-            tideTime = ui.Label(tideCue, "", 22, Color.white);
+            tideTime = ui.Label(tideCue, "", 22, null);
             SetInputTypeface(tideTime);
             Anchor(tideTime.rectTransform, new Vector2(1, .5f), new Vector2(16, 0), new Vector2(120, 40), new Vector2(0, .5f));
             tideGraceDuration = 1; showingTideGrace = false;
+            goalCue.gameObject.SetActive(false); interactionCue.gameObject.SetActive(false);
+            tutorialCue.gameObject.SetActive(false); reticleCue.gameObject.SetActive(false); tideCue.gameObject.SetActive(false);
             ApplyHintPresentation();
         }
         private void ApplyHintPresentation()
         {
             bool detailed = UISettings.Current.detailedHints;
             if (objectivePanel != null) objectivePanel.gameObject.SetActive(detailed);
-            if (abilityPanel != null) abilityPanel.gameObject.SetActive(detailed);
+            if (abilityPanel != null)
+            {
+                abilityPanel.gameObject.SetActive(detailed);
+            }
+            if (tutorialCue != null) tutorialCue.anchoredPosition = new Vector2(32, 32);
             if (visualHud != null) visualHud.gameObject.SetActive(!detailed);
         }
 
@@ -225,7 +231,7 @@ namespace PAO.UI.V2
                 showingTideGrace = grace;
                 float remaining = grace ? tide.GraceRemaining : tide.TimeUntilGoalFlooded;
                 tideArc.Progress = grace ? Mathf.Clamp01(remaining / tideGraceDuration) : 1 - tide.Progress;
-                tideArc.color = grace || remaining < 10 ? new Color32(255, 190, 122, 255) : Color.white;
+                tideArc.color = grace || remaining < 10 ? UIDesignPalette.Coral : Config.teal;
                 tideTime.text = Mathf.Max(0, Mathf.CeilToInt(remaining)) + " s";
             }
             goalCue.gameObject.SetActive(chapterGoal != null && camera != null && player != null);
@@ -247,14 +253,18 @@ namespace PAO.UI.V2
                     // Reserve the ability cluster and the first-action badge while preserving the bearing.
                     if (position.x > limit.x - 70 && position.y < -visualHud.rect.height * .5f + 430)
                         position.y = Mathf.Min(limit.y, -visualHud.rect.height * .5f + 430);
-                    if (tutorialRemaining > 0 && position.y < -visualHud.rect.height * .5f + 135 &&
+                    if (tutorialRemaining > 0 && position.y < -visualHud.rect.height * .5f + tutorialCue.anchoredPosition.y + tutorialCue.rect.height + 24 &&
                         position.x < -visualHud.rect.width * .5f + tutorialCue.rect.width + 65)
                         position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + tutorialCue.rect.width + 65);
+                    RectTransform abilityCard = abilityPanel as RectTransform;
+                    if (abilityCard != null && abilityCard.gameObject.activeInHierarchy && position.y < -visualHud.rect.height * .5f + abilityCard.rect.height + 64 &&
+                        position.x < -visualHud.rect.width * .5f + abilityCard.rect.width + 64)
+                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + abilityCard.rect.width + 64);
                 }
                 goalCue.anchoredPosition = position; goalSymbol.Symbol = clear ? UIGuideSymbol.Goal : UIGuideSymbol.Arrow;
                 goalSymbol.rectTransform.localRotation = clear ? Quaternion.identity : Quaternion.Euler(0, 0, heading);
                 // A quiet direction cue; full destination detail is available in Help.
-                goalHalo.color = new Color(1, 1, 1, UISettings.Current.highContrast ? 1 : .6f);
+                goalHalo.color = new Color(Config.teal.r, Config.teal.g, Config.teal.b, UISettings.Current.highContrast ? 1 : .8f);
             }
 
             interactionCues.RemoveAll(cue => cue.owner == null || !cue.owner.gameObject.activeInHierarchy ||

@@ -179,7 +179,7 @@ namespace PAO.UI.V2
                 Anchor(subtitleRoot, new Vector2(0.5f, 0), new Vector2(0, 36), new Vector2(760, 100), new Vector2(0.5f, 0));
                 background.raycastTarget = false;
                 background.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.ink);
-                subtitleText = ui.Label(subtitleRoot, "", 24, Color.white, TextAnchor.MiddleCenter);
+                subtitleText = ui.Label(subtitleRoot, "", 24, Config.paper, TextAnchor.MiddleCenter);
                 UIWidgets.Stretch(subtitleText.rectTransform, 16);
             }
             subtitleText.text = string.IsNullOrEmpty(speaker) ? text : speaker + "\n" + text;
@@ -202,7 +202,11 @@ namespace PAO.UI.V2
             if (subtitleRoot != null)
             {
                 subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
-                subtitleRoot.sizeDelta = new Vector2(760, Mathf.Max(90, subtitleText.preferredHeight + 40));
+                bool narrow = safeRoot.rect.width < 1200;
+                subtitleRoot.anchorMin = subtitleRoot.anchorMax = new Vector2(.5f, narrow ? .45f : 0);
+                subtitleRoot.anchoredPosition = new Vector2(0, narrow ? 0 : 36);
+                subtitleRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Min(760, safeRoot.rect.width - 96));
+                subtitleRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(90, subtitleText.preferredHeight + 40));
             }
             if (noticeRoot == null)
             {
@@ -412,8 +416,12 @@ namespace PAO.UI.V2
             ui.Button(page.Content, T("回看意识碎片", "Review memories"), ShowJournal);
             RectTransform branches = ui.Grid("Final echoes", page.Content, 2, 440);
             if (Config.endings == null || Config.endings.Length == 0)
-                ui.Label(page.Content, T("这段旅程的结局尚待写入，你可以继续回看意识碎片。", "The ending of this journey is still unwritten. You can continue reviewing your memories."), 26);
-            foreach (EndingDefinition ending in Config.endings)
+            {
+                RectTransform unwritten = ui.Card("Unwritten echo", branches);
+                ui.Emblem(unwritten, UIGuideSymbol.Current, T("旅程尚在继续", "THE JOURNEY CONTINUES"), UIDesignPalette.Coral);
+                ui.Label(unwritten, T("这段旅程的结局尚待写入，你可以继续回看意识碎片。", "The ending of this journey is still unwritten. You can continue reviewing your memories."), 26);
+            }
+            foreach (EndingDefinition ending in Config.endings ?? new EndingDefinition[0])
             {
                 EndingDefinition choice = ending;
                 RectTransform branch = ui.Card("Ending " + choice.id, branches);
