@@ -742,6 +742,23 @@ namespace PAO
             // 场景里没有潮水时这个方法自己会跳过，不影响玩法。
             PAO.BubbleTide.BubbleTideBridge.OnBombExploded(center, radius);
 
+            // 爆炸特效：水彩洇开式的爆开。
+            //
+            // 尺寸取 max(本泡泡直径, 半径推算值)：
+            // 宿主泡泡（浮粘/弹力）的 localScale 就是它的直径，而纯炸弹泡泡可能被缩放过，
+            // 两者取大更稳。特效挂在独立的物体上，本物体马上要销毁也不受影响。
+            //
+            // 颜色：宿主带弹爆炸时用彩虹粉（呼应 Bubble.AbsorbBomb 里把宿主染成
+            // 橙色的那套暗示），纯炸弹用默认冰蓝，让玩家一眼能看出是哪种爆炸。
+            bool hostPayload = m_BombSettings == null;
+            Color? burstTint = hostPayload ? new Color(1f, 0.62f, 0.92f) : (Color?)null;
+
+            BubbleBurstVFX.Spawn(
+                center,
+                radius,
+                Mathf.Max(GetDiameter(), radius * 0.66f),
+                burstTint);
+
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
             Collider[] hits = Physics.OverlapSphere(center, radius);
             HashSet<Rigidbody> affected = new HashSet<Rigidbody>();
