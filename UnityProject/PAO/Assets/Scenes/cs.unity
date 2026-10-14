@@ -5050,21 +5050,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BombSettings.prefab
-      value: 
-      objectReference: {fileID: 193157977}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BouncySettings.prefab
-      value: 
-      objectReference: {fileID: 136554135}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_StickySettings.prefab
-      value: 
-      objectReference: {fileID: 799031559}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.x

@@ -55,8 +55,9 @@ namespace PAO.UI.V2
             VerifyResourceTextFits(panel);
 
             energy.SetCurrent(3);
-            typeof(BubbleLauncher).GetField("m_MaxChargeTime", Private).SetValue(launcher, .2f);
-            typeof(BubbleLauncher).GetField("m_HoldThreshold", Private).SetValue(launcher, 0f);
+            BubbleLoadout testLoadout = Instantiate(launcher.Loadout);
+            testLoadout.maxChargeTime = .2f; testLoadout.holdThreshold = 0;
+            typeof(BubbleLauncher).GetField("m_Loadout", Private).SetValue(launcher, testLoadout);
             typeof(BubbleLauncher).GetMethod("BeginCharge", Private).Invoke(launcher, null);
             Check(launcher.IsCharging && types.IsLocked && energy.Current == 1, "Starting a sticky bubble pays its base cost and locks type switching.");
             types.SetType(BubbleType.Bomb);

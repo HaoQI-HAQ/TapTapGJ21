@@ -20,6 +20,10 @@ namespace PAO
     /// </summary>
     public class BubbleLauncher : MonoBehaviour
     {
+        [Header("共用配置")]
+        [Tooltip("设置后使用这份共用参数；下方独立参数仅用于未指定共用配置的测试对象")]
+        [SerializeField] private BubbleLoadout m_Loadout;
+
         [Header("蓄力")]
         [Tooltip("蓄满力需要的时间（秒）。点按即为不足这个时间就松手")]
         [SerializeField] private float m_MaxChargeTime = 2f;
@@ -61,6 +65,16 @@ namespace PAO
         private int m_PaidCost;                     // 本次蓄力已经扣掉的值
         private bool m_Charging;
 
+        public BubbleLoadout Loadout { get { return m_Loadout; } }
+        public bool ChargeLimited { get; private set; }
+        public int PaidCost { get { return IsCharging || HasHeldBubble ? m_PaidCost : 0; } }
+        public BubbleType DisplayType { get { return HasHeldBubble ? m_HeldType : GetCurrentType(); } }
+        private float MaxChargeTime { get { return m_Loadout != null ? m_Loadout.maxChargeTime : m_MaxChargeTime; } }
+        private float HoldThreshold { get { return m_Loadout != null ? m_Loadout.holdThreshold : m_HoldThreshold; } }
+        private Vector3 SpawnOffset { get { return m_Loadout != null ? m_Loadout.spawnOffset : m_SpawnOffset; } }
+        private float GrowthPushFactor { get { return m_Loadout != null ? m_Loadout.growthPushFactor : m_GrowthPushFactor; } }
+        private Vector3 GrowthPushDirection { get { return m_Loadout != null ? m_Loadout.growthPushDirection : m_GrowthPushDirection; } }
+
         // 按泡泡类型缓存的材质，避免每次生成都新建造成泄漏
         private readonly Material[] m_RuntimeMaterials = new Material[3];
 
@@ -69,7 +83,7 @@ namespace PAO
         /// </summary>
         public float ChargeProgress
         {
-            get { return m_MaxChargeTime > 0f ? Mathf.Clamp01(m_ChargeTime / m_MaxChargeTime) : 1f; }
+            get { return MaxChargeTime > 0f ? Mathf.Clamp01(m_ChargeTime / MaxChargeTime) : 1f; }
         }
 
         /// <summary>
@@ -80,11 +94,10 @@ namespace PAO
             get { return m_Charging; }
         }
 
+        public int MinimumCost { get { return CostFor(DisplayType, 0); } }
+        public int MaximumCost { get { return CostFor(DisplayType, 1); } }
+        public bool IsResourceLimited { get { return ChargeLimited; } }
         public bool InputBlocked { get; set; }
-        public int MinimumCost { get { return GetCostAt(0f); } }
-        public int MaximumCost { get { return GetCostAt(1f); } }
-        public int PaidCost { get { return m_PaidCost; } }
-        public bool IsResourceLimited { get; private set; }
         public bool ToggleChargeInput { get; set; }
         private bool ChargePressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
             PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButtonDown(0); } }
@@ -154,7 +167,7 @@ namespace PAO
             }
 
             m_Charging = false;
-            IsResourceLimited = false;
+            ChargeLimited = false;
             LockTypeSwitch(false);
             m_ChargeTime = 0f;
         }
@@ -165,7 +178,6 @@ namespace PAO
         private void BeginCharge()
         {
             CacheResource();
-            IsResourceLimited = false;
 
             // 值不够连最小的都吹不出来。
             // TryConsume 失败时会触发 OnInsufficient，UI 那边负责弹提示。
@@ -176,6 +188,7 @@ namespace PAO
             }
 
             m_PaidCost = baseCost;
+            ChargeLimited = false;
 
             m_Charging = true;
             m_ChargeTime = 0f;
@@ -202,8 +215,7 @@ namespace PAO
             // 涨了就要补扣；补不起就停在当前大小，不再变大 ——
             // 这就是「值不够吹不到那么大」。
             float nextTime = m_ChargeTime + Time.deltaTime;
-            float nextProgress = m_MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / m_MaxChargeTime) : 1f;
-            IsResourceLimited = false;
+            float nextProgress = MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / MaxChargeTime) : 1f;
 
             if (m_Resource != null)
             {
@@ -213,7 +225,7 @@ namespace PAO
                     int delta = nextCost - m_PaidCost;
                     if (!m_Resource.TryConsume(delta))
                     {
-                        IsResourceLimited = true;
+                        ChargeLimited = true;
                         // 值不够继续变大了：保持当前尺寸，泡泡仍然跟着玩家
                         m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
                         return;
@@ -223,6 +235,7 @@ namespace PAO
                 }
             }
 
+            ChargeLimited = false;
             m_ChargeTime = nextTime;
             m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
             ApplyChargeSize();
@@ -235,7 +248,7 @@ namespace PAO
         private void Release()
         {
             m_Charging = false;
-            IsResourceLimited = false;
+            ChargeLimited = false;
 
             // 蓄力结束，放开类型切换
             LockTypeSwitch(false);
@@ -255,7 +268,7 @@ namespace PAO
 
             // 够大：不发射，留在发射口。
             // 速度给零 —— 但它已经是「活的」泡泡了，浮力、粘性、弹力都在。
-            if (size >= m_HoldThreshold)
+            if (size >= HoldThreshold)
             {
                 m_HeldBubble = bubble;
                 m_HeldChargeProgress = progress;
@@ -325,17 +338,7 @@ namespace PAO
 
         private BubbleSettings GetHeldSettings()
         {
-            switch (m_HeldType)
-            {
-                case BubbleType.Bouncy:
-                    return m_BouncySettings;
-
-                case BubbleType.Bomb:
-                    return m_BombSettings;
-
-                default:
-                    return m_StickySettings;
-            }
+            return SettingsFor(m_HeldType);
         }
 
         /// <summary>
@@ -569,15 +572,15 @@ namespace PAO
         {
             // 把局部偏移转到世界方向再叠加：这样 X/Y/Z 分别对应基准点的
             // 右 / 上 / 前，角色转身后偏移也跟着转，调参最直观
-            Vector3 basePosition = GetSpawnBasePosition() + GetSpawnRotation() * m_SpawnOffset;
+            Vector3 basePosition = GetSpawnBasePosition() + GetSpawnRotation() * SpawnOffset;
 
             // 吹泡成长：圆心随半径沿指定方向往外推。
             // 系数为 1 时推移量正好等于半径，泡泡背面始终贴着吹气点，
             // 看起来就是从那一点"吹"出来的，而不是原地膨胀。
             float radius = GetCurrentSize() * 0.5f;
-            Vector3 pushDirection = GetSpawnRotation() * m_GrowthPushDirection.normalized;
+            Vector3 pushDirection = GetSpawnRotation() * GrowthPushDirection.normalized;
 
-            return basePosition + pushDirection * (radius * m_GrowthPushFactor);
+            return basePosition + pushDirection * (radius * GrowthPushFactor);
         }
 
         /// <summary>
@@ -621,7 +624,13 @@ namespace PAO
         /// </summary>
         private BubbleSettings GetSettings()
         {
-            switch (GetCurrentType())
+            return SettingsFor(GetCurrentType());
+        }
+
+        public BubbleSettings SettingsFor(BubbleType type)
+        {
+            if (m_Loadout != null) return m_Loadout.SettingsFor(type);
+            switch (type)
             {
                 case BubbleType.Bouncy:
                     return m_BouncySettings;
@@ -676,7 +685,12 @@ namespace PAO
         /// </summary>
         private int GetCostAt(float progress)
         {
-            BubbleSettings settings = GetSettings();
+            return CostFor(GetCurrentType(), progress);
+        }
+
+        public int CostFor(BubbleType type, float progress)
+        {
+            BubbleSettings settings = SettingsFor(type);
             if (settings == null)
             {
                 return 0;

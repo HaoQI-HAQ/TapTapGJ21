@@ -68329,31 +68329,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BombSettings.prefab
-      value: 
-      objectReference: {fileID: 1000252503}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BombSettings.minCost
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BombSettings.minSize
-      value: 0.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_BouncySettings.prefab
-      value: 
-      objectReference: {fileID: 1047878127}
-    - target: {fileID: 8926061071837945914, guid: 533472653752a5e42b3a814b5ef9cbac,
-        type: 3}
-      propertyPath: m_StickySettings.prefab
-      value: 
-      objectReference: {fileID: 1630994672}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

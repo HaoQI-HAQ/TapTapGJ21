@@ -17,6 +17,7 @@ namespace PAO.EditorTools
         public static void RunAllCLI()
         {
             RequireVerificationProject();
+            RemapCompiledPackageScripts();
             PlayerSettings.companyName = "CodexVerification";
             PlayerSettings.productName = "PAOUIV2Verification";
             RemapCompiledPackageScripts();
@@ -75,6 +76,22 @@ namespace PAO.EditorTools
             EditorApplication.isPlaying = true;
         }
 
+        public static void RunBubblesCLI()
+        {
+            RequireVerificationProject();
+            PlayerSettings.companyName = "CodexVerification";
+            PlayerSettings.productName = "PAOBubbleVerification";
+            RemapCompiledPackageScripts();
+            var scenes = new List<EditorBuildSettingsScene> { new EditorBuildSettingsScene("Assets/Scenes/cs.unity", true) };
+            for (int i = 0; i < 6; i++)
+                scenes.Add(new EditorBuildSettingsScene("Assets/GameMain/Scenes/Map" + i + ".unity", true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+            EditorSceneManager.OpenScene("Assets/Scenes/cs.unity");
+            SessionState.SetBool(Requested, true); SessionState.SetBool(Headless, true);
+            SessionState.SetBool("PAO.UI.V2.VerificationBubbles", true);
+            EditorApplication.isPlaying = true;
+        }
+
         private static void RequireVerificationProject()
         {
             if (!File.Exists(Path.Combine(Application.dataPath, "../PAO_UI_VERIFICATION_PROJECT")))
@@ -100,7 +117,7 @@ namespace PAO.EditorTools
             }
             foreach (string file in Directory.GetFiles("Assets", "*", SearchOption.AllDirectories))
             {
-                if (!file.EndsWith(".unity") && !file.EndsWith(".prefab") && !file.EndsWith(".asset")) continue;
+                if (!file.EndsWith(".unity") && !file.EndsWith(".prefab") && !file.EndsWith(".asset") && !file.EndsWith(".glb.meta")) continue;
                 string content = File.ReadAllText(file);
                 string replaced = Regex.Replace(content, @"\{fileID: 11500000, guid: ([a-f0-9]{32}), type: 3\}",
                     match => substitutions.TryGetValue(match.Groups[1].Value, out string reference) ? reference : match.Value);

@@ -261,6 +261,9 @@ namespace PAO.UI.V2
                     if (abilityCard != null && abilityCard.gameObject.activeInHierarchy && position.y < -visualHud.rect.height * .5f + abilityCard.rect.height + 64 &&
                         position.x < -visualHud.rect.width * .5f + abilityCard.rect.width + 64)
                         position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + abilityCard.rect.width + 64);
+                    if (resourcePanel != null && position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
+                        position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)
+                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + resourcePanel.rect.width + 64);
                     if (resourcePanel != null && resourcePanel.gameObject.activeInHierarchy &&
                         position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
                         position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)

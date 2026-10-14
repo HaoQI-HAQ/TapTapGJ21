@@ -6,6 +6,7 @@ namespace PAO.UI.V2
     public sealed partial class UIRuntime
     {
         private BubbleResourceManager resource;
+        private BombBubbleManager resourceBombs;
         private RectTransform resourcePanel;
         private Text resourceAmount, resourceCost, resourceStatus;
         private Image resourceFill;
@@ -20,6 +21,7 @@ namespace PAO.UI.V2
         private void BindBubbleResource()
         {
             UnbindBubbleResource();
+            resourceBombs = player != null ? player.GetComponent<BombBubbleManager>() : null;
             resource = player != null ? player.GetComponent<BubbleResourceManager>() : null;
             if (resource == null) return;
             lastResourceAmount = resource.Current;
@@ -34,7 +36,7 @@ namespace PAO.UI.V2
                 resource.OnChanged -= OnResourceChanged;
                 resource.OnInsufficient -= OnResourceInsufficient;
             }
-            resource = null;
+            resource = null; resourceBombs = null;
             resourceFeedbackChange = 0; resourceFeedbackUntil = 0;
         }
 
@@ -111,13 +113,13 @@ namespace PAO.UI.V2
             resourceAmount.color = color; resourceFill.color = color;
             resourceFill.rectTransform.anchorMax = new Vector2(resource.Normalized, 1);
             if (launcher == null) { resourceCost.text = ""; resourceStatus.text = ""; return; }
-            resourceCost.text = AbilityName(switcher != null ? (int)switcher.Current : 0) + T(" · 消耗 ", " · Cost ") +
+            resourceCost.text = AbilityName((int)launcher.DisplayType) + T(" · 消耗 ", " · Cost ") +
                 launcher.MinimumCost + "–" + launcher.MaximumCost;
             string charge = UIInput.Prompt(UIInput.Charge);
             if (launcher.IsCharging)
             {
                 resourceStatus.text = T("已用 ", "Spent ") + launcher.PaidCost +
-                    (launcher.IsResourceLimited ? T(" · 泡泡值不足", " · Energy limited") : T(" · 蓄力中", " · Charging")) +
+                    (launcher.IsResourceLimited ? T(" · 泡泡值不足，停止变大", " · Energy limited; growth stopped") : T(" · 蓄力中", " · Charging")) +
                     "\n" + (UIInput.ToggleCharge ? charge + T(" 再按释放", " to release") : T("松开 ", "Release ") + charge) +
                     T(" · 类型锁定", " · Type locked");
             }
@@ -127,6 +129,9 @@ namespace PAO.UI.V2
             else if (Time.unscaledTime < resourceFeedbackUntil)
                 resourceStatus.text = resourceFeedbackChange > 0 ? T("泡泡值恢复 +", "Recovered +") + resourceFeedbackChange :
                     T("泡泡值不足 · 还差 ", "Not enough · Need ") + -resourceFeedbackChange;
+            else if (resourceBombs != null && resourceBombs.PendingCount > 0)
+                resourceStatus.text = T("待引爆 ", "Bombs ready ") + resourceBombs.PendingCount + " · " +
+                    UIInput.Prompt(UIInput.Detonate) + T(" 依次引爆", " to detonate in order");
             else if (insufficient)
                 resourceStatus.text = T("不足以吹泡 · 还差 ", "Cannot charge · Need ") + (launcher.MinimumCost - resource.Current) +
                     T("\n破坏地形或回收浮粘泡泡", "\nBreak terrain or reclaim sticky bubbles");

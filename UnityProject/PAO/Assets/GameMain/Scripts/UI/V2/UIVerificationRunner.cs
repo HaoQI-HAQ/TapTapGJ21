@@ -44,7 +44,9 @@ namespace PAO.UI.V2
             SessionState.SetBool("PAO.UI.V2.VerificationFormal", false);
             bool mechanics = SessionState.GetBool("PAO.UI.V2.VerificationMechanics", false);
             SessionState.SetBool("PAO.UI.V2.VerificationMechanics", false);
-            var stack = new Stack<IEnumerator>(); stack.Push(mechanics ? MechanicsScenarios() : formal ? FormalScenarios() : Scenarios());
+            bool bubbles = SessionState.GetBool("PAO.UI.V2.VerificationBubbles", false);
+            SessionState.SetBool("PAO.UI.V2.VerificationBubbles", false);
+            var stack = new Stack<IEnumerator>(); stack.Push(bubbles ? BubbleScenarios() : mechanics ? MechanicsScenarios() : formal ? FormalScenarios() : Scenarios());
             float deadline = Time.realtimeSinceStartup + 240;
             while (stack.Count > 0)
             {
