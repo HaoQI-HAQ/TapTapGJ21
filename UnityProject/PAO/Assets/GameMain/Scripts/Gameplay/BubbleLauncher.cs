@@ -57,6 +57,8 @@ namespace PAO
         private float m_HeldChargeProgress;    // 它当初的蓄力进度，发射时换算速度用
         private BubbleType m_HeldType;         // 它是哪种泡泡
         private float m_ChargeTime;             // 已蓄力时间
+        private BubbleResourceManager m_Resource;   // 泡泡值（没挂就当不消耗）
+        private int m_PaidCost;                     // 本次蓄力已经扣掉的值
         private bool m_Charging;
 
         // 按泡泡类型缓存的材质，避免每次生成都新建造成泄漏
@@ -124,6 +126,7 @@ namespace PAO
             }
 
             m_Charging = false;
+            LockTypeSwitch(false);
             m_ChargeTime = 0f;
         }
 
@@ -132,8 +135,24 @@ namespace PAO
         /// </summary>
         private void BeginCharge()
         {
+            CacheResource();
+
+            // 值不够连最小的都吹不出来。
+            // TryConsume 失败时会触发 OnInsufficient，UI 那边负责弹提示。
+            int baseCost = GetCostAt(0f);
+            if (m_Resource != null && !m_Resource.TryConsume(baseCost))
+            {
+                return;
+            }
+
+            m_PaidCost = baseCost;
+
             m_Charging = true;
             m_ChargeTime = 0f;
+
+            // 蓄力期间锁住类型切换：泡泡是这一刻用当时的参数造出来的，
+            // 中途换类型会让构造参数和当前类型对不上。
+            LockTypeSwitch(true);
 
             m_CurrentBubble = CreateBubble(GetSpawnPosition(), GetSpawnRotation());
             ApplyChargeSize();
@@ -144,13 +163,36 @@ namespace PAO
         /// </summary>
         private void UpdateCharge()
         {
-            m_ChargeTime += Time.deltaTime;
-
-            if (m_CurrentBubble != null)
+            if (m_CurrentBubble == null)
             {
-                m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
+                return;
             }
 
+            // 先看「如果继续蓄力」消耗会涨到多少。
+            // 涨了就要补扣；补不起就停在当前大小，不再变大 ——
+            // 这就是「值不够吹不到那么大」。
+            float nextTime = m_ChargeTime + Time.deltaTime;
+            float nextProgress = m_MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / m_MaxChargeTime) : 1f;
+
+            if (m_Resource != null)
+            {
+                int nextCost = GetCostAt(nextProgress);
+                if (nextCost > m_PaidCost)
+                {
+                    int delta = nextCost - m_PaidCost;
+                    if (!m_Resource.TryConsume(delta))
+                    {
+                        // 值不够继续变大了：保持当前尺寸，泡泡仍然跟着玩家
+                        m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
+                        return;
+                    }
+
+                    m_PaidCost = nextCost;
+                }
+            }
+
+            m_ChargeTime = nextTime;
+            m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
             ApplyChargeSize();
         }
 
@@ -161,6 +203,9 @@ namespace PAO
         private void Release()
         {
             m_Charging = false;
+
+            // 蓄力结束，放开类型切换
+            LockTypeSwitch(false);
 
             if (m_CurrentBubble == null)
             {
@@ -278,6 +323,9 @@ namespace PAO
             {
                 behaviour.SizeProgress = progress;
                 behaviour.IsHeld = isHeld;
+
+                // 登记这颗泡泡的造价：它粘成地形后被炸掉时按这个数返还
+                behaviour.SetPaidCost(m_PaidCost);
 
                 // 滞留时它要负责把玩家提起来（只有浮粘泡泡会真提）
                 behaviour.SetLiftTarget(GetComponent<PlayerController>());
@@ -565,6 +613,43 @@ namespace PAO
             Gizmos.DrawWireSphere(basePosition, 0.08f);
             Gizmos.DrawWireSphere(spawnPosition, 0.15f);
             Gizmos.DrawLine(basePosition, spawnPosition);
+        }
+        /// <summary>懒加载泡泡值组件。没挂这个组件就当作不消耗，方便单独调试。</summary>
+        private void CacheResource()
+        {
+            if (m_Resource == null)
+            {
+                m_Resource = GetComponent<BubbleResourceManager>();
+            }
+        }
+
+        /// <summary>
+        /// 蓄力期间锁住类型切换。
+        /// 泡泡是按下那一刻用当时的类型参数造出来的，中途换类型会让
+        /// 「泡泡的构造参数」和「当前类型」对不上，后续按类型分支的逻辑就乱了。
+        /// </summary>
+        private void LockTypeSwitch(bool locked)
+        {
+            BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
+            if (switcher != null)
+            {
+                switcher.IsLocked = locked;
+            }
+        }
+        /// <summary>
+        /// 按当前泡泡类型算这次吹泡要花多少泡泡值。
+        /// 三种泡泡的消耗各自配在自己那组参数里（「泡泡值消耗」那一段），
+        /// 所以浮粘、弹力、炸弹可以调成完全不同的档位。
+        /// </summary>
+        private int GetCostAt(float progress)
+        {
+            BubbleSettings settings = GetSettings();
+            if (settings == null)
+            {
+                return 0;
+            }
+
+            return Mathf.FloorToInt(Mathf.Lerp(settings.minCost, settings.maxCost, Mathf.Clamp01(progress)));
         }
     }
 }

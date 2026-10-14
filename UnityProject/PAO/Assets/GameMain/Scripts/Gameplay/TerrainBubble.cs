@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 namespace PAO
@@ -42,6 +43,13 @@ namespace PAO
         [Header("爆开")]
         [Tooltip("填满后延迟多久消失（秒），0 为立即")]
         [SerializeField] private float m_PopDelay = 0f;
+
+        [Header("破坏与恢复")]
+        [Tooltip("被破坏时给玩家的泡泡值")]
+        [SerializeField] private int m_RewardAmount = 5;
+
+        [Tooltip("被弹力泡泡破坏后，多少秒重新长出来。0 表示也永久消失")]
+        [SerializeField] private float m_RespawnDelay = 8f;
 
         [Header("泡泡潮")]
         [Tooltip("每被填进一份容积，整条泡泡潮变慢多少。0.02 = 慢 2%。\n" +
@@ -162,10 +170,36 @@ namespace PAO
             bubble.OnContained(this);
         }
 
+        /// <summary>破坏来源。</summary>
+        public enum BreakCause
+        {
+            /// <summary>弹力泡泡填满、或被弹力泡泡的爆炸波及 —— 过一段时间会重新长出来。</summary>
+            Bouncy,
+
+            /// <summary>炸弹泡泡炸的 —— 永久破坏，不再恢复。</summary>
+            Bomb
+        }
+
+        /// <summary>被破坏时给玩家的泡泡值（策划可调）。</summary>
+        public int RewardAmount
+        {
+            get { return m_RewardAmount; }
+        }
+
         /// <summary>
-        /// 地形炸掉：里面的泡泡一起炸，然后自己消失。
+        /// 地形炸掉：里面的泡泡一起炸，自己按破坏来源决定是重生还是永久消失。
+        /// 保留这个无参入口，填满时的自爆走它（等同弹力泡泡破坏）。
         /// </summary>
         public void Explode()
+        {
+            Break(BreakCause.Bouncy);
+        }
+
+        /// <summary>
+        /// 被破坏。无论是弹力泡泡还是炸弹泡泡，都会给玩家回复泡泡值；
+        /// 区别只在于之后会不会长回来。
+        /// </summary>
+        public void Break(BreakCause cause)
         {
             // 防重入：里面的炸弹泡泡爆炸时会反过来引爆周围地形，
             // 而自己此时还没销毁，会被再次命中，加个闸挡住
@@ -175,6 +209,9 @@ namespace PAO
             }
 
             m_IsExploding = true;
+
+            // 破坏就给值 —— 弹力和炸弹一视同仁
+            RewardPlayer();
 
             // 先让里面的泡泡全部爆掉。用倒序遍历，因为 Explode 会改动场景对象
             for (int i = m_Contained.Count - 1; i >= 0; i--)
@@ -188,14 +225,89 @@ namespace PAO
 
             m_Contained.Clear();
 
-            if (m_PopDelay > 0f)
+            // 炸弹炸的永久消失；弹力炸的过一会儿长回来
+            if (cause == BreakCause.Bomb || m_RespawnDelay <= 0f)
             {
-                Destroy(gameObject, m_PopDelay);
+                if (m_PopDelay > 0f)
+                {
+                    Destroy(gameObject, m_PopDelay);
+                }
+                else
+                {
+                    Destroy(gameObject);
+                }
+
+                return;
             }
-            else
+
+            StartCoroutine(RespawnRoutine());
+        }
+
+        /// <summary>
+        /// 把回复值加给玩家的泡泡值池。
+        /// 用 FindObjectOfType 是因为破坏不频繁，找一次的开销可以接受，
+        /// 也省得每个地形都要在 Inspector 里手动拖引用。
+        /// </summary>
+        private void RewardPlayer()
+        {
+            if (m_RewardAmount <= 0)
             {
-                Destroy(gameObject);
+                return;
             }
+
+            BubbleResourceManager resource = FindObjectOfType<BubbleResourceManager>();
+            if (resource != null)
+            {
+                resource.Refund(m_RewardAmount);
+            }
+        }
+
+        /// <summary>
+        /// 藏起来 waiting 一段时间，再原样长回来。
+        /// 不销毁对象，是因为要保留它的位置、容量配置和引用关系。
+        /// </summary>
+        private IEnumerator RespawnRoutine()
+        {
+            SetActiveState(false);
+
+            yield return new WaitForSeconds(m_RespawnDelay);
+
+            ResetForRespawn();
+            SetActiveState(true);
+        }
+
+        /// <summary>开关渲染与碰撞（保留对象本身）。</summary>
+        private void SetActiveState(bool active)
+        {
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] != null)
+                {
+                    renderers[i].enabled = active;
+                }
+            }
+
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null)
+                {
+                    colliders[i].enabled = active;
+                }
+            }
+        }
+
+        /// <summary>重生长回来之前把状态清干净。</summary>
+        private void ResetForRespawn()
+        {
+            m_IsExploding = false;
+            m_CurrentFill = 0;
+
+            // 里面装过的泡泡早炸没了，列表也要清空
+            m_Contained.Clear();
+
+            RefreshTint();
         }
 
         /// <summary>

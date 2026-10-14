@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: ac867d78e98d2d6194ca38d5b6e0f34c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 297f3ca635aa24942bcf1e61693c3316, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -34,11 +34,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicMap:
-        m_Texture: {fileID: 2800000, guid: 4cced13e479dfcd81015db02b05255f8, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3a200b6b8872c8c4eb3a99f999c7a47c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: 96cbb2cfb87bc42a38c153240346fe69, type: 3}
+        m_Texture: {fileID: 2800000, guid: e559bf05cfb68d342a4a30c11947c86d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OpacityMap:
@@ -46,7 +46,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoughnessMap:
-        m_Texture: {fileID: 2800000, guid: c3565c30e3e00defca5ddd9bb2bbc216, type: 3}
+        m_Texture: {fileID: 2800000, guid: 5aaf471ad4d38c64abfe40de58ac5835, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -56,12 +56,12 @@ Material:
     - _Cutoff: 0.5
     - _DstBlend: 0
     - _EmissionEnabled: 0
-    - _Metallic: 1
-    - _NormalScale: 1
+    - _Metallic: 0.509
+    - _NormalScale: 0.2
     - _Opacity: 1
     - _OutlineEnabled: 1
-    - _OutlineWidth: 0.0004
-    - _Roughness: 1
+    - _OutlineWidth: 0.03
+    - _Roughness: 2
     - _SrcBlend: 1
     - _TransparentMode: 0
     - _UseOpacityMap: 0

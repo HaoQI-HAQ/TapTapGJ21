@@ -84,6 +84,14 @@ namespace PAO
         /// <summary>当前选中的泡泡类型。</summary>
         public BubbleType Current { get; private set; }
 
+        /// <summary>
+        /// 蓄力期间锁定类型切换。
+        /// 泡泡是在按下左键那一刻、用当时的类型参数造出来的，
+        /// 蓄力途中换类型会让「泡泡的构造参数」和「当前类型」对不上，
+        /// 后续按类型分支的逻辑就会错乱，所以干脆锁住不让换。
+        /// </summary>
+        public bool IsLocked { get; set; }
+
         /// <summary>输入是否启用。暂停菜单打开时设为 false。</summary>
         public bool InputEnabled
         {
@@ -120,7 +128,8 @@ namespace PAO
 
         private void Update()
         {
-            if (!m_InputEnabled)
+            // 蓄力中不许换类型，见 IsLocked 的说明
+            if (!m_InputEnabled || IsLocked)
             {
                 return;
             }
@@ -145,6 +154,12 @@ namespace PAO
         /// <summary>直接指定类型。</summary>
         public void SetType(BubbleType type)
         {
+            // 蓄力期间不允许换类型
+            if (IsLocked)
+            {
+                return;
+            }
+
             if (Current == type)
             {
                 Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ") 被忽略：已经是当前类型。", this);

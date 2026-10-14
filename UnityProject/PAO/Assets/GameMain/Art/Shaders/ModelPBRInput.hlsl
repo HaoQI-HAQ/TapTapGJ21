@@ -42,6 +42,11 @@ CBUFFER_START(UnityPerMaterial)
     half4  _OutlineColor;
     half   _OutlineWidth;
     float  _OutlineEnabled;
+
+    // ---- 表情图层（只有 ModelPBRExpression.shader 用；ModelPBR 里恒为默认值）----
+    // 必须放进来：SRP Batcher 要求材质上出现的每个属性都在这个 CBUFFER 里，
+    // 缺一个整个 shader 就会变成 "not compatible"。
+    half4  _ExpressionColor;
 CBUFFER_END
 
 // 基础色。RGB 是 albedo，A 交给 SampleOpacity 处理。

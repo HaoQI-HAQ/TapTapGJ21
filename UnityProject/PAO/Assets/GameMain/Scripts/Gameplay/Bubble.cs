@@ -62,6 +62,9 @@ namespace PAO
         // 滞留时这一帧该待的位置。物理帧算好、渲染帧才摆 ——
         // 和浮粘泡泡同一套路，这样才和玩家的移动节奏一致。
         private Vector3 m_HeldTargetPosition;
+
+        // 吹出这颗泡泡花掉的泡泡值。粘成地形后被炸掉时按它返还。
+        private int m_PaidCost;
         private PlayerController m_LiftTarget;              // 滞留时被我提着的玩家
         private Vector3 m_HeldLocalOffset;                  // 滞留时相对玩家的局部位置，松手瞬间记下就不再变
 
@@ -761,6 +764,29 @@ namespace PAO
                 body.AddExplosionForce(force, center, radius, 0f, ForceMode.Impulse);
             }
 
+            // 炸掉范围内「已经粘成地形的浮粘泡泡」—— 它们只能被炸弹炸掉。
+            // 炸掉时把当初吹出它的那份泡泡值还给玩家。
+            // 它们此时是 kinematic，不会出现在上面的刚体列表里，所以单独扫一遍。
+            HashSet<Bubble> stuckBubbles = new HashSet<Bubble>();
+
+            for (int i = 0; i < hits.Length; i++)
+            {
+                Bubble stuck = hits[i].GetComponentInParent<Bubble>();
+                if (stuck == null || stuck == this || !stuck.IsStuck)
+                {
+                    continue;
+                }
+
+                stuckBubbles.Add(stuck);
+            }
+
+            foreach (Bubble stuck in stuckBubbles)
+            {
+                stuck.RefundCostToPlayer();
+                Destroy(stuck.gameObject);
+            }
+
+
             // 连带引爆范围内的地形泡泡。用 HashSet 去重，
             // 免得一个地形因为挂了多个碰撞体被引爆好几次
             if (bombSettings.detonateTerrains)
@@ -777,9 +803,17 @@ namespace PAO
                 }
 
                 // TerrainBubble.Explode 自带防重入，连锁时不会互相递归
+                // 炸弹炸的永久破坏，弹力炸的过段时间长回来。
+                // 判断依据：自己就是炸弹，或者这次爆炸是体内那颗炸弹引起的
+                TerrainBubble.BreakCause breakCause =
+                    (m_BombSettings != null || settingsOverride != null)
+                    ? TerrainBubble.BreakCause.Bomb
+                    : TerrainBubble.BreakCause.Bouncy;
+
+                // TerrainBubble.Explode 自带防重入，连锁时不会互相递归
                 foreach (TerrainBubble terrain in terrains)
                 {
-                    terrain.Explode();
+                    terrain.Break(breakCause);
                 }
             }
 
@@ -1748,6 +1782,39 @@ namespace PAO
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(anchor, 0.12f);
             Gizmos.DrawLine(m_LiftTarget.transform.position, anchor);
+        }
+        /// <summary>
+        /// 由发射器登记：吹出这颗泡泡花了多少泡泡值。
+        /// 它粘成地形之后被炸弹炸掉时，按这个数返还给玩家。
+        /// </summary>
+        public void SetPaidCost(int cost)
+        {
+            m_PaidCost = Mathf.Max(0, cost);
+        }
+
+        /// <summary>这颗泡泡的造价。</summary>
+        public int PaidCost
+        {
+            get { return m_PaidCost; }
+        }
+
+        /// <summary>
+        /// 把这颗泡泡的造价还给玩家。粘成地形后被炸掉时调用。
+        /// </summary>
+        public void RefundCostToPlayer()
+        {
+            if (m_PaidCost <= 0)
+            {
+                return;
+            }
+
+            BubbleResourceManager resource = FindObjectOfType<BubbleResourceManager>();
+            if (resource != null)
+            {
+                resource.Refund(m_PaidCost);
+            }
+
+            m_PaidCost = 0;
         }
     }
 }

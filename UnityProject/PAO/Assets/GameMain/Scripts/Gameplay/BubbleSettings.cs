@@ -46,6 +46,13 @@ namespace PAO
         [Header("寿命")]
         [Tooltip("存活时间（秒），到点自动消失")]
         public float lifeTime = 10f;
+
+        [Header("泡泡值消耗")]
+        [Tooltip("最小泡泡（点按）消耗的泡泡值")]
+        public int minCost = 2;
+
+        [Tooltip("最大泡泡（蓄满）消耗的泡泡值")]
+        public int maxCost = 12;
     }
 
     /// <summary>
