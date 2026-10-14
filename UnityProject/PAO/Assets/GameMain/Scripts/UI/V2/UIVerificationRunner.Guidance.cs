@@ -16,8 +16,8 @@ namespace PAO.UI.V2
             UISettingsData quiet = original.Copy(); quiet.detailedHints = false; quiet.keys[UIInput.Interact] = KeyCode.K;
             UISettings.Apply(quiet, false); UIInput.UseKeyboard(); yield return null;
             Check(!GuideField<Transform>(runtime, "objectivePanel").gameObject.activeSelf &&
-                !GuideField<Transform>(runtime, "abilityPanel").gameObject.activeSelf,
-                "Default guidance hides the persistent objective paragraph and charge instructions.");
+                GuideField<Transform>(runtime, "abilityPanel").gameObject.activeSelf,
+                "Default guidance shows compact ability information and hides the persistent objective paragraph.");
             runtime.ShowHelp();
             string help = ""; foreach (Text label in Top(runtime).GetComponentsInChildren<Text>()) help += label.text;
             Check(help.Contains("当前路径") && help.Contains("浮粘泡泡") && help.Contains("K"),
@@ -59,9 +59,8 @@ namespace PAO.UI.V2
                 "A destination behind the camera becomes a direction arrow inside the safe area.");
             goal.transform.position = camera.transform.position + camera.transform.right * 80 - camera.transform.up * 32 + camera.transform.forward * 2;
             yield return null; yield return null;
-            Check(marker.anchoredPosition.x < marker.parent.GetComponent<RectTransform>().rect.width * .5f - 170 ||
-                marker.anchoredPosition.y >= -marker.parent.GetComponent<RectTransform>().rect.height * .5f + 430,
-                "An offscreen destination cue avoids the three ability controls in the lower corner.");
+            Check(!HudRect(runtime, marker).Overlaps(HudRect(runtime, GuideField<RectTransform>(runtime, "abilityCluster"))),
+                "An offscreen destination cue avoids the actual bounds of the three ability controls.");
             goal.transform.position = camera.transform.position - camera.transform.forward * 20;
 
             BubbleLauncher launcher = FindFirstObjectByType<BubbleLauncher>();

@@ -83,9 +83,8 @@ namespace PAO.UI.V2
             for (int i = 0; i < 8; i++) yield return null;
             UIRuntime runtime = UIRuntime.Instance;
             Check(runtime != null && SceneManager.GetActiveScene().path == "Assets/GameMain/UI/Menu.unity", "The real Menu scene bootstraps the new UI.");
-            Check(!runtime.Config.paperStyle && runtime.Config.paper.g > runtime.Config.paper.r && runtime.Config.text.r < .2f &&
-                Top(runtime).GetComponentInChildren<UILowPolyOcean>().GetComponent<CanvasRenderer>() != null && Button(runtime, "新的旅程").GetComponent<UILowPolyImage>() != null,
-                "The menu uses the cool lowpoly palette, geometric ocean artwork and cut-corner controls.");
+            Check(runtime.Config.paperStyle && runtime.Config.paper.r > .9f && runtime.Config.text.r < .2f,
+                "The document menu uses warm paper, dark blue text and a dedicated light theme.");
             Text title = Top(runtime).transform.Find("Page/Menu title").GetComponent<Text>();
             Check(title.fontSize >= 44 &&
                 Top(runtime).GetComponentInChildren<UIMenuResonance>() == null,

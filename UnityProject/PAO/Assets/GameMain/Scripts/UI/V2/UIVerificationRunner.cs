@@ -93,8 +93,8 @@ namespace PAO.UI.V2
         {
             for (int i = 0; i < 5; i++) yield return null;
             UIRuntime runtime = UIRuntime.Instance;
-            Check(runtime != null && runtime.Config.font != null && runtime.GetComponentInChildren<UILowPolyOcean>() != null,
-                "Runtime bootstraps with Chinese text and lowpoly ocean artwork.");
+            Check(runtime != null && runtime.Config.font != null && runtime.Config.round != null && runtime.Config.menuArt != null,
+                "Runtime bootstraps with the existing Chinese font and artwork.");
             Check(Top(runtime) != null && !runtime.IsGameplay, "Fresh menu opens with an actionable default focus.");
             Check(EventSystem.current.currentSelectedGameObject != null, "Menu has a default selection.");
             VerifyProgressAndBindings();
@@ -159,7 +159,7 @@ namespace PAO.UI.V2
             Check(Mathf.Abs(UISettings.Current.master - 0.1f) < 0.01f, "Settings preview applies immediately.");
             runtime.Toast("验证保存反馈"); yield return null;
             yield return Capture(runtime, "settings", 1600, 900);
-            Check(!runtime.transform.Find("UI Canvas V2/Safe Area/Context notice").gameObject.activeSelf &&
+            Check(!GuideField<RectTransform>(runtime, "noticeRoot").gameObject.activeSelf &&
                 Top(runtime).NoticeArea.gameObject.activeSelf,
                 "Save feedback occupies the modal status area instead of covering the page header.");
             runtime.Back();

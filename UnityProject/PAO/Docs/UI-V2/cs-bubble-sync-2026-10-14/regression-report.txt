@@ -1,5 +1,5 @@
 Passed: 204
-Runtime bootstraps with Chinese text and lowpoly ocean artwork.
+Runtime bootstraps with the existing Chinese font and artwork.
 Fresh menu opens with an actionable default focus.
 Menu has a default selection.
 Six-action settings migrate to seventeen actions while retaining custom bindings.
@@ -61,7 +61,7 @@ Reduced motion keeps Ability 1 at a stable size.
 Reduced motion keeps Ability 2 at a stable size.
 Rendered motion-reduced.
 Twelve open/close cycles leave no accumulated page, button or orbital tweens.
-Default guidance hides the persistent objective paragraph and charge instructions.
+Default guidance shows compact ability information and hides the persistent objective paragraph.
 Players can deliberately open Help to review route, ability behavior and current controls.
 An available memory displays its shape and mapped input beside the object.
 Visual interaction keycaps use the remapped action rather than a fixed E.
@@ -69,8 +69,8 @@ Rendered diagnostic world and HUD: guidance-world-interaction.
 Rendered guidance-minimal-960.
 A solid wall suppresses interaction guidance instead of showing it through geometry.
 A destination behind the camera becomes a direction arrow inside the safe area.
-An offscreen destination cue avoids the three ability controls in the lower corner.
-The corner charge badge reflects actual gameplay charge without covering the character.
+An offscreen destination cue avoids the actual bounds of the three ability controls.
+The selected ability ring shows actual charge; only scenes without a resource meter use the fallback badge.
 Rendered diagnostic world and HUD: guidance-world-charge.
 Pause hides destination, charge and interaction graphics together with the HUD.
 Detailed text hints remain available as an explicit accessibility preference.

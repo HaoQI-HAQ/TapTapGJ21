@@ -39,11 +39,11 @@ namespace PAO.UI.V2
         [HideInInspector] public bool paperStyle;
         public Sprite[] abilityIcons;
         public GameObject defaultPlayer;
-        public Color paper = new Color32(239, 246, 243, 255);
-        public Color ink = new Color32(28, 62, 74, 255);
-        public Color text = new Color32(28, 62, 74, 255);
-        public Color teal = new Color32(37, 112, 118, 255);
-        public Color mist = new Color32(218, 237, 230, 255);
+        public Color paper = new Color32(255, 249, 235, 255);
+        public Color ink = new Color32(40, 65, 65, 255);
+        public Color text = new Color32(40, 65, 65, 255);
+        public Color teal = new Color32(48, 117, 112, 255);
+        public Color mist = new Color32(255, 242, 212, 255);
         public UIMotionProfile motion = new UIMotionProfile();
         public ChapterDefinition[] chapters = new ChapterDefinition[0];
         public EndingDefinition[] endings = new EndingDefinition[0];

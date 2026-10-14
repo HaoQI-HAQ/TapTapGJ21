@@ -36,8 +36,8 @@ namespace PAO.UI.V2
             if (state.latest != null) UIRunState.Apply(state.latest);
             else UIRunState.NewRun();
             UIPage page = Push(T("泡涌", "BUBBLE TIDE"), "", false, UIPageDesign.Menu); page.Rebuild = ShowMenu;
-            UILowPolyOcean art = ui.Rect("Jellyfish illustration", page.transform).gameObject.AddComponent<UILowPolyOcean>();
-            art.color = Color.white; art.raycastTarget = false;
+            Image art = ui.Surface("Jellyfish illustration", page.transform, new Color(1, .96f, .87f, .82f));
+            art.sprite = Config.menuArt; art.type = Image.Type.Simple; art.raycastTarget = false;
             UIWidgets.Stretch(art.rectTransform); art.transform.SetSiblingIndex(1);
             art.gameObject.AddComponent<UIMenuAmbience>();
 

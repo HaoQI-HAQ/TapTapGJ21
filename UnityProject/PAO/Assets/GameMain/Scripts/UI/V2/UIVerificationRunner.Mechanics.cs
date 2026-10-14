@@ -40,9 +40,10 @@ namespace PAO.UI.V2
                 BubbleSettings settings = launcher.SettingsFor(type);
                 Check(settings.prefab != null && settings.minCost > 0 && settings.maxCost >= settings.minCost, "Scene bubble template and cost resolve: " + type);
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-                Check(panel.GetComponentsInChildren<Text>(true).Length == 1 &&
-                    BubbleField<Text>(runtime, "resourceAmount").text == energy.Current + " / " + energy.Max,
-                    "Detailed hints keep the resource panel focused on remaining quantity: " + type);
+                Check(GuideField<Text>(runtime, "resourceCost").text.Contains(settings.minCost + "–" + settings.maxCost) &&
+                    panel.GetComponentsInChildren<Text>(true).Length == 1 &&
+                    GuideField<Text>(runtime, "resourceAmount").text == energy.Current + " / " + energy.Max,
+                    "Detailed HUD shows shared costs beside abilities while the energy meter shows only remaining quantity: " + type);
             }
             detailedCosts.detailedHints = false; UISettings.Apply(detailedCosts);
             types.SetType(BubbleType.Sticky);
@@ -92,18 +93,11 @@ namespace PAO.UI.V2
             Camera.main.transform.LookAt(terrainObject.transform);
             Physics.SyncTransforms();
             typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-            Transform terrainHud = runtime.transform.Find("UI Canvas V2/Safe Area/Gameplay HUD/Terrain fill");
+            Transform terrainHud = runtime.transform.Find("UI Canvas V2/Safe Area/Gameplay HUD/Three bubble abilities/Current ability/Terrain fill");
             Check(terrainHud.gameObject.activeInHierarchy && terrainHud.GetComponentInChildren<Text>().text.Contains("2 / 5"),
                 "Aiming at terrain displays its actual fill count.");
             yield return Capture(runtime, "cs-terrain-fill-1600x900", 1600, 900);
             Camera.main.transform.SetPositionAndRotation(cameraPosition, cameraRotation);
-            typeof(UIRuntime).GetMethod("PositionTerrainHud", Private).Invoke(runtime, new object[] { Camera.main });
-            RectTransform terrainRect = (RectTransform)terrainHud;
-            RectTransform hudRect = (RectTransform)terrainRect.parent;
-            Vector3 playerView = Camera.main.WorldToViewportPoint(player.transform.position);
-            Vector2 playerPoint = new Vector2((playerView.x - .5f) * hudRect.rect.width, (playerView.y - .5f) * hudRect.rect.height);
-            Rect terrainBounds = new Rect(terrainRect.anchoredPosition - new Vector2(terrainRect.rect.width * .5f, 0), terrainRect.rect.size);
-            Check(!terrainBounds.Contains(playerPoint), "Terrain fill feedback avoids the actual player projection.");
             terrain.Absorb(terrain.Capacity);
             Check(energy.Current == 10 + terrain.RewardAmount, "Filling terrain rewards the actual player resource pool.");
             terrain.Break(TerrainBubble.BreakCause.Bouncy);
@@ -123,8 +117,8 @@ namespace PAO.UI.V2
             yield return Capture(runtime, "cs-test-tools-960x540", 960, 540);
             FindButton(runtime, "低资源（10%）").onClick.Invoke();
             Check(!runtime.IsBlockingGameplay && energy.Current == energy.Max / 10 && player.enabled, "Low energy test action applies and resumes gameplay.");
-            Check(BubbleField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
-                BubbleField<float>(runtime, "resourceFeedbackUntil") <= Time.unscaledTime,
+            Check(GuideField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
+                GuideField<float>(runtime, "resourceFeedbackUntil") <= Time.unscaledTime,
                 "Reducing energy clears recovery feedback from the previous resource increase.");
             yield return Capture(runtime, "cs-resource-low-960x540", 960, 540);
             runtime.ShowPause(); FindButton(runtime, "补满泡泡值").onClick.Invoke();
@@ -143,6 +137,15 @@ namespace PAO.UI.V2
             UISettings.Apply(english);
             yield return Capture(runtime, "cs-english-large-text-960x540", 960, 540);
             VerifyResourceTextFits(panel);
+            runtime.ShowSubtitle("水流", "字幕固定在底部中央，与提示自动错开。");
+            runtime.Toast("破坏地形或回收泡泡可以恢复泡泡值。");
+            yield return Capture(runtime, "cs-hud-bottom-messages-960x540", 960, 540);
+            yield return null; yield return null; Canvas.ForceUpdateCanvases();
+            VerifyHudPlacement(runtime);
+            UISettingsData minimal = UISettings.Current.Copy(); minimal.language = 0; minimal.textScale = 1; UISettings.Apply(minimal);
+            yield return CaptureWorld(runtime, "cs-hud-world-annotated-layout");
+            yield return null; yield return null; Canvas.ForceUpdateCanvases();
+            VerifyHudPlacement(runtime);
             runtime.ShowHelp();
             Check(Top(runtime).GetComponentsInChildren<Text>().Length > 10, "The field guide opens with the added mechanics lessons.");
             runtime.Back();
@@ -164,9 +167,36 @@ namespace PAO.UI.V2
 
         private void VerifyResourceTextFits(Transform panel)
         {
-            foreach (Text text in panel.GetComponentsInChildren<Text>())
-                Check(text.rectTransform.rect.height >= text.preferredHeight - 1,
-                    "Resource text fits: " + text.text.Replace('\n', ' '));
+            UIRuntime runtime = UIRuntime.Instance;
+            foreach (Transform area in new[] { panel, GuideField<Transform>(runtime, "abilityPanel"), GuideField<RectTransform>(runtime, "resourceFeedbackPanel") })
+                foreach (Text text in area.GetComponentsInChildren<Text>())
+                    Check(text.rectTransform.rect.height >= text.preferredHeight - 1,
+                        "HUD text fits: " + text.text.Replace('\n', ' '));
+        }
+
+        private static Rect HudRect(UIRuntime runtime, RectTransform rect)
+        {
+            RectTransform hud = GuideFieldStatic<RectTransform>(runtime, "hud");
+            var corners = new Vector3[4]; rect.GetWorldCorners(corners);
+            Vector3 min = hud.InverseTransformPoint(corners[0]), max = hud.InverseTransformPoint(corners[2]);
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+        private static T GuideFieldStatic<T>(UIRuntime runtime, string name) => (T)typeof(UIRuntime).GetField(name, Private).GetValue(runtime);
+
+        private void VerifyHudPlacement(UIRuntime runtime)
+        {
+            RectTransform energy = GuideField<RectTransform>(runtime, "resourcePanel");
+            RectTransform cluster = GuideField<RectTransform>(runtime, "abilityCluster");
+            RectTransform messages = GuideField<RectTransform>(runtime, "hudMessages");
+            Check(energy.anchorMin == new Vector2(0, 1) && !GuideField<Text>(runtime, "resourceCost").transform.IsChildOf(energy),
+                "Upper-left energy feedback contains a value and bar, with cost kept in the ability cluster.");
+            Check(GuideField<Text>(runtime, "currentAbility").transform.IsChildOf(cluster) && GuideField<RectTransform>(runtime, "reticleCue").IsChildOf(cluster),
+                "Type and charging feedback stay inside the three ability controls.");
+            Check(messages.anchorMin.y == 0 && !HudRect(runtime, messages).Overlaps(HudRect(runtime, cluster)),
+                "Bottom messages reserve space for the ability cluster at large text sizes. Messages=" + HudRect(runtime, messages) + ", abilities=" + HudRect(runtime, cluster));
+            RectTransform subtitle = GuideField<RectTransform>(runtime, "subtitleRoot"), notice = GuideField<RectTransform>(runtime, "noticeRoot");
+            Check(subtitle.IsChildOf(messages) && notice.IsChildOf(messages) && !HudRect(runtime, subtitle).Overlaps(HudRect(runtime, notice)),
+                "Subtitles and context notices share the bottom lane without overlapping.");
         }
     }
 }

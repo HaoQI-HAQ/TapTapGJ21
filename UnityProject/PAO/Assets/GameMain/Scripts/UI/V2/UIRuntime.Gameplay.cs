@@ -7,6 +7,7 @@ namespace PAO.UI.V2
 {
     public sealed partial class UIRuntime
     {
+        private RectTransform abilityCluster, hudMessages, abilitySummary, resourceFeedbackPanel;
         private Text currentAbility;
         private Text objectiveLabel;
         private Text chargeLabel;
@@ -44,22 +45,33 @@ namespace PAO.UI.V2
                 T("探索水域，寻找下一段水流。", "Explore the waters and find the next current.")), 24, Config.ink);
             goalLabel = ui.Label(objective, "", 20, Config.text);
 
-            RectTransform type = ui.Column("Current ability", hud, 16, 8);
+            hudMessages = ui.Column("Gameplay messages", hud, 0, 8);
+            hudMessages.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.LowerCenter;
+            if (noticeRoot != null) noticeRoot.SetParent(hudMessages, false);
+            abilityCluster = ui.Rect("Three bubble abilities", hud);
+            RectTransform abilities = abilityCluster;
+            Anchor(abilities, new Vector2(1, 0), new Vector2(-32, 32), new Vector2(380, 400), new Vector2(1, 0));
+            RectTransform type = ui.Column("Current ability", abilities, 12, 4);
             abilityPanel = type;
             AddHudBacking(type);
-            Anchor(type, Vector2.zero, new Vector2(32, 32), new Vector2(600, 192), Vector2.zero);
-            currentAbility = ui.Label(type, "", 28, Config.ink);
-            chargeLabel = ui.Label(type, T("按住左键蓄力 · E 与泡泡交互", "Hold left click to charge · E to interact"), 20, Config.ink);
-            Image chargeBackground = ui.Surface("Charge track", type, Config.ink, true); UIWidgets.Size(chargeBackground.transform, 8);
+            Anchor(type, new Vector2(1, 0), new Vector2(-190, 190), new Vector2(240, 128), new Vector2(.5f, .5f));
+            abilitySummary = ui.Row("Ability summary", type, 8);
+            currentAbility = ui.Label(abilitySummary, "", 20, Config.ink, TextAnchor.MiddleCenter);
+            UIWidgets.Size(currentAbility.transform, -1, -1, 1);
+            resourceCost = ui.Label(type, "", 18, Config.ink, TextAnchor.MiddleCenter);
+            Image chargeBackground = ui.Surface("Charge track", type, Config.mist, true); UIWidgets.Size(chargeBackground.transform, 6);
+            chargeBackground.raycastTarget = false;
             chargeFill = ui.Surface("Charge fill", chargeBackground.transform, Config.teal, true);
+            chargeFill.raycastTarget = false;
             chargeFill.rectTransform.anchorMin = Vector2.zero; chargeFill.rectTransform.anchorMax = new Vector2(0, 1);
             chargeFill.rectTransform.offsetMin = chargeFill.rectTransform.offsetMax = Vector2.zero;
-
-            RectTransform abilities = ui.Rect("Three bubble abilities", hud);
-            Anchor(abilities, new Vector2(1, 0), new Vector2(-32, 48), new Vector2(350, 340), new Vector2(1, 0));
+            resourceFeedbackPanel = ui.Column("Resource feedback", hudMessages, 12, 4);
+            AddHudBacking(resourceFeedbackPanel);
+            chargeLabel = ui.Label(resourceFeedbackPanel, "", 20, Config.ink, TextAnchor.MiddleCenter);
+            resourceStatus = ui.Label(resourceFeedbackPanel, "", 20, Config.text, TextAnchor.MiddleCenter);
             abilityMotion = abilities.gameObject.AddComponent<UIAbilityMotion>();
             abilityMotion.Configure(ui, chargeFill, type.GetComponent<Image>(), currentAbility);
-            Vector2[] positions = { new Vector2(-175, 245), new Vector2(-290, 82), new Vector2(-60, 82) };
+            Vector2[] positions = { new Vector2(-190, 336), new Vector2(-324, 56), new Vector2(-56, 56) };
             for (int i = 0; i < 3; i++)
             {
                 int index = i;
@@ -69,13 +81,20 @@ namespace PAO.UI.V2
                 Button button = circle.gameObject.AddComponent<Button>(); button.targetGraphic = circle;
                 button.onClick.AddListener(() => { if (switcher != null) switcher.SetType((BubbleType)index); });
                 circle.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
-                Image ring = ui.Rect("Selection ring", circle.transform).gameObject.AddComponent<UILowPolyRingImage>();
-                ring.color = Config.teal;
-                UIWidgets.Stretch(ring.rectTransform, -8); ring.raycastTarget = false;
+                Image ring = ui.Surface("Selection ring", circle.transform, Config.teal);
+                UIWidgets.Stretch(ring.rectTransform, -8); ring.sprite = Config.ring; ring.raycastTarget = false;
                 abilityRings.Add(ring);
                 UIGuideGraphic icon = ui.Rect("Ability symbol", circle.transform).gameObject.AddComponent<UIGuideGraphic>();
                 icon.Symbol = i == 0 ? UIGuideSymbol.Sticky : i == 1 ? UIGuideSymbol.Bouncy : UIGuideSymbol.Bomb;
                 icon.color = Config.text; icon.raycastTarget = false; UIWidgets.Stretch(icon.rectTransform, 25);
+                Sprite painted = UIHandDrawn.Ability(i);
+                if (painted != null)
+                {
+                    icon.enabled = false;
+                    Image illustration = ui.Surface("Painted ability", circle.transform, Color.white);
+                    illustration.sprite = painted; illustration.preserveAspect = true; illustration.raycastTarget = false;
+                    UIWidgets.Stretch(illustration.rectTransform, 7);
+                }
                 abilityMotion.AddNode(ui, circle, ring);
             }
             RectTransform buttons = ui.Row("HUD actions", hud, 12);
@@ -94,7 +113,8 @@ namespace PAO.UI.V2
 
         private void AddHudBacking(RectTransform rect)
         {
-            Image backing = rect.gameObject.AddComponent<UILowPolyImage>();
+            Image backing = rect.gameObject.AddComponent<Image>();
+            backing.sprite = Config.round; backing.type = Image.Type.Sliced;
             backing.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, 0.94f);
             backing.raycastTarget = false;
         }
@@ -104,7 +124,8 @@ namespace PAO.UI.V2
             if (subtitleRoot != null) Destroy(subtitleRoot.gameObject);
             subtitleRoot = null; subtitleText = null;
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
-            hud = null; abilityMotion = null; abilityRings.Clear(); currentAbility = null;
+            hud = null; hudMessages = abilityCluster = abilitySummary = resourceFeedbackPanel = null;
+            abilityMotion = null; abilityRings.Clear(); currentAbility = null;
             ClearVisualGuidance();
             ClearResourceHud();
             if (noticeRoot != null) Destroy(noticeRoot.gameObject);
@@ -131,7 +152,7 @@ namespace PAO.UI.V2
         {
             RefreshResourceHud();
             if (hud == null || currentAbility == null || switcher == null) return;
-            int type = (int)switcher.Current;
+            int type = launcher != null ? (int)launcher.DisplayType : (int)switcher.Current;
             string name = AbilityName(type);
             if (currentAbility.text != name) currentAbility.text = name;
             if (journalShortcut != null) { journalShortcut.text = GuideInputPrompt(UIInput.Journal); SetInputTypeface(journalShortcut); }
@@ -169,9 +190,10 @@ namespace PAO.UI.V2
             if (!UISettings.Current.subtitles) return;
             if (subtitleRoot == null)
             {
-                Image background = ui.Surface("Subtitles", safeRoot, Config.ink, true);
+                Image background = ui.Surface("Subtitles", hudMessages != null ? hudMessages : safeRoot, Config.ink, true);
                 subtitleRoot = background.rectTransform;
-                Anchor(subtitleRoot, new Vector2(0.5f, 0), new Vector2(0, 36), new Vector2(760, 100), new Vector2(0.5f, 0));
+                UIWidgets.Size(subtitleRoot, 90);
+                subtitleRoot.SetAsLastSibling();
                 background.raycastTarget = false;
                 background.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.ink);
                 subtitleText = ui.Label(subtitleRoot, "", 24, Config.paper, TextAnchor.MiddleCenter);
@@ -197,21 +219,19 @@ namespace PAO.UI.V2
             if (subtitleRoot != null)
             {
                 subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
-                bool narrow = safeRoot.rect.width < 1200;
-                subtitleRoot.anchorMin = subtitleRoot.anchorMax = new Vector2(.5f, narrow ? .45f : 0);
-                subtitleRoot.anchoredPosition = new Vector2(0, narrow ? 0 : 36);
-                subtitleRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Min(760, safeRoot.rect.width - 96));
-                subtitleRoot.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(90, subtitleText.preferredHeight + 40));
+                UIWidgets.Size(subtitleRoot, Mathf.Max(72, subtitleText.preferredHeight + 32));
+
             }
             if (noticeRoot == null)
             {
-                Image paper = ui.Surface("Context notice", safeRoot, Config.mist, true);
+                Image paper = ui.Surface("Context notice", hudMessages != null ? hudMessages : safeRoot, Config.mist, true);
                 noticeRoot = paper.rectTransform;
-                Anchor(noticeRoot, new Vector2(0.5f, 1), new Vector2(0, -208), new Vector2(840, 72), new Vector2(0.5f, 1));
+                UIWidgets.Size(noticeRoot, 72);
                 paper.raycastTarget = false;
                 noticeText = ui.Label(noticeRoot, "", 23, Config.text, TextAnchor.MiddleCenter);
                 UIWidgets.Stretch(noticeText.rectTransform, 20);
             }
+            if (hudMessages != null && noticeRoot.parent != hudMessages) noticeRoot.SetParent(hudMessages, false);
             if (!noticeIsForeground && notices.Count > 0) noticeRemaining = 0;
             if (noticeRemaining <= 0 && notices.Count > 0)
             { noticeText.text = notices.Dequeue(); noticeRemaining = 6; noticeIsForeground = true; noticeIsTutorial = false; }
@@ -227,8 +247,9 @@ namespace PAO.UI.V2
                 top.NoticeArea.gameObject.SetActive(visible);
                 if (visible) top.NoticeLabel.text = noticeText.text;
             }
-            if (noticeRemaining > 0) noticeRoot.sizeDelta = new Vector2(840, Mathf.Max(72, noticeText.preferredHeight + 40));
-            noticeRoot.SetAsLastSibling();
+            if (noticeRemaining > 0) UIWidgets.Size(noticeRoot, Mathf.Max(64, noticeText.preferredHeight + 40));
+            if (subtitleRoot != null) subtitleRoot.SetAsLastSibling();
+            PositionGameplayHud();
             if (visible) noticeRemaining -= Time.unscaledDeltaTime;
         }
 

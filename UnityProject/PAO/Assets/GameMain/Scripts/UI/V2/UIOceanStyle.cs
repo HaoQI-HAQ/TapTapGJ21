@@ -15,7 +15,7 @@ namespace PAO.UI.V2
         public float orbitPeriod = 7f;
     }
 
-    // Each cut-corner face has a flat tint while retaining UI masking and batching.
+    // Vertex colours preserve the existing rounded sprite, masking and batching.
     public sealed class UIFluidGradient : BaseMeshEffect
     {
         public Color top = new Color32(170, 235, 248, 255);
@@ -32,15 +32,7 @@ namespace PAO.UI.V2
             for (int i = 0; i < mesh.currentVertCount; i++)
             {
                 mesh.PopulateUIVertex(ref vertex, i);
-                float faceY = vertex.position.y;
-                if (graphic is UILowPolyImage)
-                {
-                    int first = i / 3 * 3;
-                    var a = new UIVertex(); var b = new UIVertex(); var c = new UIVertex();
-                    mesh.PopulateUIVertex(ref a, first); mesh.PopulateUIVertex(ref b, first + 1); mesh.PopulateUIVertex(ref c, first + 2);
-                    faceY = (a.position.y + b.position.y + c.position.y) / 3;
-                }
-                float y = Mathf.InverseLerp(rect.yMin, rect.yMax, faceY);
+                float y = Mathf.InverseLerp(rect.yMin, rect.yMax, vertex.position.y);
                 Color tint = Color.Lerp(bottom, top, y);
                 tint = Color.Lerp(tint, focusTint, warmth * (.4f + .4f * y));
                 vertex.color = (Color)vertex.color * tint; mesh.SetUIVertex(vertex, i);
@@ -50,7 +42,7 @@ namespace PAO.UI.V2
 
     public enum UIPearlShape { Bubble, Orbit, Glow, Current }
 
-    // Flat triangular faces and polygon rings share one UI material.
+    // Layered radial meshes provide a translucent bubble membrane without a material instance per node.
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class UIPearlGraphic : MaskableGraphic
     {
@@ -66,9 +58,9 @@ namespace PAO.UI.V2
             if (shape == UIPearlShape.Current)
             {
                 for (int line = 0; line < 4; line++)
-                    for (int i = 0; i < 6; i++)
+                    for (int i = 0; i < 64; i++)
                     {
-                        float x = (float)i / 6, next = (i + 1f) / 6;
+                        float x = (float)i / 64, next = (i + 1f) / 64;
                         Vector2 a = new Vector2(rect.xMin + rect.width * x, rect.yMin + rect.height * (.25f + line * .1f + Mathf.Sin(x * 6 + line * .6f) * .09f));
                         Vector2 b = new Vector2(rect.xMin + rect.width * next, rect.yMin + rect.height * (.25f + line * .1f + Mathf.Sin(next * 6 + line * .6f) * .09f));
                         Stroke(mesh, a, b, 1.3f, new Color(color.r, color.g, color.b, color.a * Mathf.Sin(x * Mathf.PI)));
@@ -96,25 +88,27 @@ namespace PAO.UI.V2
         }
         private static void Disc(VertexHelper mesh, Vector2 center, float radius, Color core, Color edge)
         {
-            for (int i = 0; i < 12; i++)
+            int start = mesh.currentVertCount; mesh.AddVert(center, core, Vector2.zero);
+            for (int i = 0; i <= 64; i++)
             {
-                Color face = Color.Lerp(core, edge, (i % 4) * .22f);
-                Vector2 a = UILowPolyMesh.Direction(i * 30 + 15) * radius;
-                Vector2 b = UILowPolyMesh.Direction((i + 1) * 30 + 15) * radius;
-                UILowPolyMesh.Triangle(mesh, center + new Vector2(-.12f, .16f) * radius, center + a, center + b, face);
+                float a = i * Mathf.PI * 2 / 64;
+                float dryEdge = radius + Mathf.Sin(a * 7) * .7f + Mathf.Cos(a * 13) * .35f;
+                mesh.AddVert(center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * dryEdge, edge, Vector2.zero);
+                if (i > 0) mesh.AddTriangle(start, start + i, start + i + 1);
             }
         }
         private static void Ring(VertexHelper mesh, Vector2 center, float inner, float outer, float from, float to, Color tint, bool pearl)
         {
-            int segments = Mathf.Max(1, Mathf.CeilToInt((to - from) / 30));
+            int segments = Mathf.Max(1, Mathf.CeilToInt((to - from) / 5));
             for (int i = 0; i <= segments; i++)
             {
                 float a = Mathf.Lerp(from, to, (float)i / segments) * Mathf.Deg2Rad;
                 Vector2 direction = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
-                Color c = tint;
+                float contour = Mathf.Sin(a * 7) * .65f + Mathf.Cos(a * 13) * .3f;
+                Color c = pearl ? Color.Lerp(tint, new Color(.9f, .66f, 1, tint.a), (Mathf.Sin(a * 2) + 1) * .34f) : tint;
                 int v = mesh.currentVertCount;
-                mesh.AddVert(center + direction * inner, c, Vector2.zero);
-                mesh.AddVert(center + direction * outer, c, Vector2.zero);
+                mesh.AddVert(center + direction * (inner + contour), c, Vector2.zero);
+                mesh.AddVert(center + direction * (outer + contour), c, Vector2.zero);
                 if (i > 0) { mesh.AddTriangle(v - 2, v - 1, v); mesh.AddTriangle(v - 1, v + 1, v); }
             }
         }

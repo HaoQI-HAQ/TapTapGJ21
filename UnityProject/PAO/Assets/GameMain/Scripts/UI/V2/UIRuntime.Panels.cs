@@ -148,9 +148,9 @@ namespace PAO.UI.V2
 
         private void StyleRecordCard(RectTransform card, bool highlighted)
         {
-            Image surface = card.GetComponent<Image>(); if (surface == null) surface = card.gameObject.AddComponent<UILowPolyImage>();
+            Image surface = card.GetComponent<Image>(); if (surface == null) surface = card.gameObject.AddComponent<Image>();
             surface.color = highlighted ? Config.mist : UIDesignPalette.ControlTop;
-            surface.raycastTarget = false;
+            surface.sprite = Config.round; surface.type = Image.Type.Sliced; surface.raycastTarget = false;
             if (!highlighted) return;
             Image accent = ui.Surface("Current record accent", card, Config.teal);
             accent.raycastTarget = false; accent.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;

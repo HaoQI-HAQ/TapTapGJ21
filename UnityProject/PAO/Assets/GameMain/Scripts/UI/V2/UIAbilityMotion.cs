@@ -60,7 +60,7 @@ namespace PAO.UI.V2
             graphic.shape = shape; graphic.raycastTarget = false;
             graphic.rectTransform.anchorMin = graphic.rectTransform.anchorMax = Vector2.one * .5f;
             graphic.rectTransform.sizeDelta = Vector2.one * size;
-
+            if (shape == UIPearlShape.Bubble) UIHandDrawn.Pigment(ui, graphic.transform);
             return graphic;
         }
         public void SetState(int ability, float charge, bool isCharging, bool isReady)
@@ -116,7 +116,7 @@ namespace PAO.UI.V2
             Color accent = UIAbilityColor.ColorFor(i);
             node.root.localScale = Vector3.one * (UISettings.Current.reducedMotion ? 1 : active ? 1.03f : .88f);
             node.film.color = new Color(accent.r, accent.g, accent.b, active ? 1 : .65f);
-            node.glow.color = new Color(accent.r, accent.g, accent.b, active && !UISettings.Current.highContrast ? .18f : .025f);
+            node.glow.color = new Color(accent.r, accent.g, accent.b, active && !UISettings.Current.highContrast ? .8f : .08f);
             node.ring.enabled = active; node.ring.color = config.teal;
             node.orbit.color = active ? accent : new Color(accent.r, accent.g, accent.b, .12f);
             node.orbit.Phase = 0; node.ripple.color = Color.clear;
@@ -127,9 +127,9 @@ namespace PAO.UI.V2
             if (cast != null) cast.Kill(); cast = null;
             if (UISettings.Current.reducedMotion || selected < 0) return;
             Node node = nodes[selected]; Color accent = UIAbilityColor.ColorFor(selected);
-            node.glow.color = new Color(accent.r, accent.g, accent.b, .35f);
+            node.glow.color = new Color(accent.r, accent.g, accent.b, 1);
             cast = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
-            cast.Append(node.glow.DOFade(.18f, .3f));
+            cast.Append(node.glow.DOFade(.8f, .3f));
             cast.OnKill(() => cast = null);
         }
         private void StartOrbit()

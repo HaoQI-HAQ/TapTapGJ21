@@ -89,11 +89,12 @@ namespace PAO.UI.V2
                     yield return null;
                 }
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-                Check(panel.GetComponent<Image>() != null && panel.rect.width == 300 &&
+                Check(panel.GetComponent<Image>() != null && panel.anchorMin == new Vector2(0, 1) && panel.rect.width == 340 &&
                     panel.GetComponentsInChildren<Text>(true).Length == 1 &&
                     BubbleField<Image>(runtime, "resourceFill").rectTransform.rect.height == 24 &&
-                    !BubbleField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf,
-                    scene + " emphasizes quantity with a thick bar and one numeric label in the lower-left panel.");
+                    BubbleField<Text>(runtime, "resourceCost").transform.IsChildOf(BubbleField<RectTransform>(runtime, "abilityCluster")) &&
+                    BubbleField<RectTransform>(runtime, "reticleCue").IsChildOf(BubbleField<RectTransform>(runtime, "abilityCluster")),
+                    scene + " places energy at the upper left and type, cost and charge inside the ability cluster.");
                 if (map == -1) yield return VerifyBubbleResources(runtime, launcher, resource, switcher);
                 resource.SetCurrent(100);
                 yield return Capture(runtime, scene + "-resource-hud", 1600, 900);
@@ -114,11 +115,11 @@ namespace PAO.UI.V2
             Vector3 scale = BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale;
             yield return new WaitForSecondsRealtime(.2f);
             Check(launcher.ChargeProgress == progress && BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale == scale,
-                "A depleted charge retains its size and progress. Progress " + progress + " -> " + launcher.ChargeProgress +
-                ", size " + scale.ToString("F6") + " -> " + BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale.ToString("F6"));
+                "A depleted charge retains its size and progress.");
             switcher.SetType(BubbleType.Bomb);
             Check(switcher.Current == BubbleType.Sticky && BubbleField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
                 BubbleField<Text>(runtime, "resourceAmount").text == "0 / 100" &&
+                !BubbleField<RectTransform>(runtime, "resourceFeedbackPanel").gameObject.activeSelf &&
                 BubbleField<System.Collections.Generic.Queue<string>>(runtime, "notices").Count == notices,
                 "Depletion locks switching and shows zero with a warning color without repeated notices.");
             yield return CaptureWorld(runtime, "cs-world-charging");
@@ -150,9 +151,8 @@ namespace PAO.UI.V2
             Check(launcher.HasHeldBubble && launcher.PaidCost == 12 && resource.Current == 8,
                 "A fully charged sticky bubble remains at the muzzle with its paid cost.");
             switcher.SetType(BubbleType.Bomb);
-            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<Text>(runtime, "resourceAmount").text == "8 / 100" &&
-                BubbleField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress == 1,
-                "A held bubble retains its type and full ability ring while the resource HUD shows remaining quantity.");
+            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<Text>(runtime, "currentAbility").text.Contains("浮粘"),
+                "A held bubble retains its original type in the cost preview after switching.");
             GameObject held = BubbleField<GameObject>(launcher, "m_HeldBubble");
             launcher.LaunchHeldBubble();
             Check(!launcher.HasHeldBubble && resource.Current == 8 && held.GetComponent<Bubble>().Type == BubbleType.Sticky,

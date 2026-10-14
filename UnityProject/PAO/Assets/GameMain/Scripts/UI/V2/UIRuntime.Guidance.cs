@@ -131,7 +131,8 @@ namespace PAO.UI.V2
             tutorialKey = GuideKey(tutorialCue, new Vector2(30, 0));
 
             reticleCue = ui.Rect("Charge reticle", visualHud);
-            Anchor(reticleCue, Vector2.zero, new Vector2(340, 60), new Vector2(34, 34), new Vector2(.5f, .5f));
+            reticleCue.SetParent(abilitySummary, false);
+            UIWidgets.Size(reticleCue, 28, 28);
             Image reticleBacking = ui.Rect("Charge backing", reticleCue).gameObject.AddComponent<UICircleImage>();
             UIWidgets.Stretch(reticleBacking.rectTransform, -4);
             reticleBacking.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .9f); reticleBacking.raycastTarget = false;
@@ -165,10 +166,11 @@ namespace PAO.UI.V2
             if (objectivePanel != null) objectivePanel.gameObject.SetActive(detailed);
             if (abilityPanel != null)
             {
-                abilityPanel.gameObject.SetActive(detailed);
+                abilityPanel.gameObject.SetActive(true);
             }
             PositionResourceHud();
-            if (tutorialCue != null) tutorialCue.anchoredPosition = new Vector2(32, resourcePanel != null ? resourcePanel.rect.height + 52 : 32);
+            if (tutorialCue != null && detailed) tutorialCue.gameObject.SetActive(false);
+            PositionGameplayHud();
             if (visualHud != null) visualHud.gameObject.SetActive(!detailed);
         }
 
@@ -252,19 +254,20 @@ namespace PAO.UI.V2
                 if (!clear)
                 {
                     // Reserve the ability cluster and the first-action badge while preserving the bearing.
-                    if (position.x > limit.x - 70 && position.y < -visualHud.rect.height * .5f + 430)
-                        position.y = Mathf.Min(limit.y, -visualHud.rect.height * .5f + 430);
-                    if (tutorialRemaining > 0 && position.y < -visualHud.rect.height * .5f + tutorialCue.anchoredPosition.y + tutorialCue.rect.height + 24 &&
-                        position.x < -visualHud.rect.width * .5f + tutorialCue.rect.width + 65)
-                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + tutorialCue.rect.width + 65);
-                    RectTransform abilityCard = abilityPanel as RectTransform;
-                    if (abilityCard != null && abilityCard.gameObject.activeInHierarchy && position.y < -visualHud.rect.height * .5f + abilityCard.rect.height + 64 &&
-                        position.x < -visualHud.rect.width * .5f + abilityCard.rect.width + 64)
-                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + abilityCard.rect.width + 64);
+                    if (position.x > limit.x - 70 && position.y < -visualHud.rect.height * .5f + abilityCluster.rect.height * abilityCluster.localScale.x + 64)
+                        position.y = Mathf.Min(limit.y, -visualHud.rect.height * .5f + abilityCluster.rect.height * abilityCluster.localScale.x + 64);
+                    if (hudMessages != null && position.y < -visualHud.rect.height * .5f + hudMessages.rect.height + 76 &&
+                        Mathf.Abs(position.x - hudMessages.anchoredPosition.x) < hudMessages.rect.width * .5f + 48)
+                        position.y = -visualHud.rect.height * .5f + hudMessages.rect.height + 76;
+                    if (tutorialRemaining > 0 && tutorialCue != null &&
+                        position.y < -visualHud.rect.height * .5f + tutorialCue.anchoredPosition.y + tutorialCue.rect.height + 24 &&
+                        Mathf.Abs(position.x - tutorialCue.anchoredPosition.x) < tutorialCue.rect.width * .5f + 48)
+                        position.y = -visualHud.rect.height * .5f + tutorialCue.anchoredPosition.y + tutorialCue.rect.height + 24;
                     if (resourcePanel != null && resourcePanel.gameObject.activeInHierarchy &&
-                        position.y < -visualHud.rect.height * .5f + resourcePanel.anchoredPosition.y + resourcePanel.rect.height + 24 &&
+                        position.y > visualHud.rect.height * .5f - resourcePanel.rect.height - 72 &&
                         position.x < -visualHud.rect.width * .5f + resourcePanel.rect.width + 64)
-                        position.x = Mathf.Min(limit.x, -visualHud.rect.width * .5f + resourcePanel.rect.width + 64);
+                        position.y = visualHud.rect.height * .5f - resourcePanel.rect.height - 72;
+
                 }
                 goalCue.anchoredPosition = position; goalSymbol.Symbol = clear ? UIGuideSymbol.Goal : UIGuideSymbol.Arrow;
                 goalSymbol.rectTransform.localRotation = clear ? Quaternion.identity : Quaternion.Euler(0, 0, heading);
@@ -293,12 +296,6 @@ namespace PAO.UI.V2
                 if (chapterGoal != null && best.owner.transform == chapterGoal) goalCue.gameObject.SetActive(false);
             }
 
-            if (resourcePanel == null && reticleCue != null)
-            {
-                bool charging = launcher != null && (launcher.IsCharging || launcher.HasHeldBubble);
-                reticleCue.gameObject.SetActive(charging);
-                if (charging) reticleArc.Progress = launcher.HasHeldBubble ? 1 : launcher.ChargeProgress;
-            }
             tutorialCue.gameObject.SetActive(tutorialRemaining > 0 && (!pulseIsTutorial || UISettings.Current.tutorials));
             if (tutorialCue.gameObject.activeSelf)
             {

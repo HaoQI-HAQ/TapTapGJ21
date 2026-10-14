@@ -1,4 +1,4 @@
-Passed: 145
+Passed: 179
 CS loadout resolves with a two-second charge and one-metre hold threshold.
 CS type 0 preserves its reference prefab, size range and cost.
 CS type 1 preserves its reference prefab, size range and cost.
@@ -11,138 +11,172 @@ cs shows the full resource pool with detailed hints disabled.
 CS retains its authored player spawn after replacing the missing prefab.
 cs actually creates the reference prefab for type 0.
 cs incrementally charges the displayed cost for type 0.
+cs shows real remaining quantity while charging without adding text or expanding the panel.
 cs releases and unlocks type 0.
 cs actually creates the reference prefab for type 1.
 cs incrementally charges the displayed cost for type 1.
+cs shows real remaining quantity while charging without adding text or expanding the panel.
 cs releases and unlocks type 1.
 cs actually creates the reference prefab for type 2.
 cs incrementally charges the displayed cost for type 2.
+cs shows real remaining quantity while charging without adding text or expanding the panel.
 cs releases and unlocks type 2.
-cs keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+cs places energy at the upper left and type, cost and charge inside the ability cluster.
 Insufficient resource stops growth after spending only the affordable cost.
 A depleted charge retains its size and progress.
-Type switching stays locked and repeated insufficient events use one inline hint.
-Rendered diagnostic world and HUD: cs-lowpoly-world-charging.
+Depletion locks switching and shows zero with a warning color without repeated notices.
+Rendered diagnostic world and HUD: cs-world-charging.
 Rendered cs-resource-insufficient-960.
-Resource text fits: 泡泡值  0 / 100
-Resource text fits: 浮粘泡泡 · 已用 3
-Resource text fits: 泡泡值不足 · 停止变大
+HUD text fits: 0 / 100
+HUD text fits: 浮粘泡泡
+HUD text fits: 消耗 2–12
+HUD text fits: 地形填充  0 / 8
 Recovered resource resumes the existing charge.
 Pause stops charge spending and hides the resource HUD.
-An empty pool refuses a new bubble and shows the exact shortfall.
+An empty pool refuses a new bubble and displays an empty meter with a warning color.
 A fully charged sticky bubble remains at the muzzle with its paid cost.
 A held bubble retains its original type in the cost preview after switching.
 Launching the held bubble uses its original settings without charging twice.
-Breaking actual bubble terrain refunds its reward and updates the HUD.
+Breaking actual terrain refunds its reward and fills and highlights the meter without extra text.
 Rendered cs-resource-recovered.
+The recovery highlight expires back to the ordinary meter color.
+Rendered cs-resource-quantity-56.
 Rendered cs-resource-english-large-960.
-Resource text fits: Energy  45 / 100
-Resource text fits: Bomb bubble · Cost 2–12
-Resource text fits: Recovered +5
+HUD text fits: 56 / 100
+HUD text fits: Bomb bubble
+HUD text fits: Cost 2–12
+HUD text fits: Terrain fill  0 / 8
+HUD text fits: Recovered +11
 Rendered cs-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +55
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
+HUD text fits: 地形填充  0 / 8
 Map0 has exactly one player.
 Map0 uses the same loadout and one resource/face manager.
 Map0 has no missing scripts or prefab instances.
 Map0 shows the full resource pool with detailed hints disabled.
 Map0 actually creates the reference prefab for type 0.
 Map0 incrementally charges the displayed cost for type 0.
+Map0 shows real remaining quantity while charging without adding text or expanding the panel.
 Map0 releases and unlocks type 0.
 Map0 actually creates the reference prefab for type 1.
 Map0 incrementally charges the displayed cost for type 1.
+Map0 shows real remaining quantity while charging without adding text or expanding the panel.
 Map0 releases and unlocks type 1.
 Map0 actually creates the reference prefab for type 2.
 Map0 incrementally charges the displayed cost for type 2.
+Map0 shows real remaining quantity while charging without adding text or expanding the panel.
 Map0 releases and unlocks type 2.
-Map0 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map0 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map0-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 Map1 has exactly one player.
 Map1 uses the same loadout and one resource/face manager.
 Map1 has no missing scripts or prefab instances.
 Map1 shows the full resource pool with detailed hints disabled.
 Map1 actually creates the reference prefab for type 0.
 Map1 incrementally charges the displayed cost for type 0.
+Map1 shows real remaining quantity while charging without adding text or expanding the panel.
 Map1 releases and unlocks type 0.
 Map1 actually creates the reference prefab for type 1.
 Map1 incrementally charges the displayed cost for type 1.
+Map1 shows real remaining quantity while charging without adding text or expanding the panel.
 Map1 releases and unlocks type 1.
 Map1 actually creates the reference prefab for type 2.
 Map1 incrementally charges the displayed cost for type 2.
+Map1 shows real remaining quantity while charging without adding text or expanding the panel.
 Map1 releases and unlocks type 2.
-Map1 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map1 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map1-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 Map2 has exactly one player.
 Map2 uses the same loadout and one resource/face manager.
 Map2 has no missing scripts or prefab instances.
 Map2 shows the full resource pool with detailed hints disabled.
 Map2 actually creates the reference prefab for type 0.
 Map2 incrementally charges the displayed cost for type 0.
+Map2 shows real remaining quantity while charging without adding text or expanding the panel.
 Map2 releases and unlocks type 0.
 Map2 actually creates the reference prefab for type 1.
 Map2 incrementally charges the displayed cost for type 1.
+Map2 shows real remaining quantity while charging without adding text or expanding the panel.
 Map2 releases and unlocks type 1.
 Map2 actually creates the reference prefab for type 2.
 Map2 incrementally charges the displayed cost for type 2.
+Map2 shows real remaining quantity while charging without adding text or expanding the panel.
 Map2 releases and unlocks type 2.
-Map2 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map2 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map2-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 Map3 has exactly one player.
 Map3 uses the same loadout and one resource/face manager.
 Map3 has no missing scripts or prefab instances.
 Map3 shows the full resource pool with detailed hints disabled.
 Map3 actually creates the reference prefab for type 0.
 Map3 incrementally charges the displayed cost for type 0.
+Map3 shows real remaining quantity while charging without adding text or expanding the panel.
 Map3 releases and unlocks type 0.
 Map3 actually creates the reference prefab for type 1.
 Map3 incrementally charges the displayed cost for type 1.
+Map3 shows real remaining quantity while charging without adding text or expanding the panel.
 Map3 releases and unlocks type 1.
 Map3 actually creates the reference prefab for type 2.
 Map3 incrementally charges the displayed cost for type 2.
+Map3 shows real remaining quantity while charging without adding text or expanding the panel.
 Map3 releases and unlocks type 2.
-Map3 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map3 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map3-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 Map4 has exactly one player.
 Map4 uses the same loadout and one resource/face manager.
 Map4 has no missing scripts or prefab instances.
 Map4 shows the full resource pool with detailed hints disabled.
 Map4 actually creates the reference prefab for type 0.
 Map4 incrementally charges the displayed cost for type 0.
+Map4 shows real remaining quantity while charging without adding text or expanding the panel.
 Map4 releases and unlocks type 0.
 Map4 actually creates the reference prefab for type 1.
 Map4 incrementally charges the displayed cost for type 1.
+Map4 shows real remaining quantity while charging without adding text or expanding the panel.
 Map4 releases and unlocks type 1.
 Map4 actually creates the reference prefab for type 2.
 Map4 incrementally charges the displayed cost for type 2.
+Map4 shows real remaining quantity while charging without adding text or expanding the panel.
 Map4 releases and unlocks type 2.
-Map4 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map4 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map4-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 Map5 has exactly one player.
 Map5 uses the same loadout and one resource/face manager.
 Map5 has no missing scripts or prefab instances.
 Map5 shows the full resource pool with detailed hints disabled.
 Map5 actually creates the reference prefab for type 0.
 Map5 incrementally charges the displayed cost for type 0.
+Map5 shows real remaining quantity while charging without adding text or expanding the panel.
 Map5 releases and unlocks type 0.
 Map5 actually creates the reference prefab for type 1.
 Map5 incrementally charges the displayed cost for type 1.
+Map5 shows real remaining quantity while charging without adding text or expanding the panel.
 Map5 releases and unlocks type 1.
 Map5 actually creates the reference prefab for type 2.
 Map5 incrementally charges the displayed cost for type 2.
+Map5 shows real remaining quantity while charging without adding text or expanding the panel.
 Map5 releases and unlocks type 2.
-Map5 keeps compact lowpoly energy feedback and charging badge in the lower-left panel.
+Map5 places energy at the upper left and type, cost and charge inside the ability cluster.
 Rendered Map5-resource-hud.
-Resource text fits: 泡泡值  100 / 100
-Resource text fits: 恢复 +3
+HUD text fits: 100 / 100
+HUD text fits: 炸弹泡泡
+HUD text fits: 消耗 2–12
 
 Errors: 0
