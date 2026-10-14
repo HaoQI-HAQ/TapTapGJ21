@@ -415,31 +415,49 @@ namespace PAO
             SetFloat(mat, "_WobbleAmp", 0.06f);    // 只做轻微扰动，保证还是圆
             SetFloat(mat, "_WobbleSpeed", 2.0f);
 
-            // ---- 球面着色（"有质感"的关键）----
+            // ---- 对齐角色的清透 PBR 画风 ----
             //
-            // 这里把传进来的 glowStrength 压到 45%：
-            // 加色的环形发光太强会把球面明暗冲平，看起来又变成一张亮圆片。
-            // 保留一点发光做"炸开"的亮度，但把大部分亮度交给漫反射和高光去表达。
-            SetFloat(mat, "_GlowStrength", glowStrength * 0.45f);
+            // 角色的 ModelPBR.shader 走 URP 标准 PBR，立体感是**被场景照出来的**：
+            // 环境光来自 Light Probe / 天空盒，主光来自场景方向光。
+            //
+            // 所以这里不再自己写死光方向（那样只能在特定光照下碰巧像，
+            // 换关卡或进水下就会和角色脱节），改成：
+            //   着色器里 SampleSH(n) 采样环境、GetMainLight() 取主光，
+            //   这里只调"强度"和"通透感"。
+            //
+            // 四条一起用才像：
+            //   1. 环境光给足 —— 角色在晴空下背光面也不黑
+            //   2. 主光压低 —— 环境光主导才是那套画风（不是硬阴影）
+            //   3. 次表面散射感 —— 半透明软体，光会透过去，边缘发亮
+            //   4. 大片柔光高光 —— 低粗糙度的光滑表面
+            SetFloat(mat, "_GlowStrength", glowStrength * 0.35f);
+            SetFloat(mat, "_SphereAmount", 1.0f);      // 厚度方向用满，明暗才连续
+            SetFloat(mat, "_ToonSteps", 1.0f);         // 1 = 完全平滑，不做色阶
+            SetFloat(mat, "_ShadowSoft", 0.62f);       // 明暗过渡拉宽 = 化开
+            SetFloat(mat, "_AmbientBoost", 1.35f);     // 环境光主导
+            SetFloat(mat, "_DirectBoost", 0.50f);      // 主光只做辅助
+            SetFloat(mat, "_Transmission", 0.60f);     // 半透明软体的透光感
+            SetFloat(mat, "_GrainStrength", 0.20f);    // 笔触强度
+            SetFloat(mat, "_GrainScale", 20.0f);       // 笔触粗细
+            SetFloat(mat, "_GrainStretch", 1.45f);     // 沿一个方向拉伸 = 运笔方向
 
-            // 0.75 = 明显的球面感，但不是写实渲染那种死板的余弦
-            SetFloat(mat, "_SphereAmount", 0.75f);
+            // 光照方向和暗部颜色**不再由这里指定**。
+            //
+            // 着色器直接采样场景的环境光（SampleSH）和主光（GetMainLight），
+            // 和角色拿到的是同一份数据 —— 场景光照变了，爆炸会跟着一起变。
+            // 早先这里写死过一个光方向，那样只能在特定光照下"碰巧像"，
+            // 换个关卡或进水下就会和角色脱节。
 
-            // 主光从左上前方打下来（屏幕空间），和主角水母的高光方位一致
-            SetVector(mat, "_LightDir", new Vector4(-0.40f, 0.62f, 0.68f, 0f));
-
-            // 暗部往冷青压 —— 水下环境光
-            SetColor(mat, "_AmbientTint", new Color(0.42f, 0.55f, 0.72f, 1f));
-
-            // 镜面高光：偏左上的一颗亮"水珠"
+            // 镜面高光：角色表面是光滑的（低粗糙度），
+            // 所以高光是一片渐隐的大柔光，不是小块实心白
             SetColor(mat, "_SpecColor", Color.white);
-            SetFloat(mat, "_SpecStrength", 1.05f);
-            SetFloat(mat, "_SpecPower", 42f);
+            SetFloat(mat, "_SpecStrength", 1.25f);
+            SetFloat(mat, "_SpecPower", 24f);      // 值越小光斑越宽
             SetVector(mat, "_SpecOffset", new Vector4(-0.18f, 0.20f, 0f, 0f));
 
-            // 边缘透光：泡泡的边是薄的，光会穿过来
+            // 边缘透光：角色边缘有一圈柔和的亮，这里对应上
             SetColor(mat, "_RimColor", new Color(1f, 0.94f, 0.95f, 1f));
-            SetFloat(mat, "_RimStrength", 0.95f);
+            SetFloat(mat, "_RimStrength", 0.65f);
             SetFloat(mat, "_RimPower", 2.6f);
 
             return mat;

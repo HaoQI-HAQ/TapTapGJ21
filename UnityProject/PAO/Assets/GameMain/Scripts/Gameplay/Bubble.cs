@@ -894,16 +894,19 @@ namespace PAO
                 return;
             }
 
-            // 到点自己化掉。三种类型的溶解姿态不同（见 BubbleDissolveVFX）：
-            // 浮粘往下沉慢慢化、弹力弹开式地散、爆炸收拢后骤灭。
-            // 颜色优先读泡泡自己的材质 —— 美术改了泡泡颜色，溶解会自动跟着变。
-            BubbleDissolveVFX.Spawn(
-                transform.position,
-                Type,
-                GetDiameter(),
-                BubbleDissolveVFX.ReadBubbleColor(gameObject));
-
-            Destroy(gameObject);
+            // 到点自己溶解掉。
+            //
+            // 用"逐层吃掉"式溶解（见 BubbleDissolveVFX）：泡泡表面沿有机边界被裁掉，
+            // 裁掉那一侧有一条发亮的窄边 —— 不是整体调透明度变淡。
+            //
+            // 溶解时长按类型分：浮粘最慢（黏住、留下），弹力中等，爆炸最快（引信烧完）。
+            //
+            // 【注意这里不在本帧 Destroy】
+            // 溶解要播 1~2 秒，本物体必须活到那时候才有东西可溶。
+            // 所以把 Destroy 交给回调 —— 溶解完成时才销毁。
+            // 材质是按类型共享的，VFX 内部走 MaterialPropertyBlock 只改这一个泡泡，
+            // 不会把场上同类泡泡一起溶掉。
+            BubbleDissolveVFX.Begin(gameObject, Type, delegate { Destroy(gameObject); });
         }
 
         /// <summary>

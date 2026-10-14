@@ -3,447 +3,241 @@ using UnityEngine;
 namespace PAO
 {
     /// <summary>
-    /// 泡泡存活时间到点时的"溶解 / 消散"特效。
+    /// 泡泡逐渐溶解消失。
     ///
-    /// 【三种类型各有各的散法】——这是这套特效的重点，不然三个泡泡化掉长得一样，
-    /// 玩家就分不出刚才消失的是哪种：
+    /// 【参考效果】
+    /// 一个实体被慢慢"吃掉"：一条发亮的边缘沿有机噪声边界推进，
+    /// 边缘内侧真的少掉一块，整体逐渐消失 —— 不是整体调透明度变淡。
     ///
-    ///   浮粘（Sticky）——「往下沉、慢慢化」
-    ///       泡泡壳向下坠一点，边缘像颜料洇开，碎成小水珠再浮上去。
-    ///       浮粘是"黏住、留下"的性格，所以散得最慢、最有分量。
+    /// 【和前两版的关系（这两版都是弯路，留在这里避免再走回去）】
+    ///   1. 最初的 BubbleDissolvePuff：着色器里有 `_Erode`（边缘侵蚀）参数，
+    ///      但**从没随时间驱动过**。所以实际效果只是"整体淡出"，
+    ///      泡泡并没有被吃掉。这是那一版最根本的 bug。
+    ///   2. 后来的 BubbleDissolveBurn：做成了火烧 —— 橘色火苗、焦黑、火星飞溅。
+    ///      那是"燃烧"，不是"溶解"。火是一个强烈的事件；
+    ///      溶解应该是安静的。所以这一版把火全部去掉了。
     ///
-    ///   弹力（Bouncy）——「弹开式地散」
-    ///       先被压扁一下再弹开，速度最快、扩散最广，碎屑往外崩。
-    ///       弹力是"弹跳"的性格，所以散得最干脆。
+    /// 【现在用什么】
+    ///   PAO/BubbleDissolve 着色器 + MaterialPropertyBlock 每帧推进 _DissolveAmount。
     ///
-    ///   爆炸（Bomb）——「收拢后骤灭」
-    ///       向内一收、顿一下，然后很快消失，残留一点橙色余温。
-    ///       炸弹是"引信烧完"的性格，所以散得最突然。
-    ///
-    /// 【为什么用代码建，不做预制体】
-    /// 与 BubbleBurstVFX 同理：场景/预制体是带自动分配 ID 的 YAML，
-    /// 手改或脚本改都容易踩坑；结构固定、参数全在代码里时运行时建更可靠。
-    ///
-    /// 【配色】
-    /// 优先取泡泡自己的材质颜色（这样美术改了泡泡颜色，溶解会自动跟着变）；
-    /// 取不到才退回按类型给的默认色，且这些默认色都与 PAO/BubbleBall 同色系。
+    /// 【为什么用 MaterialPropertyBlock 而不是改材质】
+    /// 泡泡的材质是**按类型共享**的（BubbleLauncher.m_RuntimeMaterials 按索引缓存）——
+    /// 直接改材质会让场上所有同类泡泡一起开始溶解。
+    /// PropertyBlock 挂在单个 Renderer 上，互不影响。
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("PAO/VFX/Bubble Dissolve VFX")]
     public sealed class BubbleDissolveVFX : MonoBehaviour
     {
-        // ---- 与 BubbleBall / 策划案 §10.2 "粉紫基调" 对齐的色板 ----
-        /// <summary>浮粘：冰蓝（BubbleBall._BaseColor 同一支）</summary>
-        private static readonly Color kStickyTint = new Color(0.72f, 0.90f, 1.00f, 1f);
+        private const string kDissolveShader = "PAO/BubbleDissolve";
 
-        /// <summary>弹力：青绿（BubbleBall._IridColorA）</summary>
-        private static readonly Color kBouncyTint = new Color(0.45f, 0.95f, 0.85f, 1f);
+        /// <summary>溶解进度属性名。</summary>
+        private static readonly int kDissolveID = Shader.PropertyToID("_DissolveAmount");
 
-        /// <summary>爆炸：暖橙（和 Bubble.AbsorbBomb 里把宿主染橙的那套一致）</summary>
-        private static readonly Color kBombTint   = new Color(1.00f, 0.66f, 0.35f, 1f);
+        // ---- 按类型区分溶解手感 ----
+        //
+        // 溶解本来就该慢（"慢慢溶解"），所以三个时长都比火烧那版长得多。
+        // 差异保留，但差异体现在节奏的"轻重"而不是"快慢到看不见"。
 
-        /// <summary>水痕亮边（三种共用）</summary>
-        private static readonly Color kWetEdge    = new Color(0.88f, 0.98f, 1.00f, 1f);
+        /// <summary>浮粘：黏住、留下 —— 溶解最慢、最舍不得</summary>
+        private const float kStickyDuration = 2.10f;
 
-        private const string kDissolveShader = "PAO/BubbleDissolvePuff";
+        /// <summary>弹力：干脆 —— 溶解中等</summary>
+        private const float kBouncyDuration = 1.55f;
 
-        /// <summary>
-        /// 本实例创建出来的所有材质，销毁时统一回收。
-        ///
-        /// 【为什么不做静态缓存】
-        /// 之前按颜色缓存过一份 static，但三个类型颜色不同会互相覆盖：
-        /// 新类型建材质时把 static 换掉，旧材质就不在"要保留"的名单里了，
-        /// 于是被销毁 —— 而它的粒子还在用。每实例各建各的就没这个问题，
-        /// 溶解本身是低频操作，这点开销可以接受。
-        /// </summary>
-        private readonly System.Collections.Generic.List<Material> m_OwnedMaterials =
-            new System.Collections.Generic.List<Material>();
+        /// <summary>爆炸：引信烧完就没了 —— 溶解最快</summary>
+        private const float kBombDuration   = 1.15f;
 
-        /// <summary>
-        /// 在指定位置播一次溶解特效。
-        /// </summary>
-        /// <param name="position">泡泡中心</param>
-        /// <param name="type">泡泡类型，决定消散姿态与颜色</param>
-        /// <param name="diameter">泡泡直径（米）</param>
-        /// <param name="sourceColor">泡泡身上的实际颜色。给 null 则用按类型的默认色</param>
-        public static BubbleDissolveVFX Spawn(Vector3 position, BubbleType type,
-                                              float diameter, Color? sourceColor = null)
+        private Renderer m_TargetRenderer;
+        private MaterialPropertyBlock m_Block;
+        private Material m_DissolveMaterial;
+
+        private float m_Duration;
+        private float m_Elapsed;
+        private bool m_Running;
+        private System.Action m_OnFinished;
+
+        /// <summary>是否正在溶解。</summary>
+        public bool IsDissolving { get { return m_Running; } }
+
+        /// <summary>溶解进度 0~1。</summary>
+        public float Progress
         {
-            if (diameter <= 0.001f)
-            {
-                diameter = 0.6f;
-            }
-
-            var root = new GameObject("Bubble Dissolve VFX");
-            root.transform.position = position;
-
-            var fx = root.AddComponent<BubbleDissolveVFX>();
-            fx.Build(type, diameter, sourceColor ?? TintForType(type));
-
-            return fx;
+            get { return m_Duration > 0.001f ? Mathf.Clamp01(m_Elapsed / m_Duration) : 1f; }
         }
 
+        // ==================== 对外接口 ====================
+
         /// <summary>
-        /// 从泡泡身上取实际颜色。
-        /// 直接读实例材质的 _BaseColor / _Color / color —— 三种写法都试，
-        /// 因为不同 shader 用的属性名不一样（URP/Lit 用 _BaseColor，Standard 用 _Color）。
+        /// 让一个泡泡开始溶解。
         /// </summary>
-        public static Color? ReadBubbleColor(GameObject bubble)
+        /// <param name="bubble">要溶解的泡泡物体（用它的 Renderer）</param>
+        /// <param name="type">泡泡类型，决定溶解时长</param>
+        /// <param name="onFinished">溶解完成时回调。调用方一般在这里 Destroy 泡泡</param>
+        public static BubbleDissolveVFX Begin(GameObject bubble, BubbleType type,
+                                              System.Action onFinished = null)
         {
             if (bubble == null)
             {
+                if (onFinished != null) { onFinished(); }
                 return null;
             }
 
-            Renderer renderer = bubble.GetComponentInChildren<Renderer>();
-            if (renderer == null || renderer.sharedMaterial == null)
+            var root = new GameObject("Bubble Dissolve VFX");
+            root.transform.position = bubble.transform.position;
+            root.transform.rotation = bubble.transform.rotation;
+
+            var fx = root.AddComponent<BubbleDissolveVFX>();
+            fx.Setup(bubble, type, onFinished);
+            return fx;
+        }
+
+        private void Setup(GameObject bubble, BubbleType type, System.Action onFinished)
+        {
+            m_OnFinished = onFinished;
+            m_Duration = DurationFor(type);
+
+            m_TargetRenderer = bubble.GetComponentInChildren<Renderer>();
+
+            if (m_TargetRenderer == null)
             {
-                return null;
+                Debug.LogWarning("[BubbleDissolveVFX] 泡泡上没有 Renderer，溶解无法进行，直接结束。");
+                Finish();
+                return;
             }
 
-            Material mat = renderer.sharedMaterial;
-
-            if (mat.HasProperty("_BaseColor"))
-            {
-                return mat.GetColor("_BaseColor");
-            }
-
-            if (mat.HasProperty("_Color"))
-            {
-                return mat.GetColor("_Color");
-            }
-
-            return mat.color;
-        }
-
-        /// <summary>按类型给默认色。</summary>
-        private static Color TintForType(BubbleType type)
-        {
-            switch (type)
-            {
-                case BubbleType.Bouncy: return kBouncyTint;
-                case BubbleType.Bomb:   return kBombTint;
-                default:                return kStickyTint;
-            }
-        }
-
-        // ==================== 构建 ====================
-
-        private float m_LifeTime;
-        private float m_Elapsed;
-
-        private void Build(BubbleType type, float diameter, Color tint)
-        {
-            Material shellMat = GetShellMaterial(tint);
-
-            switch (type)
-            {
-                case BubbleType.Bouncy:
-                    // 弹开式：最短、最快、扩散最广
-                    BuildShell(shellMat, diameter, life: 0.45f, expand: 2.3f,
-                               rise: 0.10f, count: 12, startScale: 1.00f);
-                    BuildMist(shellMat, diameter, life: 0.40f, speed: 2.6f,
-                              rise: 0.25f, count: 20, sizeScale: 0.16f);
-                    BuildDroplets(tint, diameter, life: 0.42f, speed: 2.2f,
-                                  rise: 0.05f, count: 16);
-                    m_LifeTime = 0.85f;
-                    break;
-
-                case BubbleType.Bomb:
-                    // 收拢后骤灭：先微缩（startScale < 1 表现"收紧"），再三段内消失
-                    BuildShell(shellMat, diameter, life: 0.32f, expand: 0.55f,
-                               rise: 0.18f, count: 10, startScale: 0.72f);
-                    BuildMist(shellMat, diameter, life: 0.28f, speed: 1.2f,
-                              rise: 0.42f, count: 12, sizeScale: 0.13f);
-                    BuildDroplets(tint, diameter, life: 0.30f, speed: 1.4f,
-                                  rise: 0.30f, count: 10);
-                    m_LifeTime = 0.70f;
-                    break;
-
-                default:
-                    // 浮粘：往下沉、散得最慢、最"有分量"
-                    BuildShell(shellMat, diameter, life: 0.80f, expand: 1.25f,
-                               rise: -0.38f, count: 18, startScale: 1.00f);
-                    BuildMist(shellMat, diameter, life: 0.95f, speed: 0.75f,
-                              rise: 0.30f, count: 16, sizeScale: 0.18f);
-                    BuildDroplets(tint, diameter, life: 0.75f, speed: 0.9f,
-                                  rise: 0.22f, count: 14);
-                    m_LifeTime = 1.35f;
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// 泡泡壳本身化掉。
-        /// 这是主视觉：一块和泡泡差不多大的彩块，向内收 + 边缘侵蚀 + 淡出。
-        /// </summary>
-        private void BuildShell(Material material, float diameter, float life,
-                                float expand, float rise, int count, float startScale)
-        {
-            ParticleSystem ps = NewSystem("Shell", life);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.startLifetime = life;
-            main.startSpeed = 0f;                              // 靠 Size 曲线扩张，不靠速度
-            main.startSize = diameter * startScale;
-            main.startColor = Color.white;                     // 颜色走材质 _Tint
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            // 负值 = 往上（水里的"洇上去"），正值 = 往下沉
-            main.gravityModifier = -rise;
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, count) });
-
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = diameter * 0.5f;                    // 沿球壳分布 = 泡泡的"皮"
-            shape.radiusThickness = 1f;
-
-            ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = material;
-
-            // 尺寸：从泡泡大小 → 略微扩张（或收紧）→ 收掉
-            ApplySizeCurve(ps, 1f, startScale, expand);
-
-            // 透明度：前段保持，后段淡出
-            ApplyAlphaCurve(ps, new[] { (0f, 0.95f), (0.45f, 0.75f), (1f, 0f) });
-
-            // 顶点内缩交给 Size 曲线就够了：溶解彩块是 2D billboard，
-            // 缩放粒子在视觉上就等价于"泡泡收缩"，不需要额外的顶点流。
-            // （早先试过用 Custom1 传内缩量再在顶点着色器里压，但那要同时配置
-            //   SetVector 和 renderer 的活动顶点流，多一层能出错的地方，收益为零。）
-
-            // 缓慢自转，让边缘噪声一直在动
-            ParticleSystem.RotationOverLifetimeModule rotate = ps.rotationOverLifetime;
-            rotate.enabled = true;
-            rotate.z = new ParticleSystem.MinMaxCurve(-0.5f, 0.5f);
-        }
-
-        /// <summary>细小的水雾颗粒，从泡泡位置渗出来飘散。</summary>
-        private void BuildMist(Material material, float diameter, float life,
-                               float speed, float rise, int count, float sizeScale)
-        {
-            ParticleSystem ps = NewSystem("Mist", life);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.startLifetime = life;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(speed * diameter * 0.5f, speed * diameter);
-            main.startSize = new ParticleSystem.MinMaxCurve(diameter * sizeScale * 0.6f,
-                                                            diameter * sizeScale * 1.4f);
-            main.startColor = Color.white;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = -rise;                      // 水里往上飘
-            main.maxParticles = 120;
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            // 分两波，第二波稍晚 —— 看起来像"陆续渗出来"
-            emission.SetBursts(new[]
-            {
-                new ParticleSystem.Burst(0.00f, Mathf.Max(1, count / 2)),
-                new ParticleSystem.Burst(life * 0.30f, Mathf.Max(1, count - count / 2)),
-            });
-
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = diameter * 0.35f;
-
-            ParticleSystem.LimitVelocityOverLifetimeModule limit = ps.limitVelocityOverLifetime;
-            limit.enabled = true;
-            limit.dampen = 0.45f;
-
-            ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = material;
-
-            ApplySizeCurve(ps, 0.5f, 1.15f, 1f);
-            ApplyAlphaCurve(ps, new[] { (0f, 0f), (0.2f, 0.85f), (1f, 0f) });
-        }
-
-        /// <summary>很小的实心水珠，给溶解收尾一点颗粒感。</summary>
-        private void BuildDroplets(Color tint, float diameter, float life,
-                                   float speed, float rise, int count)
-        {
-            ParticleSystem ps = NewSystem("Droplets", life);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.startLifetime = life;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(speed * diameter * 0.8f, speed * diameter * 1.8f);
-            main.startSize = new ParticleSystem.MinMaxCurve(diameter * 0.05f, diameter * 0.12f);
-            main.startColor = tint;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = -rise;
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, count) });
-
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = diameter * 0.42f;
-            shape.radiusThickness = 1f;
-
-            ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = MakeDropletMaterial(tint);
-
-            ApplySizeCurve(ps, 1f, 0.9f, 0.35f);
-            ApplyAlphaCurve(ps, new[] { (0f, 0.9f), (0.5f, 0.6f), (1f, 0f) });
-        }
-
-        /// <summary>水珠用独立材质（实心一点、不吃侵蚀），避免和壳抢同一份材质。</summary>
-        private Material MakeDropletMaterial(Color tint)
-        {
-            return MakeMaterial(tint, softness: 0.10f, corePower: 0.25f, rimStrength: 0.7f, opacity: 1f);
-        }
-
-        // ==================== 粒子系统基础 ====================
-
-        private ParticleSystem NewSystem(string name, float duration)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(transform, false);
-
-            ParticleSystem ps = go.AddComponent<ParticleSystem>();
-
-            ParticleSystem.MainModule main = ps.main;
-            main.duration = Mathf.Max(0.1f, duration);
-            main.loop = false;
-            main.playOnAwake = false;
-            main.prewarm = false;
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
-            main.stopAction = ParticleSystemStopAction.None;   // 统一由本组件销毁
-
-            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.alignment = ParticleSystemRenderSpace.View;
-            renderer.sortingFudge = -1f;
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-
-            ps.Play();
-            return ps;
-        }
-
-        /// <summary>尺寸曲线：起始 → 峰值 → 收尾，三个关键帧。</summary>
-        private static void ApplySizeCurve(ParticleSystem ps, float from, float peak, float end)
-        {
-            ParticleSystem.SizeOverLifetimeModule size = ps.sizeOverLifetime;
-            size.enabled = true;
-            size.separateAxes = false;
-
-            var curve = new AnimationCurve(
-                new Keyframe(0f, from),
-                new Keyframe(0.35f, peak),
-                new Keyframe(1f, end));
-
-            size.size = new ParticleSystem.MinMaxCurve(1f, curve);
-        }
-
-        /// <summary>透明度曲线。传入 (时间比例, 透明度) 序列。</summary>
-        private static void ApplyAlphaCurve(ParticleSystem ps, (float t, float a)[] keys)
-        {
-            ParticleSystem.ColorOverLifetimeModule color = ps.colorOverLifetime;
-            color.enabled = true;
-
-            var gradient = new Gradient();
-            var colorKeys = new GradientColorKey[keys.Length];
-            var alphaKeys = new GradientAlphaKey[keys.Length];
-
-            for (int i = 0; i < keys.Length; i++)
-            {
-                colorKeys[i] = new GradientColorKey(Color.white, keys[i].t);
-                alphaKeys[i] = new GradientAlphaKey(keys[i].a, keys[i].t);
-            }
-
-            gradient.SetKeys(colorKeys, alphaKeys);
-            color.color = new ParticleSystem.MinMaxGradient(gradient);
-        }
-
-        // ==================== 材质 ====================
-
-        /// <summary>壳的材质。每个 VFX 实例各建一份并登记回收。</summary>
-        private Material GetShellMaterial(Color tint)
-        {
-            return MakeMaterial(tint, 0.24f, 0.50f, 1.2f, 1f);
-        }
-
-        /// <summary>
-        /// 造一个 PAO/BubbleDissolvePuff 材质，并登记到本实例的回收列表。
-        /// 找不到着色器时返回 null —— 粒子会退回默认材质，不崩。
-        /// </summary>
-        private Material MakeMaterial(Color tint, float softness, float corePower,
-                                      float rimStrength, float opacity)
-        {
             Shader shader = Shader.Find(kDissolveShader);
 
             if (shader == null)
             {
                 Debug.LogWarning("[BubbleDissolveVFX] 找不到着色器 " + kDissolveShader +
-                                 "，溶解会退回默认粒子材质。请确认 " +
-                                 "Assets/GameMain/Art/Shaders/BubbleDissolvePuff.shader 存在且编译通过。");
-                return null;
+                                 "，泡泡会直接消失（没有溶解效果）。请确认 " +
+                                 "Assets/GameMain/Art/Shaders/BubbleDissolve.shader 存在且编译通过。");
+                Finish();
+                return;
             }
 
-            var mat = new Material(shader);
-            mat.name = "BubbleDissolve (Runtime)";
-            mat.hideFlags = HideFlags.DontSave;
+            m_DissolveMaterial = new Material(shader);
+            m_DissolveMaterial.hideFlags = HideFlags.DontSave;
 
-            SetColor(mat, "_Tint", tint);
-            SetColor(mat, "_RimColor", kWetEdge);
-            SetFloat(mat, "_Opacity", opacity);
-            SetFloat(mat, "_Softness", softness);
-            SetFloat(mat, "_CorePower", corePower);
-            SetFloat(mat, "_RimStrength", rimStrength);
-            SetFloat(mat, "_RimWidth", 0.18f);
-            SetFloat(mat, "_Erode", 0.55f);       // 溶解特有的边缘侵蚀
-            SetFloat(mat, "_WobbleAmp", 3.4f);
-            SetFloat(mat, "_WobbleSpeed", 1.8f);
+            // 继承泡泡原来的底色，溶解起点不会突变
+            Color baseColor = ReadBaseColor(m_TargetRenderer);
 
-            m_OwnedMaterials.Add(mat);
-            return mat;
-        }
-        private static void SetColor(Material mat, string name, Color value)
-        {
-            if (mat != null && mat.HasProperty(name))
+            if (m_DissolveMaterial.HasProperty("_BaseColor"))
             {
-                mat.SetColor(name, value);
+                m_DissolveMaterial.SetColor("_BaseColor", baseColor);
             }
-        }
 
-        private static void SetFloat(Material mat, string name, float value)
-        {
-            if (mat != null && mat.HasProperty(name))
+            // 溶解中的颜色：把底色往白里提一点，看起来像"材质在变淡"
+            if (m_DissolveMaterial.HasProperty("_FadeTint"))
             {
-                mat.SetFloat(name, value);
+                Color fade = Color.Lerp(baseColor, Color.white, 0.35f);
+                fade.a = baseColor.a;
+                m_DissolveMaterial.SetColor("_FadeTint", fade);
             }
-        }
 
-        // ==================== 生命周期 ====================
+            // 噪声密度按泡泡尺寸反比 ——
+            // 大泡泡用同样密度，火痕/溶解斑会显得太大块
+            Vector3 lossy = bubble.transform.lossyScale;
+            float diameter = Mathf.Max(lossy.x, Mathf.Max(lossy.y, lossy.z));
+
+            if (diameter > 0.01f && m_DissolveMaterial.HasProperty("_NoiseScale"))
+            {
+                m_DissolveMaterial.SetFloat("_NoiseScale", Mathf.Clamp(7f / diameter, 3f, 22f));
+            }
+
+            m_TargetRenderer.sharedMaterial = m_DissolveMaterial;
+
+            m_Block = new MaterialPropertyBlock();
+            m_Running = true;
+
+            ApplyProgress(0f);
+        }
 
         private void Update()
         {
-            m_Elapsed += Time.deltaTime;
-
-            if (m_Elapsed >= m_LifeTime)
+            if (!m_Running)
             {
-                Destroy(gameObject);
+                return;
             }
+
+            // 用 unscaledDeltaTime：暂停时（timeScale = 0）溶解也该正常推进，
+            // 否则暂停期间泡泡会卡在溶一半的状态
+            m_Elapsed += Time.unscaledDeltaTime;
+
+            float p = Progress;
+            ApplyProgress(p);
+
+            if (p >= 1f)
+            {
+                Finish();
+            }
+        }
+
+        /// <summary>把进度写进 PropertyBlock。只影响这一个 Renderer。</summary>
+        private void ApplyProgress(float progress)
+        {
+            if (m_TargetRenderer == null || m_Block == null)
+            {
+                return;
+            }
+
+            m_TargetRenderer.GetPropertyBlock(m_Block);
+            m_Block.SetFloat(kDissolveID, progress);
+            m_TargetRenderer.SetPropertyBlock(m_Block);
+        }
+
+        private void Finish()
+        {
+            m_Running = false;
+
+            // 交还控制权之前先断开引用，避免调用方 Destroy 时还挂着我们的材质
+            m_TargetRenderer = null;
+
+            if (m_OnFinished != null)
+            {
+                System.Action cb = m_OnFinished;
+                m_OnFinished = null;
+                cb();
+            }
+
+            Destroy(gameObject);
         }
 
         private void OnDestroy()
         {
-            // 回收本实例造出来的所有材质。
-            // 材质是运行时 new 的，不回收会一直泄漏到退出 Play。
-            for (int i = 0; i < m_OwnedMaterials.Count; i++)
+            if (m_DissolveMaterial != null)
             {
-                if (m_OwnedMaterials[i] != null)
-                {
-                    Destroy(m_OwnedMaterials[i]);
-                }
+                Destroy(m_DissolveMaterial);
+            }
+        }
+
+        // ==================== 辅助 ====================
+
+        private static float DurationFor(BubbleType type)
+        {
+            switch (type)
+            {
+                case BubbleType.Bouncy: return kBouncyDuration;
+                case BubbleType.Bomb:   return kBombDuration;
+                default:                return kStickyDuration;
+            }
+        }
+
+        /// <summary>从泡泡原来的材质里取底色。</summary>
+        private static Color ReadBaseColor(Renderer renderer)
+        {
+            if (renderer == null || renderer.sharedMaterial == null)
+            {
+                return new Color(0.55f, 0.85f, 1f, 1f);
             }
 
-            m_OwnedMaterials.Clear();
+            Material mat = renderer.sharedMaterial;
+
+            if (mat.HasProperty("_BaseColor")) { return mat.GetColor("_BaseColor"); }
+            if (mat.HasProperty("_Color"))     { return mat.GetColor("_Color"); }
+
+            return mat.color;
         }
     }
 }

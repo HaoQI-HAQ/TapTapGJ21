@@ -37,16 +37,26 @@ Shader "PAO/BubbleCircle"
         _Opacity       ("整体不透明度", Range(0, 2)) = 1.0
 
         _Radius        ("圆的范围（1 = 贴满粒子方块）", Range(0.5, 1.5)) = 1.0
-        _EdgeSoftness  ("边缘柔和度（0=硬边）", Range(0.01, 1.0)) = 0.42
-        _CoreSolid     ("核心实心范围", Range(0, 1)) = 0.35
+        _EdgeSoftness  ("边缘柔和度（厚涂是柔和过渡，调大）", Range(0.01, 1.0)) = 0.62
+        _CoreSolid     ("核心实心范围", Range(0, 1)) = 0.0
 
         _GlowColor     ("亮光颜色", Color) = (1.0, 1.0, 1.0, 1.0)
-        _GlowStrength  ("亮光强度", Range(0, 4)) = 1.1
-        _GlowWidth     ("亮光宽度（靠近边缘的一圈）", Range(0.01, 1.0)) = 0.30
+        _GlowStrength  ("亮光强度", Range(0, 4)) = 0.55
+        _GlowWidth     ("亮光宽度（靠近边缘的一圈）", Range(0.01, 1.0)) = 0.45
 
-        _SphereAmount  ("球面明暗强度（0=平涂，1=像球）", Range(0, 1.5)) = 0.75
-        _LightDir      ("主光方向（屏幕空间 xyz）", Color) = (-0.4, 0.6, 0.7, 1.0)
-        _AmbientTint   ("暗部颜色（水下的冷色环境光）", Color) = (0.42, 0.55, 0.72, 1.0)
+        _SphereAmount  ("球面明暗强度（保留给卡通模式，厚涂用 1）", Range(0, 1.5)) = 1.0
+
+        _AmbientBoost  ("环境光强度（乘在 Unity 的环境光上）", Range(0, 4)) = 1.25
+        _DirectBoost   ("主光强度", Range(0, 4)) = 0.55
+        _Transmission  ("次表面散射感（半透明软体的透光）", Range(0, 3)) = 0.55
+        _LightDir      ("（已废弃，方向光由场景决定）", Color) = (-0.4, 0.6, 0.7, 1.0)
+        _AmbientTint   ("（已废弃，环境色由场景决定）", Color) = (0.52, 0.64, 0.80, 1.0)
+
+        _ShadowSoft    ("明暗过渡的柔和度（越大越像厚涂）", Range(0.05, 1.0)) = 0.55
+        _ToonSteps     ("色阶数（1 = 完全平滑，厚涂用 1）", Range(1, 6)) = 1.0
+        _GrainStrength ("厚涂笔触强度", Range(0, 0.6)) = 0.22
+        _GrainScale    ("厚涂笔触粗细", Range(4, 160)) = 22.0
+        _GrainStretch  ("笔触方向拉伸（模拟运笔）", Range(0.2, 2.0)) = 1.45
 
         _SpecColor     ("高光颜色", Color) = (1.0, 1.0, 1.0, 1.0)
         _SpecStrength  ("高光强度", Range(0, 4)) = 1.1
@@ -88,7 +98,11 @@ Shader "PAO/BubbleCircle"
             #pragma target 3.0
             #pragma multi_compile_instancing
 
+            // Lighting.hlsl 提供 SampleSH（环境光 / 光照探针）和 GetMainLight（主方向光）。
+            // 角色用的 ModelPBR.shader 也是 include 这个，所以两者拿到的是同一份环境数据 ——
+            // 这正是"爆炸和角色同进同出"的保证。
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _Tint;
@@ -103,8 +117,18 @@ Shader "PAO/BubbleCircle"
                 float  _GlowWidth;
 
                 float  _SphereAmount;
+
+                float  _AmbientBoost;
+                float  _DirectBoost;
+                float  _Transmission;
                 float4 _LightDir;
                 float4 _AmbientTint;
+
+                float  _ShadowSoft;
+                float  _ToonSteps;
+                float  _GrainStrength;
+                float  _GrainScale;
+                float  _GrainStretch;
 
                 float4 _SpecColor;
                 float  _SpecStrength;
@@ -161,6 +185,39 @@ Shader "PAO/BubbleCircle"
                 return n * (1.0 / 3.0);
             }
 
+            // 哈希：给纸张颗粒用
+            float Hash21(float2 p)
+            {
+                p = frac(p * float2(123.34, 456.21));
+                p += dot(p, p + 45.32);
+                return frac(p.x * p.y);
+            }
+
+            // 厚涂笔触：把噪声在**一个方向上拉长**，看起来像一笔一笔刷上去的。
+            //
+            // 圆形颗粒看起来像"纸纹"，拉长之后才像"笔触" —— 这是厚涂和
+            // 普通颗粒质感最直接的区别。_GrainStretch 控制拉多长。
+            float BrushStroke(float2 uv)
+            {
+                // y 方向压缩 = 笔触沿 x 方向拉长
+                float2 p = float2(uv.x, uv.y * _GrainStretch);
+
+                float g  = Hash21(p * _GrainScale);
+                float g2 = Hash21(p * _GrainScale * 2.3 + 11.7);
+                float g3 = Hash21(p * _GrainScale * 0.47 + 31.9);
+
+                return g * 0.5 + g2 * 0.3 + g3 * 0.2;
+            }
+
+            // 把值量化成 N 级。
+            // 厚涂/PBR 画风**不用**它（_ToonSteps = 1 时下面会跳过），
+            // 保留是为了需要临时切成卡通效果时可以调 _ToonSteps 打开。
+            float ToonBand(float t, float steps)
+            {
+                steps = max(steps, 1.0);
+                return floor(saturate(t) * steps + 0.5) / steps;
+            }
+
             half4 Frag(Varyings i) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(i);
@@ -177,7 +234,8 @@ Shader "PAO/BubbleCircle"
                 float blob = BlobNoise(centered + i.custom.x, t);
                 float wobbled = dist * (1.0 - blob * _WobbleAmp);
 
-                // ---- 基础圆形：硬性裁掉圆外的一切 ----
+                // ---- 基础圆形 ----
+                // _EdgeSoftness 默认调小了（0.10）：手绘是硬边，不是柔和渐隐
                 float soft = max(_EdgeSoftness, 0.01);
                 float circle = 1.0 - smoothstep(_Radius - soft, _Radius, wobbled);
 
@@ -188,69 +246,89 @@ Shader "PAO/BubbleCircle"
                 float core = 1.0 - smoothstep(_CoreSolid, _Radius, wobbled);
 
                 // ---- 亮光：靠边缘的一圈 + 核心的高光 ----
+                // 强度默认调低到 0.5：手绘不该有强发光，那会盖掉平涂的色块
                 float rimDist = abs(wobbled - _Radius * (1.0 - _GlowWidth));
                 float rim = 1.0 - smoothstep(0.0, max(_GlowWidth, 0.01), rimDist);
 
                 float coreGlow = core * core;
 
                 // ============================================================
-                // 球面着色 —— "有质感"的关键
+                // 真实光照 —— 这是"和角色同一个画风"的根治手段
                 // ============================================================
                 //
-                // 粒子是 billboard（一张正对镜头的方片），本身没有体积。
-                // 但我们要它看起来像主角水母那样的**球**：有明暗过渡、有高光、
-                // 边缘透光。做法是从 uv 反推一个假的球面法线：
+                // 【为什么必须走真实光照，而不是自己假装】
+                // 角色的 ModelPBR.shader 走 URP 标准 PBR：
+                //   环境光来自 **Light Probe / 天空盒**（SampleSH），
+                //   主光来自场景里的方向光（GetMainLight）。
+                // 所以它的立体感是**被场景照出来的**，不是画上去的。
                 //
-                //   把圆盘上的点 x,y ∈ [-1,1] 当作球面上一点的水平投影，
-                //   那么 z = sqrt(1 - x² - y²) 就是它"朝镜头方向"的分量。
-                //   于是 (x, y, z) 就是一个单位球面法线 —— 圆盘中心朝镜头（z=1），
-                //   边缘与视线相切（z=0）。
+                // 我早先自己写死一个光方向、再手搓明暗，那样永远只能在
+                // 特定光照下"碰巧像"。一旦场景光照变了（换关卡、进水下），
+                // 角色跟着变、爆炸不变 —— 两者立刻脱节。
+                // 现在改成采样真实环境，爆炸就和角色同进同出。
                 //
-                // 有了这个法线，就能照 3D 那样做 N·L 漫反射和高光了。
+                // 从 uv 反推假的球面法线：圆盘上的点 (x,y) 当作球面水平投影，
+                // z = sqrt(1 - x² - y²) 就是它朝镜头的分量。
                 float r2 = saturate(dot(centered, centered));
                 float nz = sqrt(saturate(1.0 - r2));
 
                 float3 n = normalize(float3(centered.x, centered.y, max(nz, 1e-4)));
 
-                // ---- 漫反射：明暗过渡 ----
-                float3 lightDir = normalize(float3(_LightDir.x, _LightDir.y,
-                                                   max(abs(_LightDir.z), 0.2)));
+                // ---- 环境光：直接问 Unity 要当前环境 ----
+                // 蓝天、云、光照探针都会体现在这里，和角色拿到的是同一份数据
+                half3 ambient = SampleSH(n) * _AmbientBoost;
+
+                // ---- 主光 ----
+                Light mainLight = GetMainLight();
+                float3 lightDir = normalize(mainLight.direction);
 
                 float ndl = saturate(dot(n, lightDir));
 
-                // 卡通感的软过渡：smoothstep 收一下，不要写实那种死板的余弦衰减
-                float diffuse = smoothstep(0.05, 1.0, ndl);
+                // 平滑过渡（厚涂的明暗是化开的，不是切的）。
+                // _ToonSteps 保持在 1 —— 量化会和角色的连续明暗冲突。
+                float diffuse = smoothstep(1.0 - _ShadowSoft, 1.0, ndl);
+                if (_ToonSteps > 1.5)
+                {
+                    diffuse = ToonBand(diffuse, _ToonSteps);
+                }
 
-                // 暗部不是纯黑，而是往环境色压 —— 水下的环境光是冷青色的
-                half3 shadowCol = _Tint.rgb * _AmbientTint.rgb;
-                half3 litCol = _Tint.rgb * (0.72 + 0.55 * diffuse);
+                half3 col = _Tint.rgb * (ambient + mainLight.color * diffuse * _DirectBoost);
 
-                // _SphereAmount 控制"像球的程度"：
-                //   0 = 完全平涂（原来的样子），1 = 完整的球面明暗
-                float shade = lerp(1.0, diffuse, _SphereAmount);
-                half3 col = lerp(shadowCol, litCol, shade);
+                // ---- 次表面散射感 ----
+                // 角色是半透明软体：朝光源的方向上，光会"透过去"，
+                // 所以背光面靠外的一圈会亮起来，而不是黑的。
+                // 用 (1 - nz) 做边缘权重，再乘朝光程度 —— 廉价但很像。
+                float towardLight = saturate(dot(n, lightDir));
+                float thin = pow(1.0 - nz, 2.2);
+                half3 sss = _Tint.rgb * (_Transmission * thin * (0.35 + 0.65 * towardLight));
+                col += sss;
 
-                // ---- 边缘透光：越靠边越薄，光穿过来 ----
-                // 用 (1 - nz) 做菲涅尔近似：边缘 nz→0，透光最强
+                // ---- 边缘透光：角色边缘有一圈柔和的亮 ----
                 float fresnel = pow(1.0 - nz, _RimPower);
-                col += _RimColor.rgb * (fresnel * _RimStrength * _SphereAmount);
+                col += _RimColor.rgb * (fresnel * _RimStrength);
 
-                // ---- 镜面高光：一颗亮"水珠" ----
-                // 高光位置可以偏移，放到偏左上，和主角水母的高光位置呼应
+                // ---- 高光：柔和的大光斑，不是小块实心白 ----
+                // 角色表面是光滑的（低 roughness），高光是"一片柔光"，
+                // 所以这里用宽的 smoothstep，不用 ToonBand 量化。
                 float2 specCenter = centered - float2(_SpecOffset.x, _SpecOffset.y);
                 float  specDist = length(specCenter);
-                float  spec = 1.0 - smoothstep(0.0, 0.5, specDist);
-                spec = pow(saturate(spec), _SpecPower * 0.08 + 1.0);
+                float  spec = 1.0 - smoothstep(0.0, 0.55, specDist);
+                spec = spec * spec;                 // 中心集中一点，但边缘仍是渐隐
 
                 col += _SpecColor.rgb * (spec * _SpecStrength * _SphereAmount);
 
-                // ---- 原来的发光层 ----
+                // ---- 发光层（保持克制，别盖掉立体感）----
                 col += _GlowColor.rgb * (rim * _GlowStrength);
                 col += _GlowColor.rgb * (coreGlow * _GlowStrength * 0.35);
 
-                // ---- 中心稍微压一点，让球更有体积感 ----
-                float3 fakeNormal = normalize(float3(centered.x * 0.5, centered.y * 0.5, nz));
-                col *= (1.0 + 0.10 * fakeNormal.z * _SphereAmount);
+                // ---- 厚涂笔触 ----
+                // 不是"纸纹"而是"笔触"：噪声沿一个方向拉长成一条条，
+                // 看起来像颜料一笔一笔刷上去的。
+                // 加在颜色上做轻微明暗起伏 + 一点色相抖动。
+                float brush = BrushStroke(i.uv);
+                float brushOffset = (brush - 0.5) * _GrainStrength;
+                col += brushOffset;
+                col *= (1.0 + brushOffset * 0.40);
 
                 float alpha = circle * _Opacity * i.color.a;
 
