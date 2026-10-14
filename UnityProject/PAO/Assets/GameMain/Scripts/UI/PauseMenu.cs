@@ -59,6 +59,17 @@ namespace PAO.UI
         private float m_PreviousTimeScale = 1f;
         private bool m_PausedTime;
         private bool m_IsOpen;
+        private BubbleTypeHud m_GameplayHud;
+
+        private static int s_OverlayEscapeFrame = -1;
+
+        /// <summary>
+        /// 最近一次「开/关」状态发生变化的帧号。
+        ///
+        /// 用来防「同一次按 Esc 被 BubbleTypeHud 和 PauseMenu 各处理一遍」——
+        /// 那会导致一开一关撞在同一帧，界面完全不显示。
+        /// </summary>
+        private static int s_StateChangeFrame = -1;
 
         /// <summary>被冻结的玩法组件，恢复时逐个还原。</summary>
         private readonly List<MonoBehaviour> m_DisabledComponents = new List<MonoBehaviour>();
@@ -122,6 +133,8 @@ namespace PAO.UI
                 // 万一 timeScale 被别的路径改过，这里兜个底
                 UnfreezeGameplay();
             }
+
+            SetGameplayUiVisible(true);
         }
 
         /// <summary>
@@ -131,13 +144,54 @@ namespace PAO.UI
         /// （比如冻结逻辑误伤），玩家就再也退不出暂停 —— 只能重启 Play。
         /// 面板一旦显示，这个 Update 一定在跑（PauseMenu 永远不会被冻结），
         /// 所以这里再收一次做保险。
+        ///
+        /// 【为什么要有 s_StateChangeFrame 这道闸】
+        /// Update 的执行顺序是 BubbleTypeHud 在前、PauseMenu 在后，而
+        /// Input.GetKeyDown 在**同一帧内对所有组件都为 true**。于是同一次按 Esc 会被处理两遍：
+        ///   BubbleTypeHud.Update() → 看到 IsOpen=false → Open()   面板打开
+        ///   PauseMenu.Update()     → 看到 m_IsOpen=true → Close()  面板关闭
+        /// 一开一关都在同一帧，玩家看到的是「按 Esc 完全没反应」。
+        /// 所以凡是本帧刚被 Open() 打开过，就跳过本帧的关闭判定。
         /// </summary>
         private void Update()
         {
-            if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            if (!m_IsOpen || !Input.GetKeyDown(KeyCode.Escape))
             {
-                Close();
+                return;
             }
+
+            // 本帧刚由 BubbleTypeHud 打开的，同一次按键不再当成"关闭"
+            if (s_StateChangeFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            if (s_OverlayEscapeFrame == Time.frameCount ||
+                (m_SettingsPanel != null && m_SettingsPanel.IsOpen) ||
+                (m_LoadPanel != null && m_LoadPanel.IsOpen))
+            {
+                return;
+            }
+
+            Close();
+        }
+
+        /// <summary>子面板消费 Esc 后，阻止暂停菜单在同一帧也被关闭。</summary>
+        public static void MarkOverlayEscapeHandled()
+        {
+            s_OverlayEscapeFrame = Time.frameCount;
+        }
+
+        /// <summary>
+        /// 本帧是否刚刚开/关过暂停界面。
+        ///
+        /// BubbleTypeHud 在打开前会问这一句：如果 PauseMenu 本帧已经处理过这次
+        /// 按键（比如刚被别的路径关掉），就不要再打开，否则会出现
+        /// 「关了又开」或「开了又关」的抖动。
+        /// </summary>
+        public static bool StateChangedThisFrame
+        {
+            get { return s_StateChangeFrame == Time.frameCount; }
         }
 
         // ==================== 开关 ====================
@@ -151,6 +205,10 @@ namespace PAO.UI
         {
             m_IsOpen = true;
 
+            // 记下本帧刚开过 —— PauseMenu.Update 里靠它跳过同帧的关闭判定，
+            // 否则同一次按 Esc 会被开关一遍（见 Update 的注释）
+            s_StateChangeFrame = Time.frameCount;
+
             // 只 SetActive(true) 自己是不够的：如果父链上任何一层是关的，
             // activeInHierarchy 仍然是 false，界面就渲染不出来 ——
             // 表现正好是「timeScale 生效了、游戏冻住了，但看不见任何界面」。
@@ -158,6 +216,7 @@ namespace PAO.UI
             ActivateSelfAndParents();
 
             SetVisible(true);
+            SetGameplayUiVisible(false);
 
             Debug.Log("[PauseMenu] Open() 被调用。本物体=" + gameObject.name +
                       " activeSelf=" + gameObject.activeSelf +
@@ -225,7 +284,10 @@ namespace PAO.UI
         public bool Close()
         {
             m_IsOpen = false;
+            s_StateChangeFrame = Time.frameCount;   // 对称：本帧刚关过，别再开
+
             ResumeTime();
+            SetGameplayUiVisible(true);
 
             // 用 CanvasGroup 藏起来，而不是 gameObject.SetActive(false)。
             //
@@ -283,6 +345,28 @@ namespace PAO.UI
             }
         }
 
+        private void SetGameplayUiVisible(bool visible)
+        {
+            if (m_GameplayHud == null)
+            {
+#if UNITY_2022_2_OR_NEWER
+                m_GameplayHud = UnityEngine.Object.FindFirstObjectByType<BubbleTypeHud>(FindObjectsInactive.Include);
+#else
+                m_GameplayHud = UnityEngine.Object.FindObjectOfType<BubbleTypeHud>();
+#endif
+            }
+
+            if (m_GameplayHud != null)
+            {
+                m_GameplayHud.SetVisualsVisible(visible);
+            }
+
+            if (BubbleTypeSwitcher.Instance != null)
+            {
+                BubbleTypeSwitcher.Instance.SetLabelVisible(visible);
+            }
+        }
+
         /// <summary>切换显示，返回切换后是否处于打开状态。Esc 用它。</summary>
         public bool Toggle()
         {
@@ -333,6 +417,31 @@ namespace PAO.UI
             }
 
             m_LoadPanel.Open();
+        }
+
+        /// <summary>
+        /// 打开存档面板。
+        ///
+        /// 存档界面（SaveLoadPanel）不做成预制体引用，而是由 SaveLoadManager 在运行时
+        /// 建出来 —— 所以这里不直接持有它，交给管理器按模式打开。
+        /// 如果管理器不在（理论上不会），退回打开读档面板，至少有个入口。
+        /// </summary>
+        public void OpenSavePanel()
+        {
+            SaveLoadManager manager = SaveLoadManager.Instance;
+
+            if (manager != null)
+            {
+                manager.OpenSavePanel();
+                return;
+            }
+
+            Debug.LogWarning("[PauseMenu] SaveLoadManager 不在场景里，「存档」按钮只能退回读档面板。", this);
+
+            if (m_LoadPanel != null)
+            {
+                m_LoadPanel.Open();
+            }
         }
 
         /// <summary>打开设置面板。</summary>
@@ -463,6 +572,15 @@ namespace PAO.UI
         private static bool IsUiComponent(MonoBehaviour mb)
         {
             System.Type type = mb.GetType();
+
+            // Canvas 下的 Button、Slider、TMP 等 Unity 组件也必须继续运行，
+            // 否则暂停菜单看得见却无法点击，设置页的滑条也不能操作。
+            if (mb.GetComponentInParent<Canvas>(true) != null ||
+                mb is UnityEngine.EventSystems.EventSystem ||
+                mb is UnityEngine.EventSystems.BaseInputModule)
+            {
+                return true;
+            }
 
             // 暂停菜单自己必须保持运行，否则「继续」按钮失效
             if (type == typeof(PauseMenu))

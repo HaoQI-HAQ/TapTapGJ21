@@ -270,6 +270,7 @@ namespace PAO.UI
         {
             if (m_IsOpen && Input.GetKeyDown(KeyCode.Escape))
             {
+                PauseMenu.MarkOverlayEscapeHandled();
                 Close();
             }
         }

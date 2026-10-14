@@ -24,16 +24,18 @@ namespace PAO.EditorTools
         private const string kSpriteFolder = "Assets/GameMain/UI/Sprites/";
         private const string kAutoBuildKey = "PAO.PausePanel.AutoBuilt.v1";
 
-        private static readonly string[] kMenuLabels = { "地图", "重开", "读档", "设置", "主菜单" };
+        // 注意：这个顺序必须和 PauseHudSetup 里的 secondary / methods 两个数组保持一致 ——
+        // 按钮回调是按位置接的，顺序错位会把「存档」接到「重开」上。
+        private static readonly string[] kMenuLabels = { "地图", "重开", "存档", "读档", "设置", "主菜单" };
 
         // 文字按钮：常态只有文字，悬停/手柄选中时浮出一块青色底
-        private static readonly Color kNormalText = new Color(0.20f, 0.20f, 0.20f, 1f);
-        private static readonly Color kActiveText = new Color(0.10f, 0.35f, 0.40f, 1f);
+        private static readonly Color kNormalText = new Color(0.29f, 0.37f, 0.43f, 1f);
+        private static readonly Color kActiveText = new Color(0.12f, 0.43f, 0.49f, 1f);
 
         // 背景天蓝
-        private static readonly Color kBackground = new Color(0.62f, 0.88f, 0.97f, 1f);
-        private static readonly Color kHighlight = new Color(0.45f, 0.83f, 0.87f, 1f);
-        private static readonly Color kSubText = new Color(0.35f, 0.52f, 0.56f, 1f);
+        private static readonly Color kBackground = new Color(0.975f, 0.965f, 0.94f, 0.96f);
+        private static readonly Color kHighlight = new Color(0.34f, 0.68f, 0.73f, 1f);
+        private static readonly Color kSubText = new Color(0.42f, 0.52f, 0.56f, 1f);
 
         [MenuItem("PAO/UI/构建暂停界面", false, 21)]
         public static void BuildFromMenu()
@@ -124,22 +126,41 @@ namespace PAO.EditorTools
             // ---- 挂 PauseMenu 并接线 ----
             PauseMenu menu = root.AddComponent<PauseMenu>();
 
-            // 按钮回调：继续 / 地图 / 重开 / 读档 / 设置 / 主菜单
-            Wire(menuButtons[0].GetComponent<Button>(), menu, "Resume");
-            Wire(menuButtons[1].GetComponent<Button>(), menu, "OpenMap");
-            Wire(menuButtons[2].GetComponent<Button>(), menu, "RestartLevel");
-            Wire(menuButtons[3].GetComponent<Button>(), menu, "OpenLoadPanel");
-            Wire(menuButtons[4].GetComponent<Button>(), menu, "OpenSettingsPanel");
-            Wire(menuButtons[5].GetComponent<Button>(), menu, "GoToMainMenu");
+            // 按钮回调：按**按钮名字**接，不按位置。
+            //
+            // 【为什么要这样】
+            // 原来写法是 menuButtons[i] 配 methods[i]，靠位置对齐。但按钮的实际顺序
+            // 取决于层级里对象的顺序，一旦和建按钮的顺序不一致（加了一个「存档」就会这样），
+            // 回调就整体错位 —— 表现为"点存档却弹读档"，
+            // 而且**不报任何编译错误**，只能靠人肉点按钮才发现。
+            WireByName(menuButtons, "继续", menu, "Resume");
+            WireByName(menuButtons, "地图", menu, "OpenMap");
+            WireByName(menuButtons, "重开", menu, "RestartLevel");
+            WireByName(menuButtons, "存档", menu, "OpenSavePanel");
+            WireByName(menuButtons, "读档", menu, "OpenLoadPanel");
+            WireByName(menuButtons, "设置", menu, "OpenSettingsPanel");
+            WireByName(menuButtons, "主菜单", menu, "GoToMainMenu");
 
-            // 竖排导航：上下依次走，首尾环绕
-            for (int i = 0; i < menuButtons.Count; i++)
+            // 竖排导航：上下依次走，首尾环绕。
+            //
+            // 排序基准是**按钮的视觉高度**，不是列表顺序 ——
+            // 列表顺序取决于建按钮的先后，和玩家看到的上下顺序不一定一致。
+            // 用 y 坐标排可以保证"按下键真的往下走一格"。
+            var navOrder = new System.Collections.Generic.List<MenuButton>(menuButtons);
+            navOrder.Sort(delegate (MenuButton a, MenuButton b)
             {
-                Button b = menuButtons[i].GetComponent<Button>();
+                float ay = a != null ? a.GetComponent<RectTransform>().anchoredPosition.y : 0f;
+                float by = b != null ? b.GetComponent<RectTransform>().anchoredPosition.y : 0f;
+                return by.CompareTo(ay);   // 从高到低
+            });
+
+            for (int i = 0; i < navOrder.Count; i++)
+            {
+                Button b = navOrder[i].GetComponent<Button>();
                 Navigation nav = b.navigation;
                 nav.mode = Navigation.Mode.Explicit;
-                nav.selectOnDown = menuButtons[(i + 1) % menuButtons.Count].GetComponent<Button>();
-                nav.selectOnUp = menuButtons[(i - 1 + menuButtons.Count) % menuButtons.Count].GetComponent<Button>();
+                nav.selectOnDown = navOrder[(i + 1) % navOrder.Count].GetComponent<Button>();
+                nav.selectOnUp = navOrder[(i - 1 + navOrder.Count) % navOrder.Count].GetComponent<Button>();
                 b.navigation = nav;
             }
 
@@ -150,11 +171,17 @@ namespace PAO.EditorTools
             SetPrivate(menu, "m_SettingsPanel", settingsPanel);
             SetPrivate(menu, "m_LastSaveLabel", lastSave);
 
+            SerializedObject pauseSettings = new SerializedObject(menu);
+            pauseSettings.FindProperty("m_PauseTimeOnEnable").boolValue = false;
+            pauseSettings.FindProperty("m_PauseTimeOnOpen").boolValue = true;
+            pauseSettings.ApplyModifiedPropertiesWithoutUndo();
+            root.SetActive(false);
+
             // 手柄/键盘进来就有落点
             EventSystem es = Object.FindObjectOfType<EventSystem>();
             if (es != null)
             {
-                es.firstSelectedGameObject = menuButtons[0].gameObject;
+                es.firstSelectedGameObject = null;
             }
 
             EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
@@ -163,8 +190,8 @@ namespace PAO.EditorTools
             string summary = string.Format(
                 "暂停界面已建好并保存。\n\n按钮：{0} 个\n读档面板：{1}\n设置面板：{2}\n画布缩放：1920x1080 按宽度匹配",
                 menuButtons.Count,
-                loadPanel != null ? "已接上" : "场景里没有，按钮暂只打日志",
-                settingsPanel != null ? "已接上" : "场景里没有，按钮暂只打日志");
+                loadPanel != null ? "已接上" : "场景里没有，按钮禁用",
+                settingsPanel != null ? "已接上" : "场景里没有，按钮禁用");
 
             Debug.Log("[PausePanelBuilder] " + summary.Replace("\n", " "));
             Report(auto, summary);
@@ -359,6 +386,41 @@ namespace PAO.EditorTools
                 p.objectReferenceValue = value;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
+        }
+
+        /// <summary>
+        /// 按按钮名字接回调（名字形如「存档 Button」）。
+        ///
+        /// 【为什么不用位置】
+        /// 位置接线要求"建按钮的顺序"和"方法数组的顺序"严格一致，
+        /// 任何一处增删都会整体错位，而且**不报编译错误**。
+        /// 之前加「存档」按钮时就踩了这个坑：点存档弹出的是读档界面。
+        /// 按名字匹配从根上避免这个问题。
+        /// </summary>
+        private static void WireByName(System.Collections.Generic.List<MenuButton> buttons,
+                                       string label, PauseMenu menu, string method)
+        {
+            if (buttons == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                MenuButton mb = buttons[i];
+                if (mb == null)
+                {
+                    continue;
+                }
+
+                if (mb.gameObject.name.StartsWith(label, System.StringComparison.Ordinal))
+                {
+                    Wire(mb.GetComponent<Button>(), menu, method);
+                    return;
+                }
+            }
+
+            Debug.LogWarning("[PausePanelBuilder] 没找到「" + label + "」按钮，回调 " + method + " 未绑定。");
         }
 
         private static void Wire(Button button, PauseMenu menu, string method)

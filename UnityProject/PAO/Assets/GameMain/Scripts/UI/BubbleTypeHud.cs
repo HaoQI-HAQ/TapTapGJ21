@@ -71,6 +71,7 @@ namespace PAO
         private BubbleTypeSwitcher m_InitedSwitcher;
         private float[] m_CurrentScale;
         private float[] m_CurrentAlpha;
+        private bool m_VisualsVisible = true;
 
         private void Awake()
         {
@@ -109,6 +110,32 @@ namespace PAO
             }
 
             HandleEscape();
+        }
+
+        /// <summary>
+        /// 隐藏三个泡泡操作按钮，但保留控制器运行，让它仍能接收 Esc。
+        /// </summary>
+        public void SetVisualsVisible(bool visible)
+        {
+            if (m_VisualsVisible == visible)
+            {
+                return;
+            }
+
+            m_VisualsVisible = visible;
+            if (m_Slots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < m_Slots.Length; i++)
+            {
+                TypeSlot slot = m_Slots[i];
+                if (slot != null && slot.root != null)
+                {
+                    slot.root.SetActive(visible);
+                }
+            }
         }
 
         /// <summary>把三个圆的显示刷新成「type 亮起、其它暗下去」。</summary>
@@ -212,6 +239,13 @@ namespace PAO
                       "  HUD自身 enabled=" + enabled, this);
 
             if (m_PauseMenu == null || m_PauseMenu.IsOpen)
+            {
+                return;
+            }
+
+            // 本帧 PauseMenu 已经处理过这次按键（比如刚被关掉）—— 不要再打开，
+            // 否则同一次按 Esc 会「关了又开」，来回抖
+            if (PauseMenu.StateChangedThisFrame)
             {
                 return;
             }

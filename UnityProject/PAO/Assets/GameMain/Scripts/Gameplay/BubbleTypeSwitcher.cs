@@ -99,6 +99,15 @@ namespace PAO
             set { m_InputEnabled = value; }
         }
 
+        /// <summary>暂停界面打开时隐藏左下角的当前泡泡提示。</summary>
+        public void SetLabelVisible(bool visible)
+        {
+            if (m_Label != null)
+            {
+                m_Label.gameObject.SetActive(visible);
+            }
+        }
+
         /// <summary>当前类型的代表色，发射器用它给泡泡上色。</summary>
         public Color CurrentColor
         {
