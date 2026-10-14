@@ -744,20 +744,34 @@ namespace PAO
 
             // 爆炸特效：水彩洇开式的爆开。
             //
-            // 尺寸取 max(本泡泡直径, 半径推算值)：
-            // 宿主泡泡（浮粘/弹力）的 localScale 就是它的直径，而纯炸弹泡泡可能被缩放过，
-            // 两者取大更稳。特效挂在独立的物体上，本物体马上要销毁也不受影响。
+            // 【尺寸只看泡泡直径】
+            // 之前是按爆炸半径（blastRadius，固定 3 米）推尺寸的，结果无论泡泡吹多小，
+            // 爆炸画面都一样大 —— 玩家感觉不到"我把泡泡吹大了"。
+            // 现在特效大小完全由泡泡直径决定：吹得小 = 紧凑一小簇，吹得满 = 铺开一整团。
+            // 爆炸半径仍然只用于下面的物理推力，两者不再混在一起。
             //
-            // 颜色：宿主带弹爆炸时用彩虹粉（呼应 Bubble.AbsorbBomb 里把宿主染成
-            // 橙色的那套暗示），纯炸弹用默认冰蓝，让玩家一眼能看出是哪种爆炸。
+            // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
+            // 归一化都自动跟着走；拿不到就退回 1.5（BubbleSettings.maxSize 的默认值）。
+            float sizeReference = 1.5f;
+
+            BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
+                FindObjectsInactive.Exclude);
+
+            if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+            {
+                sizeReference = launcher.CurrentMaxSize;
+            }
+
+            // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
+            // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
             bool hostPayload = m_BombSettings == null;
-            Color? burstTint = hostPayload ? new Color(1f, 0.62f, 0.92f) : (Color?)null;
+            Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
 
             BubbleBurstVFX.Spawn(
                 center,
-                radius,
-                Mathf.Max(GetDiameter(), radius * 0.66f),
-                burstTint);
+                GetDiameter(),
+                burstTint,
+                sizeReference);
 
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
             Collider[] hits = Physics.OverlapSphere(center, radius);
@@ -880,8 +894,18 @@ namespace PAO
                 return;
             }
 
+            // 到点自己化掉。三种类型的溶解姿态不同（见 BubbleDissolveVFX）：
+            // 浮粘往下沉慢慢化、弹力弹开式地散、爆炸收拢后骤灭。
+            // 颜色优先读泡泡自己的材质 —— 美术改了泡泡颜色，溶解会自动跟着变。
+            BubbleDissolveVFX.Spawn(
+                transform.position,
+                Type,
+                GetDiameter(),
+                BubbleDissolveVFX.ReadBubbleColor(gameObject));
+
             Destroy(gameObject);
         }
+
         /// <summary>
         /// 粘在可粘地形上：直接冻住刚体，泡泡会永远停在这个位置。
         /// 存活时间到点也不会消失——它已经是场景的一部分了。

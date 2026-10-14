@@ -644,6 +644,22 @@ namespace PAO
         }
 
         /// <summary>
+        /// 当前类型的"满蓄力直径"（米）。
+        ///
+        /// 给爆炸特效用：特效要按泡泡大小缩放，就得知道"满蓄力"是多长，
+        /// 才能把当前泡泡归一化成 0~1。这样美术以后改 maxSize，特效会自动跟着变，
+        /// 不用回来同步一个写死的参考值。
+        /// </summary>
+        public float CurrentMaxSize
+        {
+            get
+            {
+                BubbleSettings settings = GetSettings();
+                return settings != null ? settings.maxSize : 0f;
+            }
+        }
+
+        /// <summary>
         /// 在 Scene 视图里画出基准点与生成点，方便对着调偏移。
         /// </summary>
         private void OnDrawGizmosSelected()

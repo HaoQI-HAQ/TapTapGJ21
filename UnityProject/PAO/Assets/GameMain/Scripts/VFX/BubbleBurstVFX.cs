@@ -25,53 +25,88 @@ namespace PAO
     [AddComponentMenu("PAO/VFX/Bubble Burst VFX")]
     public sealed class BubbleBurstVFX : MonoBehaviour
     {
-        // ---- 项目风格色板（与 BubbleBall 的 _BaseColor / _IridColorA / _IridColorB 对应）----
-        /// <summary>冰蓝底（泡泡主体色）</summary>
-        private static readonly Color kIceBlue   = new Color(0.72f, 0.90f, 1.00f, 1f);
+        // ---- 爆炸配色：草莓色系 ----
+        //
+        // 早先用的是冰蓝底 + 青/粉（照搬 BubbleBall 的 _BaseColor / _IridColorA），
+        // 但那让爆炸和泡泡本身一个颜色，炸开时看不出"这里发生了变化"。
+        // 现在改成草莓色系：更饱和、更偏红，和青蓝的水下环境形成对比，爆炸才有力度。
+        // 色相仍落在策划案 §10.2 的"粉紫基调"里，不破坏整体色板。
 
-        /// <summary>彩虹色相 A：青（BubbleBall 的 _IridColorA）</summary>
-        private static readonly Color kIridTeal  = new Color(0.45f, 0.95f, 0.85f, 1f);
+        /// <summary>
+        /// 默认爆炸主色：草莓色。
+        /// 对应世界观里"记忆泡泡"的粉色系，也和 BubbleBall._IridColorB 同色相，但更偏红。
+        /// </summary>
+        private static readonly Color kStrawberry     = new Color(1.00f, 0.45f, 0.60f, 1f);
 
-        /// <summary>彩虹色相 B：粉（BubbleBall 的 _IridColorB，对应粉紫基调）</summary>
-        private static readonly Color kIridPink  = new Color(1.00f, 0.62f, 0.92f, 1f);
+        /// <summary>草莓色的亮光（偏白粉，用来做高光边）</summary>
+        private static readonly Color kStrawberryGlow = new Color(1.00f, 0.86f, 0.90f, 1f);
 
-        /// <summary>水痕亮边</summary>
-        private static readonly Color kWetEdge   = new Color(0.88f, 0.98f, 1.00f, 1f);
+        /// <summary>
+        /// 爆炸粒子用的着色器。
+        ///
+        /// 【为什么从 BubbleBurstSplash 换成 BubbleCircle】
+        /// 前者用噪声去"咬"圆形的边，但没有保证基础圆形 ——
+        /// 粒子方块的四角会露出来，看起来就是一片片粉紫色的三角形。
+        /// BubbleCircle 用径向衰减打底（圆外直接 clip），
+        /// 无论参数怎么调都一定是个圆。
+        /// </summary>
+        private const string kSplashShader = "PAO/BubbleCircle";
 
-        /// <summary>爆炸的暖色核心（一点点对比，免得整团都是冷色没有爆发感）</summary>
-        private static readonly Color kFlashWarm = new Color(1.00f, 0.86f, 0.72f, 1f);
+        [Header("子系统开关（调试用）")]
+        [Tooltip("爆开外壳：原泡泡尺寸的球壳向外撑开")]
+        [SerializeField] private bool m_UseShell = true;
 
-        private const string kSplashShader = "PAO/BubbleBurstSplash";
+        [Tooltip("水彩彩块：主视觉")]
+        [SerializeField] private bool m_UseSplash = true;
+
+        [Tooltip("飞溅液滴：往外甩的小点")]
+        [SerializeField] private bool m_UseSpray = true;
 
         private static Material s_SplashMaterial;
 
         /// <summary>
         /// 在指定位置播一次爆炸特效。
+        ///
+        /// 【尺寸由谁决定 —— 这里是关键】
+        /// 特效大小**只看泡泡直径**，不看爆炸半径。
+        /// 之前是按 blastRadius（固定 3 米）推尺寸，结果无论泡泡吹多小，
+        /// 爆炸画面都一样大 —— 玩家感觉不到"我把泡泡吹大了"。
+        ///
+        /// 现在：吹得小的泡泡 → 紧凑的一小簇；吹满的大泡泡 → 铺开的整团。
+        /// 爆炸半径仍然只用于**物理推力**，两者不再混在一起。
         /// </summary>
         /// <param name="position">爆炸中心（世界坐标）</param>
-        /// <param name="radius">爆炸半径（米），由炸弹参数传进来，特效按它缩放</param>
-        /// <param name="bubbleDiameter">原泡泡直径（米）。0 表示未知，按半径推算</param>
-        /// <param name="tint">主色调。传 null 用默认冰蓝</param>
-        public static BubbleBurstVFX Spawn(Vector3 position, float radius,
-                                           float bubbleDiameter = 0f,
-                                           Color? tint = null)
+        /// <param name="bubbleDiameter">原泡泡直径（米）。这是决定特效大小的唯一依据</param>
+        /// <param name="tint">主色调。传 null 用默认草莓色</param>
+        /// <param name="sizeReference">"满蓄力"的直径参考值，用来把泡泡大小归一化。0 则内部估一个</param>
+        public static BubbleBurstVFX Spawn(Vector3 position, float bubbleDiameter,
+                                           Color? tint = null,
+                                           float sizeReference = 0f)
         {
-            if (radius <= 0.001f)
-            {
-                radius = 1f;
-            }
-
             if (bubbleDiameter <= 0.001f)
             {
-                // 泡泡一般是爆炸半径的三分之一左右，没传就按这个估
-                bubbleDiameter = radius * 0.66f;
+                bubbleDiameter = 0.6f;
             }
+
+            if (sizeReference <= 0.001f)
+            {
+                // 没给参考值就按默认满蓄力直径估（BubbleSettings.maxSize 的默认值）
+                sizeReference = 1.5f;
+            }
+
+            // 视觉缩放 = 泡泡直径 / 满蓄力直径。
+            //
+            // 直接相除，不做"归一化再插值"那一圈 —— 那样会绕回去，
+            // 结果 1.5 米的满蓄力泡泡反而不是 1.0 倍，比例对不上。
+            // 现在：满蓄力 = 1.0 倍（基准），最小泡泡（0.2 米）≈ 0.13 倍，吹得越大炸得越大。
+            // 下限 0.25 是为了别小到看不见；上限 2 是为了别炸到满屏。
+            float visualScale = Mathf.Clamp(bubbleDiameter / sizeReference, 0.25f, 2f);
 
             var root = new GameObject("Bubble Burst VFX");
             root.transform.position = position;
 
             var fx = root.AddComponent<BubbleBurstVFX>();
-            fx.Build(radius, bubbleDiameter, tint ?? kIceBlue);
+            fx.Build(bubbleDiameter, visualScale, tint ?? kStrawberry);
 
             return fx;
         }
@@ -81,81 +116,74 @@ namespace PAO
         private float m_LifeTime;
         private float m_Elapsed;
 
-        private void Build(float radius, float bubbleDiameter, Color tint)
+        /// <param name="bubbleDiameter">泡泡直径，决定所有子系统的基准尺寸</param>
+        /// <param name="visualScale">整体缩放，= 泡泡直径 / 满蓄力直径</param>
+        /// <param name="tint">主色调</param>
+        private void Build(float bubbleDiameter, float visualScale, Color tint)
         {
             Material splash = GetSplashMaterial();
 
             float splashLife = 0.85f;
             float shellLife = 0.55f;
             float sprayLife = 0.45f;
-            float flashLife = 0.16f;
 
             // 整个特效的存活时间 = 最长的那个子系统 + 一点余量
             m_LifeTime = Mathf.Max(splashLife, Mathf.Max(shellLife, sprayLife)) + 0.35f;
 
-            // ---------- 1. 冲击闪白 ----------
-            BuildFlash(radius, flashLife);
+            // ---------- 1. 爆开外壳（原泡泡那一层皮）----------
+            if (m_UseShell)
+            {
+                BuildShell(bubbleDiameter, visualScale, shellLife);
+            }
 
-            // ---------- 2. 爆开外壳（原泡泡那一层皮）----------
-            BuildShell(bubbleDiameter, shellLife);
+            // ---------- 2. 水彩彩块（主视觉）----------
+            if (m_UseSplash)
+            {
+                BuildSplash(bubbleDiameter, visualScale, splashLife, tint, splash);
+            }
 
-            // ---------- 3. 水彩彩块（主视觉）----------
-            BuildSplash(radius, splashLife, tint, splash);
-
-            // ---------- 4. 飞溅液滴 ----------
-            BuildSpray(radius, sprayLife, tint);
-        }
-
-        /// <summary>极短的一下亮光，给爆发定节奏。</summary>
-        private void BuildFlash(float radius, float life)
-        {
-            ParticleSystem ps = NewSystem("Flash", 0.35f);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.startLifetime = life;
-            main.startSpeed = 0f;
-            main.startSize = radius * 1.9f;
-            main.startColor = new ParticleSystem.MinMaxGradient(kFlashWarm, Color.white);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.enabled = true;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
-
-            // 用同一个彩块材质，但把核心撑满、边缘不化开 —— 看起来就是一团实心光
-            ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = MakeMaterial(
-                Color.white, softness: 0.02f, corePower: 0.05f, rimStrength: 0.4f, opacity: 1f);
-
-            ApplySizeCurve(ps, 1f, 2.6f);
-            ApplyAlphaCurve(ps, new[] { (0f, 1f), (0.45f, 0.85f), (1f, 0f) });
+            // ---------- 3. 飞溅液滴 ----------
+            if (m_UseSpray)
+            {
+                BuildSpray(bubbleDiameter, visualScale, sprayLife, tint);
+            }
         }
 
         /// <summary>原泡泡尺寸的球壳向外撑开 —— 表现"这颗泡泡破了"。</summary>
-        private void BuildShell(float bubbleDiameter, float life)
+        private void BuildShell(float bubbleDiameter, float visualScale, float life)
         {
             ParticleSystem ps = NewSystem("Shell", 0.7f);
 
+            float d = bubbleDiameter * visualScale;
+
             ParticleSystem.MainModule main = ps.main;
             main.startLifetime = life;
-            main.startSpeed = bubbleDiameter * 0.55f;
-            main.startSize = bubbleDiameter * 2.6f;     // 出生时几乎就是泡泡本身
-            main.startColor = new ParticleSystem.MinMaxGradient(kIceBlue, kIridTeal);
+            main.startSpeed = d * 0.50f;
+            main.startSize = d * 1.7f;                  // 出生时差不多就是泡泡本身大小
+            main.startColor = new ParticleSystem.MinMaxGradient(kStrawberry, kStrawberryGlow);
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.gravityModifier = -0.05f;              // 轻微上浮，和水下感一致
 
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = bubbleDiameter * 0.5f;
+            shape.radius = d * 0.5f;
             shape.radiusThickness = 1f;                 // 只在球壳上生成，不填满内部
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
             emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 26) });
 
+            // 球壳用"空心圆"（coreSolid 越大中心越空，看得出来是"壳"）
             ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = MakeMaterial(
-                kIceBlue, softness: 0.32f, corePower: 0.30f, rimStrength: 1.5f, opacity: 0.85f);
+                tint: kStrawberry,
+                glowColor: kStrawberryGlow,
+                radius: 1.0f,
+                edgeSoftness: 0.55f,
+                coreSolid: 0.55f,
+                glowStrength: 1.5f,
+                glowWidth: 0.34f,
+                opacity: 0.85f);
 
             // 从泡泡尺寸放大到约 1.6 倍，然后收住
             ApplySizeCurve(ps, 1f, 1.6f);
@@ -163,16 +191,21 @@ namespace PAO
         }
 
         /// <summary>主视觉：一团水彩彩块向外飞散，边一直在蠕动。</summary>
-        private void BuildSplash(float radius, float life, Color tint, Material material)
+        private void BuildSplash(float bubbleDiameter, float visualScale,
+                                 float life, Color tint, Material material)
         {
             ParticleSystem ps = NewSystem("Splash", 1.1f);
 
+            // 所有尺寸/速度都以泡泡直径为基准，再乘整体缩放 ——
+            // 这样"吹得小 = 炸得紧凑，吹得大 = 炸得铺开"
+            float d = bubbleDiameter * visualScale;
+
             ParticleSystem.MainModule main = ps.main;
             main.startLifetime = life;
-            main.startSpeed = radius * 1.25f;
-            main.startSize = new ParticleSystem.MinMaxCurve(radius * 0.55f, radius * 1.05f);
+            main.startSpeed = d * 1.05f;
+            main.startSize = new ParticleSystem.MinMaxCurve(d * 0.42f, d * 0.80f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-            main.startColor = new ParticleSystem.MinMaxGradient(tint, kIridPink);
+            main.startColor = new ParticleSystem.MinMaxGradient(tint, kStrawberryGlow);
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.gravityModifier = 0.02f;               // 水里几乎不下沉
             main.maxParticles = 220;
@@ -180,7 +213,7 @@ namespace PAO
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.08f;                       // 从中心喷出
+            shape.radius = d * 0.06f;                   // 从中心喷出
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
@@ -195,7 +228,7 @@ namespace PAO
             ParticleSystem.LimitVelocityOverLifetimeModule limit = ps.limitVelocityOverLifetime;
             limit.enabled = true;
             limit.dampen = 0.32f;
-            limit.limit = radius * 1.6f;
+            limit.limit = d * 1.6f;
 
             ParticleSystem.RotationOverLifetimeModule rotate = ps.rotationOverLifetime;
             rotate.enabled = true;
@@ -208,22 +241,24 @@ namespace PAO
         }
 
         /// <summary>快速往外甩的小点，拉出方向感。</summary>
-        private void BuildSpray(float radius, float life, Color tint)
+        private void BuildSpray(float bubbleDiameter, float visualScale, float life, Color tint)
         {
             ParticleSystem ps = NewSystem("Spray", 0.9f);
 
+            float d = bubbleDiameter * visualScale;
+
             ParticleSystem.MainModule main = ps.main;
             main.startLifetime = life;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(radius * 2.2f, radius * 3.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(radius * 0.08f, radius * 0.20f);
-            main.startColor = new ParticleSystem.MinMaxGradient(kWetEdge, tint);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(d * 1.9f, d * 3.1f);
+            main.startSize = new ParticleSystem.MinMaxCurve(d * 0.07f, d * 0.16f);
+            main.startColor = new ParticleSystem.MinMaxGradient(kStrawberryGlow, tint);
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.gravityModifier = 0.12f;               // 比彩块重一点，会往下坠
 
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.05f;
+            shape.radius = d * 0.04f;
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
@@ -233,9 +268,16 @@ namespace PAO
             limit.enabled = true;
             limit.dampen = 0.5f;
 
-            // 小点用实心一点的材质，飞出去才看得见
+            // 小液滴用接近实心的圆，飞出去才看得见
             ps.GetComponent<ParticleSystemRenderer>().sharedMaterial = MakeMaterial(
-                kWetEdge, softness: 0.12f, corePower: 0.22f, rimStrength: 0.6f, opacity: 1f);
+                tint: kStrawberryGlow,
+                glowColor: Color.white,
+                radius: 1.0f,
+                edgeSoftness: 0.30f,
+                coreSolid: 0.10f,          // 几乎是实心圆
+                glowStrength: 0.7f,
+                glowWidth: 0.22f,
+                opacity: 1f);
 
             ApplySizeCurve(ps, 1f, 0.35f);   // 飞出去越来越小
             ApplyAlphaCurve(ps, new[] { (0f, 1f), (0.6f, 0.7f), (1f, 0f) });
@@ -326,18 +368,28 @@ namespace PAO
                 return s_SplashMaterial;
             }
 
-            s_SplashMaterial = MakeMaterial(kIceBlue, 0.20f, 0.52f, 1.15f, 1f);
+            s_SplashMaterial = MakeMaterial(
+                tint: kStrawberry,
+                glowColor: kStrawberryGlow,
+                radius: 1.0f,
+                edgeSoftness: 0.42f,
+                coreSolid: 0.35f,
+                glowStrength: 1.2f,
+                glowWidth: 0.30f,
+                opacity: 1f);
+
             return s_SplashMaterial;
         }
 
         /// <summary>
-        /// 按参数造一个 PAO/BubbleBurstSplash 材质。
+        /// 造一个 PAO/BubbleCircle 材质。
         ///
         /// 找不到着色器时返回 null —— 粒子系统会退回默认材质，
         /// 效果不理想但不会崩，也不会把游戏卡死。
         /// </summary>
-        private static Material MakeMaterial(Color tint, float softness, float corePower,
-                                             float rimStrength, float opacity)
+        private static Material MakeMaterial(Color tint, Color glowColor,
+                                             float radius, float edgeSoftness, float coreSolid,
+                                             float glowStrength, float glowWidth, float opacity)
         {
             Shader shader = Shader.Find(kSplashShader);
 
@@ -345,23 +397,50 @@ namespace PAO
             {
                 Debug.LogWarning("[BubbleBurstVFX] 找不到着色器 " + kSplashShader +
                                  "，爆炸会退回默认粒子材质。请确认 " +
-                                 "Assets/GameMain/Art/Shaders/BubbleBurstSplash.shader 存在且编译通过。");
+                                 "Assets/GameMain/Art/Shaders/BubbleCircle.shader 存在且编译通过。");
                 return null;
             }
 
             var mat = new Material(shader);
-            mat.name = "BubbleBurst Splash (Runtime)";
+            mat.name = "BubbleBurst Circle (Runtime)";
             mat.hideFlags = HideFlags.DontSave;
 
             SetColor(mat, "_Tint", tint);
-            SetColor(mat, "_RimColor", kWetEdge);
+            SetColor(mat, "_GlowColor", glowColor);
             SetFloat(mat, "_Opacity", opacity);
-            SetFloat(mat, "_Softness", softness);
-            SetFloat(mat, "_CorePower", corePower);
-            SetFloat(mat, "_RimStrength", rimStrength);
-            SetFloat(mat, "_RimWidth", 0.16f);
-            SetFloat(mat, "_WobbleAmp", 4.2f);
-            SetFloat(mat, "_WobbleSpeed", 2.4f);
+            SetFloat(mat, "_Radius", radius);
+            SetFloat(mat, "_EdgeSoftness", edgeSoftness);
+            SetFloat(mat, "_CoreSolid", coreSolid);
+            SetFloat(mat, "_GlowWidth", glowWidth);
+            SetFloat(mat, "_WobbleAmp", 0.06f);    // 只做轻微扰动，保证还是圆
+            SetFloat(mat, "_WobbleSpeed", 2.0f);
+
+            // ---- 球面着色（"有质感"的关键）----
+            //
+            // 这里把传进来的 glowStrength 压到 45%：
+            // 加色的环形发光太强会把球面明暗冲平，看起来又变成一张亮圆片。
+            // 保留一点发光做"炸开"的亮度，但把大部分亮度交给漫反射和高光去表达。
+            SetFloat(mat, "_GlowStrength", glowStrength * 0.45f);
+
+            // 0.75 = 明显的球面感，但不是写实渲染那种死板的余弦
+            SetFloat(mat, "_SphereAmount", 0.75f);
+
+            // 主光从左上前方打下来（屏幕空间），和主角水母的高光方位一致
+            SetVector(mat, "_LightDir", new Vector4(-0.40f, 0.62f, 0.68f, 0f));
+
+            // 暗部往冷青压 —— 水下环境光
+            SetColor(mat, "_AmbientTint", new Color(0.42f, 0.55f, 0.72f, 1f));
+
+            // 镜面高光：偏左上的一颗亮"水珠"
+            SetColor(mat, "_SpecColor", Color.white);
+            SetFloat(mat, "_SpecStrength", 1.05f);
+            SetFloat(mat, "_SpecPower", 42f);
+            SetVector(mat, "_SpecOffset", new Vector4(-0.18f, 0.20f, 0f, 0f));
+
+            // 边缘透光：泡泡的边是薄的，光会穿过来
+            SetColor(mat, "_RimColor", new Color(1f, 0.94f, 0.95f, 1f));
+            SetFloat(mat, "_RimStrength", 0.95f);
+            SetFloat(mat, "_RimPower", 2.6f);
 
             return mat;
         }
@@ -380,6 +459,14 @@ namespace PAO
             if (mat != null && mat.HasProperty(name))
             {
                 mat.SetFloat(name, value);
+            }
+        }
+
+        private static void SetVector(Material mat, string name, Vector4 value)
+        {
+            if (mat != null && mat.HasProperty(name))
+            {
+                mat.SetVector(name, value);
             }
         }
 
