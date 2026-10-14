@@ -65,9 +65,9 @@ namespace PAO.UI.V2
             UISettingsData custom = original.Copy(); custom.keys[UIInput.Charge] = KeyCode.Q; custom.keys[UIInput.Journal] = KeyCode.K;
             UISettings.Apply(custom);
             typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-            Check(((Text)typeof(UIRuntime).GetField("chargeLabel", Private).GetValue(runtime)).text.Contains("Q") &&
+            Check(UIInput.Binding(UIInput.Charge) == KeyCode.Q &&
                 ((Text)typeof(UIRuntime).GetField("journalShortcut", Private).GetValue(runtime)).text.Contains("K"),
-                "HUD charge and journal hints display the current bindings.");
+                "The charge action and journal shortcut respect the current bindings.");
             runtime.ShowHelp();
             string help = ""; foreach (Text label in Top(runtime).GetComponentsInChildren<Text>()) help += label.text;
             Check(help.Contains("Q") && help.Contains("K") && help.Contains("引爆"), "Tutorial help reflects custom keys and the detonation action.");

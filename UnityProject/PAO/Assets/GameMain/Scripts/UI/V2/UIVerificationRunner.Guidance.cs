@@ -16,8 +16,8 @@ namespace PAO.UI.V2
             UISettingsData quiet = original.Copy(); quiet.detailedHints = false; quiet.keys[UIInput.Interact] = KeyCode.K;
             UISettings.Apply(quiet, false); UIInput.UseKeyboard(); yield return null;
             Check(!GuideField<Transform>(runtime, "objectivePanel").gameObject.activeSelf &&
-                GuideField<Transform>(runtime, "abilityPanel").gameObject.activeSelf,
-                "Default guidance shows compact ability information and hides the persistent objective paragraph.");
+                GuideField<Transform>(runtime, "abilityPanel") == null,
+                "Default guidance has no ability information card and hides the persistent objective paragraph.");
             runtime.ShowHelp();
             string help = ""; foreach (Text label in Top(runtime).GetComponentsInChildren<Text>()) help += label.text;
             Check(help.Contains("当前路径") && help.Contains("浮粘泡泡") && help.Contains("K"),
@@ -67,11 +67,9 @@ namespace PAO.UI.V2
             UIInput.VerificationAxis = axis => 0;
             UIInput.VerificationHeld = control => control == UIInput.PadBinding(UIInput.Charge);
             yield return new WaitForSecondsRealtime(.25f);
-            bool resourceMeter = GuideField<RectTransform>(runtime, "resourcePanel") != null;
-            Check(launcher.IsCharging && GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf == !resourceMeter &&
-                Mathf.Abs(GuideField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress - launcher.ChargeProgress) < .05f &&
-                (resourceMeter || Mathf.Abs(GuideField<UIChargeArc>(runtime, "reticleArc").Progress - launcher.ChargeProgress) < .05f),
-                "The selected ability ring shows actual charge; only scenes without a resource meter use the fallback badge.");
+            Check(launcher.IsCharging && !GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf &&
+                Mathf.Abs(GuideField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress - launcher.ChargeProgress) < .05f,
+                "The selected ability ring shows actual charge without adding another badge or card.");
             yield return CaptureWorld(runtime, "guidance-world-charge");
             runtime.ShowPause(); yield return null;
             Check(!GuideField<RectTransform>(runtime, "visualHud").gameObject.activeInHierarchy,
@@ -81,7 +79,7 @@ namespace PAO.UI.V2
 
             quiet.detailedHints = true; UISettings.Apply(quiet, false); yield return null;
             Check(GuideField<Transform>(runtime, "objectivePanel").gameObject.activeSelf &&
-                GuideField<Transform>(runtime, "abilityPanel").gameObject.activeSelf && !GuideField<RectTransform>(runtime, "visualHud").gameObject.activeSelf,
+                GuideField<Transform>(runtime, "abilityPanel") == null && !GuideField<RectTransform>(runtime, "visualHud").gameObject.activeSelf,
                 "Detailed text hints remain available as an explicit accessibility preference.");
             yield return Capture(runtime, "guidance-detailed-opt-in", 1600, 900);
             quiet.tutorials = true; UISettings.Apply(quiet, false);

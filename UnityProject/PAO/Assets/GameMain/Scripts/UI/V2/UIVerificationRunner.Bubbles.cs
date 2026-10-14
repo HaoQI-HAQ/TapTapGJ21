@@ -92,9 +92,12 @@ namespace PAO.UI.V2
                 Check(panel.GetComponent<Image>() != null && panel.anchorMin == new Vector2(0, 1) && panel.rect.width == 340 &&
                     panel.GetComponentsInChildren<Text>(true).Length == 1 &&
                     BubbleField<Image>(runtime, "resourceFill").rectTransform.rect.height == 24 &&
-                    BubbleField<Text>(runtime, "resourceCost").transform.IsChildOf(BubbleField<RectTransform>(runtime, "abilityCluster")) &&
-                    BubbleField<RectTransform>(runtime, "reticleCue").IsChildOf(BubbleField<RectTransform>(runtime, "abilityCluster")),
-                    scene + " places energy at the upper left and type, cost and charge inside the ability cluster.");
+                    BubbleField<RectTransform>(runtime, "abilityCluster").Find("Current ability") == null,
+                    scene + " shows the upper-left energy meter and three ability buttons without an information card.");
+                RectTransform narration = BubbleField<RectTransform>(runtime, "subtitleRoot");
+                Check(map == -1 ? narration != null && narration.gameObject.activeInHierarchy :
+                    narration == null || !narration.gameObject.activeInHierarchy,
+                    scene + " keeps narration visible only in the opted-in test scene.");
                 if (map == -1) yield return VerifyBubbleResources(runtime, launcher, resource, switcher);
                 resource.SetCurrent(100);
                 yield return Capture(runtime, scene + "-resource-hud", 1600, 900);
@@ -119,7 +122,7 @@ namespace PAO.UI.V2
             switcher.SetType(BubbleType.Bomb);
             Check(switcher.Current == BubbleType.Sticky && BubbleField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
                 BubbleField<Text>(runtime, "resourceAmount").text == "0 / 100" &&
-                !BubbleField<RectTransform>(runtime, "resourceFeedbackPanel").gameObject.activeSelf &&
+                BubbleField<RectTransform>(runtime, "hudMessages").Find("Resource feedback") == null &&
                 BubbleField<System.Collections.Generic.Queue<string>>(runtime, "notices").Count == notices,
                 "Depletion locks switching and shows zero with a warning color without repeated notices.");
             yield return CaptureWorld(runtime, "cs-world-charging");
@@ -151,8 +154,8 @@ namespace PAO.UI.V2
             Check(launcher.HasHeldBubble && launcher.PaidCost == 12 && resource.Current == 8,
                 "A fully charged sticky bubble remains at the muzzle with its paid cost.");
             switcher.SetType(BubbleType.Bomb);
-            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<Text>(runtime, "currentAbility").text.Contains("浮粘"),
-                "A held bubble retains its original type in the cost preview after switching.");
+            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<UIAbilityMotion>(runtime, "abilityMotion").Selected == (int)BubbleType.Sticky && BubbleField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress == 1,
+                "A held bubble retains its original type and full selected ability ring after switching.");
             GameObject held = BubbleField<GameObject>(launcher, "m_HeldBubble");
             launcher.LaunchHeldBubble();
             Check(!launcher.HasHeldBubble && resource.Current == 8 && held.GetComponent<Bubble>().Type == BubbleType.Sticky,

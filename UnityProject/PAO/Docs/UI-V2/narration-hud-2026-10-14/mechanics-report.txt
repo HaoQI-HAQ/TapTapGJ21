@@ -1,0 +1,81 @@
+Passed: 78
+cs bootstraps the gameplay UI.
+The repaired scene contains exactly one player.
+The scene has no missing scripts.
+Only one EventSystem is active.
+The player has resources, expressions and a main camera.
+Resource feedback remains visible with minimal hints.
+Scene bubble template and cost resolve: Sticky
+Detailed mode keeps the ability card absent and energy focused on remaining quantity: Sticky
+Scene bubble template and cost resolve: Bouncy
+Detailed mode keeps the ability card absent and energy focused on remaining quantity: Bouncy
+Scene bubble template and cost resolve: Bomb
+Detailed mode keeps the ability card absent and energy focused on remaining quantity: Bomb
+cs starts with a persistent narration preview rather than a resource recovery notice.
+A narration event opens the bottom popup.
+Timed narration hides automatically when it ends.
+Pause hides the narration preview with gameplay UI.
+The persistent preview returns after closing pause.
+The subtitle preference also hides the narration popup.
+Narration can be closed explicitly without leaving an empty panel.
+Rendered cs-resource-full-1600x900.
+HUD text fits: 100 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+Insufficient energy prevents charging without locking input or going negative.
+Rendered cs-resource-empty-960x540.
+HUD text fits: 0 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+Starting a sticky bubble pays its base cost and locks type switching.
+Ability selection respects the charge lock.
+Growing bubbles stop at the available budget and keep consistent paid cost.
+Rendered cs-charge-limited-1600x900.
+HUD text fits: 0 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+A limited bubble can still be released and held ready.
+Rendered cs-bubble-held-960x540.
+HUD text fits: 0 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+Launching a held bubble does not charge twice.
+Terrain stores partial fill before it is full.
+Aiming at partly filled terrain keeps the removed information card absent.
+Rendered cs-terrain-fill-1600x900.
+Filling terrain rewards the actual player resource pool.
+Repeated terrain destruction does not reward twice.
+Launched bubbles retain their paid cost for recovery.
+Sticky recovery refunds the paid amount exactly once.
+Rendered cs-recovered-1600x900.
+Pause hides resource HUD and blocks charging.
+Rendered cs-test-tools-960x540.
+Low energy test action applies and resumes gameplay.
+Reducing energy clears recovery feedback from the previous resource increase.
+Rendered cs-resource-low-960x540.
+Refill test action restores the pool and resumes.
+Return to spawn uses the repaired scene's original spawn point.
+Rendered cs-detailed-large-text-960x540.
+HUD text fits: 100 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+Rendered cs-english-large-text-960x540.
+HUD text fits: 100 / 100
+HUD text fits: 旁白
+HUD text fits: 水流轻轻涌动，泡泡会带你去往新的水域。
+Rendered cs-hud-bottom-messages-960x540.
+Upper-left energy feedback contains only the quantity value and meter.
+Three ability buttons remain without the removed card or duplicate charge badge.
+Bottom messages reserve space for the ability cluster at large text sizes. Messages=(x:-485.50, y:-422.00, width:720.00, height:211.20), abilities=(x:254.50, y:-418.00, width:313.50, height:280.50)
+Narration and temporary notices share the bottom lane without overlapping.
+Rendered diagnostic world and HUD: cs-hud-world-annotated-layout.
+Upper-left energy feedback contains only the quantity value and meter.
+Three ability buttons remain without the removed card or duplicate charge badge.
+Bottom messages reserve space for the ability cluster at large text sizes. Messages=(x:-485.50, y:-422.00, width:720.00, height:184.40), abilities=(x:254.50, y:-418.00, width:313.50, height:280.50)
+Narration and temporary notices share the bottom lane without overlapping.
+The field guide opens with the added mechanics lessons.
+Reloading the test scene restores a single fully provisioned player.
+Map5 inherits one resource manager and one face director with its original defaults.
+Map5 uses the new HUD while suppressing its legacy resource display.
+
+Errors: 0

@@ -61,7 +61,7 @@ Reduced motion keeps Ability 1 at a stable size.
 Reduced motion keeps Ability 2 at a stable size.
 Rendered motion-reduced.
 Twelve open/close cycles leave no accumulated page, button or orbital tweens.
-Default guidance shows compact ability information and hides the persistent objective paragraph.
+Default guidance has no ability information card and hides the persistent objective paragraph.
 Players can deliberately open Help to review route, ability behavior and current controls.
 An available memory displays its shape and mapped input beside the object.
 Visual interaction keycaps use the remapped action rather than a fixed E.
@@ -70,7 +70,7 @@ Rendered guidance-minimal-960.
 A solid wall suppresses interaction guidance instead of showing it through geometry.
 A destination behind the camera becomes a direction arrow inside the safe area.
 An offscreen destination cue avoids the actual bounds of the three ability controls.
-The selected ability ring shows actual charge; only scenes without a resource meter use the fallback badge.
+The selected ability ring shows actual charge without adding another badge or card.
 Rendered diagnostic world and HUD: guidance-world-charge.
 Pause hides destination, charge and interaction graphics together with the HUD.
 Detailed text hints remain available as an explicit accessibility preference.
@@ -184,7 +184,7 @@ Binding movement to an occupied key swaps the two actions.
 A rebuilt binding control remains selected and fully visible inside its scroll viewport.
 Rendered controls-all-actions.
 Leaving settings rolls back both actions in a key conflict swap.
-HUD charge and journal hints display the current bindings.
+The charge action and journal shortcut respect the current bindings.
 Tutorial help reflects custom keys and the detonation action.
 A restored memory trigger does not collect its fragment twice.
 An archived dialogue with an unfinished choice remains available from its trigger.

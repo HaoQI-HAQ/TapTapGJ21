@@ -7,11 +7,8 @@ namespace PAO.UI.V2
 {
     public sealed partial class UIRuntime
     {
-        private RectTransform abilityCluster, hudMessages, abilitySummary, resourceFeedbackPanel;
-        private Text currentAbility;
+        private RectTransform abilityCluster, hudMessages;
         private Text objectiveLabel;
-        private Text chargeLabel;
-        private Image chargeFill;
         private UIAbilityMotion abilityMotion;
         private readonly List<Image> abilityRings = new List<Image>();
         private Text journalShortcut;
@@ -28,6 +25,7 @@ namespace PAO.UI.V2
         private RectTransform subtitleRoot;
         private Text subtitleText;
         private float subtitleUntil;
+        private Text narrationSpeaker;
         private string objectiveOverride;
         private bool resultShown;
         private bool wasCharging;
@@ -51,27 +49,9 @@ namespace PAO.UI.V2
             abilityCluster = ui.Rect("Three bubble abilities", hud);
             RectTransform abilities = abilityCluster;
             Anchor(abilities, new Vector2(1, 0), new Vector2(-32, 32), new Vector2(380, 400), new Vector2(1, 0));
-            RectTransform type = ui.Column("Current ability", abilities, 12, 4);
-            abilityPanel = type;
-            AddHudBacking(type);
-            Anchor(type, new Vector2(1, 0), new Vector2(-190, 190), new Vector2(240, 128), new Vector2(.5f, .5f));
-            abilitySummary = ui.Row("Ability summary", type, 8);
-            currentAbility = ui.Label(abilitySummary, "", 20, Config.ink, TextAnchor.MiddleCenter);
-            UIWidgets.Size(currentAbility.transform, -1, -1, 1);
-            resourceCost = ui.Label(type, "", 18, Config.ink, TextAnchor.MiddleCenter);
-            Image chargeBackground = ui.Surface("Charge track", type, Config.mist, true); UIWidgets.Size(chargeBackground.transform, 6);
-            chargeBackground.raycastTarget = false;
-            chargeFill = ui.Surface("Charge fill", chargeBackground.transform, Config.teal, true);
-            chargeFill.raycastTarget = false;
-            chargeFill.rectTransform.anchorMin = Vector2.zero; chargeFill.rectTransform.anchorMax = new Vector2(0, 1);
-            chargeFill.rectTransform.offsetMin = chargeFill.rectTransform.offsetMax = Vector2.zero;
-            resourceFeedbackPanel = ui.Column("Resource feedback", hudMessages, 12, 4);
-            AddHudBacking(resourceFeedbackPanel);
-            chargeLabel = ui.Label(resourceFeedbackPanel, "", 20, Config.ink, TextAnchor.MiddleCenter);
-            resourceStatus = ui.Label(resourceFeedbackPanel, "", 20, Config.text, TextAnchor.MiddleCenter);
             abilityMotion = abilities.gameObject.AddComponent<UIAbilityMotion>();
-            abilityMotion.Configure(ui, chargeFill, type.GetComponent<Image>(), currentAbility);
-            Vector2[] positions = { new Vector2(-190, 336), new Vector2(-324, 56), new Vector2(-56, 56) };
+            abilityMotion.Configure(ui, null, null, null);
+            Vector2[] positions = { new Vector2(-190, 245), new Vector2(-324, 56), new Vector2(-56, 56) };
             for (int i = 0; i < 3; i++)
             {
                 int index = i;
@@ -104,6 +84,9 @@ namespace PAO.UI.V2
             BuildVisualGuidance();
             BuildResourceHud();
             RefreshHud();
+            MechanicsTestScene test = FindFirstObjectByType<MechanicsTestScene>();
+            if (test != null && test.NarrationPreview)
+                ShowNarration(T("旁白", "Narrator"), T("水流轻轻涌动，泡泡会带你去往新的水域。", "The current stirs softly. Let the bubbles carry you into new waters."), -1);
         }
 
         private static void Anchor(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size, Vector2 pivot)
@@ -122,10 +105,10 @@ namespace PAO.UI.V2
         private void ClearHud()
         {
             if (subtitleRoot != null) Destroy(subtitleRoot.gameObject);
-            subtitleRoot = null; subtitleText = null;
+            subtitleRoot = null; subtitleText = narrationSpeaker = null; subtitleUntil = 0;
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
-            hud = null; hudMessages = abilityCluster = abilitySummary = resourceFeedbackPanel = null;
-            abilityMotion = null; abilityRings.Clear(); currentAbility = null;
+            hud = null; hudMessages = abilityCluster = null;
+            abilityMotion = null; abilityRings.Clear();
             ClearVisualGuidance();
             ClearResourceHud();
             if (noticeRoot != null) Destroy(noticeRoot.gameObject);
@@ -151,10 +134,8 @@ namespace PAO.UI.V2
         private void RefreshHud()
         {
             RefreshResourceHud();
-            if (hud == null || currentAbility == null || switcher == null) return;
+            if (hud == null || switcher == null) return;
             int type = launcher != null ? (int)launcher.DisplayType : (int)switcher.Current;
-            string name = AbilityName(type);
-            if (currentAbility.text != name) currentAbility.text = name;
             if (journalShortcut != null) { journalShortcut.text = GuideInputPrompt(UIInput.Journal); SetInputTypeface(journalShortcut); }
             if (pauseShortcut != null) pauseShortcut.text = UIInput.ControllerActive ? "Menu" : "Esc";
             if (goalLabel != null)
@@ -164,17 +145,10 @@ namespace PAO.UI.V2
             if (abilityMotion != null)
                 abilityMotion.SetState(type, launcher != null && launcher.IsCharging ? launcher.ChargeProgress : 0,
                     launcher != null && launcher.IsCharging, launcher != null && launcher.HasHeldBubble);
-            if (launcher != null && chargeLabel != null)
+            if (launcher != null)
             {
-                string charge = UIInput.Prompt(UIInput.Charge), interact = UIInput.Prompt(UIInput.Interact);
-                string status = launcher.IsCharging ? T("正在蓄力 ", "Charging ") + Mathf.RoundToInt(launcher.ChargeProgress * 100) + "%" :
-                    launcher.HasHeldBubble ? T("泡泡已就绪 · ", "Bubble ready · ") + charge + T(" 发射", " to launch") :
-                    UIInput.ToggleCharge ? charge + T(" 点击蓄力 · 再次点击释放", " to charge · Press again to release") :
-                    T("按住 ", "Hold ") + charge + T(" 蓄力 · ", " to charge · ") + interact + T(" 交互", " to interact");
-                if (chargeLabel.text != status) chargeLabel.text = status;
-                chargeFill.rectTransform.anchorMax = new Vector2(launcher.HasHeldBubble ? 1 : launcher.IsCharging ? launcher.ChargeProgress : 0, 1);
                 if (wasCharging && !launcher.IsCharging) ShowTutorial("first-cast", T("让泡泡成为你的路径", "Let bubbles become your path"),
-                    T("留意泡泡与地形的关系。交互按键：", "Watch how bubbles interact with the terrain. Interaction key: ") + interact);
+                    T("留意泡泡与地形的关系。交互按键：", "Watch how bubbles interact with the terrain. Interaction key: ") + UIInput.Prompt(UIInput.Interact));
                 wasCharging = launcher.IsCharging;
             }
         }
@@ -185,22 +159,44 @@ namespace PAO.UI.V2
             if (objectiveLabel != null) objectiveLabel.text = text;
         }
 
-        public void ShowSubtitle(string speaker, string text)
+        public void ShowSubtitle(string speaker, string text) => ShowNarration(speaker, text);
+
+        // Negative duration keeps a line visible until HideNarration; zero uses reading time.
+        public void ShowNarration(string speaker, string text, float duration = 0)
         {
-            if (!UISettings.Current.subtitles) return;
+            if (string.IsNullOrWhiteSpace(text)) { HideNarration(); return; }
+            if (hudMessages == null) return;
             if (subtitleRoot == null)
             {
-                Image background = ui.Surface("Subtitles", hudMessages != null ? hudMessages : safeRoot, Config.ink, true);
-                subtitleRoot = background.rectTransform;
-                UIWidgets.Size(subtitleRoot, 90);
+                subtitleRoot = ui.Column("Narration popup", hudMessages, 18, 6);
+                AddHudBacking(subtitleRoot);
+                subtitleRoot.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.paper);
+                narrationSpeaker = ui.Label(subtitleRoot, "", 20, Config.teal, TextAnchor.MiddleCenter);
+                subtitleText = ui.Label(subtitleRoot, "", 24, Config.ink, TextAnchor.MiddleCenter);
                 subtitleRoot.SetAsLastSibling();
-                background.raycastTarget = false;
-                background.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.ink);
-                subtitleText = ui.Label(subtitleRoot, "", 24, Config.paper, TextAnchor.MiddleCenter);
-                UIWidgets.Stretch(subtitleText.rectTransform, 16);
             }
-            subtitleText.text = string.IsNullOrEmpty(speaker) ? text : speaker + "\n" + text;
-            subtitleUntil = Time.unscaledTime + Mathf.Max(5, text.Length * 0.12f);
+            narrationSpeaker.text = speaker;
+            narrationSpeaker.gameObject.SetActive(!string.IsNullOrWhiteSpace(speaker));
+            subtitleText.text = text;
+            subtitleUntil = duration < 0 ? float.PositiveInfinity : Time.unscaledTime +
+                (duration > 0 ? duration : Mathf.Max(5, text.Length * .12f));
+            RefreshNarration();
+            PositionGameplayHud();
+        }
+
+        public void HideNarration()
+        {
+            subtitleUntil = 0;
+            if (subtitleRoot != null) subtitleRoot.gameObject.SetActive(false);
+        }
+
+        private void RefreshNarration()
+        {
+            if (subtitleRoot == null) return;
+            subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
+            float height = 36 + ResourceTextHeight(subtitleText);
+            if (narrationSpeaker.gameObject.activeSelf) height += ResourceTextHeight(narrationSpeaker) + 6;
+            UIWidgets.Size(subtitleRoot, Mathf.Max(90, height));
         }
 
         public void Toast(string message, bool showOverModals = true)
@@ -216,12 +212,7 @@ namespace PAO.UI.V2
                 tutorialNotices.Clear();
                 if (noticeIsTutorial) noticeRemaining = 0;
             }
-            if (subtitleRoot != null)
-            {
-                subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
-                UIWidgets.Size(subtitleRoot, Mathf.Max(72, subtitleText.preferredHeight + 32));
-
-            }
+            RefreshNarration();
             if (noticeRoot == null)
             {
                 Image paper = ui.Surface("Context notice", hudMessages != null ? hudMessages : safeRoot, Config.mist, true);

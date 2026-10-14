@@ -6,22 +6,15 @@ namespace PAO.UI.V2
     public sealed partial class UIRuntime
     {
         private BubbleResourceManager resource;
-        private BombBubbleManager resourceBombs;
         private RectTransform resourcePanel;
-        private Text resourceAmount, resourceCost, resourceStatus;
+        private Text resourceAmount;
         private Image resourceFill;
         private int lastResourceAmount;
         private int resourceFeedbackChange;
         private float resourceFeedbackUntil;
-        private RectTransform terrainPanel;
-        private Text terrainAmount;
-        private Image terrainFill;
-        private readonly RaycastHit[] terrainHits = new RaycastHit[32];
-
         private void BindBubbleResource()
         {
             UnbindBubbleResource();
-            resourceBombs = player != null ? player.GetComponent<BombBubbleManager>() : null;
             resource = player != null ? player.GetComponent<BubbleResourceManager>() : null;
             if (resource == null) return;
             lastResourceAmount = resource.Current;
@@ -36,7 +29,7 @@ namespace PAO.UI.V2
                 resource.OnChanged -= OnResourceChanged;
                 resource.OnInsufficient -= OnResourceInsufficient;
             }
-            resource = null; resourceBombs = null;
+            resource = null;
             resourceFeedbackChange = 0; resourceFeedbackUntil = 0;
         }
 
@@ -79,15 +72,6 @@ namespace PAO.UI.V2
             resourceFill.rectTransform.offsetMin = resourceFill.rectTransform.offsetMax = Vector2.zero;
             PositionResourceHud();
             ApplyHintPresentation();
-            terrainPanel = ui.Column("Terrain fill", abilityPanel, 0, 4);
-            terrainAmount = ui.Label(terrainPanel, "", 18, Config.ink, TextAnchor.MiddleCenter);
-            Image terrainTrack = ui.Surface("Terrain track", terrainPanel, Config.mist, true);
-            terrainTrack.raycastTarget = false; UIWidgets.Size(terrainTrack.transform, 6);
-            terrainFill = ui.Surface("Terrain fill bar", terrainTrack.transform, Config.teal, true);
-            terrainFill.raycastTarget = false;
-            terrainFill.rectTransform.anchorMin = Vector2.zero;
-            terrainFill.rectTransform.offsetMin = terrainFill.rectTransform.offsetMax = Vector2.zero;
-            terrainPanel.gameObject.SetActive(false);
         }
 
         private void PositionResourceHud()
@@ -113,7 +97,6 @@ namespace PAO.UI.V2
         private void RefreshResourceHud()
         {
             if (hud == null) return;
-            RefreshTerrainHud();
             if (resourcePanel != null && resource != null)
             {
                 resourceAmount.text = resource.Current + " / " + resource.Max;
@@ -127,69 +110,14 @@ namespace PAO.UI.V2
                 resourceFill.rectTransform.anchorMax = new Vector2(resource.Normalized, 1);
                 resourceFill.enabled = resource.Current > 0;
             }
-            bool charging = launcher != null && (launcher.IsCharging || launcher.HasHeldBubble);
-            if (reticleCue != null)
-            {
-                reticleCue.gameObject.SetActive(charging && resource == null);
-                if (charging) reticleArc.Progress = launcher.HasHeldBubble ? 1 : launcher.ChargeProgress;
-            }
-            if (launcher == null) { resourceCost.text = resourceStatus.text = ""; }
-            else
-            {
-                resourceCost.text = T("消耗 ", "Cost ") + launcher.MinimumCost + "–" + launcher.MaximumCost;
-                string charge = GuideInputPrompt(UIInput.Charge);
-                if (launcher.IsCharging)
-                    resourceStatus.text = launcher.IsResourceLimited ? T("泡泡值不足 · 停止变大", "Energy limited · Growth stopped") :
-                        UIInput.ToggleCharge ? charge + T(" 再按释放", " again to release") : T("松开 ", "Release ") + charge;
-                else if (launcher.HasHeldBubble)
-                    resourceStatus.text = T("就绪 · ", "Ready · ") + charge + T(" 发射", " to launch");
-                else if (resource != null && Time.unscaledTime < resourceFeedbackUntil)
-                    resourceStatus.text = resourceFeedbackChange > 0 ? T("恢复 +", "Recovered +") + resourceFeedbackChange :
-                        T("泡泡值不足 · 还差 ", "Not enough · Need ") + -resourceFeedbackChange;
-                else if (resourceBombs != null && resourceBombs.PendingCount > 0)
-                    resourceStatus.text = T("待引爆 ", "Bombs ready ") + resourceBombs.PendingCount + " · " + GuideInputPrompt(UIInput.Detonate);
-                else if (resource != null && !resource.CanAfford(launcher.MinimumCost))
-                    resourceStatus.text = T("泡泡值不足 · 还差 ", "Not enough · Need ") + (launcher.MinimumCost - resource.Current);
-                else resourceStatus.text = "";
-            }
-            if (!UISettings.Current.detailedHints) resourceStatus.text = "";
-            resourceCost.gameObject.SetActive(!string.IsNullOrEmpty(resourceCost.text));
-            resourceStatus.gameObject.SetActive(!string.IsNullOrEmpty(resourceStatus.text));
-            chargeLabel.gameObject.SetActive(UISettings.Current.detailedHints && !resourceStatus.gameObject.activeSelf);
-            resourceFeedbackPanel.gameObject.SetActive(resourceStatus.gameObject.activeSelf || chargeLabel.gameObject.activeSelf);
+            if (reticleCue != null) reticleCue.gameObject.SetActive(false);
             PositionResourceHud();
             PositionGameplayHud();
         }
 
         private void ClearResourceHud()
         {
-            resourcePanel = null; resourceAmount = resourceCost = resourceStatus = null; resourceFill = null;
-            terrainPanel = null; terrainAmount = null; terrainFill = null;
-        }
-
-        private void RefreshTerrainHud()
-        {
-            if (terrainPanel == null) return;
-            Camera view = Camera.main;
-            TerrainBubble terrain = null;
-            float closest = float.PositiveInfinity;
-            if (view != null)
-            {
-                int count = Physics.RaycastNonAlloc(view.ViewportPointToRay(new Vector3(.5f, .5f, 0)), terrainHits,
-                    35f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < count; i++)
-                {
-                    Transform hit = terrainHits[i].collider.transform;
-                    if (player != null && hit.IsChildOf(player.transform)) continue;
-                    if (terrainHits[i].distance >= closest) continue;
-                    closest = terrainHits[i].distance;
-                    terrain = hit.GetComponentInParent<TerrainBubble>();
-                }
-            }
-            terrainPanel.gameObject.SetActive(terrain != null);
-            if (terrain == null) return;
-            terrainAmount.text = T("地形填充  ", "Terrain fill  ") + terrain.CurrentFill + " / " + terrain.Capacity;
-            terrainFill.rectTransform.anchorMax = new Vector2(terrain.FillProgress, 1);
+            resourcePanel = null; resourceAmount = null; resourceFill = null;
         }
 
         private void BuildMechanicsTestTools(Transform parent)

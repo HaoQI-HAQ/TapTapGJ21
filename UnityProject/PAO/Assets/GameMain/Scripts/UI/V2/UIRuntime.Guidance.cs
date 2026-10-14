@@ -131,8 +131,8 @@ namespace PAO.UI.V2
             tutorialKey = GuideKey(tutorialCue, new Vector2(30, 0));
 
             reticleCue = ui.Rect("Charge reticle", visualHud);
-            reticleCue.SetParent(abilitySummary, false);
-            UIWidgets.Size(reticleCue, 28, 28);
+            reticleCue.SetParent(abilityCluster, false);
+            Anchor(reticleCue, new Vector2(1, 0), new Vector2(-190, 130), new Vector2(28, 28), new Vector2(.5f, .5f));
             Image reticleBacking = ui.Rect("Charge backing", reticleCue).gameObject.AddComponent<UICircleImage>();
             UIWidgets.Stretch(reticleBacking.rectTransform, -4);
             reticleBacking.color = new Color(Config.paper.r, Config.paper.g, Config.paper.b, .9f); reticleBacking.raycastTarget = false;

@@ -40,13 +40,14 @@ namespace PAO.UI.V2
                 BubbleSettings settings = launcher.SettingsFor(type);
                 Check(settings.prefab != null && settings.minCost > 0 && settings.maxCost >= settings.minCost, "Scene bubble template and cost resolve: " + type);
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-                Check(GuideField<Text>(runtime, "resourceCost").text.Contains(settings.minCost + "–" + settings.maxCost) &&
+                Check(GuideField<RectTransform>(runtime, "abilityCluster").Find("Current ability") == null &&
                     panel.GetComponentsInChildren<Text>(true).Length == 1 &&
                     GuideField<Text>(runtime, "resourceAmount").text == energy.Current + " / " + energy.Max,
-                    "Detailed HUD shows shared costs beside abilities while the energy meter shows only remaining quantity: " + type);
+                    "Detailed mode keeps the ability card absent and energy focused on remaining quantity: " + type);
             }
             detailedCosts.detailedHints = false; UISettings.Apply(detailedCosts);
             types.SetType(BubbleType.Sticky);
+            yield return VerifyNarrationLifecycle(runtime);
             yield return Capture(runtime, "cs-resource-full-1600x900", 1600, 900);
             VerifyResourceTextFits(panel);
 
@@ -93,9 +94,8 @@ namespace PAO.UI.V2
             Camera.main.transform.LookAt(terrainObject.transform);
             Physics.SyncTransforms();
             typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-            Transform terrainHud = runtime.transform.Find("UI Canvas V2/Safe Area/Gameplay HUD/Three bubble abilities/Current ability/Terrain fill");
-            Check(terrainHud.gameObject.activeInHierarchy && terrainHud.GetComponentInChildren<Text>().text.Contains("2 / 5"),
-                "Aiming at terrain displays its actual fill count.");
+            Check(GuideField<RectTransform>(runtime, "abilityCluster").Find("Current ability") == null && terrain.CurrentFill == 2,
+                "Aiming at partly filled terrain keeps the removed information card absent.");
             yield return Capture(runtime, "cs-terrain-fill-1600x900", 1600, 900);
             Camera.main.transform.SetPositionAndRotation(cameraPosition, cameraRotation);
             terrain.Absorb(terrain.Capacity);
@@ -165,11 +165,35 @@ namespace PAO.UI.V2
                 "Map5 uses the new HUD while suppressing its legacy resource display.");
         }
 
+        private IEnumerator VerifyNarrationLifecycle(UIRuntime runtime)
+        {
+            RectTransform popup = GuideField<RectTransform>(runtime, "subtitleRoot");
+            Check(popup != null && popup.gameObject.activeInHierarchy && float.IsPositiveInfinity(GuideField<float>(runtime, "subtitleUntil")),
+                "cs starts with a persistent narration preview rather than a resource recovery notice.");
+            runtime.ShowNarration("旁白", "这是一段短暂的旁白。", .12f);
+            yield return null;
+            Check(popup.gameObject.activeInHierarchy, "A narration event opens the bottom popup.");
+            yield return new WaitForSecondsRealtime(.2f);
+            Check(!popup.gameObject.activeInHierarchy, "Timed narration hides automatically when it ends.");
+            runtime.ShowNarration("旁白", "测试场景常驻旁白，正式关卡只在触发时显示。", -1);
+            runtime.ShowPause(); yield return null;
+            Check(!popup.gameObject.activeInHierarchy, "Pause hides the narration preview with gameplay UI.");
+            runtime.Back(); yield return null; yield return null;
+            Check(popup.gameObject.activeInHierarchy, "The persistent preview returns after closing pause.");
+            UISettingsData disabled = UISettings.Current.Copy(); disabled.subtitles = false; UISettings.Apply(disabled);
+            yield return null;
+            Check(!popup.gameObject.activeInHierarchy, "The subtitle preference also hides the narration popup.");
+            disabled.subtitles = true; UISettings.Apply(disabled); yield return null;
+            runtime.HideNarration(); yield return null;
+            Check(!popup.gameObject.activeInHierarchy, "Narration can be closed explicitly without leaving an empty panel.");
+            runtime.ShowNarration("旁白", "水流轻轻涌动，泡泡会带你去往新的水域。", -1);
+        }
+
         private void VerifyResourceTextFits(Transform panel)
         {
             UIRuntime runtime = UIRuntime.Instance;
-            foreach (Transform area in new[] { panel, GuideField<Transform>(runtime, "abilityPanel"), GuideField<RectTransform>(runtime, "resourceFeedbackPanel") })
-                foreach (Text text in area.GetComponentsInChildren<Text>())
+            foreach (Transform area in new[] { panel, GuideField<RectTransform>(runtime, "subtitleRoot") })
+                if (area != null) foreach (Text text in area.GetComponentsInChildren<Text>())
                     Check(text.rectTransform.rect.height >= text.preferredHeight - 1,
                         "HUD text fits: " + text.text.Replace('\n', ' '));
         }
@@ -188,15 +212,15 @@ namespace PAO.UI.V2
             RectTransform energy = GuideField<RectTransform>(runtime, "resourcePanel");
             RectTransform cluster = GuideField<RectTransform>(runtime, "abilityCluster");
             RectTransform messages = GuideField<RectTransform>(runtime, "hudMessages");
-            Check(energy.anchorMin == new Vector2(0, 1) && !GuideField<Text>(runtime, "resourceCost").transform.IsChildOf(energy),
-                "Upper-left energy feedback contains a value and bar, with cost kept in the ability cluster.");
-            Check(GuideField<Text>(runtime, "currentAbility").transform.IsChildOf(cluster) && GuideField<RectTransform>(runtime, "reticleCue").IsChildOf(cluster),
-                "Type and charging feedback stay inside the three ability controls.");
+            Check(energy.anchorMin == new Vector2(0, 1) && energy.GetComponentsInChildren<Text>().Length == 1,
+                "Upper-left energy feedback contains only the quantity value and meter.");
+            Check(cluster.Find("Current ability") == null && !GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf,
+                "Three ability buttons remain without the removed card or duplicate charge badge.");
             Check(messages.anchorMin.y == 0 && !HudRect(runtime, messages).Overlaps(HudRect(runtime, cluster)),
                 "Bottom messages reserve space for the ability cluster at large text sizes. Messages=" + HudRect(runtime, messages) + ", abilities=" + HudRect(runtime, cluster));
             RectTransform subtitle = GuideField<RectTransform>(runtime, "subtitleRoot"), notice = GuideField<RectTransform>(runtime, "noticeRoot");
             Check(subtitle.IsChildOf(messages) && notice.IsChildOf(messages) && !HudRect(runtime, subtitle).Overlaps(HudRect(runtime, notice)),
-                "Subtitles and context notices share the bottom lane without overlapping.");
+                "Narration and temporary notices share the bottom lane without overlapping.");
         }
     }
 }

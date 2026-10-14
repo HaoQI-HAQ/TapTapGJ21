@@ -7,6 +7,9 @@ namespace PAO
     {
         [SerializeField] private Vector3 m_SpawnPosition = new Vector3(.55f, .59f, -3.37f);
 
+        [SerializeField] private bool m_NarrationPreview = true;
+        public bool NarrationPreview => m_NarrationPreview;
+
         public void ReturnToSpawn(PlayerController player)
         {
             if (player == null) return;
