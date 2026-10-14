@@ -40,8 +40,9 @@ namespace PAO.UI.V2
                 BubbleSettings settings = launcher.SettingsFor(type);
                 Check(settings.prefab != null && settings.minCost > 0 && settings.maxCost >= settings.minCost, "Scene bubble template and cost resolve: " + type);
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-                Check(System.Array.Exists(panel.GetComponentsInChildren<Text>(), text => text.text.Contains(settings.minCost + "–" + settings.maxCost)),
-                    "Detailed HUD reads the selected type's shared cost: " + type);
+                Check(panel.GetComponentsInChildren<Text>(true).Length == 1 &&
+                    BubbleField<Text>(runtime, "resourceAmount").text == energy.Current + " / " + energy.Max,
+                    "Detailed hints keep the resource panel focused on remaining quantity: " + type);
             }
             detailedCosts.detailedHints = false; UISettings.Apply(detailedCosts);
             types.SetType(BubbleType.Sticky);
@@ -122,7 +123,8 @@ namespace PAO.UI.V2
             yield return Capture(runtime, "cs-test-tools-960x540", 960, 540);
             FindButton(runtime, "低资源（10%）").onClick.Invoke();
             Check(!runtime.IsBlockingGameplay && energy.Current == energy.Max / 10 && player.enabled, "Low energy test action applies and resumes gameplay.");
-            Check(!System.Array.Exists(panel.GetComponentsInChildren<Text>(), text => text.text.Contains("恢复")),
+            Check(BubbleField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
+                BubbleField<float>(runtime, "resourceFeedbackUntil") <= Time.unscaledTime,
                 "Reducing energy clears recovery feedback from the previous resource increase.");
             yield return Capture(runtime, "cs-resource-low-960x540", 960, 540);
             runtime.ShowPause(); FindButton(runtime, "补满泡泡值").onClick.Invoke();

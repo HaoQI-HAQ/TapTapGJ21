@@ -59,6 +59,7 @@ namespace PAO.UI.V2
                     }
                 Check(missing == 0, scene + " has no missing scripts or prefab instances.");
                 RectTransform panel = BubbleField<RectTransform>(runtime, "resourcePanel");
+                Vector2 panelSize = panel.sizeDelta;
                 Check(panel != null && panel.gameObject.activeInHierarchy && resource.Current == 100,
                     scene + " shows the full resource pool with detailed hints disabled.");
                 if (scene == "cs")
@@ -77,6 +78,10 @@ namespace PAO.UI.V2
                     Check(launcher.IsCharging && switcher.IsLocked && 100 - resource.Current == launcher.PaidCost &&
                         launcher.PaidCost == launcher.CostFor((BubbleType)type, launcher.ChargeProgress),
                         scene + " incrementally charges the displayed cost for type " + type + ".");
+                    typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
+                    Check(panel.sizeDelta == panelSize && panel.GetComponentsInChildren<Text>().Length == 1 &&
+                        Mathf.Abs(BubbleField<Image>(runtime, "resourceFill").rectTransform.anchorMax.x - resource.Normalized) < .001f,
+                        scene + " shows real remaining quantity while charging without adding text or expanding the panel.");
                     UIInput.VerificationHeld = control => false;
                     yield return null; yield return null;
                     Check(!launcher.IsCharging && !switcher.IsLocked, scene + " releases and unlocks type " + type + ".");
@@ -84,10 +89,11 @@ namespace PAO.UI.V2
                     yield return null;
                 }
                 typeof(UIRuntime).GetMethod("RefreshHud", Private).Invoke(runtime, null);
-                Check(panel.GetComponent<UILowPolyImage>() != null && panel.rect.width == 300 &&
-                    !BubbleField<Text>(runtime, "resourceCost").gameObject.activeSelf &&
-                    BubbleField<RectTransform>(runtime, "reticleCue").IsChildOf(panel),
-                    scene + " keeps compact lowpoly energy feedback and charging badge in the lower-left panel.");
+                Check(panel.GetComponent<Image>() != null && panel.rect.width == 300 &&
+                    panel.GetComponentsInChildren<Text>(true).Length == 1 &&
+                    BubbleField<Image>(runtime, "resourceFill").rectTransform.rect.height == 24 &&
+                    !BubbleField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf,
+                    scene + " emphasizes quantity with a thick bar and one numeric label in the lower-left panel.");
                 if (map == -1) yield return VerifyBubbleResources(runtime, launcher, resource, switcher);
                 resource.SetCurrent(100);
                 yield return Capture(runtime, scene + "-resource-hud", 1600, 900);
@@ -108,12 +114,14 @@ namespace PAO.UI.V2
             Vector3 scale = BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale;
             yield return new WaitForSecondsRealtime(.2f);
             Check(launcher.ChargeProgress == progress && BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale == scale,
-                "A depleted charge retains its size and progress.");
+                "A depleted charge retains its size and progress. Progress " + progress + " -> " + launcher.ChargeProgress +
+                ", size " + scale.ToString("F6") + " -> " + BubbleField<GameObject>(launcher, "m_CurrentBubble").transform.localScale.ToString("F6"));
             switcher.SetType(BubbleType.Bomb);
-            Check(switcher.Current == BubbleType.Sticky && BubbleField<Text>(runtime, "resourceStatus").text.Contains("停止变大") &&
+            Check(switcher.Current == BubbleType.Sticky && BubbleField<Image>(runtime, "resourceFill").color == UIDesignPalette.Coral &&
+                BubbleField<Text>(runtime, "resourceAmount").text == "0 / 100" &&
                 BubbleField<System.Collections.Generic.Queue<string>>(runtime, "notices").Count == notices,
-                "Type switching stays locked and repeated insufficient events use one inline hint.");
-            yield return CaptureWorld(runtime, "cs-lowpoly-world-charging");
+                "Depletion locks switching and shows zero with a warning color without repeated notices.");
+            yield return CaptureWorld(runtime, "cs-world-charging");
             yield return Capture(runtime, "cs-resource-insufficient-960", 960, 540);
             VerifyResourceTextFits(BubbleField<RectTransform>(runtime, "resourcePanel"));
             resource.Refund(5); yield return new WaitForSecondsRealtime(.2f);
@@ -129,8 +137,10 @@ namespace PAO.UI.V2
             resource.SetCurrent(0);
             UIInput.VerificationHeld = control => control == UIInput.PadBinding(UIInput.Charge);
             yield return new WaitForSecondsRealtime(.15f);
-            Check(!launcher.IsCharging && resource.Current == 0 && BubbleField<Text>(runtime, "resourceStatus").text.Contains("还差 2"),
-                "An empty pool refuses a new bubble and shows the exact shortfall.");
+            Check(!launcher.IsCharging && resource.Current == 0 && BubbleField<Image>(runtime, "resourceFill").rectTransform.anchorMax.x == 0 &&
+                !BubbleField<Image>(runtime, "resourceFill").enabled &&
+                BubbleField<Text>(runtime, "resourceAmount").color == UIDesignPalette.Coral,
+                "An empty pool refuses a new bubble and displays an empty meter with a warning color.");
             UIInput.VerificationHeld = control => false; yield return null; yield return null;
 
             resource.SetCurrent(20);
@@ -140,8 +150,9 @@ namespace PAO.UI.V2
             Check(launcher.HasHeldBubble && launcher.PaidCost == 12 && resource.Current == 8,
                 "A fully charged sticky bubble remains at the muzzle with its paid cost.");
             switcher.SetType(BubbleType.Bomb);
-            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<Text>(runtime, "resourceCost").text.Contains("浮粘"),
-                "A held bubble retains its original type in the cost preview after switching.");
+            Check(launcher.DisplayType == BubbleType.Sticky && BubbleField<Text>(runtime, "resourceAmount").text == "8 / 100" &&
+                BubbleField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress == 1,
+                "A held bubble retains its type and full ability ring while the resource HUD shows remaining quantity.");
             GameObject held = BubbleField<GameObject>(launcher, "m_HeldBubble");
             launcher.LaunchHeldBubble();
             Check(!launcher.HasHeldBubble && resource.Current == 8 && held.GetComponent<Bubble>().Type == BubbleType.Sticky,
@@ -153,9 +164,17 @@ namespace PAO.UI.V2
             TerrainBubble target = terrain.AddComponent<TerrainBubble>();
             terrain.transform.position = launcher.transform.position + Vector3.right * 20;
             target.Break(TerrainBubble.BreakCause.Bomb); yield return null;
-            Check(resource.Current == 45 && BubbleField<Text>(runtime, "resourceStatus").text.Contains("+5"),
-                "Breaking actual bubble terrain refunds its reward and updates the HUD.");
+            Check(resource.Current == 45 && BubbleField<Text>(runtime, "resourceAmount").text == "45 / 100" &&
+                BubbleField<Image>(runtime, "resourceFill").enabled &&
+                Mathf.Abs(BubbleField<Image>(runtime, "resourceFill").rectTransform.anchorMax.x - .45f) < .001f &&
+                BubbleField<Image>(runtime, "resourceFill").color == Color.Lerp(runtime.Config.teal, runtime.Config.paper, .3f),
+                "Breaking actual terrain refunds its reward and fills and highlights the meter without extra text.");
             yield return Capture(runtime, "cs-resource-recovered", 1600, 900);
+            yield return new WaitForSecondsRealtime(2.1f);
+            Check(BubbleField<Image>(runtime, "resourceFill").color == runtime.Config.teal,
+                "The recovery highlight expires back to the ordinary meter color.");
+            resource.SetCurrent(56);
+            yield return Capture(runtime, "cs-resource-quantity-56", 1600, 900);
             UISettingsData english = new UISettingsData { language = 1, textScale = 1.3f, uiScale = 1.2f, detailedHints = true, tutorials = false };
             UISettings.Apply(english, false);
             yield return Capture(runtime, "cs-resource-english-large-960", 960, 540);

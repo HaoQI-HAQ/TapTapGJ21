@@ -68,9 +68,11 @@ namespace PAO.UI.V2
             UIInput.VerificationAxis = axis => 0;
             UIInput.VerificationHeld = control => control == UIInput.PadBinding(UIInput.Charge);
             yield return new WaitForSecondsRealtime(.25f);
-            Check(launcher.IsCharging && GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf &&
-                Mathf.Abs(GuideField<UIChargeArc>(runtime, "reticleArc").Progress - launcher.ChargeProgress) < .05f,
-                "The corner charge badge reflects actual gameplay charge without covering the character.");
+            bool resourceMeter = GuideField<RectTransform>(runtime, "resourcePanel") != null;
+            Check(launcher.IsCharging && GuideField<RectTransform>(runtime, "reticleCue").gameObject.activeSelf == !resourceMeter &&
+                Mathf.Abs(GuideField<UIAbilityMotion>(runtime, "abilityMotion").ChargeProgress - launcher.ChargeProgress) < .05f &&
+                (resourceMeter || Mathf.Abs(GuideField<UIChargeArc>(runtime, "reticleArc").Progress - launcher.ChargeProgress) < .05f),
+                "The selected ability ring shows actual charge; only scenes without a resource meter use the fallback badge.");
             yield return CaptureWorld(runtime, "guidance-world-charge");
             runtime.ShowPause(); yield return null;
             Check(!GuideField<RectTransform>(runtime, "visualHud").gameObject.activeInHierarchy,
