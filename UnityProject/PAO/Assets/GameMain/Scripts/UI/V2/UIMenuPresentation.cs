@@ -5,6 +5,22 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
+    public sealed class UIMenuHeroFit : MonoBehaviour
+    {
+        public float maximumWidth = 760;
+        public int baseFontSize = 112;
+        private void LateUpdate()
+        {
+            RectTransform rect = (RectTransform)transform;
+            float available = ((RectTransform)rect.parent).rect.width - 32;
+            LayoutGroup parentLayout = rect.parent.GetComponent<LayoutGroup>();
+            if (available > 0 && (parentLayout == null || !parentLayout.enabled))
+                rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Min(maximumWidth, available));
+            if (UISettings.Current != null)
+                GetComponent<Text>().resizeTextMaxSize = Mathf.RoundToInt(baseFontSize * UISettings.Current.textScale);
+        }
+    }
+
     // Keep one semantic column. The parent viewport handles large text without covering the footer.
     public sealed class UIMenuLayout : MonoBehaviour
     {
@@ -72,6 +88,231 @@ namespace PAO.UI.V2
             color.a = UISettings.Current.reducedMotion || UISettings.Current.highContrast ? .82f : .8f + .02f * Mathf.Sin(Time.unscaledTime * 0.35f);
             art.color = color;
         }
+    }
+
+    public sealed class UIPauseActionStyle : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+        IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
+    {
+        private Image surface, marker, corner;
+        private Text label, number;
+        private UIGuideGraphic arrow;
+        private Sequence response;
+        private Tween press;
+        private bool hovered, focused, pressed;
+
+        public void Configure(UIWidgets ui, UIConfig theme, int index, bool compact)
+        {
+            Button button = GetComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            GetComponent<UIButtonFeedback>().enabled = false;
+            GetComponent<UIFluidGradient>().enabled = false;
+            GetComponent<UIAdaptiveButton>().enabled = false;
+            UIWidgets.Size(transform, compact ? 58 : 72);
+            UIControlAccent accent = GetComponent<UIControlAccent>();
+            if (accent != null) accent.enabled = false;
+            surface = GetComponent<Image>();
+            surface.sprite = null; surface.type = Image.Type.Simple;
+            foreach (Outline border in GetComponents<Outline>()) border.effectColor = Color.black;
+            label = transform.Find("Text").GetComponent<Text>();
+            label.GetComponent<UIStyledText>().Configure(compact ? 25 : 30, false, theme);
+            label.fontStyle = FontStyle.Bold; label.alignment = TextAnchor.MiddleLeft;
+            label.rectTransform.offsetMin = new Vector2(compact ? 64 : 74, 4);
+            label.rectTransform.offsetMax = new Vector2(compact ? -34 : -44, -4);
+
+            number = ui.Label(transform, index.ToString("00"), 18, Color.black, TextAnchor.MiddleCenter);
+            number.fontStyle = FontStyle.Bold;
+            RectTransform nr = number.rectTransform;
+            nr.anchorMin = nr.anchorMax = new Vector2(0, .5f); nr.pivot = new Vector2(.5f, .5f);
+            nr.anchoredPosition = new Vector2(compact ? 31 : 37, 0);
+            nr.sizeDelta = new Vector2(compact ? 40 : 46, 48);
+
+            marker = ui.Surface("Navigation marker", transform, Color.black);
+            marker.raycastTarget = false;
+            RectTransform mr = marker.rectTransform;
+            mr.anchorMin = mr.anchorMax = new Vector2(0, .5f);
+            mr.pivot = new Vector2(.5f, .5f); mr.anchoredPosition = new Vector2(8, 0);
+            mr.sizeDelta = new Vector2(4, 42);
+
+            arrow = ui.Rect("Navigation arrow", transform).gameObject.AddComponent<UIGuideGraphic>();
+            arrow.Symbol = UIGuideSymbol.Arrow; arrow.raycastTarget = false;
+            RectTransform ar = arrow.rectTransform;
+            ar.anchorMin = ar.anchorMax = new Vector2(1, .5f);
+            ar.pivot = new Vector2(.5f, .5f); ar.anchoredPosition = new Vector2(-22, 0);
+            ar.sizeDelta = new Vector2(23, 23);
+
+            corner = ui.Surface("Drafting slash", transform, Color.black);
+            corner.raycastTarget = false;
+            RectTransform cr = corner.rectTransform;
+            cr.anchorMin = cr.anchorMax = Vector2.one;
+            cr.pivot = new Vector2(.5f, .5f); cr.anchoredPosition = new Vector2(-12, -10);
+            cr.sizeDelta = new Vector2(15, 2); cr.localEulerAngles = new Vector3(0, 0, -45);
+            Apply(true);
+        }
+
+        private void Apply(bool instant = false)
+        {
+            if (surface == null) return;
+            bool active = hovered || focused;
+            Color foreground = active ? Color.white : Color.black;
+            Color background = active ? Color.black : Color.white;
+            if (response != null) response.Kill();
+            if (instant || UISettings.Current.reducedMotion)
+            {
+                surface.color = background;
+                label.color = number.color = arrow.color = marker.color = corner.color = foreground;
+                arrow.rectTransform.anchoredPosition = new Vector2(active ? -17 : -22, 0);
+                return;
+            }
+            response = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            response.Join(surface.DOColor(background, .16f));
+            response.Join(label.DOColor(foreground, .16f));
+            response.Join(number.DOColor(foreground, .16f));
+            response.Join(arrow.DOColor(foreground, .16f));
+            response.Join(marker.DOColor(foreground, .16f));
+            response.Join(corner.DOColor(foreground, .16f));
+            response.Join(arrow.rectTransform.DOAnchorPosX(active ? -17 : -22, .18f).SetEase(Ease.OutCubic));
+            response.OnKill(() => response = null);
+        }
+        public void OnPointerEnter(PointerEventData data) { hovered = true; Apply(); }
+        public void OnPointerExit(PointerEventData data) { hovered = false; pressed = false; Press(); Apply(); }
+        public void OnPointerDown(PointerEventData data)
+        { if (data.button == PointerEventData.InputButton.Left) { pressed = true; Press(); } }
+        public void OnPointerUp(PointerEventData data)
+        { if (data.button == PointerEventData.InputButton.Left) { pressed = false; Press(); } }
+        public void OnSelect(BaseEventData data) { focused = true; Apply(); }
+        public void OnDeselect(BaseEventData data) { focused = false; Apply(); }
+
+        private void Press()
+        {
+            if (press != null) press.Kill();
+            RectTransform rect = (RectTransform)transform;
+            Vector3 target = Vector3.one * (pressed ? .985f : 1);
+            if (UISettings.Current.reducedMotion) rect.localScale = target;
+            else press = rect.DOScale(target, .12f).SetEase(Ease.OutCubic).SetUpdate(true)
+                .SetLink(gameObject).OnKill(() => press = null);
+        }
+        private void OnDisable()
+        {
+            if (response != null) response.Kill();
+            if (press != null) press.Kill();
+            transform.localScale = Vector3.one;
+        }
+    }
+
+    // Pause entrance follows the supplied motion reference: two 70 ms spaced
+    // underlays, a delayed panel, then numbered items rising in sequence.
+    public sealed class UIPauseReveal : MonoBehaviour
+    {
+        private RectTransform panel;
+        private RectTransform[] layers;
+        private RectTransform title;
+        private CanvasGroup titleGroup;
+        private Image scrim;
+        private Sequence entrance, exit;
+        private float distance;
+        private bool closing;
+
+        public void Configure()
+        {
+            panel = (RectTransform)transform;
+            if (UISettings.Current.reducedMotion) return;
+            Canvas.ForceUpdateCanvases();
+            RectTransform parent = (RectTransform)panel.parent;
+            distance = Mathf.Max(panel.rect.width + 32, parent.rect.width * .4f, 480);
+            RectTransform page = (RectTransform)parent.parent;
+            var dimmer = new GameObject("Pause scene shade", typeof(RectTransform), typeof(Image));
+            dimmer.layer = 5;
+            RectTransform shadeRect = dimmer.GetComponent<RectTransform>();
+            shadeRect.SetParent(page, false);
+            shadeRect.anchorMin = Vector2.zero; shadeRect.anchorMax = Vector2.one;
+            shadeRect.offsetMin = shadeRect.offsetMax = Vector2.zero;
+            shadeRect.SetSiblingIndex(0);
+            scrim = dimmer.GetComponent<Image>();
+            scrim.color = new Color(0, 0, 0, 0); scrim.raycastTarget = false;
+            title = page.Find("Pause overlay title") as RectTransform;
+            if (title != null)
+            {
+                titleGroup = title.gameObject.AddComponent<CanvasGroup>();
+                titleGroup.alpha = 0;
+                title.anchoredPosition += new Vector2(0, -18);
+            }
+            layers = new RectTransform[2];
+            for (int i = 0; i < layers.Length; i++)
+            {
+                var paper = new GameObject("Pause stagger layer " + i, typeof(RectTransform), typeof(Image));
+                paper.layer = 5;
+                RectTransform rect = paper.GetComponent<RectTransform>(); rect.SetParent(parent, false);
+                rect.anchorMin = panel.anchorMin; rect.anchorMax = panel.anchorMax;
+                rect.offsetMin = rect.offsetMax = Vector2.zero;
+                Image image = paper.GetComponent<Image>(); image.raycastTarget = false;
+                image.color = i == 0 ? new Color(.1f, .1f, .1f, 1) : new Color(.7f, .7f, .7f, 1);
+                rect.SetSiblingIndex(panel.GetSiblingIndex());
+                rect.anchoredPosition = new Vector2(distance, 0); layers[i] = rect;
+            }
+            panel.anchoredPosition = new Vector2(distance, 0);
+            entrance = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            entrance.Insert(0, scrim.DOFade(.2f, .42f).SetEase(Ease.OutCubic));
+            entrance.Insert(0, layers[0].DOAnchorPosX(0, .5f).SetEase(Ease.OutQuart));
+            entrance.Insert(.07f, layers[1].DOAnchorPosX(0, .5f).SetEase(Ease.OutQuart));
+            entrance.Insert(.15f, panel.DOAnchorPosX(0, .65f).SetEase(Ease.OutQuart));
+            if (titleGroup != null)
+            {
+                entrance.Insert(.18f, titleGroup.DOFade(1, .38f));
+                entrance.Insert(.18f, title.DOAnchorPosY(title.anchoredPosition.y + 18, .48f).SetEase(Ease.OutCubic));
+            }
+            Button[] actions = GetComponentsInChildren<Button>();
+            for (int i = 0; i < actions.Length; i++)
+            {
+                CanvasGroup group = actions[i].gameObject.AddComponent<CanvasGroup>();
+                group.alpha = 0; group.interactable = false; group.blocksRaycasts = false;
+                Text text = actions[i].transform.Find("Text").GetComponent<Text>();
+                RectTransform label = text.rectTransform;
+                float homeY = label.anchoredPosition.y;
+                label.anchoredPosition = new Vector2(label.anchoredPosition.x, homeY - 32);
+                label.localEulerAngles = new Vector3(0, 0, -8);
+                float start = .25f + i * .1f;
+                entrance.Insert(start, group.DOFade(1, .45f));
+                entrance.Insert(start, label.DOAnchorPosY(homeY, 1f).SetEase(Ease.OutQuart));
+                entrance.Insert(start, label.DOLocalRotate(Vector3.zero, 1f).SetEase(Ease.OutQuart));
+                bool first = i == 0;
+                entrance.InsertCallback(start + .45f, () =>
+                {
+                    if (group == null) return;
+                    group.interactable = true; group.blocksRaycasts = true;
+                    if (first)
+                    {
+                        UIPage owner = GetComponentInParent<UIPage>();
+                        if (owner != null) owner.RestoreFocus();
+                    }
+                });
+            }
+            entrance.OnKill(() => entrance = null);
+        }
+
+        public void Close(System.Action after)
+        {
+            if (closing) return;
+            closing = true;
+            UIPage owner = GetComponentInParent<UIPage>();
+            if (owner != null) owner.SetInteractable(false);
+            if (entrance != null) entrance.Kill();
+            if (UISettings.Current.reducedMotion || panel == null) { after?.Invoke(); return; }
+            exit = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            if (scrim != null) exit.Insert(0, scrim.DOFade(0, .3f));
+            if (titleGroup != null) exit.Insert(0, titleGroup.DOFade(0, .2f));
+            exit.Insert(0, panel.DOAnchorPosX(distance, .32f).SetEase(Ease.InCubic));
+            if (layers != null)
+                foreach (RectTransform layer in layers)
+                    if (layer != null) exit.Insert(0, layer.DOAnchorPosX(distance, .32f).SetEase(Ease.InCubic));
+            exit.OnComplete(() => { exit = null; after?.Invoke(); });
+            exit.OnKill(() => exit = null);
+        }
+        private void OnDisable()
+        {
+            if (entrance != null) entrance.Kill();
+            if (exit != null) exit.Kill();
+        }
+        private void OnDestroy() { OnDisable(); }
     }
 
     public sealed class UIMenuResponsiveDesign : MonoBehaviour

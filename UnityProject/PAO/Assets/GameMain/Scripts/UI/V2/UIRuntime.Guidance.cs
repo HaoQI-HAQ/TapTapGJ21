@@ -78,9 +78,10 @@ namespace PAO.UI.V2
         }
         private void SetGuideKey(CueKey key, int action)
         {
+            key.root.gameObject.SetActive(false);
             KeyCode binding = UIInput.Binding(action);
             bool mouse = !UIInput.ControllerActive && (binding == KeyCode.Mouse0 || binding == KeyCode.Mouse1);
-            key.mouse.gameObject.SetActive(mouse); key.label.gameObject.SetActive(!mouse);
+            key.mouse.gameObject.SetActive(false); key.label.gameObject.SetActive(false);
             if (mouse) key.mouse.Symbol = binding == KeyCode.Mouse0 ? UIGuideSymbol.MouseLeft : UIGuideSymbol.MouseRight;
             else key.label.text = GuideInputPrompt(action);
             SetInputTypeface(key.label);
@@ -90,14 +91,17 @@ namespace PAO.UI.V2
         private Text HudIconButton(Transform parent, UIGuideSymbol symbol, System.Action action)
         {
             Image plate = ui.Surface(symbol.ToString(), parent, new Color(Config.paper.r, Config.paper.g, Config.paper.b, .97f), true);
+            Outline outline = plate.gameObject.AddComponent<Outline>();
+            outline.effectColor = Color.black; outline.effectDistance = Vector2.one;
             UIWidgets.Size(plate.transform, 56, 64);
             Button button = plate.gameObject.AddComponent<Button>(); button.targetGraphic = plate; button.onClick.AddListener(() => action());
             plate.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
-            GuideSymbol(plate.transform, symbol + " icon", symbol, 28, Config.ink).rectTransform.anchoredPosition = new Vector2(0, 6);
+            GuideSymbol(plate.transform, symbol + " icon", symbol, 34, Config.ink).rectTransform.anchoredPosition = Vector2.zero;
             Text key = ui.Label(plate.transform, "", 18, null, TextAnchor.MiddleCenter);
             key.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             key.resizeTextForBestFit = true; key.resizeTextMinSize = 12; key.resizeTextMaxSize = 18;
             Anchor(key.rectTransform, new Vector2(.5f, .5f), new Vector2(0, -16), new Vector2(62, 24), new Vector2(.5f, .5f));
+            key.gameObject.SetActive(false);
             return key;
         }
         private void BuildVisualGuidance()
@@ -155,6 +159,8 @@ namespace PAO.UI.V2
             tideTime = ui.Label(tideCue, "", 22, null);
             SetInputTypeface(tideTime);
             Anchor(tideTime.rectTransform, new Vector2(1, .5f), new Vector2(16, 0), new Vector2(120, 40), new Vector2(0, .5f));
+            tideTime.gameObject.SetActive(false);
+            clockBacking.gameObject.SetActive(false);
             tideGraceDuration = 1; showingTideGrace = false;
             goalCue.gameObject.SetActive(false); interactionCue.gameObject.SetActive(false);
             tutorialCue.gameObject.SetActive(false); reticleCue.gameObject.SetActive(false); tideCue.gameObject.SetActive(false);
@@ -162,16 +168,14 @@ namespace PAO.UI.V2
         }
         private void ApplyHintPresentation()
         {
-            bool detailed = UISettings.Current.detailedHints;
-            if (objectivePanel != null) objectivePanel.gameObject.SetActive(detailed);
+            if (objectivePanel != null) objectivePanel.gameObject.SetActive(false);
             if (abilityPanel != null)
             {
                 abilityPanel.gameObject.SetActive(true);
             }
             PositionResourceHud();
-            if (tutorialCue != null && detailed) tutorialCue.gameObject.SetActive(false);
             PositionGameplayHud();
-            if (visualHud != null) visualHud.gameObject.SetActive(!detailed);
+            if (visualHud != null) visualHud.gameObject.SetActive(true);
         }
 
         // Call while the interaction is actually available; unrefreshed owners expire automatically.
@@ -299,7 +303,7 @@ namespace PAO.UI.V2
             tutorialCue.gameObject.SetActive(tutorialRemaining > 0 && (!pulseIsTutorial || UISettings.Current.tutorials));
             if (tutorialCue.gameObject.activeSelf)
             {
-                tutorialKey.root.gameObject.SetActive(tutorialAction >= 0);
+                tutorialKey.root.gameObject.SetActive(false);
                 if (tutorialAction >= 0) SetGuideKey(tutorialKey, tutorialAction);
                 float width = tutorialAction < 0 ? 80 : tutorialKey.root.sizeDelta.x + 96;
                 tutorialSymbol.rectTransform.anchoredPosition = new Vector2(tutorialAction < 0 ? 0 : -width * .5f + 36, 0);

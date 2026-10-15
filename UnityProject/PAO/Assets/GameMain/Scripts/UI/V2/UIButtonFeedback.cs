@@ -78,8 +78,8 @@ namespace PAO.UI.V2
             if (UISettings.Current.reducedMotion && pulse != null)
             { pulse.Kill(); pulse = null; ripple.color = Color.clear; ripple.rectTransform.localScale = Vector3.one; }
             bool contrast = UISettings.Current.highContrast;
-            Color contrastTop = film.contrastDark ? Color.black : new Color32(255, 247, 225, 255);
-            Color contrastBottom = film.contrastDark ? Color.black : new Color32(255, 229, 190, 255);
+            Color contrastTop = film.contrastDark ? Color.black : Color.white;
+            Color contrastBottom = film.contrastDark ? Color.black : Color.white;
             film.top = contrast ? contrastTop : emphasized ? UIDesignPalette.PrimaryTop : top;
             film.bottom = contrast ? contrastBottom : emphasized ? UIDesignPalette.PrimaryBottom : bottom;
             film.GetComponent<Graphic>().SetVerticesDirty();
@@ -102,7 +102,7 @@ namespace PAO.UI.V2
             if (pulse != null) pulse.Kill(); pulse = null;
             if (ripple == null || UISettings.Current.reducedMotion) return;
             ripple.rectTransform.localScale = Vector3.one * .4f;
-            ripple.color = new Color(1, 1, 1, .8f);
+            ripple.color = new Color(0, 0, 0, .8f);
             pulse = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
             pulse.Join(ripple.rectTransform.DOScale(1.2f, config.motion.ripple).SetEase(Ease.OutQuad));
             pulse.Join(ripple.DOFade(0, config.motion.ripple)); pulse.OnKill(() => pulse = null);

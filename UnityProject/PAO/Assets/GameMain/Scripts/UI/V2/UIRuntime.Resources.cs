@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,6 +10,8 @@ namespace PAO.UI.V2
         private RectTransform resourcePanel;
         private Text resourceAmount;
         private Image resourceFill;
+        private Image resourceTrail;
+        private Tween resourceDrain;
         private int lastResourceAmount;
         private int resourceFeedbackChange;
         private float resourceFeedbackUntil;
@@ -35,6 +38,19 @@ namespace PAO.UI.V2
 
         private void OnResourceChanged(int current, int maximum)
         {
+            float previous = maximum > 0 ? Mathf.Clamp01((float)lastResourceAmount / maximum) : 0;
+            float next = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0;
+            if (resourceTrail != null)
+            {
+                if (resourceDrain != null) resourceDrain.Kill();
+                resourceTrail.rectTransform.anchorMax = new Vector2(previous, 1);
+                if (current < lastResourceAmount && !UISettings.Current.reducedMotion)
+                    resourceDrain = DOTween.To(() => resourceTrail.rectTransform.anchorMax.x,
+                        x => resourceTrail.rectTransform.anchorMax = new Vector2(x, 1), next, .55f)
+                        .SetDelay(.1f).SetEase(Ease.OutCubic).SetUpdate(true)
+                        .SetLink(resourceTrail.gameObject).OnKill(() => resourceDrain = null);
+                else resourceTrail.rectTransform.anchorMax = new Vector2(next, 1);
+            }
             if (current > lastResourceAmount)
             {
                 resourceFeedbackChange = current - lastResourceAmount;
@@ -57,6 +73,8 @@ namespace PAO.UI.V2
             if (resource == null) return;
             resourcePanel = ui.Column("Bubble resource", hud, 12, 6);
             AddHudBacking(resourcePanel);
+            Outline edge = resourcePanel.gameObject.AddComponent<Outline>();
+            edge.effectColor = Color.black; edge.effectDistance = Vector2.one;
             RectTransform header = ui.Row("Energy summary", resourcePanel, 8);
             UIPearlGraphic bubble = ui.Rect("Resource bubble", header).gameObject.AddComponent<UIPearlGraphic>();
             bubble.shape = UIPearlShape.Bubble; bubble.color = Config.teal; bubble.raycastTarget = false;
@@ -64,9 +82,17 @@ namespace PAO.UI.V2
             resourceAmount = ui.Label(header, "", 32, Config.ink);
             resourceAmount.horizontalOverflow = HorizontalWrapMode.Overflow;
             UIWidgets.Size(resourceAmount.transform, -1, -1, 1);
-            Image track = ui.Surface("Resource track", resourcePanel, Config.mist, true);
+            header.gameObject.SetActive(false);
+            Image track = ui.Surface("Resource track", resourcePanel, Color.white, true);
             track.raycastTarget = false; UIWidgets.Size(track.transform, 24);
-            resourceFill = ui.Surface("Resource fill", track.transform, Config.teal, true);
+            Outline trackEdge = track.gameObject.AddComponent<Outline>();
+            trackEdge.effectColor = Color.black; trackEdge.effectDistance = Vector2.one;
+            resourceTrail = ui.Surface("Resource decrease", track.transform, new Color(.65f, .65f, .65f, 1));
+            resourceTrail.raycastTarget = false;
+            resourceTrail.rectTransform.anchorMin = Vector2.zero;
+            resourceTrail.rectTransform.anchorMax = new Vector2(resource.Normalized, 1);
+            resourceTrail.rectTransform.offsetMin = resourceTrail.rectTransform.offsetMax = Vector2.zero;
+            resourceFill = ui.Surface("Resource fill", track.transform, Color.black);
             resourceFill.raycastTarget = false;
             resourceFill.rectTransform.anchorMin = Vector2.zero;
             resourceFill.rectTransform.offsetMin = resourceFill.rectTransform.offsetMax = Vector2.zero;
@@ -77,10 +103,7 @@ namespace PAO.UI.V2
         private void PositionResourceHud()
         {
             if (resourcePanel == null) return;
-            float summaryHeight = Mathf.Max(34, resourceAmount.fontSize * 1.6f);
-            UIWidgets.Size(resourceAmount.transform, summaryHeight, -1, 1);
-            UIWidgets.Size(resourceAmount.transform.parent, summaryHeight);
-            float height = 54 + summaryHeight;
+            float height = 48;
             Anchor(resourcePanel, new Vector2(0, 1), new Vector2(32, -28), new Vector2(340, height), new Vector2(0, 1));
             if (objectivePanel != null) ((RectTransform)objectivePanel).anchoredPosition = new Vector2(32, -height - 44);
             if (tideCue != null) tideCue.anchoredPosition = new Vector2(398, -32);
@@ -99,14 +122,8 @@ namespace PAO.UI.V2
             if (hud == null) return;
             if (resourcePanel != null && resource != null)
             {
-                resourceAmount.text = resource.Current + " / " + resource.Max;
-                bool insufficient = launcher != null && !resource.CanAfford(launcher.MinimumCost);
-                bool feedback = Time.unscaledTime < resourceFeedbackUntil;
-                Color color = insufficient || resource.Normalized < .2f || (feedback && resourceFeedbackChange < 0)
-                    ? UIDesignPalette.Coral : Config.teal;
-                resourceAmount.color = color;
-                resourceFill.color = feedback && resourceFeedbackChange > 0 && color == Config.teal
-                    ? Color.Lerp(Config.teal, Config.paper, .3f) : color;
+                resourceAmount.text = "";
+                resourceFill.color = Color.black;
                 resourceFill.rectTransform.anchorMax = new Vector2(resource.Normalized, 1);
                 resourceFill.enabled = resource.Current > 0;
             }
@@ -117,7 +134,8 @@ namespace PAO.UI.V2
 
         private void ClearResourceHud()
         {
-            resourcePanel = null; resourceAmount = null; resourceFill = null;
+            if (resourceDrain != null) resourceDrain.Kill();
+            resourceDrain = null; resourcePanel = null; resourceAmount = null; resourceFill = resourceTrail = null;
         }
 
         private void BuildMechanicsTestTools(Transform parent)

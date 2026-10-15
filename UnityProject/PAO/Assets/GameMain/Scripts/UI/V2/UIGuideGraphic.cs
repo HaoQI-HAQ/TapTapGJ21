@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
-    public enum UIGuideSymbol { Goal, Memory, Build, Ride, Steer, Exit, Charge, Move, Journal, Pause, Arrow, Sticky, Bouncy, Bomb, MouseLeft, MouseRight, Check, Current }
+    public enum UIGuideSymbol { Goal, Memory, Build, Ride, Steer, Exit, Charge, Move, Journal, Pause, Arrow, Sticky, Bouncy, Bomb, MouseLeft, MouseRight, Check, Current, Restart }
 
     // Vector strokes stay sharp at every UI scale and convey meaning without depending on color.
     [RequireComponent(typeof(CanvasRenderer))]
@@ -69,6 +69,11 @@ namespace PAO.UI.V2
                         Line(-.4f, y, -.2f, y + .08f); Line(-.2f, y + .08f, 0, y);
                         Line(0, y, .2f, y + .08f); Line(.2f, y + .08f, .4f, y);
                     }
+                    break;
+                case UIGuideSymbol.Restart:
+                    Arc(Vector2.zero, .34f, -45, 260);
+                    Line(-.34f, -.07f, -.43f, .18f);
+                    Line(-.43f, .18f, -.14f, .13f);
                     break;
             }
         }

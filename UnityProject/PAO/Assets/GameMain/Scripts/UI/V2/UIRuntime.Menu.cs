@@ -1,5 +1,7 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace PAO.UI.V2
@@ -36,57 +38,92 @@ namespace PAO.UI.V2
             if (state.latest != null) UIRunState.Apply(state.latest);
             else UIRunState.NewRun();
             UIPage page = Push(T("泡涌", "BUBBLE TIDE"), "", false, UIPageDesign.Menu); page.Rebuild = ShowMenu;
-            Image art = ui.Surface("Jellyfish illustration", page.transform, new Color(1, .96f, .87f, .82f));
-            art.sprite = Config.menuArt; art.type = Image.Type.Simple; art.raycastTarget = false;
-            UIWidgets.Stretch(art.rectTransform); art.transform.SetSiblingIndex(1);
-            art.gameObject.AddComponent<UIMenuAmbience>();
-
             RectTransform body = (RectTransform)page.transform.Find("Page");
-            VerticalLayoutGroup layout = body.GetComponent<VerticalLayoutGroup>();
-            body.anchorMin = new Vector2(.055f, .06f); body.anchorMax = new Vector2(.53f, .95f);
-            layout.padding = new RectOffset(24, 24, 24, 16); layout.spacing = 12;
+            body.GetComponent<VerticalLayoutGroup>().enabled = false;
             Text heading = body.GetChild(0).GetComponent<Text>();
-            heading.name = "Menu title"; heading.alignment = TextAnchor.MiddleLeft;
-            heading.GetComponent<UIStyledText>().Configure(72, true, Config);
-            UIWidgets.Size(heading.transform, -1);
-            Text subtitle = ui.Label(body, T("意识之海", "THE SEA OF CONSCIOUSNESS"), 21, null, TextAnchor.MiddleLeft);
-            subtitle.name = "Menu subtitle"; subtitle.transform.SetSiblingIndex(1);
-
-            VerticalLayoutGroup contentLayout = page.Content.GetComponent<VerticalLayoutGroup>();
-            contentLayout.padding = new RectOffset(0, 0, 8, 8);
-            contentLayout.childForceExpandWidth = false; contentLayout.childAlignment = TextAnchor.UpperLeft;
-            RectTransform actions = ui.Column("Menu actions", page.Content, 0, 10);
-            LayoutElement actionSize = UIWidgets.Size(actions, -1, 560);
-            actions.gameObject.AddComponent<UIMenuLayout>().Configure(actionSize);
-            if (state.latest != null)
-                MenuButton(actions, T("继续游戏", "Continue"), () => ContinueJourney(state.latest.slot), true);
-            MenuButton(actions, T("新的旅程", "New journey"), RequestNewRun, state.latest == null);
-            MenuButton(actions, T("章节路径", "Chapter path"), ShowChapters);
-            MenuButton(actions, T("读取记录", "Load record"), ShowSaves);
-            MenuButton(actions, T("游戏设置", "Settings"), ShowSettings);
-
-            if (state.latest == null && (state.damaged > 0 || state.unavailable > 0))
+            heading.name = "Menu title"; heading.alignment = TextAnchor.MiddleCenter;
+            heading.GetComponent<UIStyledText>().Configure(112, true, Config);
+            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 42; heading.resizeTextMaxSize = 112;
+            Anchor(heading.rectTransform, new Vector2(.5f, .64f), Vector2.zero, new Vector2(760, 190), new Vector2(.5f, .5f));
+            heading.gameObject.AddComponent<UIMenuHeroFit>().maximumWidth = 760;
+            page.Content.GetComponentInParent<ScrollRect>().gameObject.SetActive(false);
+            page.Footer.gameObject.SetActive(false);
+            Image hit = ui.Surface("开始游戏", body, new Color(1, 1, 1, 0));
+            Anchor(hit.rectTransform, new Vector2(.5f, .38f), Vector2.zero, new Vector2(300, 76), new Vector2(.5f, .5f));
+            Button start = hit.gameObject.AddComponent<Button>(); start.targetGraphic = hit;
+            Text startLabel = ui.Label(hit.transform, T("开始游戏", "Start game"), 34, Config.ink, TextAnchor.MiddleCenter);
+            UIWidgets.Stretch(startLabel.rectTransform);
+            bool opening = false;
+            start.onClick.AddListener(() =>
             {
-                Text status = ui.Label(page.Content, state.damaged > 0 ?
-                    T("记录无法读取，可在「读取记录」恢复备份。", "Record unreadable. Restore a backup in Load record.") :
-                    T("记录对应的章节暂不可用。", "The recorded chapter is currently unavailable."),
-                    18, null, TextAnchor.MiddleCenter);
-                status.name = "Record status";
-                UIWidgets.Size(status.transform, -1, 560).layoutPriority = 3;
-            }
+                if (opening) return;
+                opening = true;
+                if (UISettings.Current.reducedMotion) { ShowMenuActions(); return; }
+                startLabel.DOColor(new Color(0, 0, 0, .25f), .24f).SetEase(Ease.InOutSine)
+                    .SetUpdate(true).SetLink(hit.gameObject).OnComplete(ShowMenuActions);
+            });
+            Finish(page);
+        }
 
-            // Secondary actions reflow independently of the clipped main list.
-            RectTransform secondary = ui.Rect("Secondary menu actions", page.Footer);
-            UIWidgets.Size(secondary, -1, -1, 1);
-            UIFlowLayout footerFlow = secondary.gameObject.AddComponent<UIFlowLayout>();
-            footerFlow.maxColumns = 3; footerFlow.spacing = 12;
-            UIWidgets.Size(page.Footer, -1);
-            MenuSecondaryButton(secondary, T("操作图鉴", "Guide"), ShowHelp);
-            MenuSecondaryButton(secondary, T("制作人员", "Credits"), ShowCredits);
-            MenuSecondaryButton(secondary, T("离开", "Quit"), ConfirmQuit);
-            body.gameObject.AddComponent<UIMenuResponsiveDesign>().Configure(heading, subtitle, contentLayout, footerFlow);
+        private void ShowMenuActions()
+        {
+            MenuRecordState state = ReadMenuRecords(); menuSignature = state.Signature;
+            UIPage page = Push(T("泡涌", "BUBBLE TIDE"), "", false, UIPageDesign.Menu); page.Rebuild = ShowMenuActions;
+            RectTransform body = (RectTransform)page.transform.Find("Page");
+            body.anchorMin = new Vector2(.25f, .06f); body.anchorMax = new Vector2(.75f, .95f);
+            body.offsetMin = body.offsetMax = Vector2.zero;
+            body.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.UpperCenter;
+            Text heading = body.GetChild(0).GetComponent<Text>();
+            heading.alignment = TextAnchor.MiddleCenter;
+            heading.GetComponent<UIStyledText>().Configure(92, true, Config);
+            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 42; heading.resizeTextMaxSize = 92;
+            UIMenuHeroFit fit = heading.gameObject.AddComponent<UIMenuHeroFit>();
+            fit.maximumWidth = 760; fit.baseFontSize = 92;
+            UIWidgets.Size(heading.transform, 140);
+            VerticalLayoutGroup contentLayout = page.Content.GetComponent<VerticalLayoutGroup>();
+            contentLayout.childForceExpandWidth = false; contentLayout.childAlignment = TextAnchor.UpperCenter;
+            RectTransform actions = ui.Column("Menu actions", page.Content, 0, 10);
+            LayoutElement actionSize = UIWidgets.Size(actions, -1, 480);
+            actions.gameObject.AddComponent<UIMenuLayout>().Configure(actionSize);
+            Button resume = MenuButton(actions, T("继续游戏", "Continue"), () => { if (state.latest != null) ContinueJourney(state.latest.slot); }, true);
+            resume.interactable = state.latest != null;
+            MenuButton(actions, T("新游戏", "New game"), RequestNewRun);
+            MenuButton(actions, T("读档", "Load game"), ShowSaves);
+            MenuButton(actions, T("设置", "Settings"), ShowSettings);
+            page.Footer.gameObject.SetActive(false);
+            RectTransform lowerEdge = ui.Row("Menu lower edge", page.transform, 12);
+            lowerEdge.anchorMin = new Vector2(0, 0); lowerEdge.anchorMax = new Vector2(1, 0);
+            lowerEdge.pivot = new Vector2(.5f, 0); lowerEdge.anchoredPosition = new Vector2(0, 20);
+            lowerEdge.sizeDelta = new Vector2(-80, 50);
+            HorizontalLayoutGroup footer = lowerEdge.GetComponent<HorizontalLayoutGroup>();
+            footer.childForceExpandWidth = false; footer.childAlignment = TextAnchor.MiddleCenter;
+            Text version = ui.Label(lowerEdge, T("版本 ", "Version ") + Application.version, 18, Config.ink);
+            UIWidgets.Size(version.transform, 42, 240);
+            RectTransform spacer = ui.Rect("Footer spacer", lowerEdge); UIWidgets.Size(spacer, 42, 0, 1);
+            Button credits = ui.Button(lowerEdge, T("开发人员致谢", "Credits"), ShowCredits);
+            UIWidgets.Size(credits.transform, 48, 240);
             AddMenuScrollbar(page.Content.GetComponentInParent<ScrollRect>());
             Finish(page);
+            if (!UISettings.Current.reducedMotion)
+            {
+                Sequence arrival = DOTween.Sequence().SetUpdate(true).SetLink(actions.gameObject);
+                if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+                for (int i = 0; i < actions.childCount; i++)
+                {
+                    Transform item = actions.GetChild(i);
+                    CanvasGroup layer = item.gameObject.AddComponent<CanvasGroup>();
+                    layer.alpha = 0; layer.interactable = false; layer.blocksRaycasts = false;
+                    float at = .12f + i * .1f;
+                    arrival.Insert(at, layer.DOFade(1, .32f));
+                    bool first = i == 0;
+                    arrival.InsertCallback(at + .32f, () =>
+                    {
+                        if (layer == null) return;
+                        layer.interactable = true; layer.blocksRaycasts = true;
+                        if (first) page.RestoreFocus();
+                    });
+                }
+            }
         }
 
         private Button MenuButton(Transform parent, string title, Action click, bool primary = false)
@@ -142,8 +179,13 @@ namespace PAO.UI.V2
 
         private void RefreshMenuOnReturn(UIPage parent)
         {
-            if (parent.Design == UIPageDesign.Menu && ReadMenuRecords().Signature != menuSignature)
-                RefreshVisiblePage();
+            if (parent.Design != UIPageDesign.Menu) return;
+            MenuRecordState state = ReadMenuRecords();
+            if (state.Signature == menuSignature) return;
+            menuSignature = state.Signature;
+            if (state.latest != null) UIRunState.Apply(state.latest);
+            else UIRunState.NewRun();
+            RefreshVisiblePage();
         }
     }
 }

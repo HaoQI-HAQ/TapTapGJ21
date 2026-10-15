@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -67,26 +68,34 @@ namespace PAO.UI.V2
                 UIGuideGraphic icon = ui.Rect("Ability symbol", circle.transform).gameObject.AddComponent<UIGuideGraphic>();
                 icon.Symbol = i == 0 ? UIGuideSymbol.Sticky : i == 1 ? UIGuideSymbol.Bouncy : UIGuideSymbol.Bomb;
                 icon.color = Config.text; icon.raycastTarget = false; UIWidgets.Stretch(icon.rectTransform, 25);
-                Sprite painted = UIHandDrawn.Ability(i);
-                if (painted != null)
-                {
-                    icon.enabled = false;
-                    Image illustration = ui.Surface("Painted ability", circle.transform, Color.white);
-                    illustration.sprite = painted; illustration.preserveAspect = true; illustration.raycastTarget = false;
-                    UIWidgets.Stretch(illustration.rectTransform, 7);
-                }
                 abilityMotion.AddNode(ui, circle, ring);
             }
             RectTransform buttons = ui.Row("HUD actions", hud, 12);
             Anchor(buttons, Vector2.one, new Vector2(-32, -28), new Vector2(140, 56), Vector2.one);
-            journalShortcut = HudIconButton(buttons, UIGuideSymbol.Journal, ShowJournal);
+            journalShortcut = HudIconButton(buttons, UIGuideSymbol.Restart, () => Confirm(
+                T("重新开始本章？", "Restart this chapter?"),
+                T("本章尚未保存的变化会重置。", "Unsaved changes in this chapter will be reset."), () => LoadScene(lastScene)));
             pauseShortcut = HudIconButton(buttons, UIGuideSymbol.Pause, ShowPause);
+            journalShortcut.transform.parent.gameObject.SetActive(true);
+            pauseShortcut.transform.parent.gameObject.SetActive(true);
             BuildVisualGuidance();
             BuildResourceHud();
             RefreshHud();
+            RevealHudElement(resourcePanel, 0);
+            RevealHudElement(abilityCluster, .12f);
+            RevealHudElement(buttons, .2f);
             MechanicsTestScene test = FindFirstObjectByType<MechanicsTestScene>();
             if (test != null && test.NarrationPreview)
                 ShowNarration(T("旁白", "Narrator"), T("水流轻轻涌动，泡泡会带你去往新的水域。", "The current stirs softly. Let the bubbles carry you into new waters."), -1);
+        }
+
+        private static void RevealHudElement(RectTransform element, float delay)
+        {
+            if (element == null || UISettings.Current.reducedMotion) return;
+            CanvasGroup layer = element.gameObject.AddComponent<CanvasGroup>();
+            layer.alpha = 0;
+            layer.DOFade(1, .38f).SetDelay(delay).SetEase(Ease.OutCubic)
+                .SetUpdate(true).SetLink(element.gameObject);
         }
 
         private static void Anchor(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size, Vector2 pivot)
@@ -136,8 +145,7 @@ namespace PAO.UI.V2
             RefreshResourceHud();
             if (hud == null || switcher == null) return;
             int type = launcher != null ? (int)launcher.DisplayType : (int)switcher.Current;
-            if (journalShortcut != null) { journalShortcut.text = GuideInputPrompt(UIInput.Journal); SetInputTypeface(journalShortcut); }
-            if (pauseShortcut != null) pauseShortcut.text = UIInput.ControllerActive ? "Menu" : "Esc";
+            // HUD controls show symbols only; their button actions remain available.
             if (goalLabel != null)
                 goalLabel.text = chapterGoal != null && player != null ? T("终点距离 ", "Goal distance ") +
                     Mathf.RoundToInt(Vector3.Distance(player.transform.position, chapterGoal.position)) + " m" :
@@ -231,7 +239,7 @@ namespace PAO.UI.V2
             else if (noticeRemaining <= 0 && pages.Count == 0 && contextNotices.Count > 0)
             { noticeText.text = contextNotices.Dequeue(); noticeRemaining = 6; noticeIsForeground = false; noticeIsTutorial = false; }
             bool visible = noticeRemaining > 0 && (noticeIsForeground || pages.Count == 0);
-            noticeRoot.gameObject.SetActive(visible && pages.Count == 0);
+            noticeRoot.gameObject.SetActive(false);
             if (pages.Count > 0)
             {
                 UIPage top = pages[pages.Count - 1];
@@ -248,8 +256,7 @@ namespace PAO.UI.V2
         {
             if (hud == null || !UISettings.Current.tutorials || UIRunState.Progress.tutorialsSeen.Contains(id)) return;
             UIRunState.Progress.tutorialsSeen.Add(id);
-            if (UISettings.Current.detailedHints) { if (tutorialNotices.Count < 3) tutorialNotices.Enqueue(title + "\n" + body); }
-            else ShowVisualTutorial(id);
+            ShowVisualTutorial(id);
         }
 
         public void ShowHelp()
