@@ -20,8 +20,14 @@ namespace PAO
     /// </summary>
     public class BubbleLauncher : MonoBehaviour
     {
-        [Header("共用配置")]
-        [Tooltip("设置后使用这份共用参数；下方独立参数仅用于未指定共用配置的测试对象")]
+        /// <summary>
+        /// 共用配置的资源路径。Awake 里用它做兜底：
+        /// 场景里没挂 m_Loadout 时自动补上，避免"改了资产却没人读"。
+        /// </summary>
+        public const string SharedLoadoutPath = "CSBubbleLoadout";
+
+        [Header("共用配置（唯一权威来源）")]
+        [Tooltip("泡泡的所有参数都从这份资产读。留空则运行时自动加载 Resources/CSBubbleLoadout")]
         [SerializeField] private BubbleLoadout m_Loadout;
 
         [Header("蓄力")]
@@ -46,13 +52,16 @@ namespace PAO
         [Tooltip("圆心推移方向（局部）：X=右 / Y=上 / Z=前。默认沿正前方，可改成一侧或斜上方")]
         [SerializeField] private Vector3 m_GrowthPushDirection = new Vector3(0f, 0f, 1f);
 
-        [Header("① 浮粘泡泡参数")]
+        // ⚠️ 下面三组是【已弃用的回退值】，只有在 m_Loadout 为空时才会被读到。
+        //    只要「共用配置」那一栏有资产（正常场景都有，而且 Awake 还会兜底），
+        //    在这里改任何数值都不会进游戏 —— 请改 BubbleLoadout 资产。
+        [Header("① 浮粘泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private StickyBubbleSettings m_StickySettings = new StickyBubbleSettings();
 
-        [Header("② 弹力泡泡参数（行为待实现）")]
+        [Header("② 弹力泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private BouncyBubbleSettings m_BouncySettings = new BouncyBubbleSettings();
 
-        [Header("③ 炸弹泡泡参数（行为待实现）")]
+        [Header("③ 炸弹泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private BombBubbleSettings m_BombSettings = new BombBubbleSettings();
 
         // ---------- 运行时状态 ----------
@@ -66,6 +75,15 @@ namespace PAO
         private bool m_Charging;
 
         public BubbleLoadout Loadout { get { return m_Loadout; } }
+
+        /// <summary>
+        /// 代码里指定共用配置（编辑器建场工具、验证脚本用）。
+        /// 运行时想换参数请改资产本身，不要用它做临时替换 —— 会把数据来源又搞成两处。
+        /// </summary>
+        public void SetLoadout(BubbleLoadout loadout)
+        {
+            m_Loadout = loadout;
+        }
         public bool ChargeLimited { get; private set; }
         public int PaidCost { get { return IsCharging || HasHeldBubble ? m_PaidCost : 0; } }
         public BubbleType DisplayType { get { return HasHeldBubble ? m_HeldType : GetCurrentType(); } }
@@ -103,6 +121,78 @@ namespace PAO
             PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButtonDown(0); } }
         private bool ChargeHeld { get { return PAO.UI.V2.UIInput.UsesV2 ?
             PAO.UI.V2.UIInput.Held(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButton(0); } }
+
+        /// <summary>
+        /// 没在场景里挂共用配置的发射器，运行时自动补一份 Resources/CSBubbleLoadout。
+        ///
+        /// 这样即使某个场景的 Player 漏配了 m_Loadout，读到的也是资产那套数值，
+        /// 而不是组件上那三组已经废弃的默认值 —— 不然就会出现
+        /// 「改了 CSBubbleLoadout.asset 但游戏里没生效」这种假象。
+        /// </summary>
+        private void Awake()
+        {
+            if (m_Loadout == null)
+            {
+                m_Loadout = Resources.Load<BubbleLoadout>(SharedLoadoutPath);
+                if (m_Loadout == null)
+                {
+                    Debug.LogWarning(
+                        "[BubbleLauncher] 既没有在 Inspector 挂 BubbleLoadout，也加载不到 Resources/" +
+                        SharedLoadoutPath + "，本次回退到组件上已废弃的「① / ② / ③」参数。", this);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 编辑期守卫：共用配置已经接管时，下面那三组是死数据，
+        /// 在这里改消耗不会有任何效果 —— 直接把这件事喊出来，别再让人白改一遍。
+        /// </summary>
+        private void OnValidate()
+        {
+            if (m_Loadout == null || Application.isPlaying)
+            {
+                return;
+            }
+
+            // 只在真正打开的场景里检查：
+            // 预制体资产和 Prefab Mode 预览场景都会让 scene.IsValid() 为 true，
+            // 但那里没有"误导调参"的问题，不必刷警告。
+            if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded)
+            {
+                return;
+            }
+
+            ReportStaleOverride(BubbleType.Sticky);
+            ReportStaleOverride(BubbleType.Bouncy);
+            ReportStaleOverride(BubbleType.Bomb);
+        }
+
+        /// <summary>
+        /// 只有当「组件上的本地值」和「资产里的值」不一致时才报 ——
+        /// 一致说明这份本地数据是同步过的，没有误导风险。
+        /// </summary>
+        private void ReportStaleOverride(BubbleType type)
+        {
+            BubbleSettings local = LocalSettingsFor(type);
+            BubbleSettings shared = m_Loadout.SettingsFor(type);
+            if (local == null || shared == null)
+            {
+                return;
+            }
+
+            if (local.minCost == shared.minCost && local.maxCost == shared.maxCost)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[BubbleLauncher] 「" + type + " 泡泡参数」里的 泡泡值消耗 = " + local.minCost + " ~ " + local.maxCost +
+                " 是死数据：共用配置（" + m_Loadout.name + "）已经接管，运行时读的是它的 " + shared.minCost + " ~ " + shared.maxCost + "。\n" +
+                "想改消耗请直接改 Assets/GameMain/Resources/CSBubbleLoadout.asset；" +
+                "或用菜单 Tools/PAO/泡泡配置/清理已删字段的僵尸覆盖 清掉场景里的旧覆盖。", this);
+        }
+#endif
 
         private void Update()
         {
@@ -629,7 +719,18 @@ namespace PAO
 
         public BubbleSettings SettingsFor(BubbleType type)
         {
-            if (m_Loadout != null) return m_Loadout.SettingsFor(type);
+            // 共用配置是唯一权威来源；它为空时（理论上只可能是没挂资产又加载失败的极端情况）
+            // 才回退到组件上那三组已弃用的参数。
+            BubbleSettings shared = m_Loadout != null ? m_Loadout.SettingsFor(type) : null;
+            return shared != null ? shared : LocalSettingsFor(type);
+        }
+
+        /// <summary>
+        /// 组件上那三组【已弃用的回退参数】。仅在共用配置缺失时才会被读到。
+        /// 正常场景请改 <see cref="BubbleLoadout"/> 资产，不要动这里。
+        /// </summary>
+        private BubbleSettings LocalSettingsFor(BubbleType type)
+        {
             switch (type)
             {
                 case BubbleType.Bouncy:

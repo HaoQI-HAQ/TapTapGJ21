@@ -208,3 +208,47 @@ Unity.exe -batchmode -nographics -projectPath <工程路径> ^
 ```
 
 退出码 0 = 全过。检查项：shader 能否编译、pass 数、结构体字段数 / 大小、Renderer 装配。
+
+---
+
+## ⚠️ 泡泡参数（含泡泡值消耗）改哪里
+
+**唯一权威来源：`Assets/GameMain/Resources/CSBubbleLoadout.asset`。**
+
+```
+BubbleLauncher.SettingsFor(type)
+  ├─ m_Loadout 有值 → 只读 CSBubbleLoadout.asset 的 sticky / bouncy / bomb
+  └─ m_Loadout 为空 → 才回退到组件上那三组 m_*Settings（已弃用，见下）
+```
+
+`BubbleLauncher` 组件 Inspector 里的「① 浮粘 / ② 弹力 / ③ 炸弹泡泡参数」是
+**已弃用的回退值**：只要「共用配置」那一栏挂了资产（正常场景都挂了，
+`Awake` 还会兜底 `Resources.Load("CSBubbleLoadout")`），改那三组**不会进游戏**。
+
+曾在 `Assets/Scenes/cs.unity` 里对 `m_BombSettings` 留下过预制体实例覆盖
+（10 / 20），它让 Inspector 显示的数值和实际生效的数值不一致 —— 这就是
+「改了资产但游戏里没生效」的由来。已由下面的菜单清理。
+
+### 排查与清理菜单
+
+| 菜单 | 作用 |
+|------|------|
+| **工具 → PAO → 泡泡配置 → 诊断：消耗到底读哪一份** | 只读。对比磁盘 YAML 与引擎实际加载的对象，扫描所有场景 / 预制体汇报冲突 |
+| **工具 → PAO → 泡泡配置 → 清理已删字段的僵尸覆盖** | 清掉场景里压在 `m_*Settings` 上的预制体实例覆盖（会保存场景） |
+| **工具 → PAO → 泡泡配置 → 修复缺失的共用配置引用** | 给没挂 `m_Loadout` 的 `BubbleLauncher` 补上资产引用 |
+
+实现见 `Scripts/Editor/BubbleCostSourceTools.cs`。
+
+### 改消耗的正确姿势
+
+1. 选中 `Assets/GameMain/Resources/CSBubbleLoadout.asset`；
+2. 改 `sticky` / `bouncy` / `bomb` 各自的 `minCost`（起吹价）/ `maxCost`（满蓄力价）；
+3. `Ctrl+S`。
+
+消耗按蓄力进度线性插值、向下取整：`floor(lerp(minCost, maxCost, 进度))`，
+起吹先扣 `minCost`，蓄力变大时逐段补扣。三型各配各的，互不影响。
+
+> 改了消耗记得同步 `UIVerificationRunner.Bubbles.cs` 里的断言
+> （`minCost == 2 && maxCost == 12`、`PaidCost == 3`、`PaidCost == 12 && Current == 8`），
+> 否则 UI 自检会红。
+

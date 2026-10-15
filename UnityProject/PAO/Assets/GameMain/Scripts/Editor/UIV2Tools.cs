@@ -35,6 +35,8 @@ namespace PAO.EditorTools
             floor.name = "Preview floor"; floor.transform.localScale = new Vector3(30, 1, 30); floor.transform.position = Vector3.down;
             GameObject player = new GameObject("Player", typeof(CharacterController), typeof(PlayerController), typeof(BubbleLauncher));
             player.transform.position = new Vector3(0, 1, 0);
+            // 预览场景的 Player 也挂共用配置，否则它会走组件上那三组已弃用的回退值
+            player.GetComponent<BubbleLauncher>().SetLoadout(Resources.Load<BubbleLoadout>(BubbleLauncher.SharedLoadoutPath));
             new GameObject("Bubble state", typeof(BubbleTypeSwitcher));
             new GameObject("UI prototype lab", typeof(UIPrototypeLab));
             Directory.CreateDirectory(Path.GetDirectoryName(PreviewPath));
