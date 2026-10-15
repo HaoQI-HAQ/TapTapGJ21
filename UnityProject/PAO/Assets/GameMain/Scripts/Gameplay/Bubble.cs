@@ -742,6 +742,37 @@ namespace PAO
             // 场景里没有潮水时这个方法自己会跳过，不影响玩法。
             PAO.BubbleTide.BubbleTideBridge.OnBombExploded(center, radius);
 
+            // 爆炸特效：水彩洇开式的爆开。
+            //
+            // 【尺寸只看泡泡直径】
+            // 之前是按爆炸半径（blastRadius，固定 3 米）推尺寸的，结果无论泡泡吹多小，
+            // 爆炸画面都一样大 —— 玩家感觉不到"我把泡泡吹大了"。
+            // 现在特效大小完全由泡泡直径决定：吹得小 = 紧凑一小簇，吹得满 = 铺开一整团。
+            // 爆炸半径仍然只用于下面的物理推力，两者不再混在一起。
+            //
+            // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
+            // 归一化都自动跟着走；拿不到就退回 1.5（BubbleSettings.maxSize 的默认值）。
+            float sizeReference = 1.5f;
+
+            BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
+                FindObjectsInactive.Exclude);
+
+            if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+            {
+                sizeReference = launcher.CurrentMaxSize;
+            }
+
+            // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
+            // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
+            bool hostPayload = m_BombSettings == null;
+            Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
+
+            BubbleBurstVFX.Spawn(
+                center,
+                GetDiameter(),
+                burstTint,
+                sizeReference);
+
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
             Collider[] hits = Physics.OverlapSphere(center, radius);
             HashSet<Rigidbody> affected = new HashSet<Rigidbody>();
@@ -863,8 +894,21 @@ namespace PAO
                 return;
             }
 
-            Destroy(gameObject);
+            // 到点自己溶解掉。
+            //
+            // 用"逐层吃掉"式溶解（见 BubbleDissolveVFX）：泡泡表面沿有机边界被裁掉，
+            // 裁掉那一侧有一条发亮的窄边 —— 不是整体调透明度变淡。
+            //
+            // 溶解时长按类型分：浮粘最慢（黏住、留下），弹力中等，爆炸最快（引信烧完）。
+            //
+            // 【注意这里不在本帧 Destroy】
+            // 溶解要播 1~2 秒，本物体必须活到那时候才有东西可溶。
+            // 所以把 Destroy 交给回调 —— 溶解完成时才销毁。
+            // 材质是按类型共享的，VFX 内部走 MaterialPropertyBlock 只改这一个泡泡，
+            // 不会把场上同类泡泡一起溶掉。
+            BubbleDissolveVFX.Begin(gameObject, Type, delegate { Destroy(gameObject); });
         }
+
         /// <summary>
         /// 粘在可粘地形上：直接冻住刚体，泡泡会永远停在这个位置。
         /// 存活时间到点也不会消失——它已经是场景的一部分了。

@@ -80,8 +80,8 @@ MonoBehaviour:
     drag: 0.8
     useGravity: 0
     lifeTime: 13
-    minCost: 2
-    maxCost: 12
+    minCost: 10
+    maxCost: 20
     blastRadius: 0.3
     blastForce: 12
     fuseTime: 2
