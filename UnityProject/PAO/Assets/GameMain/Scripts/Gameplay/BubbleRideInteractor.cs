@@ -48,6 +48,7 @@ namespace PAO
 
         private PlayerController m_PlayerController;
         private CharacterController m_CharacterController;
+        private BubbleLauncher m_Launcher;            // 用来判断「是否正在蓄力吹泡泡」
         private Collider[] m_PlayerColliders;   // 玩家身上所有碰撞体，进出泡泡时统一开关
         private Camera m_Camera;
         private GUIStyle m_HintStyle;
@@ -76,6 +77,7 @@ namespace PAO
         {
             m_PlayerController = GetComponent<PlayerController>();
             m_CharacterController = GetComponent<CharacterController>();
+            m_Launcher = GetComponent<BubbleLauncher>();
 
             // 连子物体上的碰撞体一起收。只关 CharacterController 不够——
             // 角色模型自带的碰撞体会顶到泡泡内壁，把泡泡顶得乱转
@@ -84,6 +86,20 @@ namespace PAO
 
         private void Update()
         {
+            // ===== 蓄力吹泡泡期间：不接受任何 F / E 交互 =====
+            //
+            // 这时手上正握着一颗没吹完的泡泡，再去进入 / 操控别的泡泡会出各种乱子：
+            //   * 蓄力那颗没人管，会一直留在原地
+            //   * 玩家位置被「蓄力跟随」和「泡泡载人」两套逻辑同时改
+            //   * 类型和参数也会串（蓄力用的是按下那一刻的快照）
+            // 所以干脆不响应，等松手再说。
+            if (m_Launcher != null && m_Launcher.IsCharging)
+            {
+                // 顺手清掉目标，免得 UI 还挂着 [F] / [E] 提示
+                m_NearbyBubble = null;
+                return;
+            }
+
             // ===== E 模式：远程操控中（人留在原地，相机在泡泡上）=====
             if (m_IsControlling)
             {
