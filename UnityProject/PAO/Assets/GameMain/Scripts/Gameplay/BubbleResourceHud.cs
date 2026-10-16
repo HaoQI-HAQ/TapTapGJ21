@@ -78,7 +78,7 @@ namespace PAO
 
         private void OnGUI()
         {
-            if (m_Resource == null)
+            if (m_Resource == null || PAO.UI.V2.UIInput.UsesV2)
             {
                 return;
             }

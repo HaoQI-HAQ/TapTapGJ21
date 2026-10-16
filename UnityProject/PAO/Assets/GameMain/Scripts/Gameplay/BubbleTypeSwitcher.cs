@@ -138,16 +138,27 @@ namespace PAO
         private void Update()
         {
             // 蓄力中不许换类型，见 IsLocked 的说明
-            if (!m_InputEnabled || IsLocked)
+            if (!m_InputEnabled || IsLocked || PAO.UI.V2.UIInput.Blocked)
             {
                 return;
             }
 
             if (m_EnableHotkeys)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1)) { SetType(BubbleType.Sticky); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha2)) { SetType(BubbleType.Bouncy); return; }
-                if (Input.GetKeyDown(KeyCode.Alpha3)) { SetType(BubbleType.Bomb); return; }
+                if (PAO.UI.V2.UIInput.UsesV2)
+                {
+                    if (PAO.UI.V2.UIInput.Down(0)) { SetType(BubbleType.Sticky); return; }
+                    if (PAO.UI.V2.UIInput.Down(1)) { SetType(BubbleType.Bouncy); return; }
+                    if (PAO.UI.V2.UIInput.Down(2)) { SetType(BubbleType.Bomb); return; }
+                    if (PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.PreviousBubble)) { Cycle(-1); return; }
+                    if (PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.NextBubble)) { Cycle(1); return; }
+                }
+                else
+                {
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(0, KeyCode.Alpha1))) { SetType(BubbleType.Sticky); return; }
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(1, KeyCode.Alpha2))) { SetType(BubbleType.Bouncy); return; }
+                if (Input.GetKeyDown(PAO.UI.V2.UISettings.Key(2, KeyCode.Alpha3))) { SetType(BubbleType.Bomb); return; }
+                }
             }
 
             if (m_EnableScrollWheel)

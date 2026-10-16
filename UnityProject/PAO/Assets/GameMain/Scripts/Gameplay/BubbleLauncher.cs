@@ -20,6 +20,16 @@ namespace PAO
     /// </summary>
     public class BubbleLauncher : MonoBehaviour
     {
+        /// <summary>
+        /// 共用配置的资源路径。Awake 里用它做兜底：
+        /// 场景里没挂 m_Loadout 时自动补上，避免"改了资产却没人读"。
+        /// </summary>
+        public const string SharedLoadoutPath = "CSBubbleLoadout";
+
+        [Header("共用配置（唯一权威来源）")]
+        [Tooltip("泡泡的所有参数都从这份资产读。留空则运行时自动加载 Resources/CSBubbleLoadout")]
+        [SerializeField] private BubbleLoadout m_Loadout;
+
         [Header("蓄力")]
         [Tooltip("蓄满力需要的时间（秒）。点按即为不足这个时间就松手")]
         [SerializeField] private float m_MaxChargeTime = 2f;
@@ -42,13 +52,16 @@ namespace PAO
         [Tooltip("圆心推移方向（局部）：X=右 / Y=上 / Z=前。默认沿正前方，可改成一侧或斜上方")]
         [SerializeField] private Vector3 m_GrowthPushDirection = new Vector3(0f, 0f, 1f);
 
-        [Header("① 浮粘泡泡参数")]
+        // ⚠️ 下面三组是【已弃用的回退值】，只有在 m_Loadout 为空时才会被读到。
+        //    只要「共用配置」那一栏有资产（正常场景都有，而且 Awake 还会兜底），
+        //    在这里改任何数值都不会进游戏 —— 请改 BubbleLoadout 资产。
+        [Header("① 浮粘泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private StickyBubbleSettings m_StickySettings = new StickyBubbleSettings();
 
-        [Header("② 弹力泡泡参数（行为待实现）")]
+        [Header("② 弹力泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private BouncyBubbleSettings m_BouncySettings = new BouncyBubbleSettings();
 
-        [Header("③ 炸弹泡泡参数（行为待实现）")]
+        [Header("③ 炸弹泡泡参数（已弃用：仅 m_Loadout 为空时生效）")]
         [SerializeField] private BombBubbleSettings m_BombSettings = new BombBubbleSettings();
 
         // ---------- 运行时状态 ----------
@@ -61,6 +74,25 @@ namespace PAO
         private int m_PaidCost;                     // 本次蓄力已经扣掉的值
         private bool m_Charging;
 
+        public BubbleLoadout Loadout { get { return m_Loadout; } }
+
+        /// <summary>
+        /// 代码里指定共用配置（编辑器建场工具、验证脚本用）。
+        /// 运行时想换参数请改资产本身，不要用它做临时替换 —— 会把数据来源又搞成两处。
+        /// </summary>
+        public void SetLoadout(BubbleLoadout loadout)
+        {
+            m_Loadout = loadout;
+        }
+        public bool ChargeLimited { get; private set; }
+        public int PaidCost { get { return IsCharging || HasHeldBubble ? m_PaidCost : 0; } }
+        public BubbleType DisplayType { get { return HasHeldBubble ? m_HeldType : GetCurrentType(); } }
+        private float MaxChargeTime { get { return m_Loadout != null ? m_Loadout.maxChargeTime : m_MaxChargeTime; } }
+        private float HoldThreshold { get { return m_Loadout != null ? m_Loadout.holdThreshold : m_HoldThreshold; } }
+        private Vector3 SpawnOffset { get { return m_Loadout != null ? m_Loadout.spawnOffset : m_SpawnOffset; } }
+        private float GrowthPushFactor { get { return m_Loadout != null ? m_Loadout.growthPushFactor : m_GrowthPushFactor; } }
+        private Vector3 GrowthPushDirection { get { return m_Loadout != null ? m_Loadout.growthPushDirection : m_GrowthPushDirection; } }
+
         // 按泡泡类型缓存的材质，避免每次生成都新建造成泄漏
         private readonly Material[] m_RuntimeMaterials = new Material[3];
 
@@ -69,7 +101,7 @@ namespace PAO
         /// </summary>
         public float ChargeProgress
         {
-            get { return m_MaxChargeTime > 0f ? Mathf.Clamp01(m_ChargeTime / m_MaxChargeTime) : 1f; }
+            get { return MaxChargeTime > 0f ? Mathf.Clamp01(m_ChargeTime / MaxChargeTime) : 1f; }
         }
 
         /// <summary>
@@ -80,12 +112,111 @@ namespace PAO
             get { return m_Charging; }
         }
 
+        public int MinimumCost { get { return CostFor(DisplayType, 0); } }
+        public int MaximumCost { get { return CostFor(DisplayType, 1); } }
+        public bool IsResourceLimited { get { return ChargeLimited; } }
+        public bool InputBlocked { get; set; }
+        public bool ToggleChargeInput { get; set; }
+        private bool ChargePressed { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButtonDown(0); } }
+        private bool ChargeHeld { get { return PAO.UI.V2.UIInput.UsesV2 ?
+            PAO.UI.V2.UIInput.Held(PAO.UI.V2.UIInput.Charge) : Input.GetMouseButton(0); } }
+
+        /// <summary>
+        /// 没在场景里挂共用配置的发射器，运行时自动补一份 Resources/CSBubbleLoadout。
+        ///
+        /// 这样即使某个场景的 Player 漏配了 m_Loadout，读到的也是资产那套数值，
+        /// 而不是组件上那三组已经废弃的默认值 —— 不然就会出现
+        /// 「改了 CSBubbleLoadout.asset 但游戏里没生效」这种假象。
+        /// </summary>
+        private void Awake()
+        {
+            if (m_Loadout == null)
+            {
+                m_Loadout = Resources.Load<BubbleLoadout>(SharedLoadoutPath);
+                if (m_Loadout == null)
+                {
+                    Debug.LogWarning(
+                        "[BubbleLauncher] 既没有在 Inspector 挂 BubbleLoadout，也加载不到 Resources/" +
+                        SharedLoadoutPath + "，本次回退到组件上已废弃的「① / ② / ③」参数。", this);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 编辑期守卫：共用配置已经接管时，下面那三组是死数据，
+        /// 在这里改消耗不会有任何效果 —— 直接把这件事喊出来，别再让人白改一遍。
+        /// </summary>
+        private void OnValidate()
+        {
+            if (m_Loadout == null || Application.isPlaying)
+            {
+                return;
+            }
+
+            // 只在真正打开的场景里检查：
+            // 预制体资产和 Prefab Mode 预览场景都会让 scene.IsValid() 为 true，
+            // 但那里没有"误导调参"的问题，不必刷警告。
+            if (!gameObject.scene.IsValid() || !gameObject.scene.isLoaded)
+            {
+                return;
+            }
+
+            ReportStaleOverride(BubbleType.Sticky);
+            ReportStaleOverride(BubbleType.Bouncy);
+            ReportStaleOverride(BubbleType.Bomb);
+        }
+
+        /// <summary>
+        /// 只有当「组件上的本地值」和「资产里的值」不一致时才报 ——
+        /// 一致说明这份本地数据是同步过的，没有误导风险。
+        /// </summary>
+        private void ReportStaleOverride(BubbleType type)
+        {
+            BubbleSettings local = LocalSettingsFor(type);
+            BubbleSettings shared = m_Loadout.SettingsFor(type);
+            if (local == null || shared == null)
+            {
+                return;
+            }
+
+            if (local.minCost == shared.minCost && local.maxCost == shared.maxCost)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[BubbleLauncher] 「" + type + " 泡泡参数」里的 泡泡值消耗 = " + local.minCost + " ~ " + local.maxCost +
+                " 是死数据：共用配置（" + m_Loadout.name + "）已经接管，运行时读的是它的 " + shared.minCost + " ~ " + shared.maxCost + "。\n" +
+                "想改消耗请直接改 Assets/GameMain/Resources/CSBubbleLoadout.asset；" +
+                "或用菜单 Tools/PAO/泡泡配置/清理已删字段的僵尸覆盖 清掉场景里的旧覆盖。", this);
+        }
+#endif
+
         private void Update()
         {
+            if (InputBlocked || PAO.UI.V2.UIInput.Blocked) return;
+            bool mouseCharge = !PAO.UI.V2.UIInput.UsesV2 || PAO.UI.V2.UIInput.Binding(PAO.UI.V2.UIInput.Charge) >= KeyCode.Mouse0;
+            if (mouseCharge && !PAO.UI.V2.UIInput.ControllerHeld(PAO.UI.V2.UIInput.PadBinding(PAO.UI.V2.UIInput.Charge)) && UnityEngine.EventSystems.EventSystem.current != null &&
+                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return;
+            if (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.ToggleCharge : ToggleChargeInput)
+            {
+                if (m_HeldBubble != null)
+                {
+                    if (ChargePressed) LaunchHeldBubble();
+                }
+                else if (ChargePressed)
+                {
+                    if (m_Charging) Release(); else BeginCharge();
+                }
+                if (m_Charging) UpdateCharge();
+                return;
+            }
             // 有泡泡滞留在发射口时，左键不再是蓄力，而是「发射它」
             if (m_HeldBubble != null)
             {
-                if (Input.GetMouseButtonDown(0))
+                if (ChargePressed)
                 {
                     LaunchHeldBubble();
                 }
@@ -93,17 +224,17 @@ namespace PAO
                 return;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (ChargePressed)
             {
                 BeginCharge();
             }
 
-            if (m_Charging && Input.GetMouseButton(0))
+            if (m_Charging && ChargeHeld)
             {
                 UpdateCharge();
             }
 
-            if (m_Charging && Input.GetMouseButtonUp(0))
+            if (m_Charging && !ChargeHeld)
             {
                 Release();
             }
@@ -126,6 +257,7 @@ namespace PAO
             }
 
             m_Charging = false;
+            ChargeLimited = false;
             LockTypeSwitch(false);
             m_ChargeTime = 0f;
         }
@@ -146,6 +278,7 @@ namespace PAO
             }
 
             m_PaidCost = baseCost;
+            ChargeLimited = false;
 
             m_Charging = true;
             m_ChargeTime = 0f;
@@ -172,7 +305,7 @@ namespace PAO
             // 涨了就要补扣；补不起就停在当前大小，不再变大 ——
             // 这就是「值不够吹不到那么大」。
             float nextTime = m_ChargeTime + Time.deltaTime;
-            float nextProgress = m_MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / m_MaxChargeTime) : 1f;
+            float nextProgress = MaxChargeTime > 0f ? Mathf.Clamp01(nextTime / MaxChargeTime) : 1f;
 
             if (m_Resource != null)
             {
@@ -182,6 +315,7 @@ namespace PAO
                     int delta = nextCost - m_PaidCost;
                     if (!m_Resource.TryConsume(delta))
                     {
+                        ChargeLimited = true;
                         // 值不够继续变大了：保持当前尺寸，泡泡仍然跟着玩家
                         m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
                         return;
@@ -191,6 +325,7 @@ namespace PAO
                 }
             }
 
+            ChargeLimited = false;
             m_ChargeTime = nextTime;
             m_CurrentBubble.transform.SetPositionAndRotation(GetSpawnPosition(), GetSpawnRotation());
             ApplyChargeSize();
@@ -203,6 +338,7 @@ namespace PAO
         private void Release()
         {
             m_Charging = false;
+            ChargeLimited = false;
 
             // 蓄力结束，放开类型切换
             LockTypeSwitch(false);
@@ -222,7 +358,7 @@ namespace PAO
 
             // 够大：不发射，留在发射口。
             // 速度给零 —— 但它已经是「活的」泡泡了，浮力、粘性、弹力都在。
-            if (size >= m_HoldThreshold)
+            if (size >= HoldThreshold)
             {
                 m_HeldBubble = bubble;
                 m_HeldChargeProgress = progress;
@@ -292,17 +428,7 @@ namespace PAO
 
         private BubbleSettings GetHeldSettings()
         {
-            switch (m_HeldType)
-            {
-                case BubbleType.Bouncy:
-                    return m_BouncySettings;
-
-                case BubbleType.Bomb:
-                    return m_BombSettings;
-
-                default:
-                    return m_StickySettings;
-            }
+            return SettingsFor(m_HeldType);
         }
 
         /// <summary>
@@ -536,15 +662,15 @@ namespace PAO
         {
             // 把局部偏移转到世界方向再叠加：这样 X/Y/Z 分别对应基准点的
             // 右 / 上 / 前，角色转身后偏移也跟着转，调参最直观
-            Vector3 basePosition = GetSpawnBasePosition() + GetSpawnRotation() * m_SpawnOffset;
+            Vector3 basePosition = GetSpawnBasePosition() + GetSpawnRotation() * SpawnOffset;
 
             // 吹泡成长：圆心随半径沿指定方向往外推。
             // 系数为 1 时推移量正好等于半径，泡泡背面始终贴着吹气点，
             // 看起来就是从那一点"吹"出来的，而不是原地膨胀。
             float radius = GetCurrentSize() * 0.5f;
-            Vector3 pushDirection = GetSpawnRotation() * m_GrowthPushDirection.normalized;
+            Vector3 pushDirection = GetSpawnRotation() * GrowthPushDirection.normalized;
 
-            return basePosition + pushDirection * (radius * m_GrowthPushFactor);
+            return basePosition + pushDirection * (radius * GrowthPushFactor);
         }
 
         /// <summary>
@@ -588,7 +714,24 @@ namespace PAO
         /// </summary>
         private BubbleSettings GetSettings()
         {
-            switch (GetCurrentType())
+            return SettingsFor(GetCurrentType());
+        }
+
+        public BubbleSettings SettingsFor(BubbleType type)
+        {
+            // 共用配置是唯一权威来源；它为空时（理论上只可能是没挂资产又加载失败的极端情况）
+            // 才回退到组件上那三组已弃用的参数。
+            BubbleSettings shared = m_Loadout != null ? m_Loadout.SettingsFor(type) : null;
+            return shared != null ? shared : LocalSettingsFor(type);
+        }
+
+        /// <summary>
+        /// 组件上那三组【已弃用的回退参数】。仅在共用配置缺失时才会被读到。
+        /// 正常场景请改 <see cref="BubbleLoadout"/> 资产，不要动这里。
+        /// </summary>
+        private BubbleSettings LocalSettingsFor(BubbleType type)
+        {
+            switch (type)
             {
                 case BubbleType.Bouncy:
                     return m_BouncySettings;
@@ -598,6 +741,22 @@ namespace PAO
 
                 default:
                     return m_StickySettings;
+            }
+        }
+
+        /// <summary>
+        /// 当前类型的"满蓄力直径"（米）。
+        ///
+        /// 给爆炸特效用：特效要按泡泡大小缩放，就得知道"满蓄力"是多长，
+        /// 才能把当前泡泡归一化成 0~1。这样美术以后改 maxSize，特效会自动跟着变，
+        /// 不用回来同步一个写死的参考值。
+        /// </summary>
+        public float CurrentMaxSize
+        {
+            get
+            {
+                BubbleSettings settings = GetSettings();
+                return settings != null ? settings.maxSize : 0f;
             }
         }
 
@@ -643,7 +802,12 @@ namespace PAO
         /// </summary>
         private int GetCostAt(float progress)
         {
-            BubbleSettings settings = GetSettings();
+            return CostFor(GetCurrentType(), progress);
+        }
+
+        public int CostFor(BubbleType type, float progress)
+        {
+            BubbleSettings settings = SettingsFor(type);
             if (settings == null)
             {
                 return 0;

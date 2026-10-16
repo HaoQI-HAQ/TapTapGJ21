@@ -185,6 +185,8 @@ GameObject:
   - component: {fileID: 3295932112560120694}
   - component: {fileID: 1978911633032434617}
   - component: {fileID: 5122362358621721097}
+  - component: {fileID: 9000000000000000200}
+  - component: {fileID: 9000000000000000201}
   m_Layer: 0
   m_Name: takoyaki
   m_TagString: Untagged
@@ -281,6 +283,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcac0db11c8f2ea43a4ea2022fd2dc6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Loadout: {fileID: 11400000, guid: 5490f9580e2b4b5e931b3882069e910a, type: 2}
   m_MaxChargeTime: 2
   m_HoldThreshold: 1
   m_Muzzle: {fileID: 0}
@@ -288,7 +291,7 @@ MonoBehaviour:
   m_GrowthPushFactor: 1
   m_GrowthPushDirection: {x: 0, y: 0, z: 1}
   m_StickySettings:
-    prefab: {fileID: 0}
+    prefab: {fileID: 341690582057091424, guid: e9f2f5ae1bff9df44b57f8043defaea4, type: 3}
     color: {r: 0.55, g: 0.85, b: 1, a: 1}
     minSize: 0.2
     maxSize: 1.6
@@ -299,6 +302,8 @@ MonoBehaviour:
     drag: 0.8
     useGravity: 0
     lifeTime: 20
+    minCost: 2
+    maxCost: 12
     stickBreakForce: 500
     stickSticky: 1
     stickBouncy: 1
@@ -309,7 +314,7 @@ MonoBehaviour:
     controlMoveForce: 7
     heldLiftSpeed: 1
   m_BouncySettings:
-    prefab: {fileID: 0}
+    prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f, type: 3}
     color: {r: 1, g: 0, b: 0.910151, a: 1}
     minSize: 0.3
     maxSize: 1.1
@@ -320,6 +325,8 @@ MonoBehaviour:
     drag: 0.8
     useGravity: 0
     lifeTime: 10
+    minCost: 2
+    maxCost: 12
     bounciness: 0.9
     maxBounceCount: 0
     fillAmountMin: 1
@@ -335,7 +342,7 @@ MonoBehaviour:
     riderLaunchRatio: 1
     riderLaunchDuration: 0.7
   m_BombSettings:
-    prefab: {fileID: 0}
+    prefab: {fileID: 4259276435024632764, guid: 6442c7ee7072375448a2e290e59a82da, type: 3}
     color: {r: 0.55, g: 0.85, b: 1, a: 1}
     minSize: 0.2
     maxSize: 0.6
@@ -346,6 +353,8 @@ MonoBehaviour:
     drag: 0.8
     useGravity: 0
     lifeTime: 13
+    minCost: 2
+    maxCost: 12
     blastRadius: 0.3
     blastForce: 12
     fuseTime: 2
@@ -577,3 +586,42 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 8840244447658543665}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &9000000000000000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4001224688086030769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbc2f3c08b508da4285afb6a69795616, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_MaxResource: 100
+  m_StartResource: -1
+--- !u!114 &9000000000000000201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4001224688086030769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87a44da4c4546824cb734c74b481abcf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  m_Switcher: {fileID: 7340384814760928497}
+  m_AnimatorDriver: {fileID: 5122362358621721097}
+  m_Launcher: {fileID: 8926061071837945914}
+  m_RideInteractor: {fileID: 3295932112560120694}
+  m_Resource: {fileID: 9000000000000000200}
+  m_Character: {fileID: 3704080788282222486}
+  m_FallFace: 6
+  m_BlowFace: 3
+  m_JumpFace: 1
+  m_RideFace: 2
+  m_LowResourceThreshold: 20
+  m_LowResourceFaces: 0500000006000000
+  m_IdleFaces: 00000000020000000100000004000000

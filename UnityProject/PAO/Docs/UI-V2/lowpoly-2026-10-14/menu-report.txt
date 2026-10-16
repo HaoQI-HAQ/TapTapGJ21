@@ -1,0 +1,340 @@
+Passed: 337
+The real Menu scene bootstraps the new UI.
+The menu uses the cool lowpoly palette, geometric ocean artwork and cut-corner controls.
+The brand title remains prominent and the background has no rotating character or orbit.
+An empty journey hides Continue and focuses New journey.
+Main menu entry is available: 新的旅程.
+Main menu entry is available: 章节路径.
+Main menu entry is available: 读取记录.
+Main menu entry is available: 游戏设置.
+Main menu entry is available: 制作人员.
+Main menu entry is available: 操作图鉴.
+Main menu entry is available: 离开.
+Legacy menu canvas is hidden in the real scene.
+The brand title is fully readable at 1600x900.
+The menu scrollbar appears only when the main list overflows at 1600x900.
+Readable button label at 1600x900: 新的旅程.
+Readable button label at 1600x900: 章节路径.
+Readable button label at 1600x900: 读取记录.
+Readable button label at 1600x900: 游戏设置.
+Readable button label at 1600x900: 操作图鉴.
+Readable button label at 1600x900: 制作人员.
+Readable button label at 1600x900: 离开.
+The water illustration remains visible at 1600x900.
+Rendered menu-new-1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 新的旅程.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 章节路径.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 读取记录.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 游戏设置.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+The brand title is fully readable at 1280x800.
+The menu scrollbar appears only when the main list overflows at 1280x800.
+Readable button label at 1280x800: 新的旅程.
+Readable button label at 1280x800: 章节路径.
+Readable button label at 1280x800: 读取记录.
+Readable button label at 1280x800: 游戏设置.
+Readable button label at 1280x800: 操作图鉴.
+Readable button label at 1280x800: 制作人员.
+Readable button label at 1280x800: 离开.
+The water illustration remains visible at 1280x800.
+Rendered menu-new-1280x800.
+Menu controls and title do not overlap at 1280x800.
+Menu controls and title do not overlap at 1280x800.
+Focused control is visible at 1280x800: 新的旅程.
+Menu controls and title do not overlap at 1280x800.
+Focused control is visible at 1280x800: 章节路径.
+Menu controls and title do not overlap at 1280x800.
+Focused control is visible at 1280x800: 读取记录.
+Menu controls and title do not overlap at 1280x800.
+Focused control is visible at 1280x800: 游戏设置.
+Menu controls and title do not overlap at 1280x800.
+Menu controls and title do not overlap at 1280x800.
+Menu controls and title do not overlap at 1280x800.
+The brand title is fully readable at 1920x820.
+The menu scrollbar appears only when the main list overflows at 1920x820.
+Readable button label at 1920x820: 新的旅程.
+Readable button label at 1920x820: 章节路径.
+Readable button label at 1920x820: 读取记录.
+Readable button label at 1920x820: 游戏设置.
+Readable button label at 1920x820: 操作图鉴.
+Readable button label at 1920x820: 制作人员.
+Readable button label at 1920x820: 离开.
+The water illustration remains visible at 1920x820.
+Rendered menu-new-1920x820.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 新的旅程.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 章节路径.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 读取记录.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 游戏设置.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+The brand title is fully readable at 960x540.
+The menu scrollbar appears only when the main list overflows at 960x540.
+Readable button label at 960x540: 新的旅程.
+Readable button label at 960x540: 章节路径.
+Readable button label at 960x540: 读取记录.
+Readable button label at 960x540: 游戏设置.
+Readable button label at 960x540: 操作图鉴.
+Readable button label at 960x540: 制作人员.
+Readable button label at 960x540: 离开.
+The water illustration remains visible at 960x540.
+Rendered menu-new-960x540.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: 新的旅程.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: 章节路径.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: 读取记录.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: 游戏设置.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Directional navigation advances through the single column to Chapter path.
+Press feedback responds while the menu is open. Scale=0.9701608, reduced=False
+Hover moves the menu icon inside its reserved space without touching the label.
+Enabling reduced motion immediately stops and resets menu icon travel.
+Rapid hover changes leave the menu icon at its final resting position.
+Credits display the configured production information.
+Rendered credits.
+Credits return restores the originating focus.
+Nested page returns to its menu entry: 章节路径.
+Nested page returns to its menu entry: 读取记录.
+Nested page returns to its menu entry: 游戏设置.
+Nested page returns to its menu entry: 操作图鉴.
+Quit opens a confirmation focused on Cancel.
+Cancelling Quit preserves the menu focus.
+A returning journey is stored in the isolated directory.
+A valid record enables Continue while statistics and duplicate save details stay off the main menu.
+Rendered chapter-cards.
+Rendered record-cards.
+The brand title is fully readable at 1600x900.
+The menu scrollbar appears only when the main list overflows at 1600x900.
+Readable button label at 1600x900: 继续游戏.
+Readable button label at 1600x900: 新的旅程.
+Readable button label at 1600x900: 章节路径.
+Readable button label at 1600x900: 读取记录.
+Readable button label at 1600x900: 游戏设置.
+Readable button label at 1600x900: 操作图鉴.
+Readable button label at 1600x900: 制作人员.
+Readable button label at 1600x900: 离开.
+The water illustration remains visible at 1600x900.
+Rendered menu-returning-1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 继续游戏.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 新的旅程.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 章节路径.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 读取记录.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 游戏设置.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+The brand title is fully readable at 1920x820.
+The menu scrollbar appears only when the main list overflows at 1920x820.
+Readable button label at 1920x820: 继续游戏.
+Readable button label at 1920x820: 新的旅程.
+Readable button label at 1920x820: 章节路径.
+Readable button label at 1920x820: 读取记录.
+Readable button label at 1920x820: 游戏设置.
+Readable button label at 1920x820: 操作图鉴.
+Readable button label at 1920x820: 制作人员.
+Readable button label at 1920x820: 离开.
+The water illustration remains visible at 1920x820.
+Rendered menu-returning-1920x820.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 继续游戏.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 新的旅程.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 章节路径.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 读取记录.
+Menu controls and title do not overlap at 1920x820.
+Focused control is visible at 1920x820: 游戏设置.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+Menu controls and title do not overlap at 1920x820.
+The brand title is fully readable at 934x534.
+The menu scrollbar appears only when the main list overflows at 934x534.
+Readable button label at 934x534: 继续游戏.
+Readable button label at 934x534: 新的旅程.
+Readable button label at 934x534: 章节路径.
+Readable button label at 934x534: 读取记录.
+Readable button label at 934x534: 游戏设置.
+Readable button label at 934x534: 操作图鉴.
+Readable button label at 934x534: 制作人员.
+Readable button label at 934x534: 离开.
+The water illustration remains visible at 934x534.
+Rendered menu-returning-934x534.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 继续游戏.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 新的旅程.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 章节路径.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 读取记录.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 游戏设置.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+The brand title is fully readable at 800x900.
+The menu scrollbar appears only when the main list overflows at 800x900.
+Readable button label at 800x900: 继续游戏.
+Readable button label at 800x900: 新的旅程.
+Readable button label at 800x900: 章节路径.
+Readable button label at 800x900: 读取记录.
+Readable button label at 800x900: 游戏设置.
+Readable button label at 800x900: 操作图鉴.
+Readable button label at 800x900: 制作人员.
+Readable button label at 800x900: 离开.
+The water illustration remains visible at 800x900.
+The single menu column adapts to a narrow window.
+Rendered menu-returning-800x900.
+Menu controls and title do not overlap at 800x900.
+Menu controls and title do not overlap at 800x900.
+Focused control is visible at 800x900: 继续游戏.
+Menu controls and title do not overlap at 800x900.
+Focused control is visible at 800x900: 新的旅程.
+Menu controls and title do not overlap at 800x900.
+Focused control is visible at 800x900: 章节路径.
+Menu controls and title do not overlap at 800x900.
+Focused control is visible at 800x900: 读取记录.
+Menu controls and title do not overlap at 800x900.
+Focused control is visible at 800x900: 游戏设置.
+Menu controls and title do not overlap at 800x900.
+Menu controls and title do not overlap at 800x900.
+Menu controls and title do not overlap at 800x900.
+The brand title is fully readable at 934x534.
+The menu scrollbar appears only when the main list overflows at 934x534.
+Readable button label at 934x534: 继续游戏.
+Readable button label at 934x534: 新的旅程.
+Readable button label at 934x534: 章节路径.
+Readable button label at 934x534: 读取记录.
+Readable button label at 934x534: 游戏设置.
+Readable button label at 934x534: 操作图鉴.
+Readable button label at 934x534: 制作人员.
+Readable button label at 934x534: 离开.
+The water illustration remains visible at 934x534.
+Rendered menu-high-contrast-934x534.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 继续游戏.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 新的旅程.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 章节路径.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 读取记录.
+Menu controls and title do not overlap at 934x534.
+Focused control is visible at 934x534: 游戏设置.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+Menu controls and title do not overlap at 934x534.
+High contrast gives Continue at least 7:1 text contrast and a visible default focus.
+New journey confirms replacing the automatic record.
+Cancelling a new journey retains progress and records.
+An unavailable first chapter cannot erase the current journey.
+Overwriting a record creates a recoverable backup.
+Continue revalidates changed records and offers recovery without loading damaged data.
+The brand title is fully readable at 1600x900.
+The menu scrollbar appears only when the main list overflows at 1600x900.
+Readable button label at 1600x900: 新的旅程.
+Readable button label at 1600x900: 章节路径.
+Readable button label at 1600x900: 读取记录.
+Readable button label at 1600x900: 游戏设置.
+Readable button label at 1600x900: 操作图鉴.
+Readable button label at 1600x900: 制作人员.
+Readable button label at 1600x900: 离开.
+The water illustration remains visible at 1600x900.
+Rendered menu-damaged-record.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 新的旅程.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 章节路径.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 读取记录.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 游戏设置.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Recovering a backup refreshes Continue and retains the originating menu focus.
+A recovered record can be removed in the isolated test.
+An unavailable scene record is prepared.
+Unavailable scenes are excluded from Continue with a readable explanation.
+Without a valid journey, chapter selection cannot inherit stale unlocks or memories.
+The brand title is fully readable at 1600x900.
+The menu scrollbar appears only when the main list overflows at 1600x900.
+Readable button label at 1600x900: 新的旅程.
+Readable button label at 1600x900: 章节路径.
+Readable button label at 1600x900: 读取记录.
+Readable button label at 1600x900: 游戏设置.
+Readable button label at 1600x900: 操作图鉴.
+Readable button label at 1600x900: 制作人员.
+Readable button label at 1600x900: 离开.
+The water illustration remains visible at 1600x900.
+Rendered menu-unavailable-scene.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 新的旅程.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 章节路径.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 读取记录.
+Menu controls and title do not overlap at 1600x900.
+Focused control is visible at 1600x900: 游戏设置.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+Menu controls and title do not overlap at 1600x900.
+The brand title is fully readable at 960x540.
+The menu scrollbar appears only when the main list overflows at 960x540.
+Readable button label at 960x540: ［New journey ········］.
+Readable button label at 960x540: ［Chapter path ········］.
+Readable button label at 960x540: ［Load record ········］.
+Readable button label at 960x540: ［Settings ········］.
+Readable button label at 960x540: ［Guide ········］.
+Readable button label at 960x540: ［Credits ········］.
+Readable button label at 960x540: ［Quit ········］.
+The water illustration remains visible at 960x540.
+Rendered menu-accessible-pseudo.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: ［New journey ········］.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: ［Chapter path ········］.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: ［Load record ········］.
+Menu controls and title do not overlap at 960x540.
+Focused control is visible at 960x540: ［Settings ········］.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Menu controls and title do not overlap at 960x540.
+Reduced motion disables button scaling, including submit feedback.
+Final continuation record is ready.
+Continue enters the actual saved Map0 scene and restores position and memories.
+The shared button changes preserve gameplay pause behavior.
+
+Errors: 0

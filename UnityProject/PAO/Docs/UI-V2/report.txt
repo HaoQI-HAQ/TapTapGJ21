@@ -1,0 +1,53 @@
+Passed: 50
+Runtime bootstraps with the existing Chinese font and artwork.
+Fresh menu opens with an actionable default focus.
+Menu has a default selection.
+Rendered menu-1600x900.
+Rendered menu-1280x800.
+Rendered menu-1920x820.
+Rendered menu-960x540.
+The next chapter is locked before completing its predecessor.
+Completing a chapter unlocks the next chapter.
+Rendered chapters.
+Empty save pages focus the available Back control instead of disabled load buttons.
+Rendered empty-records.
+First versioned save succeeds.
+Saved player position round-trips.
+Overwrite retains a valid recovery backup.
+Corrupted checksums are rejected while retaining the backup.
+Rendered damaged-record.
+Recovery preserves damaged bytes and restores the previous valid position.
+Plain V1 JSON saves remain readable.
+Future save versions are rejected.
+Non-finite player positions are rejected.
+Rendered menu-continue-1920x820.
+The continued-run menu keeps every action visible on an ultrawide display.
+The continued-run menu retains its artwork and both lines of introduction.
+Loading enters the saved scene and restores player position.
+Rendered gameplay-hud.
+Pause blocks gameplay input and preserves the launcher's state.
+Pause hides the whole gameplay HUD.
+Settings preview applies immediately.
+Rendered settings.
+Save feedback occupies the modal status area instead of covering the page header.
+Cancelling settings rolls back the draft and keeps the game paused.
+Returning restores focus to the originating control.
+Resume restores the exact previous time scale and input state.
+Rapid repeated pause/settings navigation leaves no modal or pause state behind.
+Cancelling video settings restores the actual quality level even when the saved setting is Current.
+Rendered settings-pseudo-130percent.
+Rendered dialogue.
+Read dialogue is archived in the memory journal.
+Rendered journal.
+Rendered construction-preview.
+Construction previews expose the world by hiding the opaque recipe page.
+Cancelling a construction preview consumes no energy.
+Cancelling a construction preview restores the recipe page.
+Confirmed construction consumes energy and records its placement.
+Removing construction returns its energy.
+Rendered chapter-complete.
+Chapter completion records progress and creates an automatic save.
+Cancelling ending confirmation does not commit an ending.
+An ending is saved only after final confirmation.
+
+Errors: 0

@@ -310,6 +310,7 @@ namespace PAO.BubbleTide
 
         private void Update()
         {
+            if (PAO.UI.V2.UIInput.Blocked || Time.timeScale <= 0f) return;
             if (!m_Started || m_Field == null || !m_Field.IsBaked)
             {
                 return;
@@ -717,7 +718,8 @@ namespace PAO.BubbleTide
                     continue;
                 }
 
-                if (goal.RequireConfirmKey && !Input.GetKeyDown(goal.ConfirmKey))
+                bool confirm = PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Interact) : Input.GetKeyDown(goal.ConfirmKey);
+                if (goal.RequireConfirmKey && !confirm)
                 {
                     continue;
                 }
@@ -1002,7 +1004,7 @@ namespace PAO.BubbleTide
 
         private void OnGUI()
         {
-            if (!m_DrawHud)
+            if (!m_DrawHud || PAO.UI.V2.UIInput.UsesV2)
             {
                 return;
             }

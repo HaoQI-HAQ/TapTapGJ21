@@ -1,0 +1,61 @@
+Passed: 58
+cs bootstraps the gameplay UI.
+The repaired scene contains exactly one player.
+The scene has no missing scripts.
+Only one EventSystem is active.
+The player has resources, expressions and a main camera.
+Resource feedback remains visible with minimal hints.
+Scene bubble template and cost resolve: Sticky
+Detailed HUD reads the selected type's shared cost: Sticky
+Scene bubble template and cost resolve: Bouncy
+Detailed HUD reads the selected type's shared cost: Bouncy
+Scene bubble template and cost resolve: Bomb
+Detailed HUD reads the selected type's shared cost: Bomb
+Rendered cs-resource-full-1600x900.
+Resource text fits: 泡泡值  100 / 100
+Insufficient energy prevents charging without locking input or going negative.
+Rendered cs-resource-empty-960x540.
+Resource text fits: 泡泡值  0 / 100
+Resource text fits: 泡泡值不足 · 还差 2
+Starting a sticky bubble pays its base cost and locks type switching.
+Ability selection respects the charge lock.
+Growing bubbles stop at the available budget and keep consistent paid cost.
+Rendered cs-charge-limited-1600x900.
+Resource text fits: 泡泡值  0 / 100
+Resource text fits: 浮粘泡泡 · 已用 3
+Resource text fits: 泡泡值不足 · 停止变大
+A limited bubble can still be released and held ready.
+Rendered cs-bubble-held-960x540.
+Resource text fits: 泡泡值  0 / 100
+Resource text fits: 浮粘泡泡 · 已用 3
+Resource text fits: 就绪 · M1 发射
+Launching a held bubble does not charge twice.
+Terrain stores partial fill before it is full.
+Aiming at terrain displays its actual fill count.
+Rendered cs-terrain-fill-1600x900.
+Terrain fill feedback avoids the actual player projection.
+Filling terrain rewards the actual player resource pool.
+Repeated terrain destruction does not reward twice.
+Launched bubbles retain their paid cost for recovery.
+Sticky recovery refunds the paid amount exactly once.
+Rendered cs-recovered-1600x900.
+Pause hides resource HUD and blocks charging.
+Rendered cs-test-tools-960x540.
+Low energy test action applies and resumes gameplay.
+Reducing energy clears recovery feedback from the previous resource increase.
+Rendered cs-resource-low-960x540.
+Refill test action restores the pool and resumes.
+Return to spawn uses the repaired scene's original spawn point.
+Rendered cs-detailed-large-text-960x540.
+Resource text fits: 泡泡值  100 / 100
+Resource text fits: 浮粘泡泡 · 消耗 2–12
+Resource text fits: 恢复 +90
+Rendered cs-english-large-text-960x540.
+Resource text fits: Energy  100 / 100
+Resource text fits: Recovered +90
+The field guide opens with the added mechanics lessons.
+Reloading the test scene restores a single fully provisioned player.
+Map5 inherits one resource manager and one face director with its original defaults.
+Map5 uses the new HUD while suppressing its legacy resource display.
+
+Errors: 0

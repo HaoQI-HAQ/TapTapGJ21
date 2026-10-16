@@ -1,0 +1,118 @@
+Passed: 107
+cs source template resolves with matching mesh and material: Sticky
+cs source template resolves with matching mesh and material: Bouncy
+cs source template resolves with matching mesh and material: Bomb
+Map0: exactly one player.
+Map0: ability and resource components resolve.
+Map0/Sticky: inherits the cs prefab asset directly.
+Map0/Sticky: generates the correct live bubble behavior.
+Map0/Sticky: generated mesh and material match cs, without a fallback material.
+Map0/Sticky: charges the configured cost and locks switching.
+Map0/Sticky: release preserves refund cost and unlocks switching.
+Map0/Bouncy: inherits the cs prefab asset directly.
+Map0/Bouncy: generates the correct live bubble behavior.
+Map0/Bouncy: generated mesh and material match cs, without a fallback material.
+Map0/Bouncy: charges the configured cost and locks switching.
+Map0/Bouncy: release preserves refund cost and unlocks switching.
+Map0/Bomb: inherits the cs prefab asset directly.
+Map0/Bomb: generates the correct live bubble behavior.
+Map0/Bomb: generated mesh and material match cs, without a fallback material.
+Map0/Bomb: charges the configured cost and locks switching.
+Map0/Bomb: release preserves refund cost and unlocks switching.
+Map1: exactly one player.
+Map1: ability and resource components resolve.
+Map1/Sticky: inherits the cs prefab asset directly.
+Map1/Sticky: generates the correct live bubble behavior.
+Map1/Sticky: generated mesh and material match cs, without a fallback material.
+Map1/Sticky: charges the configured cost and locks switching.
+Map1/Sticky: release preserves refund cost and unlocks switching.
+Map1/Bouncy: inherits the cs prefab asset directly.
+Map1/Bouncy: generates the correct live bubble behavior.
+Map1/Bouncy: generated mesh and material match cs, without a fallback material.
+Map1/Bouncy: charges the configured cost and locks switching.
+Map1/Bouncy: release preserves refund cost and unlocks switching.
+Map1/Bomb: inherits the cs prefab asset directly.
+Map1/Bomb: generates the correct live bubble behavior.
+Map1/Bomb: generated mesh and material match cs, without a fallback material.
+Map1/Bomb: charges the configured cost and locks switching.
+Map1/Bomb: release preserves refund cost and unlocks switching.
+Map2: exactly one player.
+Map2: ability and resource components resolve.
+Map2/Sticky: inherits the cs prefab asset directly.
+Map2/Sticky: generates the correct live bubble behavior.
+Map2/Sticky: generated mesh and material match cs, without a fallback material.
+Map2/Sticky: charges the configured cost and locks switching.
+Map2/Sticky: release preserves refund cost and unlocks switching.
+Map2/Bouncy: inherits the cs prefab asset directly.
+Map2/Bouncy: generates the correct live bubble behavior.
+Map2/Bouncy: generated mesh and material match cs, without a fallback material.
+Map2/Bouncy: charges the configured cost and locks switching.
+Map2/Bouncy: release preserves refund cost and unlocks switching.
+Map2/Bomb: inherits the cs prefab asset directly.
+Map2/Bomb: generates the correct live bubble behavior.
+Map2/Bomb: generated mesh and material match cs, without a fallback material.
+Map2/Bomb: charges the configured cost and locks switching.
+Map2/Bomb: release preserves refund cost and unlocks switching.
+Map3: exactly one player.
+Map3: ability and resource components resolve.
+Map3/Sticky: inherits the cs prefab asset directly.
+Map3/Sticky: generates the correct live bubble behavior.
+Map3/Sticky: generated mesh and material match cs, without a fallback material.
+Map3/Sticky: charges the configured cost and locks switching.
+Map3/Sticky: release preserves refund cost and unlocks switching.
+Map3/Bouncy: inherits the cs prefab asset directly.
+Map3/Bouncy: generates the correct live bubble behavior.
+Map3/Bouncy: generated mesh and material match cs, without a fallback material.
+Map3/Bouncy: charges the configured cost and locks switching.
+Map3/Bouncy: release preserves refund cost and unlocks switching.
+Map3/Bomb: inherits the cs prefab asset directly.
+Map3/Bomb: generates the correct live bubble behavior.
+Map3/Bomb: generated mesh and material match cs, without a fallback material.
+Map3/Bomb: charges the configured cost and locks switching.
+Map3/Bomb: release preserves refund cost and unlocks switching.
+Map4: exactly one player.
+Map4: ability and resource components resolve.
+Map4/Sticky: inherits the cs prefab asset directly.
+Map4/Sticky: generates the correct live bubble behavior.
+Map4/Sticky: generated mesh and material match cs, without a fallback material.
+Map4/Sticky: charges the configured cost and locks switching.
+Map4/Sticky: release preserves refund cost and unlocks switching.
+Map4/Bouncy: inherits the cs prefab asset directly.
+Map4/Bouncy: generates the correct live bubble behavior.
+Map4/Bouncy: generated mesh and material match cs, without a fallback material.
+Map4/Bouncy: charges the configured cost and locks switching.
+Map4/Bouncy: release preserves refund cost and unlocks switching.
+Map4/Bomb: inherits the cs prefab asset directly.
+Map4/Bomb: generates the correct live bubble behavior.
+Map4/Bomb: generated mesh and material match cs, without a fallback material.
+Map4/Bomb: charges the configured cost and locks switching.
+Map4/Bomb: release preserves refund cost and unlocks switching.
+Map5: exactly one player.
+Map5: ability and resource components resolve.
+Map5/Sticky: inherits the cs prefab asset directly.
+Map5/Sticky: generates the correct live bubble behavior.
+Map5/Sticky: generated mesh and material match cs, without a fallback material.
+Map5/Sticky: charges the configured cost and locks switching.
+Map5/Sticky: release preserves refund cost and unlocks switching.
+Map5/Bouncy: inherits the cs prefab asset directly.
+Map5/Bouncy: generates the correct live bubble behavior.
+Map5/Bouncy: generated mesh and material match cs, without a fallback material.
+Map5/Bouncy: charges the configured cost and locks switching.
+Map5/Bouncy: release preserves refund cost and unlocks switching.
+Map5/Bomb: inherits the cs prefab asset directly.
+Map5/Bomb: generates the correct live bubble behavior.
+Map5/Bomb: generated mesh and material match cs, without a fallback material.
+Map5/Bomb: charges the configured cost and locks switching.
+Map5/Bomb: release preserves refund cost and unlocks switching.
+Map5: obsolete scene template objects are removed.
+Map5: authored bomb cost and size are preserved.
+
+Errors: 4
+Problem detected while opening the Scene file: 'Assets/GameMain/Scenes/Map4.unity'.
+Check the following logs for more details.
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L5yi_ ji_1glb (Missing Prefab with guid: 1ee526b49e3df5946a2ff50c2857297c)'
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L4_yi_ ji_2glb (Missing Prefab with guid: 570ac9390f8a6764f801e8d6d4ac8bce)'
+
+Prefab instance problem. Missing Prefab Asset: 'LS_5_shan_ shi (Missing Prefab with guid: 9ed98f21d17bbed45b7848655aa86497)'

@@ -1,0 +1,126 @@
+Passed: 96
+Six-action settings migrate to seventeen actions while retaining custom bindings.
+Invalid and duplicate bindings are repaired without stealing UI navigation keys.
+Mouse bindings are accepted and menu/controller navigation stays reserved.
+Malformed progress normalizes null entries, duplicate IDs, negative costs and non-finite time.
+Loaded progress is a deep copy; later gameplay cannot change the read snapshot.
+Collected memory content is independent of its authored source.
+Formal maps resolve the configured player prefab.
+Map0 has exactly one active player.
+Map0 has movement, launch and camera components.
+Map0 opens the gameplay HUD.
+Map0 resolves its configured or authored chapter goal.
+Map0 imports with no missing script components.
+Map0 pauses its real gameplay components.
+Map0 remains stationary while paused.
+Map0 blocks gameplay for the frame that closes the page.
+Map0 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map0-entry.
+Map0 saves real player coordinates.
+Map0 restores saved coordinates after reloading the real map.
+Map0 presents a confirmation without prematurely completing the chapter.
+Map0 cancels goal confirmation and keeps exploration available.
+Map0 completes and persists progress in the automatic slot.
+Rendered formal-goal-complete.
+Map1 has exactly one active player.
+Map1 has movement, launch and camera components.
+Map1 opens the gameplay HUD.
+Map1 resolves its configured or authored chapter goal.
+Map1 imports with no missing script components.
+Map1 pauses its real gameplay components.
+Map1 remains stationary while paused.
+Map1 blocks gameplay for the frame that closes the page.
+Map1 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map1-entry.
+Map1 saves real player coordinates.
+Map1 restores saved coordinates after reloading the real map.
+Map1 completes and persists progress in the automatic slot.
+Map2 has exactly one active player.
+Map2 has movement, launch and camera components.
+Map2 opens the gameplay HUD.
+Map2 resolves its configured or authored chapter goal.
+Map2 imports with no missing script components.
+Map2 pauses its real gameplay components.
+Map2 remains stationary while paused.
+Map2 blocks gameplay for the frame that closes the page.
+Map2 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map2-entry.
+Map2 saves real player coordinates.
+Map2 restores saved coordinates after reloading the real map.
+Map2 presents a confirmation without prematurely completing the chapter.
+Map2 cancels goal confirmation and keeps exploration available.
+Map2 completes and persists progress in the automatic slot.
+Map3 has exactly one active player.
+Map3 has movement, launch and camera components.
+Map3 opens the gameplay HUD.
+Map3 resolves its configured or authored chapter goal.
+Map3 imports with no missing script components.
+Map3 pauses its real gameplay components.
+Map3 remains stationary while paused.
+Map3 blocks gameplay for the frame that closes the page.
+Map3 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map3-entry.
+Map3 saves real player coordinates.
+Map3 restores saved coordinates after reloading the real map.
+Map3 presents a confirmation without prematurely completing the chapter.
+Map3 cancels goal confirmation and keeps exploration available.
+Map3 completes and persists progress in the automatic slot.
+Map4 has exactly one active player.
+Map4 has movement, launch and camera components.
+Map4 opens the gameplay HUD.
+Map4 resolves its configured or authored chapter goal.
+Map4 imports with no missing script components.
+Map4 pauses its real gameplay components.
+Map4 remains stationary while paused.
+Map4 blocks gameplay for the frame that closes the page.
+Map4 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map4-entry.
+Map4 saves real player coordinates.
+Map4 restores saved coordinates after reloading the real map.
+Map4 presents a confirmation without prematurely completing the chapter.
+Map4 cancels goal confirmation and keeps exploration available.
+Map4 completes and persists progress in the automatic slot.
+Map5 has exactly one active player.
+Map5 has movement, launch and camera components.
+Map5 opens the gameplay HUD.
+Map5 resolves its configured or authored chapter goal.
+Map5 imports with no missing script components.
+Map5 pauses its real gameplay components.
+Map5 remains stationary while paused.
+Map5 blocks gameplay for the frame that closes the page.
+Map5 restores gameplay after closing pause.
+Rendered diagnostic world and HUD: Map5-entry.
+Map5 saves real player coordinates.
+Map5 restores saved coordinates after reloading the real map.
+Map5 presents a confirmation without prematurely completing the chapter.
+Map5 cancels goal confirmation and keeps exploration available.
+Map5 completes and persists progress in the automatic slot.
+
+Errors: 12
+Problem detected while opening the Scene file: 'Assets/GameMain/Scenes/Map1.unity'.
+Check the following logs for more details.
+
+Prefab instance problem. Missing Prefab Asset: 'takoyaki (Missing Prefab with guid: c8c72f6b23ce2334dae9db64d6e83b08)'
+
+Problem detected while opening the Scene file: 'Assets/GameMain/Scenes/Map1.unity'.
+Check the following logs for more details.
+
+Prefab instance problem. Missing Prefab Asset: 'takoyaki (Missing Prefab with guid: c8c72f6b23ce2334dae9db64d6e83b08)'
+
+Problem detected while opening the Scene file: 'Assets/GameMain/Scenes/Map4.unity'.
+Check the following logs for more details.
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L5yi_ ji_1glb (Missing Prefab with guid: 1ee526b49e3df5946a2ff50c2857297c)'
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L4_yi_ ji_2glb (Missing Prefab with guid: 570ac9390f8a6764f801e8d6d4ac8bce)'
+
+Prefab instance problem. Missing Prefab Asset: 'LS_5_shan_ shi (Missing Prefab with guid: 9ed98f21d17bbed45b7848655aa86497)'
+
+Problem detected while opening the Scene file: 'Assets/GameMain/Scenes/Map4.unity'.
+Check the following logs for more details.
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L5yi_ ji_1glb (Missing Prefab with guid: 1ee526b49e3df5946a2ff50c2857297c)'
+
+Prefab instance problem. Missing Prefab Asset: 'SM_L4_yi_ ji_2glb (Missing Prefab with guid: 570ac9390f8a6764f801e8d6d4ac8bce)'
+
+Prefab instance problem. Missing Prefab Asset: 'LS_5_shan_ shi (Missing Prefab with guid: 9ed98f21d17bbed45b7848655aa86497)'
