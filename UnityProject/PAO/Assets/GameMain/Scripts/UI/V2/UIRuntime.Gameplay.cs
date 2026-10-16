@@ -27,6 +27,8 @@ namespace PAO.UI.V2
         private Text subtitleText;
         private float subtitleUntil;
         private Text narrationSpeaker;
+        private UICinematicSubtitleMotion subtitleMotion;
+        private bool subtitleExitImmediately;
         private string objectiveOverride;
         private bool resultShown;
         private bool wasCharging;
@@ -114,7 +116,8 @@ namespace PAO.UI.V2
         private void ClearHud()
         {
             if (subtitleRoot != null) Destroy(subtitleRoot.gameObject);
-            subtitleRoot = null; subtitleText = narrationSpeaker = null; subtitleUntil = 0;
+            subtitleRoot = null; subtitleText = narrationSpeaker = null; subtitleMotion = null;
+            subtitleUntil = 0; subtitleExitImmediately = false;
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
             hud = null; hudMessages = abilityCluster = null;
             abilityMotion = null; abilityRings.Clear();
@@ -178,16 +181,30 @@ namespace PAO.UI.V2
             {
                 subtitleRoot = ui.Column("Narration popup", hudMessages, 18, 6);
                 AddHudBacking(subtitleRoot);
-                subtitleRoot.gameObject.AddComponent<UISubtitleBackground>().Configure(Config.paper);
-                narrationSpeaker = ui.Label(subtitleRoot, "", 20, Config.teal, TextAnchor.MiddleCenter);
-                subtitleText = ui.Label(subtitleRoot, "", 24, Config.ink, TextAnchor.MiddleCenter);
+                subtitleRoot.gameObject.AddComponent<UISubtitleBackground>().Configure(Color.black);
+                narrationSpeaker = ui.Label(subtitleRoot, "", 20, Color.white, TextAnchor.MiddleCenter);
+                narrationSpeaker.fontStyle = FontStyle.Bold;
+                subtitleText = ui.Label(subtitleRoot, "", 30, Color.white, TextAnchor.MiddleCenter);
+                subtitleText.lineSpacing = 1.12f;
+                subtitleMotion = subtitleRoot.gameObject.AddComponent<UICinematicSubtitleMotion>();
+                subtitleMotion.Configure(subtitleText, narrationSpeaker);
+                Outline textEdge = subtitleText.gameObject.AddComponent<Outline>();
+                textEdge.effectColor = new Color(0, 0, 0, .92f);
+                textEdge.effectDistance = new Vector2(1, -1);
+                Shadow textShadow = subtitleText.gameObject.AddComponent<Shadow>();
+                textShadow.effectColor = new Color(0, 0, 0, .72f);
+                textShadow.effectDistance = new Vector2(0, -2);
                 subtitleRoot.SetAsLastSibling();
             }
             narrationSpeaker.text = speaker;
-            narrationSpeaker.gameObject.SetActive(!string.IsNullOrWhiteSpace(speaker));
-            subtitleText.text = text;
+            // A generic narrator tag adds no information to a cinematic subtitle.
+            bool namedSpeaker = !string.IsNullOrWhiteSpace(speaker) && speaker != "旁白" &&
+                !string.Equals(speaker, "Narrator", StringComparison.OrdinalIgnoreCase);
+            narrationSpeaker.gameObject.SetActive(namedSpeaker);
+            float revealDuration = subtitleMotion.Present(text);
+            subtitleExitImmediately = duration > 0 && duration <= .2f;
             subtitleUntil = duration < 0 ? float.PositiveInfinity : Time.unscaledTime +
-                (duration > 0 ? duration : Mathf.Max(5, text.Length * .12f));
+                (duration > 0 ? duration : revealDuration + Mathf.Max(5, text.Length * .12f));
             RefreshNarration();
             PositionGameplayHud();
         }
@@ -195,13 +212,31 @@ namespace PAO.UI.V2
         public void HideNarration()
         {
             subtitleUntil = 0;
-            if (subtitleRoot != null) subtitleRoot.gameObject.SetActive(false);
+            if (subtitleMotion != null) subtitleMotion.Dismiss(true);
+            else if (subtitleRoot != null) subtitleRoot.gameObject.SetActive(false);
         }
 
         private void RefreshNarration()
         {
             if (subtitleRoot == null) return;
-            subtitleRoot.gameObject.SetActive(UISettings.Current.subtitles && !IsBlockingGameplay && Time.unscaledTime < subtitleUntil);
+            bool enabled = UISettings.Current.subtitles && !IsBlockingGameplay;
+            bool withinTime = Time.unscaledTime < subtitleUntil;
+            if (!enabled)
+            {
+                if (subtitleMotion != null && subtitleRoot.gameObject.activeSelf) subtitleMotion.Suspend();
+                else subtitleRoot.gameObject.SetActive(false);
+            }
+            else if (withinTime)
+            {
+                if (!subtitleRoot.gameObject.activeSelf && subtitleMotion != null) subtitleMotion.Restore();
+                else if (!subtitleRoot.gameObject.activeSelf) subtitleRoot.gameObject.SetActive(true);
+            }
+            else if (subtitleMotion != null)
+            {
+                if (subtitleRoot.gameObject.activeSelf && !subtitleMotion.IsDismissing)
+                    subtitleMotion.Dismiss(subtitleExitImmediately || UISettings.Current.reducedMotion);
+            }
+            else subtitleRoot.gameObject.SetActive(false);
             float height = 36 + ResourceTextHeight(subtitleText);
             if (narrationSpeaker.gameObject.activeSelf) height += ResourceTextHeight(narrationSpeaker) + 6;
             UIWidgets.Size(subtitleRoot, Mathf.Max(90, height));
