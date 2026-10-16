@@ -28,11 +28,11 @@ for source in (root / 'Assets/GameMain/Scripts/UI/V2').glob('*.cs'):
     if not meta.exists():
         meta.write_text('fileFormatVersion: 2\nguid: ' + uuid.uuid5(namespace, source.relative_to(root).as_posix()).hex + '\n', encoding='utf-8')
 
-for folder in ('Assets/GameMain/Scripts/UI', 'Assets/GameMain/Scripts/Gameplay', 'Assets/GameMain/Resources'):
+for folder in ('Assets/GameMain/Scripts/UI', 'Assets/GameMain/Scripts/Gameplay', 'Assets/GameMain/Scripts/VFX', 'Assets/GameMain/Resources'):
     for source in (root / folder).rglob('*'):
         if source.is_file():
             copy(source)
-for name in ('UIV2Tools', 'UIV2Verification', 'UIMenuVerification'):
+for name in ('UIV2Tools', 'UIV2Verification', 'UIMenuVerification', 'LoadingTransitionReview'):
     for suffix in ('.cs', '.cs.meta'):
         copy(root / ('Assets/GameMain/Scripts/Editor/' + name + suffix))
 for source in (root / 'Assets/GameMain/UI/Demigiant/DOTween').rglob('*'):
