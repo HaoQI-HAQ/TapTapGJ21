@@ -109,7 +109,7 @@ namespace PAO.UI.V2
             UIWidgets.Size(viewport, 560);
             Image paper = viewport.gameObject.AddComponent<Image>(); paper.color = Color.white;
             viewport.gameObject.AddComponent<RectMask2D>();
-            ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            ScrollRect scroll = viewport.gameObject.AddComponent<UIHorizontalScrollRect>();
             scroll.horizontal = true; scroll.vertical = false; scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.scrollSensitivity = 36; scroll.viewport = viewport;
             RectTransform strip = ui.Row("Chapter tiles", viewport, 22);

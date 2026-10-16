@@ -54,7 +54,7 @@ namespace PAO
         private static readonly Color[] s_TypeColors =
         {
             new Color(0.55f, 0.85f, 1f),    // 浮粘：淡蓝
-            new Color(0.55f, 1f, 0.62f),    // 弹力：淡绿
+            new Color(1f, 0.82f, 0.24f),    // 弹力：黄色
             new Color(1f, 0.62f, 0.42f)     // 炸弹：橙红
         };
 

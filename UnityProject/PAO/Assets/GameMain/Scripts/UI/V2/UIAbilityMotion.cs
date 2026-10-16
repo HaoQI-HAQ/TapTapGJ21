@@ -146,7 +146,7 @@ namespace PAO.UI.V2
             node.root.localScale = Vector3.one * (active ? 1.26f : previous ? 1.04f : .78f);
             node.film.color = new Color(accent.r, accent.g, accent.b, active ? .18f : .08f);
             node.glow.color = new Color(accent.r, accent.g, accent.b, active && !UISettings.Current.highContrast ? .12f : .03f);
-            node.ring.enabled = active; node.ring.color = config.teal;
+            node.ring.enabled = active; node.ring.color = accent;
             node.orbit.color = active ? accent : new Color(accent.r, accent.g, accent.b, .12f);
             node.orbit.Phase = 0; node.ripple.color = Color.clear;
             node.ripple.rectTransform.localScale = Vector3.one;

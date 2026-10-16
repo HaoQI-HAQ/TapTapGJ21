@@ -6,6 +6,20 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
+    // Unity maps a vertical mouse wheel to horizontal motion with the opposite
+    // direction expected by the chapter atlas. Keep native horizontal gestures
+    // unchanged while making wheel-down reveal content on the right.
+    public sealed class UIHorizontalScrollRect : ScrollRect
+    {
+        public override void OnScroll(PointerEventData eventData)
+        {
+            Vector2 originalDelta = eventData.scrollDelta;
+            eventData.scrollDelta = new Vector2(originalDelta.x, -originalDelta.y);
+            try { base.OnScroll(eventData); }
+            finally { eventData.scrollDelta = originalDelta; }
+        }
+    }
+
     public sealed class UIWidgets
     {
         public readonly UIConfig Config;
