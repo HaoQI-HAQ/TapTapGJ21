@@ -5,6 +5,80 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
+    public sealed class UIMenuWordmarkMotion : MonoBehaviour
+    {
+        private CanvasGroup ink;
+        private RectTransform rule;
+        private Sequence reveal;
+        private float ruleWidth;
+
+        public void Configure(bool opening)
+        {
+            ink = gameObject.AddComponent<CanvasGroup>();
+            ruleWidth = opening ? 320 : 260;
+            var line = new GameObject("Wordmark rule", typeof(RectTransform), typeof(Image));
+            line.layer = 5; line.transform.SetParent(transform, false);
+            rule = (RectTransform)line.transform;
+            rule.anchorMin = rule.anchorMax = new Vector2(.5f, 0);
+            rule.pivot = new Vector2(.5f, .5f);
+            rule.anchoredPosition = new Vector2(0, 4);
+            rule.sizeDelta = new Vector2(ruleWidth, 4);
+            Image image = line.GetComponent<Image>(); image.color = Color.black; image.raycastTarget = false;
+            if (UISettings.Current.reducedMotion) return;
+            ink.alpha = 0;
+            transform.localScale = Vector3.one * .93f;
+            rule.sizeDelta = new Vector2(0, 4);
+            reveal = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            reveal.Insert(.04f, ink.DOFade(1, .46f));
+            reveal.Insert(.04f, transform.DOScale(1, .62f).SetEase(Ease.OutCubic));
+            reveal.Insert(.28f, rule.DOSizeDelta(new Vector2(ruleWidth, 4), .48f).SetEase(Ease.OutCubic));
+        }
+
+        private void OnDisable()
+        {
+            if (reveal != null) reveal.Kill();
+            if (ink != null) ink.alpha = 1;
+            if (rule != null) rule.sizeDelta = new Vector2(ruleWidth, 4);
+            transform.localScale = Vector3.one;
+        }
+    }
+
+    public sealed class UIStartPromptMotion : MonoBehaviour
+    {
+        private CanvasGroup prompt;
+        private Tween breath;
+        private bool stopped;
+        public void Configure()
+        {
+            stopped = false;
+            prompt = gameObject.AddComponent<CanvasGroup>();
+            Apply();
+        }
+        public void Stop()
+        {
+            stopped = true;
+            if (breath != null) breath.Kill();
+            breath = null;
+            if (prompt != null) prompt.alpha = 1;
+        }
+        private void OnEnable() { UISettings.Changed += Apply; }
+        private void OnDisable()
+        {
+            UISettings.Changed -= Apply;
+            if (breath != null) breath.Kill();
+            if (prompt != null) prompt.alpha = 1;
+        }
+        private void Apply()
+        {
+            if (prompt == null || stopped) return;
+            if (breath != null) breath.Kill();
+            prompt.alpha = UISettings.Current.reducedMotion ? 1 : .72f;
+            if (!UISettings.Current.reducedMotion)
+                breath = prompt.DOFade(1, 1.35f).SetEase(Ease.InOutSine)
+                    .SetLoops(-1, LoopType.Yoyo).SetUpdate(true).SetLink(gameObject);
+        }
+    }
+
     public sealed class UIMenuHeroFit : MonoBehaviour
     {
         public float maximumWidth = 760;

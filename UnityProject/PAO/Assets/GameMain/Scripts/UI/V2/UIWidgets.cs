@@ -345,17 +345,61 @@ namespace PAO.UI.V2
         public bool CanClose = true;
         public UIPageDesign Design;
         private CanvasGroup group;
+        private CanvasGroup headingReveal;
+        private RectTransform openingLine;
         private Sequence transition, contentReveal;
+        private bool requestedInteractable = true;
         private UIMotionProfile profile = new UIMotionProfile();
         public void Configure(UIMotionProfile motion) { profile = motion ?? new UIMotionProfile(); }
 
         public void Show()
         {
             Kill(); group = GetComponent<CanvasGroup>();
-            group.alpha = 0; group.blocksRaycasts = true; group.interactable = true;
+            requestedInteractable = true;
+            group.alpha = 0; group.blocksRaycasts = false; group.interactable = false;
             transition = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
-            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? .12f : profile.pageEnter));
+            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? .12f : profile.pageEnter)
+                .OnComplete(() =>
+                {
+                    if (group == null) return;
+                    group.blocksRaycasts = requestedInteractable;
+                    group.interactable = requestedInteractable;
+                    if (requestedInteractable && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+                        RestoreFocus();
+                }));
             transition.OnKill(() => transition = null);
+            if (Design != UIPageDesign.Pause && Design != UIPageDesign.Menu &&
+                Design != UIPageDesign.Loading)
+            {
+                RectTransform body = transform.Find("Page") as RectTransform;
+                if (body != null)
+                {
+                    var rule = new GameObject("Page opening rule", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                    rule.layer = 5; rule.transform.SetParent(body, false);
+                    openingLine = (RectTransform)rule.transform;
+                    openingLine.anchorMin = openingLine.anchorMax = new Vector2(0, 1);
+                    openingLine.anchorMax = Vector2.one;
+                    openingLine.pivot = new Vector2(0, .5f);
+                    openingLine.offsetMin = new Vector2(24, -10);
+                    openingLine.offsetMax = new Vector2(-24, -6);
+                    rule.GetComponent<Image>().color = Color.black;
+                    rule.GetComponent<Image>().raycastTarget = false;
+                    rule.GetComponent<LayoutElement>().ignoreLayout = true;
+                    if (!UISettings.Current.reducedMotion)
+                    {
+                        openingLine.localScale = new Vector3(0, 1, 1);
+                        transition.Insert(.06f, openingLine.DOScaleX(1, .48f).SetEase(Ease.OutCubic));
+                        Text heading = body.Find("Page title")?.GetComponent<Text>();
+                        if (heading != null)
+                        {
+                            headingReveal = heading.GetComponent<CanvasGroup>();
+                            if (headingReveal == null) headingReveal = heading.gameObject.AddComponent<CanvasGroup>();
+                            headingReveal.alpha = 0;
+                            transition.Insert(.12f, headingReveal.DOFade(1, .34f));
+                        }
+                    }
+                }
+            }
             if (!UISettings.Current.reducedMotion && Design != UIPageDesign.Pause)
             {
                 RectTransform body = transform.Find("Page") as RectTransform;
@@ -370,14 +414,16 @@ namespace PAO.UI.V2
             {
                 CanvasGroup contentGroup = Content.GetComponent<CanvasGroup>();
                 if (contentGroup == null) contentGroup = Content.gameObject.AddComponent<CanvasGroup>();
-                contentGroup.alpha = 0;
-                transition.Join(contentGroup.DOFade(1, profile.pageEnter * .75f).SetDelay(.04f));
+                contentGroup.alpha = 0; contentGroup.blocksRaycasts = false; contentGroup.interactable = false;
+                transition.Join(contentGroup.DOFade(1, profile.pageEnter * .75f).SetDelay(.04f)
+                    .OnComplete(() => { if (contentGroup != null) { contentGroup.blocksRaycasts = true; contentGroup.interactable = true; } }));
                 if (Footer != null)
                 {
                     CanvasGroup footerGroup = Footer.GetComponent<CanvasGroup>();
                     if (footerGroup == null) footerGroup = Footer.gameObject.AddComponent<CanvasGroup>();
-                    footerGroup.alpha = 0;
-                    transition.Join(footerGroup.DOFade(1, profile.pageEnter * .65f).SetDelay(.08f));
+                    footerGroup.alpha = 0; footerGroup.blocksRaycasts = false; footerGroup.interactable = false;
+                    transition.Join(footerGroup.DOFade(1, profile.pageEnter * .65f).SetDelay(.08f)
+                        .OnComplete(() => { if (footerGroup != null) { footerGroup.blocksRaycasts = true; footerGroup.interactable = true; } }));
                 }
             }
         }
@@ -420,6 +466,7 @@ namespace PAO.UI.V2
         public void SetInteractable(bool value)
         {
             if (group == null) group = GetComponent<CanvasGroup>();
+            requestedInteractable = value;
             group.interactable = value; group.blocksRaycasts = value;
         }
         public void SetVisible(bool value)
@@ -427,6 +474,8 @@ namespace PAO.UI.V2
             Kill();
             if (group == null) group = GetComponent<CanvasGroup>();
             group.alpha = value ? 1 : 0;
+            group.interactable = value && requestedInteractable;
+            group.blocksRaycasts = value && requestedInteractable;
         }
         public void RestoreFocus()
         {
@@ -437,7 +486,13 @@ namespace PAO.UI.V2
         {
             if (transition != null) transition.Kill(); transition = null;
             if (contentReveal != null) contentReveal.Kill(); contentReveal = null;
-            if (Content != null && Content.GetComponent<CanvasGroup>() != null) Content.GetComponent<CanvasGroup>().alpha = 1;
+            if (headingReveal != null) headingReveal.alpha = 1;
+            if (openingLine != null) openingLine.localScale = Vector3.one;
+            if (Content != null && Content.GetComponent<CanvasGroup>() != null)
+            {
+                CanvasGroup contentGroup = Content.GetComponent<CanvasGroup>();
+                contentGroup.alpha = 1; contentGroup.interactable = true; contentGroup.blocksRaycasts = true;
+            }
             if (Content != null)
                 foreach (Transform child in Content)
                 {
@@ -447,7 +502,11 @@ namespace PAO.UI.V2
                         layer.alpha = 1; layer.interactable = true; layer.blocksRaycasts = true;
                     }
                 }
-            if (Footer != null && Footer.GetComponent<CanvasGroup>() != null) Footer.GetComponent<CanvasGroup>().alpha = 1;
+            if (Footer != null && Footer.GetComponent<CanvasGroup>() != null)
+            {
+                CanvasGroup footerGroup = Footer.GetComponent<CanvasGroup>();
+                footerGroup.alpha = 1; footerGroup.interactable = true; footerGroup.blocksRaycasts = true;
+            }
         }
         private void OnDisable() { Kill(); }
         private void OnDestroy() { Kill(); }

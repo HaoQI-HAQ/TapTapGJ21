@@ -90,9 +90,17 @@ namespace PAO.UI.V2
         {
             UIPage page = Push(T("章节地图", "Chapter map"), "", false, UIPageDesign.Chapters);
             page.Rebuild = ShowChapters;
-            BuildChapterAtlas(page.Content);
+            BuildStageRoute(page.Content);
             ui.Button(page.Footer, T("返回", "Back"), Pop);
             Finish(page);
+            if (UISettings.Current.reducedMotion && Config.chapters != null && Config.chapters.Length > 0)
+            {
+                SaveSlotData latest = IsGameplay ? null : ReadMenuRecords().latest;
+                string scene = IsGameplay ? lastScene : latest != null ? latest.sceneName : "";
+                string target = "Stage " + (Mathf.Max(0, Config.IndexOf(scene)) + 1).ToString("00");
+                foreach (Button button in page.Content.GetComponentsInChildren<Button>())
+                    if (button.name == target) { button.Select(); break; }
+            }
         }
         private Action<SaveSlotData> BuildChapterAtlas(Transform parent, bool recordPreview = false)
         {
@@ -102,10 +110,25 @@ namespace PAO.UI.V2
                 return null;
             }
             RectTransform atlas = ui.Card("Chapter atlas", parent);
-            ui.Emblem(atlas, UIGuideSymbol.Goal, T("航线图册", "ROUTE ATLAS"));
+            atlas.GetComponent<VerticalLayoutGroup>().padding = new RectOffset(16, 16, 24, 24);
+            RectTransform navigation = ui.Row("Route navigation", atlas, 12);
+            UIWidgets.Size(navigation, 48);
+            Text routeTitle = ui.Label(navigation, T("航线图册", "ROUTE ATLAS"), 22, Color.black);
+            routeTitle.fontStyle = FontStyle.Bold;
+            UIWidgets.Size(routeTitle.transform, 44, 170);
+            Text routeHint = ui.Label(navigation, "", 19, Color.black);
+            routeHint.resizeTextForBestFit = true;
+            routeHint.resizeTextMinSize = 15;
+            routeHint.resizeTextMaxSize = 19;
+            UIWidgets.Size(routeHint.transform, 44, -1, 1);
+            Text routeCounter = ui.Label(navigation, "", 20, Color.black, TextAnchor.MiddleRight);
+            routeCounter.resizeTextForBestFit = true;
+            routeCounter.resizeTextMinSize = 15;
+            routeCounter.resizeTextMaxSize = 20;
+            UIWidgets.Size(routeCounter.transform, 44, 112);
             RectTransform viewport = ui.Rect("Horizontal chapter map", atlas);
-            // The route is the main content of this page: each stop reads as a full
-            // stage card at 1920x1080 rather than a small chapter tab.
+            // Full atlas leaves remain large enough to read at 1920 x 1080.
+            // Further stops remain reachable by dragging, the wheel, or arrows.
             UIWidgets.Size(viewport, 560);
             Image paper = viewport.gameObject.AddComponent<Image>(); paper.color = Color.white;
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -132,6 +155,7 @@ namespace PAO.UI.V2
             string currentScene = IsGameplay ? lastScene : latest != null ? latest.sceneName : "";
             int selected = Mathf.Max(0, Config.IndexOf(currentScene));
             Button[] tiles = new Button[Config.chapters.Length];
+            Button previous = null, next = null;
             Action redraw = () =>
             {
                 for (int i = 0; i < tiles.Length; i++)
@@ -142,12 +166,24 @@ namespace PAO.UI.V2
                     bool unlocked = i == 0 || previewProgress.completed.Contains(Config.chapters[i - 1].scene);
                     bool available = Application.CanStreamedLevelBeLoaded(chapter.scene);
                     Text state = tiles[i].transform.Find("Stage status").GetComponent<Text>();
-                    state.text = completed ? T("已完成", "COMPLETED") : currentScene == chapter.scene ?
+                    state.text = !available ? T("暂不可进入", "UNAVAILABLE") : completed ? T("已完成", "COMPLETED") : currentScene == chapter.scene ?
                         T("当前章节", "CURRENT") : unlocked && available ? T("已开放", "AVAILABLE") :
                         T("未解锁", "LOCKED");
                     tiles[i].GetComponent<Outline>().effectDistance = i == selected ? new Vector2(3, 3) : Vector2.one;
                     tiles[i].GetComponent<UIStageCardMotion>().SetCurrent(i == selected);
                 }
+                ChapterDefinition chosen = Config.chapters[selected];
+                bool chosenCompleted = previewProgress.completed.Contains(chosen.scene);
+                bool chosenUnlocked = selected == 0 || previewProgress.completed.Contains(Config.chapters[selected - 1].scene);
+                bool chosenAvailable = Application.CanStreamedLevelBeLoaded(chosen.scene);
+                string chosenStatus = chosenCompleted ? T("已完成", "Completed") : currentScene == chosen.scene ?
+                    T("当前章节", "Current") : chosenUnlocked && chosenAvailable ? T("已开放", "Available") :
+                    T("未解锁", "Locked");
+                if (!chosenAvailable) chosenStatus = T("暂不可进入", "Unavailable");
+                routeHint.text = safeRoot.rect.width < 1000 ? "" : chosen.title + "  /  " + chosenStatus;
+                routeCounter.text = (selected + 1).ToString("00") + " / " + tiles.Length.ToString("00");
+                if (previous != null) previous.interactable = selected > 0;
+                if (next != null) next.interactable = selected + 1 < tiles.Length;
             };
             for (int i = 0; i < Config.chapters.Length; i++)
             {
@@ -160,7 +196,51 @@ namespace PAO.UI.V2
                 });
                 tiles[i] = tile;
             }
+            // Small junction marks keep the route legible between atlas leaves.
+            for (int i = 0; i + 1 < tiles.Length; i++)
+            {
+                Image junction = ui.Surface("Route junction " + (i + 1), strip, Color.black);
+                junction.raycastTarget = false;
+                junction.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                junction.rectTransform.anchorMin = junction.rectTransform.anchorMax = new Vector2(0, .5f);
+                junction.rectTransform.pivot = new Vector2(.5f, .5f);
+                junction.rectTransform.anchoredPosition = new Vector2(401 + i * 412, 0);
+                junction.rectTransform.sizeDelta = new Vector2(9, 9);
+                junction.rectTransform.localRotation = Quaternion.Euler(0, 0, 45);
+            }
+            Action<int> locate = index =>
+            {
+                selected = Mathf.Clamp(index, 0, tiles.Length - 1);
+                redraw();
+                Canvas.ForceUpdateCanvases();
+                scroll.horizontalNormalizedPosition = tiles.Length <= 1 ? 0 : selected / (float)(tiles.Length - 1);
+                if (tiles[selected] != null && tiles[selected].IsInteractable()) tiles[selected].Select();
+            };
+            previous = ui.Button(navigation, "‹", () => locate(selected - 1));
+            next = ui.Button(navigation, "›", () => locate(selected + 1));
+            foreach (Button arrow in new[] { previous, next })
+            {
+                UIAdaptiveButton adaptive = arrow.GetComponent<UIAdaptiveButton>();
+                if (adaptive != null) adaptive.enabled = false;
+                UIButtonFeedback feedback = arrow.GetComponent<UIButtonFeedback>();
+                if (feedback != null) feedback.enabled = false;
+                UIControlAccent accent = arrow.GetComponent<UIControlAccent>();
+                if (accent != null) accent.enabled = false;
+                UIFluidGradient gradient = arrow.GetComponent<UIFluidGradient>();
+                if (gradient != null) gradient.enabled = false;
+                ColorBlock colors = arrow.colors;
+                colors.highlightedColor = colors.selectedColor = new Color(.92f, .92f, .92f);
+                colors.pressedColor = new Color(.78f, .78f, .78f);
+                colors.disabledColor = new Color(.86f, .86f, .86f);
+                arrow.colors = colors;
+                UIWidgets.Size(arrow.transform, 44, 56);
+                Text glyph = arrow.GetComponentInChildren<Text>();
+                UIWidgets.Stretch(glyph.rectTransform);
+                glyph.fontSize = 28;
+            }
             redraw();
+            Canvas.ForceUpdateCanvases();
+            scroll.horizontalNormalizedPosition = tiles.Length <= 1 ? 0 : selected / (float)(tiles.Length - 1);
             if (!recordPreview) return null;
             return data =>
             {
@@ -169,6 +249,8 @@ namespace PAO.UI.V2
                 currentScene = data.sceneName;
                 selected = Mathf.Max(0, Config.IndexOf(currentScene));
                 redraw();
+                Canvas.ForceUpdateCanvases();
+                scroll.horizontalNormalizedPosition = tiles.Length <= 1 ? 0 : selected / (float)(tiles.Length - 1);
                 if (tiles[selected] != null && tiles[selected].IsInteractable())
                     tiles[selected].Select();
             };
@@ -178,8 +260,8 @@ namespace PAO.UI.V2
         {
             Button tile = ui.Button(strip, "", open);
             tile.name = "Stage " + (index + 1).ToString("00");
-            // The card occupies a full atlas leaf (390 x 540 design units), rather
-            // than the height of a chapter tab. Details live in the dossier popup.
+            // A full atlas leaf keeps its map drawing, title, and status readable.
+            // Details live in the separate dossier popup.
             UIWidgets.Size(tile.transform, 540, 390);
             Image surface = tile.GetComponent<Image>(); surface.color = Color.white; surface.sprite = null;
             tile.GetComponent<UIFluidGradient>().enabled = false;
@@ -188,6 +270,10 @@ namespace PAO.UI.V2
             UIControlAccent defaultAccent = tile.GetComponent<UIControlAccent>();
             if (defaultAccent != null) defaultAccent.enabled = false;
             tile.transition = Selectable.Transition.None;
+            // The page opens non-interactable; clear the Button's initial disabled tint
+            // after switching to the card's own focus and hover treatment.
+            surface.canvasRenderer.SetColor(Color.white);
+            surface.canvasRenderer.SetAlpha(1f);
             Image masthead = ui.Surface("Stage masthead", tile.transform, Color.black);
             masthead.raycastTarget = false;
             masthead.rectTransform.anchorMin = new Vector2(0, 1);
@@ -196,10 +282,13 @@ namespace PAO.UI.V2
             masthead.rectTransform.offsetMax = Vector2.zero;
             Text mastheadLabel = ui.Label(tile.transform, "PAO  /  OPERATION  " + (index + 1).ToString("00"),
                 17, Color.white, TextAnchor.MiddleLeft);
-            Anchor(mastheadLabel.rectTransform, new Vector2(0, 1), new Vector2(20, -46), new Vector2(320, 44), new Vector2(0, 1));
+            Anchor(mastheadLabel.rectTransform, new Vector2(0, 1), new Vector2(20, -2), new Vector2(320, 44), new Vector2(0, 1));
             Text number = tile.transform.Find("Text").GetComponent<Text>();
             number.text = (index + 1).ToString("00"); number.fontStyle = FontStyle.Bold;
             number.GetComponent<UIStyledText>().Configure(122, false, Config);
+            number.resizeTextForBestFit = true;
+            number.resizeTextMinSize = 50;
+            number.resizeTextMaxSize = 122;
             number.alignment = TextAnchor.UpperLeft;
             number.rectTransform.anchorMin = number.rectTransform.anchorMax = new Vector2(0, 1);
             number.rectTransform.pivot = new Vector2(0, 1);
@@ -300,52 +389,72 @@ namespace PAO.UI.V2
         public void ShowSaves()
         {
             UIPage page = Push(T("旅程记录", "Journey records"),
-                T("按章节浏览旅程，并选择要读取或写入的记录。", "Browse the route and choose a journey record."), false, UIPageDesign.Records);
+                T("选择要读取或写入的记录；上方可查看章节进度。", "Choose a record to load or save. The route summary is above."), false, UIPageDesign.Records);
             page.Rebuild = ShowSaves;
-            Action<SaveSlotData> preview = BuildChapterAtlas(page.Content, true);
-            RectTransform records = ui.Grid("Record shelf", page.Content, 1, 720);
+            Action<SaveSlotData> preview = BuildRecordRouteSummary(page.Content);
+            RectTransform records = ui.Grid("Record shelf", page.Content, 2, 520);
             for (int i = 0; i <= UIRunState.AutoSlot; i++)
             {
                 int slot = i; SaveSlotData data = SaveSystem.LoadSlot(i);
                 bool exists = SaveSystem.HasSlot(i), automatic = i == UIRunState.AutoSlot;
                 string name = automatic ? T("自动记录", "Automatic record") : T("记录 ", "Record ") + (i + 1);
-                RectTransform card = ui.Card(name, records, automatic);
+                int actionColumns = safeRoot.rect.width < 520 ? 1 : safeRoot.rect.width < 820 ? 2 : 3;
+                float cardHeight = actionColumns == 1 ? 420 : actionColumns == 2 ? 300 : 240;
+                float actionHeight = actionColumns == 1 ? 264 : actionColumns == 2 ? 156 : 102;
+                RectTransform card = ui.Rect(name, records);
+                UIWidgets.Size(card, cardHeight);
                 StyleRecordCard(card, automatic);
-                ui.Emblem(card, automatic ? UIGuideSymbol.Current : UIGuideSymbol.Journal, name);
-                ui.Label(card, data == null ? (exists ? T("记录无法读取，可尝试恢复备份。", "This record is unreadable. Try restoring its backup.") :
-                    T("这里还没有留下记录。", "No record here yet.")) : ChapterName(data.sceneName) + "  ·  " + data.SavedAtText, 22);
-                if (data != null) ui.Label(card, T("游玩时间 ", "Play time ") +
+                RecordCardLabel(card, "Record name", name, 23, 10, 34, 20, 170, TextAnchor.MiddleLeft, true);
+                RecordCardRightLabel(card, "Record index", automatic ? T("自动保存  /  AUTO", "AUTO SAVE") :
+                    T("航行日志  /  ", "VOYAGE LOG  /  ") + (i + 1).ToString("00"),
+                    15, 10, 34);
+                Text summary = RecordCardLabel(card, "Record summary",
+                    data == null ? (exists ? T("记录无法读取，可尝试恢复备份。", "This record is unreadable. Try restoring its backup.") :
+                        T("这里还没有留下记录。", "No record here yet.")) :
+                        ChapterName(data.sceneName) + "  ·  " + data.SavedAtText,
+                    20, 48, 32, 20, 20, TextAnchor.MiddleLeft, true);
+                summary.resizeTextForBestFit = true;
+                summary.resizeTextMinSize = 15; summary.resizeTextMaxSize = 26;
+                if (data != null) RecordCardLabel(card, "Record details", T("游玩时间 ", "Play time ") +
                     TimeSpan.FromSeconds(data.runProgress != null ? data.runProgress.playSeconds : 0).ToString(@"hh\:mm\:ss") +
-                    T("  ·  意识碎片 ", "  ·  Memories ") + (data.runProgress != null ? data.runProgress.memories.Count : 0), 21);
-                if (data != null && !Application.CanStreamedLevelBeLoaded(data.sceneName))
-                    ui.Label(card, T("记录所在的水域暂不可用。记录仍会保留。", "The recorded waters are unavailable. Your record is preserved."), 21);
-                if (automatic) ui.Label(card, T("探索中、暂停时及完成章节后自动更新。", "Updated during exploration, on pause and after a chapter."), 18);
-                RectTransform actions = ui.Grid("Record actions", card, 2, 140);
-                if (data != null && preview != null)
-                    ui.Button(actions, T("查看章节进度", "Preview route"), () =>
-                    {
-                        preview(data);
-                        page.Content.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1;
-                    });
-                ui.Button(actions, T("读取", "Load"), () => Confirm(T("读取这份记录？", "Load this record?"),
+                    T("  ·  意识碎片 ", "  ·  Memories ") + (data.runProgress != null && data.runProgress.memories != null ? data.runProgress.memories.Count : 0),
+                    16, 82, 25, 20, 20, TextAnchor.MiddleLeft);
+                string note = data != null && !Application.CanStreamedLevelBeLoaded(data.sceneName) ?
+                    T("所在水域暂不可用，记录仍会保留。", "Stage unavailable; the record is preserved.") :
+                    automatic ? T("探索、暂停及完成章节后自动更新。", "Updated during play, pause and completion.") : "";
+                if (!string.IsNullOrEmpty(note))
+                    RecordCardLabel(card, "Record note", note, 14, 108, 18, 20, 20, TextAnchor.MiddleLeft);
+                RectTransform actions = ui.Grid("Record actions", card, actionColumns, 130);
+                actions.GetComponent<UIFlowLayout>().spacing = 6;
+                actions.anchorMin = Vector2.zero; actions.anchorMax = new Vector2(1, 0);
+                actions.offsetMin = new Vector2(16, 12);
+                actions.offsetMax = new Vector2(-16, 12 + actionHeight);
+                CompactRecordAction(ui.Button(actions, T("读取", "Load"), () => Confirm(T("读取这份记录？", "Load this record?"),
                     T("当前尚未保存的探索会重置。", "Your unsaved exploration will be reset."), () => LoadScene(data.sceneName, data)),
-                    false, data != null && Application.CanStreamedLevelBeLoaded(data.sceneName));
+                    false, data != null && Application.CanStreamedLevelBeLoaded(data.sceneName)));
                 if (IsGameplay && !automatic)
-                    ui.Button(actions, T("保存", "Save"), () =>
+                    CompactRecordAction(ui.Button(actions, T("保存", "Save"), () =>
                     {
                         Action save = () => { if (SaveSnapshot(slot)) RefreshSaves(page); };
                         if (exists) Confirm(T("覆盖这份记录？", "Overwrite this record?"),
                             T("原记录会保留为一份恢复备份。", "The previous record will be kept as a recovery backup."), save, true);
                         else save();
-                    });
-                if (SaveSystem.HasBackup(i)) ui.Button(actions, T("恢复备份", "Restore backup"), () => Confirm(
+                    }));
+                if (data != null && preview != null)
+                    CompactRecordAction(ui.Button(actions, T("查看章节进度", "Preview route"), () =>
+                    {
+                        preview(data);
+                        page.Content.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1;
+                    }));
+                if (SaveSystem.HasBackup(i)) CompactRecordAction(ui.Button(actions, T("恢复备份", "Restore backup"), () => Confirm(
                     T("恢复上一份记录？", "Restore the previous record?"),
                     T("使用备份替换当前记录。损坏的内容会被保留。", "Replace this record with its backup. Damaged contents are preserved."),
-                    () => { if (SaveSystem.RestoreBackup(slot)) { RefreshSaves(page); Toast(T("备份已恢复", "Backup restored")); } else Toast(T("恢复失败，请稍后再试。", "Recovery failed. Please retry.")); }));
-                if (exists && !automatic) ui.Button(actions, T("删除", "Delete"), () => Confirm(
+                    () => { if (SaveSystem.RestoreBackup(slot)) { RefreshSaves(page); Toast(T("备份已恢复", "Backup restored")); } else Toast(T("恢复失败，请稍后再试。", "Recovery failed. Please retry.")); })));
+                if (exists && !automatic) CompactRecordAction(ui.Button(actions, T("删除", "Delete"), () => Confirm(
                     T("删除这份记录？", "Delete this record?"),
                     T("这份记录及其备份将被删除，此操作无法撤销。", "This record and its backup will be deleted. This cannot be undone."),
-                    () => { if (SaveSystem.DeleteSlot(slot)) RefreshSaves(page); else Toast(T("删除失败，请稍后再试。", "Deletion failed. Please retry.")); }, true), false, true, true);
+                    () => { if (SaveSystem.DeleteSlot(slot)) RefreshSaves(page); else Toast(T("删除失败，请稍后再试。", "Deletion failed. Please retry.")); }, true), false, true, true));
+                card.gameObject.AddComponent<UIRecordCardMotion>().Configure(ui, i);
             }
             ui.Button(page.Footer, T("返回", "Back"), Pop); Finish(page);
         }
@@ -361,11 +470,11 @@ namespace PAO.UI.V2
             Image surface = card.GetComponent<Image>(); if (surface == null) surface = card.gameObject.AddComponent<Image>();
             surface.color = highlighted ? Config.mist : UIDesignPalette.ControlTop;
             surface.sprite = Config.round; surface.type = Image.Type.Sliced; surface.raycastTarget = false;
-            if (!highlighted) return;
-            Image accent = ui.Surface("Current record accent", card, Config.teal);
+            Image accent = ui.Surface("Record spine", card, Config.ink);
             accent.raycastTarget = false; accent.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
             accent.rectTransform.anchorMin = Vector2.zero; accent.rectTransform.anchorMax = Vector2.up;
-            accent.rectTransform.offsetMin = new Vector2(0, 16); accent.rectTransform.offsetMax = new Vector2(4, -16);
+            accent.rectTransform.offsetMin = new Vector2(0, highlighted ? 12 : 20);
+            accent.rectTransform.offsetMax = new Vector2(highlighted ? 6 : 3, highlighted ? -12 : -20);
         }
 
         private bool SaveSnapshot(int slot)
@@ -406,12 +515,36 @@ namespace PAO.UI.V2
         {
             UIPage page = Push(T("制作人员", "Credits"), T("每一段水流，都来自共同的创作。", "Every current begins with a shared creation."), false, UIPageDesign.Credits);
             page.Rebuild = ShowCredits;
-            RectTransform card = ui.Card("Credits card", page.Content);
-            ui.Emblem(card, UIGuideSymbol.Current, T("共同留下的回响", "CREATED TOGETHER"));
-            ui.Label(card, string.IsNullOrWhiteSpace(Config.credits) ?
+            RectTransform spread = ui.Grid("Credits spread", page.Content, 2, 440);
+            RectTransform index = ui.Column("Credits index", spread, 32, 20);
+            Image indexSurface = index.gameObject.AddComponent<Image>(); indexSurface.color = Color.black;
+            indexSurface.raycastTarget = false;
+            UIWidgets.Size(index, 430).preferredHeight = -1;
+            ui.Label(index, "PAO   /   01", 21, Color.white);
+            Text indexTitle = ui.Label(index, T("泡涌", "BUBBLE TIDE"), 58, Color.white);
+            UIWidgets.Size(indexTitle.transform, 110).preferredHeight = -1;
+            Image indexRule = ui.Surface("Credits white rule", index, Color.white);
+            indexRule.raycastTarget = false; UIWidgets.Size(indexRule.transform, 3);
+            ui.Label(index, T("制作档案", "CREDITS / ARCHIVE"), 25, Color.white);
+            ui.Label(index, T("每个名字，都是这段旅程的一部分。", "Every name is part of this journey."), 21, Color.white);
+
+            RectTransform names = ui.Column("Credits names", spread, 32, 22);
+            Image namesSurface = names.gameObject.AddComponent<Image>(); namesSurface.color = Color.white;
+            namesSurface.raycastTarget = false;
+            Outline namesEdge = names.gameObject.AddComponent<Outline>(); namesEdge.effectColor = Color.black;
+            namesEdge.effectDistance = new Vector2(2, 2);
+            UIWidgets.Size(names, 430).preferredHeight = -1;
+            ui.Emblem(names, UIGuideSymbol.Current, T("共同留下的回响", "CREATED TOGETHER"), Color.black);
+            Image namesRule = ui.Surface("Credits black rule", names, Color.black);
+            namesRule.raycastTarget = false; UIWidgets.Size(namesRule.transform, 2);
+            Text namesText = ui.Label(names, string.IsNullOrWhiteSpace(Config.credits) ?
                 T("感谢每一位参与创作与体验的朋友。", "Thank you to everyone who created and explored this world.") : Config.credits, 26);
+            namesText.verticalOverflow = VerticalWrapMode.Overflow;
             ui.Label(page.Content, T("感谢你在意识之海留下涟漪。", "Thank you for leaving a ripple in the sea of consciousness."), 22);
+            UICreditsFolioMotion motion = spread.gameObject.AddComponent<UICreditsFolioMotion>();
+            motion.Configure(index, names);
             ui.Button(page.Footer, T("返回", "Back"), Pop); Finish(page);
+            motion.Play();
         }
 
         private void ConfirmQuit()

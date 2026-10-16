@@ -46,6 +46,7 @@ namespace PAO.UI.V2
             heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 42; heading.resizeTextMaxSize = 112;
             Anchor(heading.rectTransform, new Vector2(.5f, .64f), Vector2.zero, new Vector2(760, 190), new Vector2(.5f, .5f));
             heading.gameObject.AddComponent<UIMenuHeroFit>().maximumWidth = 760;
+            heading.gameObject.AddComponent<UIMenuWordmarkMotion>().Configure(true);
             page.Content.GetComponentInParent<ScrollRect>().gameObject.SetActive(false);
             page.Footer.gameObject.SetActive(false);
             Image hit = ui.Surface("开始游戏", body, new Color(1, 1, 1, 0));
@@ -53,11 +54,14 @@ namespace PAO.UI.V2
             Button start = hit.gameObject.AddComponent<Button>(); start.targetGraphic = hit;
             Text startLabel = ui.Label(hit.transform, T("开始游戏", "Start game"), 34, Config.ink, TextAnchor.MiddleCenter);
             UIWidgets.Stretch(startLabel.rectTransform);
+            UIStartPromptMotion prompt = startLabel.gameObject.AddComponent<UIStartPromptMotion>();
+            prompt.Configure();
             bool opening = false;
             start.onClick.AddListener(() =>
             {
                 if (opening) return;
                 opening = true;
+                prompt.Stop();
                 if (UISettings.Current.reducedMotion) { ShowMenuActions(); return; }
                 startLabel.DOColor(new Color(0, 0, 0, .25f), .24f).SetEase(Ease.InOutSine)
                     .SetUpdate(true).SetLink(hit.gameObject).OnComplete(ShowMenuActions);
@@ -80,6 +84,7 @@ namespace PAO.UI.V2
             UIMenuHeroFit fit = heading.gameObject.AddComponent<UIMenuHeroFit>();
             fit.maximumWidth = 760; fit.baseFontSize = 92;
             UIWidgets.Size(heading.transform, 140);
+            heading.gameObject.AddComponent<UIMenuWordmarkMotion>().Configure(false);
             VerticalLayoutGroup contentLayout = page.Content.GetComponent<VerticalLayoutGroup>();
             contentLayout.childForceExpandWidth = false; contentLayout.childAlignment = TextAnchor.UpperCenter;
             RectTransform actions = ui.Column("Menu actions", page.Content, 0, 10);

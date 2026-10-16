@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -13,6 +14,10 @@ namespace PAO.UI.V2
             public UISettingsData original, draft;
             public UIPage page;
             public RectTransform body, tabs;
+            public RectTransform[] tabMarks;
+            public Sequence sectionReveal;
+            public int presentedTab = -1;
+            public bool presentedInputOptions;
             public int tab, quality, width, height;
             public FullScreenMode mode;
             public bool committed, inputOptions;
@@ -36,6 +41,10 @@ namespace PAO.UI.V2
             session.page = Push(T("游戏设置", "Settings"), T("即时预览 · 应用后保存 · 返回撤销未保存的调整", "Live preview · Apply to save · Back discards unsaved changes"), false, UIPageDesign.Settings);
             session.page.BeforeClose = () =>
             {
+                session.sectionReveal?.Kill();
+                if (session.tabMarks != null)
+                    foreach (RectTransform mark in session.tabMarks)
+                        if (mark != null) mark.DOKill();
                 CancelBindingCapture(false);
                 if (!session.committed)
                 {
@@ -51,10 +60,21 @@ namespace PAO.UI.V2
             session.tabs.SetSiblingIndex(scroll.transform.GetSiblingIndex());
             UIWidgets.Size(session.tabs, 80).preferredHeight = -1;
             session.body = ui.Card("Settings workbench", session.page.Content);
+            session.tabMarks = new RectTransform[6];
             for (int i = 0; i < 6; i++)
             {
                 int index = i;
-                ui.Button(session.tabs, TabName(i), () => { session.tab = index; session.inputOptions = false; RenderSettings(session); });
+                Button tab = ui.Button(session.tabs, TabName(i), () => { session.tab = index; session.inputOptions = false; RenderSettings(session); });
+                Image mark = ui.Surface("Selected section rule", tab.transform, Color.black);
+                mark.raycastTarget = false;
+                RectTransform marker = mark.rectTransform;
+                marker.anchorMin = new Vector2(0, 0);
+                marker.anchorMax = new Vector2(1, 0);
+                marker.pivot = new Vector2(0, 0);
+                marker.offsetMin = new Vector2(16, 5);
+                marker.offsetMax = new Vector2(-16, 9);
+                marker.localScale = new Vector3(i == 0 ? 1 : 0, 1, 1);
+                session.tabMarks[i] = marker;
             }
             ui.Button(session.page.Footer, T("返回", "Back"), Pop);
             ui.Button(session.page.Footer, T("恢复全部默认", "Restore all defaults"), () => Confirm(T("恢复全部默认设置？", "Restore all defaults?"),
@@ -76,6 +96,12 @@ namespace PAO.UI.V2
         private void RenderSettings(SettingsSession session, int focusAction = -1)
         {
             if (session != settingsSession || session.page == null) return;
+            bool sectionChanged = session.presentedTab != session.tab ||
+                session.presentedInputOptions != session.inputOptions;
+            session.presentedTab = session.tab;
+            session.presentedInputOptions = session.inputOptions;
+            session.sectionReveal?.Kill();
+            session.sectionReveal = null;
             GameObject focused = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             Selectable[] previousControls = session.body.GetComponentsInChildren<Selectable>();
             int previousIndex = Array.FindIndex(previousControls, item => item.gameObject == focused);
@@ -88,6 +114,15 @@ namespace PAO.UI.V2
                 tab.GetComponent<UIButtonFeedback>().SetEmphasized(i == session.tab);
                 Text label = tab.GetComponentInChildren<Text>(); label.text = TabName(i);
                 label.color = ui.Ink;
+                RectTransform mark = session.tabMarks[i];
+                mark.DOKill();
+                float width = i == session.tab ? 1 : 0;
+                if (UISettings.Current.reducedMotion || !sectionChanged)
+                    mark.localScale = new Vector3(width, 1, 1);
+                else
+                    mark.DOScaleX(width, i == session.tab ? .28f : .18f)
+                        .SetEase(i == session.tab ? Ease.OutCubic : Ease.InCubic)
+                        .SetUpdate(true).SetLink(mark.gameObject);
             }
             var d = session.draft;
             Text[] pageLabels = session.page.GetComponentsInChildren<Text>(true);
@@ -219,6 +254,7 @@ namespace PAO.UI.V2
                 }
             }
             session.page.Refresh();
+            RevealSettingsSection(session, sectionChanged);
             ScrollRect ownerScroll = session.body.GetComponentInParent<ScrollRect>();
             if (focusAction < 0)
             {
@@ -233,6 +269,35 @@ namespace PAO.UI.V2
             }
             else foreach (Button button in session.body.GetComponentsInChildren<Button>())
                 if (button.name == "Bind " + focusAction) { button.Select(); break; }
+        }
+
+        private static void RevealSettingsSection(SettingsSession session, bool sectionChanged)
+        {
+            if (!sectionChanged || UISettings.Current.reducedMotion || session.body == null) return;
+            // The controls stay visible and usable as the new sheet settles.
+            // Binding rows share one short delay to keep long lists responsive.
+            Sequence reveal = DOTween.Sequence().SetUpdate(true).SetLink(session.page.gameObject);
+            session.sectionReveal = reveal;
+            for (int i = 0; i < session.body.childCount; i++)
+            {
+                Transform item = session.body.GetChild(i);
+                CanvasGroup layer = item.GetComponent<CanvasGroup>();
+                if (layer == null) layer = item.gameObject.AddComponent<CanvasGroup>();
+                bool hasControl = item.GetComponentInChildren<Selectable>() != null;
+                layer.alpha = hasControl ? .68f : .16f;
+                float delay = .035f + Mathf.Min(i, 8) * .045f;
+                reveal.Insert(delay, layer.DOFade(1, .24f).SetEase(Ease.OutCubic));
+            }
+            reveal.OnKill(() =>
+            {
+                if (session.body != null)
+                    foreach (Transform item in session.body)
+                    {
+                        CanvasGroup layer = item.GetComponent<CanvasGroup>();
+                        if (layer != null) layer.alpha = 1;
+                    }
+                if (session.sectionReveal == reveal) session.sectionReveal = null;
+            });
         }
 
         private static void SizeBindingButton(Button button, float width)
