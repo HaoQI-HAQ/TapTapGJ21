@@ -6,6 +6,20 @@ using UnityEngine.UI;
 
 namespace PAO.UI.V2
 {
+    // Unity maps a vertical mouse wheel to horizontal motion with the opposite
+    // direction expected by the chapter atlas. Keep native horizontal gestures
+    // unchanged while making wheel-down reveal content on the right.
+    public sealed class UIHorizontalScrollRect : ScrollRect
+    {
+        public override void OnScroll(PointerEventData eventData)
+        {
+            Vector2 originalDelta = eventData.scrollDelta;
+            eventData.scrollDelta = new Vector2(originalDelta.x, -originalDelta.y);
+            try { base.OnScroll(eventData); }
+            finally { eventData.scrollDelta = originalDelta; }
+        }
+    }
+
     public sealed class UIWidgets
     {
         public readonly UIConfig Config;
@@ -100,13 +114,13 @@ namespace PAO.UI.V2
         {
             Image surface = Surface(text, parent, Color.white, true);
             var gradient = surface.gameObject.AddComponent<UIFluidGradient>();
-            gradient.top = danger ? new Color32(255, 225, 209, 255) : primary ? UIDesignPalette.PrimaryTop : UIDesignPalette.ControlTop;
-            gradient.bottom = danger ? new Color32(247, 182, 151, 255) : primary ? UIDesignPalette.PrimaryBottom : UIDesignPalette.ControlBottom;
-            gradient.focusTint = new Color32(208, 237, 221, 255);
+            gradient.top = primary ? UIDesignPalette.PrimaryTop : UIDesignPalette.ControlTop;
+            gradient.bottom = primary ? UIDesignPalette.PrimaryBottom : UIDesignPalette.ControlBottom;
+            gradient.focusTint = new Color32(232, 232, 232, 255);
             gradient.contrastDark = false;
             var edge = surface.gameObject.AddComponent<Outline>();
-            edge.effectColor = new Color(Config.ink.r, Config.ink.g, Config.ink.b, .16f);
-            edge.effectDistance = new Vector2(1, -1);
+            edge.effectColor = Config.ink;
+            edge.effectDistance = new Vector2(1, 1);
             Button button = surface.gameObject.AddComponent<Button>();
             button.targetGraphic = surface; button.interactable = enabled;
             ColorBlock colors = button.colors;
@@ -124,6 +138,7 @@ namespace PAO.UI.V2
             surface.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
             surface.gameObject.AddComponent<UIAdaptiveButton>();
             surface.gameObject.AddComponent<UIButtonFeedback>().Configure(Config, gradient);
+            surface.gameObject.AddComponent<UIControlAccent>().Configure(this);
             return button;
         }
 
@@ -151,7 +166,7 @@ namespace PAO.UI.V2
             RectTransform rect = Column(name, parent, 24, 12);
             Image image = rect.gameObject.AddComponent<Image>(); image.sprite = Config.round; image.type = Image.Type.Sliced;
             image.color = highlighted ? UIDesignPalette.Cream : UIDesignPalette.ControlTop; image.raycastTarget = false;
-            Outline edge = rect.gameObject.AddComponent<Outline>(); edge.effectColor = new Color(.5f, .38f, .2f, .12f); edge.effectDistance = new Vector2(1, -1);
+            Outline edge = rect.gameObject.AddComponent<Outline>(); edge.effectColor = Config.ink; edge.effectDistance = new Vector2(1, 1);
             return rect;
         }
 
@@ -231,6 +246,53 @@ namespace PAO.UI.V2
         }
     }
 
+    // A short drawing rule makes every standard control respond without shifting layout.
+    public sealed class UIControlAccent : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+        ISelectHandler, IDeselectHandler, IPointerDownHandler, IPointerUpHandler
+    {
+        private RectTransform rule;
+        private Button button;
+        private Tween motion;
+        private bool hovered, focused, pressed;
+
+        public void Configure(UIWidgets ui)
+        {
+            button = GetComponent<Button>();
+            Image image = ui.Surface("Control accent", transform, Color.black);
+            image.raycastTarget = false;
+            rule = image.rectTransform;
+            rule.anchorMin = rule.anchorMax = new Vector2(0, 1);
+            rule.pivot = new Vector2(0, 1);
+            rule.anchoredPosition = new Vector2(1, -1);
+            rule.sizeDelta = new Vector2(22, 4);
+        }
+
+        private void Refresh()
+        {
+            if (rule == null) return;
+            float width = button != null && button.IsInteractable() ? pressed ? 92 : hovered || focused ? 72 : 22 : 12;
+            if (motion != null) motion.Kill();
+            if (UISettings.Current.reducedMotion) { rule.sizeDelta = new Vector2(width, 4); return; }
+            motion = rule.DOSizeDelta(new Vector2(width, 4), .18f).SetEase(Ease.OutCubic)
+                .SetUpdate(true).SetLink(gameObject).OnKill(() => motion = null);
+        }
+
+        public void OnPointerEnter(PointerEventData data) { hovered = true; Refresh(); }
+        public void OnPointerExit(PointerEventData data) { hovered = pressed = false; Refresh(); }
+        public void OnSelect(BaseEventData data) { focused = true; Refresh(); }
+        public void OnDeselect(BaseEventData data) { focused = pressed = false; Refresh(); }
+        public void OnPointerDown(PointerEventData data) { pressed = true; Refresh(); }
+        public void OnPointerUp(PointerEventData data) { pressed = false; Refresh(); }
+        private void OnDisable()
+        {
+            if (motion != null) motion.Kill();
+            hovered = focused = pressed = false;
+            if (rule != null) rule.gameObject.SetActive(false);
+        }
+        private void OnEnable() { if (rule != null) { rule.gameObject.SetActive(true); Refresh(); } }
+        private void OnDestroy() { if (motion != null) motion.Kill(); }
+    }
+
     // Selection remains visible in addition to the button's tint, including without color cues.
     public sealed class UIFocusRing : MonoBehaviour, ISelectHandler, IDeselectHandler
     {
@@ -261,10 +323,12 @@ namespace PAO.UI.V2
             var rect = transform as RectTransform;
             Bounds bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(scroll.viewport, rect);
             Rect view = scroll.viewport.rect;
-            float shift = bounds.min.y < view.yMin ? view.yMin - bounds.min.y :
-                          bounds.max.y > view.yMax ? view.yMax - bounds.max.y : 0;
+            float shiftX = scroll.horizontal && bounds.min.x < view.xMin ? view.xMin - bounds.min.x :
+                           scroll.horizontal && bounds.max.x > view.xMax ? view.xMax - bounds.max.x : 0;
+            float shiftY = scroll.vertical && bounds.min.y < view.yMin ? view.yMin - bounds.min.y :
+                           scroll.vertical && bounds.max.y > view.yMax ? view.yMax - bounds.max.y : 0;
             scroll.StopMovement();
-            scroll.content.anchoredPosition += Vector2.up * shift;
+            scroll.content.anchoredPosition += new Vector2(shiftX, shiftY);
         }
         public void OnDeselect(BaseEventData data) { if (outline != null) outline.enabled = false; }
     }
@@ -281,31 +345,116 @@ namespace PAO.UI.V2
         public bool CanClose = true;
         public UIPageDesign Design;
         private CanvasGroup group;
-        private Sequence transition;
+        private CanvasGroup headingReveal;
+        private RectTransform openingLine;
+        private Sequence transition, contentReveal;
+        private bool requestedInteractable = true;
         private UIMotionProfile profile = new UIMotionProfile();
         public void Configure(UIMotionProfile motion) { profile = motion ?? new UIMotionProfile(); }
 
         public void Show()
         {
             Kill(); group = GetComponent<CanvasGroup>();
-            group.alpha = 0; group.blocksRaycasts = true; group.interactable = true;
+            requestedInteractable = true;
+            group.alpha = 0; group.blocksRaycasts = false; group.interactable = false;
             transition = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
-            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? .12f : profile.pageEnter));
+            transition.Append(group.DOFade(1, UISettings.Current.reducedMotion ? .12f : profile.pageEnter)
+                .OnComplete(() =>
+                {
+                    if (group == null) return;
+                    group.blocksRaycasts = requestedInteractable;
+                    group.interactable = requestedInteractable;
+                    if (requestedInteractable && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+                        RestoreFocus();
+                }));
             transition.OnKill(() => transition = null);
+            if (Design != UIPageDesign.Pause && Design != UIPageDesign.Menu &&
+                Design != UIPageDesign.Loading)
+            {
+                RectTransform body = transform.Find("Page") as RectTransform;
+                if (body != null)
+                {
+                    var rule = new GameObject("Page opening rule", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                    rule.layer = 5; rule.transform.SetParent(body, false);
+                    openingLine = (RectTransform)rule.transform;
+                    openingLine.anchorMin = openingLine.anchorMax = new Vector2(0, 1);
+                    openingLine.anchorMax = Vector2.one;
+                    openingLine.pivot = new Vector2(0, .5f);
+                    openingLine.offsetMin = new Vector2(24, -10);
+                    openingLine.offsetMax = new Vector2(-24, -6);
+                    rule.GetComponent<Image>().color = Color.black;
+                    rule.GetComponent<Image>().raycastTarget = false;
+                    rule.GetComponent<LayoutElement>().ignoreLayout = true;
+                    if (!UISettings.Current.reducedMotion)
+                    {
+                        openingLine.localScale = new Vector3(0, 1, 1);
+                        transition.Insert(.06f, openingLine.DOScaleX(1, .48f).SetEase(Ease.OutCubic));
+                        Text heading = body.Find("Page title")?.GetComponent<Text>();
+                        if (heading != null)
+                        {
+                            headingReveal = heading.GetComponent<CanvasGroup>();
+                            if (headingReveal == null) headingReveal = heading.gameObject.AddComponent<CanvasGroup>();
+                            headingReveal.alpha = 0;
+                            transition.Insert(.12f, headingReveal.DOFade(1, .34f));
+                        }
+                    }
+                }
+            }
+            if (!UISettings.Current.reducedMotion && Design != UIPageDesign.Pause)
+            {
+                RectTransform body = transform.Find("Page") as RectTransform;
+                if (body != null)
+                {
+                    Vector2 resting = body.anchoredPosition;
+                    body.anchoredPosition = resting + new Vector2(0, -22);
+                    transition.Join(body.DOAnchorPos(resting, profile.pageEnter + .12f).SetEase(Ease.OutCubic));
+                }
+            }
             if (!UISettings.Current.reducedMotion && Content != null)
             {
                 CanvasGroup contentGroup = Content.GetComponent<CanvasGroup>();
                 if (contentGroup == null) contentGroup = Content.gameObject.AddComponent<CanvasGroup>();
-                contentGroup.alpha = 0;
-                transition.Join(contentGroup.DOFade(1, profile.pageEnter * .75f).SetDelay(.04f));
+                contentGroup.alpha = 0; contentGroup.blocksRaycasts = false; contentGroup.interactable = false;
+                transition.Join(contentGroup.DOFade(1, profile.pageEnter * .75f).SetDelay(.04f)
+                    .OnComplete(() => { if (contentGroup != null) { contentGroup.blocksRaycasts = true; contentGroup.interactable = true; } }));
                 if (Footer != null)
                 {
                     CanvasGroup footerGroup = Footer.GetComponent<CanvasGroup>();
                     if (footerGroup == null) footerGroup = Footer.gameObject.AddComponent<CanvasGroup>();
-                    footerGroup.alpha = 0;
-                    transition.Join(footerGroup.DOFade(1, profile.pageEnter * .65f).SetDelay(.08f));
+                    footerGroup.alpha = 0; footerGroup.blocksRaycasts = false; footerGroup.interactable = false;
+                    transition.Join(footerGroup.DOFade(1, profile.pageEnter * .65f).SetDelay(.08f)
+                        .OnComplete(() => { if (footerGroup != null) { footerGroup.blocksRaycasts = true; footerGroup.interactable = true; } }));
                 }
             }
+        }
+        public void RevealContents()
+        {
+            if (Content == null || Design == UIPageDesign.Pause || Design == UIPageDesign.Menu ||
+                Design == UIPageDesign.Confirmation || Design == UIPageDesign.Loading ||
+                UISettings.Current.reducedMotion) return;
+            if (contentReveal != null) contentReveal.Kill();
+            contentReveal = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            int count = Mathf.Min(Content.childCount, 12);
+            for (int i = 0; i < count; i++)
+            {
+                Transform child = Content.GetChild(i);
+                CanvasGroup layer = child.GetComponent<CanvasGroup>();
+                if (layer == null) layer = child.gameObject.AddComponent<CanvasGroup>();
+                layer.alpha = 0; layer.interactable = false; layer.blocksRaycasts = false;
+                float start = .08f + i * .055f;
+                contentReveal.Insert(start, layer.DOFade(1, .32f));
+                contentReveal.InsertCallback(start + .32f, () =>
+                {
+                    if (layer == null) return;
+                    layer.interactable = true; layer.blocksRaycasts = true;
+                    GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+                    if (group != null && group.interactable &&
+                        (selected == null || !selected.transform.IsChildOf(transform) ||
+                         Footer != null && selected.transform.IsChildOf(Footer)))
+                        RestoreFocus();
+                });
+            }
+            contentReveal.OnKill(() => contentReveal = null);
         }
         public void Resonate(bool pressed = false)
         {
@@ -317,6 +466,7 @@ namespace PAO.UI.V2
         public void SetInteractable(bool value)
         {
             if (group == null) group = GetComponent<CanvasGroup>();
+            requestedInteractable = value;
             group.interactable = value; group.blocksRaycasts = value;
         }
         public void SetVisible(bool value)
@@ -324,6 +474,8 @@ namespace PAO.UI.V2
             Kill();
             if (group == null) group = GetComponent<CanvasGroup>();
             group.alpha = value ? 1 : 0;
+            group.interactable = value && requestedInteractable;
+            group.blocksRaycasts = value && requestedInteractable;
         }
         public void RestoreFocus()
         {
@@ -333,8 +485,28 @@ namespace PAO.UI.V2
         private void Kill()
         {
             if (transition != null) transition.Kill(); transition = null;
-            if (Content != null && Content.GetComponent<CanvasGroup>() != null) Content.GetComponent<CanvasGroup>().alpha = 1;
-            if (Footer != null && Footer.GetComponent<CanvasGroup>() != null) Footer.GetComponent<CanvasGroup>().alpha = 1;
+            if (contentReveal != null) contentReveal.Kill(); contentReveal = null;
+            if (headingReveal != null) headingReveal.alpha = 1;
+            if (openingLine != null) openingLine.localScale = Vector3.one;
+            if (Content != null && Content.GetComponent<CanvasGroup>() != null)
+            {
+                CanvasGroup contentGroup = Content.GetComponent<CanvasGroup>();
+                contentGroup.alpha = 1; contentGroup.interactable = true; contentGroup.blocksRaycasts = true;
+            }
+            if (Content != null)
+                foreach (Transform child in Content)
+                {
+                    CanvasGroup layer = child.GetComponent<CanvasGroup>();
+                    if (layer != null)
+                    {
+                        layer.alpha = 1; layer.interactable = true; layer.blocksRaycasts = true;
+                    }
+                }
+            if (Footer != null && Footer.GetComponent<CanvasGroup>() != null)
+            {
+                CanvasGroup footerGroup = Footer.GetComponent<CanvasGroup>();
+                footerGroup.alpha = 1; footerGroup.interactable = true; footerGroup.blocksRaycasts = true;
+            }
         }
         private void OnDisable() { Kill(); }
         private void OnDestroy() { Kill(); }

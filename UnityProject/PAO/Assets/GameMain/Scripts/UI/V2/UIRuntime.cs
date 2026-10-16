@@ -36,6 +36,7 @@ namespace PAO.UI.V2
         private PlayerController player;
         private BubbleTideDirector tide;
         private float nextHudUpdate;
+        private float nextAutoSave;
         private string lastScene;
         private Action<KeyCode> rebind;
         private int rebindOpenedFrame;
@@ -59,15 +60,16 @@ namespace PAO.UI.V2
 
         public void Initialize(UIConfig config)
         {
-            UIHandDrawn.Apply(config);
-            Instance = this; gameplayTheme = config;
+            Instance = this; gameplayTheme = Instantiate(config); gameplayTheme.name = "Monochrome gameplay theme";
             menuTheme = Instantiate(config); menuTheme.name = "Document menu theme";
-            menuTheme.paperStyle = true;
-            menuTheme.paper = config.paper;
-            menuTheme.ink = menuTheme.text = config.text;
-            menuTheme.mist = config.mist;
-            menuTheme.teal = config.teal;
-            menuTheme.menuArt = config.menuPaperArt != null ? config.menuPaperArt : config.menuArt;
+            foreach (UIConfig theme in new[] { gameplayTheme, menuTheme })
+            {
+                theme.paperStyle = false;
+                theme.paper = theme.mist = Color.white;
+                theme.ink = theme.text = theme.teal = Color.black;
+                theme.round = null;
+            }
+            menuTheme.menuArt = null;
             menuTheme.chapters = config.chapters; menuTheme.endings = config.endings;
             Config = config; ui = new UIWidgets(config);
             RectTransform canvasRect = ui.Rect("UI Canvas V2", transform);
@@ -92,6 +94,7 @@ namespace PAO.UI.V2
             if (mode == LoadSceneMode.Additive) return;
             ReleasePause(); UnbindGameplay(); ClearPages(); ClearHud();
             lastScene = scene.name; loading = false;
+            nextAutoSave = Time.unscaledTime + 60f;
             canvas.gameObject.SetActive(Config.Supports(scene.name));
             if (!Config.Supports(scene.name)) { IsGameplay = false; return; }
             IsGameplay = scene.name != Config.menuScene;
@@ -194,6 +197,11 @@ namespace PAO.UI.V2
             if (IsGameplay && !BlocksInputThisFrame)
             {
                 UIRunState.Progress.playSeconds += Time.deltaTime;
+                if (Time.unscaledTime >= nextAutoSave)
+                {
+                    nextAutoSave = Time.unscaledTime + 60f;
+                    AutoSaveQuietly();
+                }
                 if (UIInput.Down(UIInput.Journal)) ShowJournal();
                 else if (UIInput.Down(UIInput.Help)) ShowHelp();
             }
@@ -216,6 +224,7 @@ namespace PAO.UI.V2
             if (pages.Count == 0) { if (IsGameplay) ShowPause(); return; }
             if (pages.Count == 1 && !IsGameplay) { ConfirmQuit(); return; }
             if (!pages[pages.Count - 1].CanClose) { ShowChapters(); return; }
+            if (pages[pages.Count - 1].Design == UIPageDesign.Pause) { ClosePause(); return; }
             Pop();
         }
 
@@ -229,22 +238,22 @@ namespace PAO.UI.V2
             }
             Image background = ui.Surface(title, safeRoot, compact ? new Color(Config.ink.r, Config.ink.g, Config.ink.b, 0.35f) :
                 Config.paper);
-            if (!compact) background.color = Color.white;
+            if (!compact) background.color = design == UIPageDesign.Pause ? new Color(1, 1, 1, .08f) : Color.white;
             UIWidgets.Stretch(background.rectTransform);
             background.gameObject.AddComponent<CanvasGroup>();
             UIPage page = background.gameObject.AddComponent<UIPage>(); page.ReturnFocus = focus;
             page.Design = design;
             page.Configure(Config.motion);
-            if (!compact)
+            if (!compact && design != UIPageDesign.Pause)
             {
                 var gradient = background.gameObject.AddComponent<UIFluidGradient>();
                 gradient.top = UIDesignPalette.Paper;
-                gradient.bottom = Color.Lerp(UIDesignPalette.Paper, UIDesignPalette.Accent(design), .09f);
+                gradient.bottom = UIDesignPalette.Paper;
                 UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
                 artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
                 artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
             }
-            UIHandDrawn.Backdrop(ui, background.transform);
+            // The atlas design uses clean white stock and black drafting lines.
             RectTransform body = ui.Column("Page", background.transform, compact ? 32 : 24, 16);
             UIWidgets.Stretch(body);
             if (!compact)
@@ -291,7 +300,7 @@ namespace PAO.UI.V2
 
         private void Finish(UIPage page)
         {
-            page.Refresh(); page.RestoreFocus();
+            page.Refresh(); page.RevealContents(); page.RestoreFocus();
         }
 
         private void Pop()
@@ -442,7 +451,10 @@ namespace PAO.UI.V2
             UISettings.Changed -= ApplyGameplaySettings;
             ReleasePause(); UnbindGameplay(); if (Instance == this) Instance = null;
             if (menuTheme != null) Destroy(menuTheme);
+            if (gameplayTheme != null) Destroy(gameplayTheme);
         }
         private static string T(string chinese, string english) { return UISettings.Text(chinese, english); }
+        private void OnApplicationPause(bool suspended) { if (suspended) AutoSaveQuietly(); }
+        private void OnApplicationQuit() { AutoSaveQuietly(); }
     }
 }

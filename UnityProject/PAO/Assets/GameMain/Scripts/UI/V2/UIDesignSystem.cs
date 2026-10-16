@@ -5,19 +5,19 @@ namespace PAO.UI.V2
 {
     public enum UIPageDesign { Plain, Menu, Pause, Chapters, Records, Settings, Guide, Journal, Dialogue, Construction, Completion, Ending, Credits, Failure, Loading, Controls, Confirmation }
 
-    // One palette for both menu and gameplay pages. Accent colours carry state; paper carries content.
+    // Shared black linework and white paper for menu and gameplay pages.
     public static class UIDesignPalette
     {
-        public static readonly Color Paper = new Color32(255, 249, 235, 255);
-        public static readonly Color Cream = new Color32(255, 242, 212, 255);
-        public static readonly Color Ink = new Color32(40, 65, 65, 255);
-        public static readonly Color Teal = new Color32(48, 117, 112, 255);
-        public static readonly Color Coral = new Color32(177, 82, 60, 255);
-        public static readonly Color Gold = new Color32(241, 185, 81, 255);
-        public static readonly Color ControlTop = new Color32(255, 252, 242, 255);
-        public static readonly Color ControlBottom = new Color32(255, 235, 195, 255);
-        public static readonly Color PrimaryTop = new Color32(255, 222, 135, 255);
-        public static readonly Color PrimaryBottom = new Color32(245, 184, 86, 255);
+        public static readonly Color Paper = Color.white;
+        public static readonly Color Cream = Color.white;
+        public static readonly Color Ink = Color.black;
+        public static readonly Color Teal = Color.black;
+        public static readonly Color Coral = Color.black;
+        public static readonly Color Gold = Color.black;
+        public static readonly Color ControlTop = Color.white;
+        public static readonly Color ControlBottom = Color.white;
+        public static readonly Color PrimaryTop = Color.white;
+        public static readonly Color PrimaryBottom = Color.white;
         public static Color Accent(UIPageDesign design)
         {
             switch (design)
