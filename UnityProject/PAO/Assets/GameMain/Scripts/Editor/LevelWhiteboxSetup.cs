@@ -68,6 +68,26 @@ namespace PAO.EditorTools
             Debug.Log("[PAO Whitebox] Map2 through Map5 blockout geometry saved. Map2 is open.");
         }
 
+        [MenuItem("Tools/PAO/关卡白盒/搭建教学关 Map1 - Map3", priority = 79)]
+        public static void BuildTutorialMap1To3()
+        {
+            EnsureMaterials();
+            BuildMap(Map1Path, BuildMap1Geometry);
+            BuildMap(Map2Path, BuildMap2TutorialGeometry);
+            BuildMap(Map3Path, BuildMap3TutorialGeometry);
+
+            Scene map1 = EditorSceneManager.OpenScene(Map1Path, OpenSceneMode.Single);
+            GameObject root = GameObject.Find("Map1_Whitebox");
+            if (root != null)
+            {
+                Selection.activeGameObject = root;
+                EditorGUIUtility.PingObject(root);
+                SceneView.lastActiveSceneView?.FrameSelected();
+            }
+            EditorSceneManager.SetActiveScene(map1);
+            Debug.Log("[PAO Whitebox] Tutorial Map1-Map3 geometry saved. Map1 is open.");
+        }
+
         private static void BuildMap(string scenePath, System.Action<Transform> build)
         {
             Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
@@ -78,10 +98,9 @@ namespace PAO.EditorTools
 
             var root = new GameObject(rootName);
             SceneManager.MoveGameObjectToScene(root, scene);
-            // Maps 2–5 are open underwater regions, deliberately twice the
-            // previous footprint so the player can read and choose between
-            // distant caverns, shelves and vertical routes.
-            if (scenePath == Map2Path || scenePath == Map3Path || scenePath == Map4Path || scenePath == Map5Path)
+            // Maps 4–5 are open underwater regions, deliberately twice the
+            // previous footprint. Tutorial shrines use authored world units.
+            if (scenePath == Map4Path || scenePath == Map5Path)
                 root.transform.localScale = Vector3.one * 2f;
             build(root.transform);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -120,33 +139,252 @@ namespace PAO.EditorTools
 
         private static void BuildMap1Geometry(Transform root)
         {
-            // Starting island and broad, forgiving landing island.
-            Box(root, "Island_Start", new Vector3(-8.0f, -0.25f, 0.0f), new Vector3(11.0f, 0.5f, 12.0f), m_Ground);
-            Box(root, "Island_Landing", new Vector3(8.0f, 0.15f, 0.0f), new Vector3(10.0f, 0.8f, 11.0f), m_Ground);
-            Box(root, "Abyss_Backdrop_NoCollider", new Vector3(0, -5.0f, 0), new Vector3(10.0f, 0.15f, 18.0f), m_Void, false);
+            // Map1 / Temple of the Compressed Pearl. The plan is a memorable
+            // three-ring shell: one central shaft, two mirrored side wings, and
+            // a lower annulus. Elastic Bubble changes the central lock itself.
+            Box(root, "T1_Outer_Shell_Floor_South", new Vector3(0, -0.35f, -18), new Vector3(44, 0.7f, 18), m_Ground);
+            Box(root, "T1_Outer_Shell_Floor_North", new Vector3(0, -0.35f, 18), new Vector3(44, 0.7f, 18), m_Ground);
+            Box(root, "T1_Central_Ring_Floor_W", new Vector3(-8, -0.35f, 0), new Vector3(6, 0.7f, 18), m_Ground);
+            Box(root, "T1_Central_Ring_Floor_E", new Vector3(8, -0.35f, 0), new Vector3(6, 0.7f, 18), m_Ground);
+            Box(root, "T1_Central_Shaft_Backdrop_NoCollider", new Vector3(0, -13, 0), new Vector3(9, 0.15f, 9), m_Void, false);
 
-            // Main stepping route across the gap, with changing elevation and generous pads.
-            Box(root, "Step_01_Low", new Vector3(-2.6f, 0.05f, 2.7f), new Vector3(2.8f, 0.5f, 3.0f), m_Edge);
-            Box(root, "Step_02_Mid", new Vector3(0.1f, 0.85f, 0.8f), new Vector3(2.8f, 0.5f, 2.8f), m_Edge);
-            Box(root, "Step_03_High", new Vector3(2.5f, 1.55f, -1.2f), new Vector3(2.8f, 0.5f, 2.8f), m_Edge);
-            Box(root, "Step_04_Landing", new Vector3(5.0f, 0.9f, 1.8f), new Vector3(2.8f, 0.5f, 3.0f), m_Edge);
+            // Concentric ring walls have broad cardinal breaks; the form is clear
+            // from the entrance, but players choose a wing and can return through
+            // the lower ring rather than following a prescribed corridor.
+            Box(root, "T1_Hub_Ring_Wall_NW", new Vector3(-8, 2.4f, 10), new Vector3(12, 5, 0.8f), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_NE", new Vector3(8, 2.4f, 10), new Vector3(12, 5, 0.8f), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_SW", new Vector3(-8, 2.4f, -10), new Vector3(12, 5, 0.8f), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_SE", new Vector3(8, 2.4f, -10), new Vector3(12, 5, 0.8f), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_WN", new Vector3(-15, 2.4f, 6), new Vector3(0.8f, 5, 8), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_WS", new Vector3(-15, 2.4f, -6), new Vector3(0.8f, 5, 8), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_EN", new Vector3(15, 2.4f, 6), new Vector3(0.8f, 5, 8), m_Edge);
+            Box(root, "T1_Hub_Ring_Wall_ES", new Vector3(15, 2.4f, -6), new Vector3(0.8f, 5, 8), m_Edge);
 
-            // Lower, longer side route gives an alternate path and room to experiment.
-            Box(root, "SideRoute_01", new Vector3(-2.4f, -0.05f, 5.8f), new Vector3(2.4f, 0.45f, 2.2f), m_Landmark);
-            Box(root, "SideRoute_02", new Vector3(0.2f, -0.05f, 6.2f), new Vector3(2.4f, 0.45f, 2.2f), m_Landmark);
-            Box(root, "SideRoute_03", new Vector3(2.8f, 0.05f, 5.8f), new Vector3(2.4f, 0.45f, 2.2f), m_Landmark);
+            // The central well is visible through a broken annular floor. Falling
+            // into it is an intentional discovery: a recoverable lower gallery
+            // encircles an absorbable terrain-bubble plug.
+            Box(root, "T1_Lower_Annulus_Floor_N", new Vector3(0, -7.5f, 8), new Vector3(20, 0.8f, 6), m_Landmark);
+            Box(root, "T1_Lower_Annulus_Floor_S", new Vector3(0, -7.5f, -8), new Vector3(20, 0.8f, 6), m_Landmark);
+            Box(root, "T1_Lower_Annulus_Floor_W", new Vector3(-8, -7.5f, 0), new Vector3(6, 0.8f, 11), m_Edge);
+            Box(root, "T1_Lower_Annulus_Floor_E", new Vector3(8, -7.5f, 0), new Vector3(6, 0.8f, 11), m_Edge);
+            TerrainBubbleNode(root, "T1_Central_Pearl_Terrain_Bubble_Lock", new Vector3(0, -4.4f, 0), 4.4f, 4);
+            Box(root, "T1_Central_Lock_Rock_Jamb_W", new Vector3(-3.4f, -4.4f, 0), new Vector3(1.2f, 5, 2), m_Landmark);
+            Box(root, "T1_Central_Lock_Rock_Jamb_E", new Vector3(3.4f, -4.4f, 0), new Vector3(1.2f, 5, 2), m_Landmark);
+            Box(root, "T1_Shaft_Exit_Pocket", new Vector3(0, -10.4f, -14), new Vector3(12, 0.8f, 8), m_Bounce);
 
-            // Floating-bubble stand-ins suggest several possible connection shapes.
-            Sphere(root, "AnchorBubble_01", new Vector3(-4.7f, 1.4f, 1.6f), 0.95f, m_Sticky);
-            Sphere(root, "AnchorBubble_02", new Vector3(-2.3f, 2.0f, 0.4f), 0.95f, m_Sticky);
-            Sphere(root, "AnchorBubble_03", new Vector3(0.0f, 2.6f, -0.7f), 0.95f, m_Sticky);
-            Sphere(root, "AnchorBubble_04", new Vector3(2.4f, 2.7f, -0.1f), 0.95f, m_Sticky);
-            Sphere(root, "AnchorBubble_05", new Vector3(4.4f, 2.2f, 1.0f), 0.95f, m_Sticky);
+            // West lobe: training grotto with a safe, forgiving wall squeeze.
+            Box(root, "T1_West_Grotto_Floor", new Vector3(-24, -0.2f, 0), new Vector3(14, 0.8f, 18), m_Ground);
+            RoomShell(root, "T1_West_Grotto_Shell", new Vector3(-24, 0, 0), 14, 18, 5, m_Edge);
+            Box(root, "T1_West_Squeeze_Wall", new Vector3(-19, 1.5f, 1), new Vector3(0.8f, 3, 6), m_Bounce);
+            Box(root, "T1_West_Rebound_Ramp", new Vector3(-29, 1.2f, 5), new Vector3(6, 0.8f, 5), m_Landmark);
+            TerrainBubbleNode(root, "T1_West_Optional_Pocket_Lock", new Vector3(-24, 1.5f, 7), 2.7f, 3);
+            Box(root, "T1_West_Lower_Return_Crawl", new Vector3(-24, -4.3f, -13), new Vector3(8, 0.8f, 8), m_Edge);
 
-            // A few stable visual landmarks help read elevation and the destination.
-            Box(root, "LandingLandmark_Plinth", new Vector3(8.0f, 0.7f, -3.7f), new Vector3(2.2f, 0.7f, 1.4f), m_Landmark);
-            Box(root, "Boundary_LeftGuide", new Vector3(-13.3f, 0.5f, 0.0f), new Vector3(0.35f, 1.0f, 12.0f), m_Edge);
-            Box(root, "Boundary_RightGuide", new Vector3(13.3f, 0.5f, 0.0f), new Vector3(0.35f, 1.0f, 12.0f), m_Edge);
+            // East lobe: a two-level challenge. The upper shelf is an optional
+            // short goal, reached by a steeper squeeze; the low passage returns
+            // to the hub and keeps failure within the same readable space.
+            Box(root, "T1_East_Grotto_Floor", new Vector3(24, -0.2f, 0), new Vector3(14, 0.8f, 18), m_Ground);
+            RoomShell(root, "T1_East_Grotto_Shell", new Vector3(24, 0, 0), 14, 18, 5, m_Edge);
+            Box(root, "T1_East_Squeeze_Column", new Vector3(19, 2, -1), new Vector3(0.8f, 4, 6), m_Bounce);
+            Box(root, "T1_East_Upper_Observation_Shelf", new Vector3(25, 4.5f, 5), new Vector3(8, 0.8f, 6), m_Landmark);
+            Box(root, "T1_East_Descending_Return_Ramp", new Vector3(29, 1.5f, -7), new Vector3(6, 0.8f, 7), m_Edge);
+            TerrainBubbleNode(root, "T1_East_Short_Goal_Pearl", new Vector3(28, 4.1f, 6), 2.3f, 3);
+
+            // Entrance gives a long view to the central hole; a low side gallery
+            // reconnects west, hub and east as a single ring.
+            Box(root, "T1_Entrance_Foyer", new Vector3(0, -0.2f, -28), new Vector3(14, 0.8f, 9), m_Landmark);
+            Box(root, "T1_Outer_Lower_Return_W", new Vector3(-12, -3.7f, -16), new Vector3(10, 0.8f, 5), m_Edge);
+            Box(root, "T1_Outer_Lower_Return_E", new Vector3(12, -3.7f, -16), new Vector3(10, 0.8f, 5), m_Edge);
+            Box(root, "T1_Abyss_Backdrop_NoCollider", new Vector3(0, -16, 0), new Vector3(72, 0.15f, 76), m_Void, false);
+        }
+
+        private static void BuildMap2TutorialGeometry(Transform root)
+        {
+            // Map2 / Temple of the Turned Keel. A wheel-shaped hub with four
+            // radial doors; west/east are two short-goal wings, the north overlook
+            // is a map-reading point, and the sealed central drop is the finale.
+            Box(root, "T2_Hub_Ring_Floor_N", new Vector3(0, -0.35f, 8), new Vector3(18, 0.7f, 8), m_Ground);
+            Box(root, "T2_Hub_Ring_Floor_S", new Vector3(0, -0.35f, -8), new Vector3(18, 0.7f, 8), m_Ground);
+            Box(root, "T2_Hub_Ring_Floor_W", new Vector3(-8, -0.35f, 0), new Vector3(8, 0.7f, 8), m_Ground);
+            Box(root, "T2_Hub_Ring_Floor_E", new Vector3(8, -0.35f, 0), new Vector3(8, 0.7f, 8), m_Ground);
+            RoomShell(root, "T2_Hub_Outer_Shell", Vector3.zero, 24, 24, 6, m_Edge);
+            Box(root, "T2_Hub_Inner_Ring_W", new Vector3(-5, 2.5f, 0), new Vector3(0.8f, 5, 8), m_Landmark);
+            Box(root, "T2_Hub_Inner_Ring_E", new Vector3(5, 2.5f, 0), new Vector3(0.8f, 5, 8), m_Landmark);
+            Box(root, "T2_Hub_Inner_Ring_NW", new Vector3(-3, 2.5f, 5), new Vector3(4, 5, 0.8f), m_Landmark);
+            Box(root, "T2_Hub_Inner_Ring_NE", new Vector3(3, 2.5f, 5), new Vector3(4, 5, 0.8f), m_Landmark);
+            Box(root, "T2_Hub_Inner_Ring_SW", new Vector3(-3, 2.5f, -5), new Vector3(4, 5, 0.8f), m_Landmark);
+            Box(root, "T2_Hub_Inner_Ring_SE", new Vector3(3, 2.5f, -5), new Vector3(4, 5, 0.8f), m_Landmark);
+
+            // Central well and lock. The visible lower room communicates the
+            // spatial goal before the player knows whether the bubble is a key,
+            // a wall, or an object to feed. Both learned abilities open it.
+            Box(root, "T2_Central_Well_Backdrop_NoCollider", new Vector3(0, -16, 0), new Vector3(12, 0.15f, 12), m_Void, false);
+            Box(root, "T2_Central_Well_Lip_N", new Vector3(0, -0.1f, 5.5f), new Vector3(12, 0.8f, 1), m_Edge);
+            Box(root, "T2_Central_Well_Lip_S", new Vector3(0, -0.1f, -5.5f), new Vector3(12, 0.8f, 1), m_Edge);
+            Box(root, "T2_Central_Well_Lip_W", new Vector3(-5.5f, -0.1f, 0), new Vector3(1, 0.8f, 10), m_Edge);
+            Box(root, "T2_Central_Well_Lip_E", new Vector3(5.5f, -0.1f, 0), new Vector3(1, 0.8f, 10), m_Edge);
+            TerrainBubbleNode(root, "T2_Central_Keel_Terrain_Bubble_Lock", new Vector3(0, 2.3f, 0), 4.4f, 6);
+            PathPlatform(root, "T2_Central_Horizontal_Ferry", new Vector3(0, -3.2f, 0), new Vector3(4.5f, 0.7f, 4.5f), m_Bomb, Vector3.right, 7f, 1.6f);
+            Box(root, "T2_Lower_Keel_Room_Floor", new Vector3(0, -10, 0), new Vector3(18, 0.8f, 18), m_Landmark);
+            RoomShell(root, "T2_Lower_Keel_Room_Shell", new Vector3(0, -10, 0), 18, 18, 5, m_Edge);
+            TerrainBubbleNode(root, "T2_Lower_Relic_Socket", new Vector3(0, -7.2f, -5), 2.7f, 4);
+
+            // West wing / impulse gallery: knock the loose limestone keel aside
+            // with a bomb to clear a blocked crossing. A lower catch and annular
+            // return preserve flow if it tumbles into the trench.
+            Box(root, "T2_West_Gallery_Floor_W", new Vector3(-31.5f, -0.25f, 0), new Vector3(3, 0.7f, 22), m_Ground);
+            Box(root, "T2_West_Gallery_Floor_E", new Vector3(-16.5f, -0.25f, 0), new Vector3(3, 0.7f, 22), m_Ground);
+            RoomShell(root, "T2_West_Gallery_Shell", new Vector3(-24, 0, 0), 18, 22, 6, m_Edge);
+            Box(root, "T2_West_Impulse_Pit_Backdrop_NoCollider", new Vector3(-24, -9, 0), new Vector3(13, 0.15f, 15), m_Void, false);
+            Box(root, "T2_West_Pit_Lip_W", new Vector3(-31, -0.2f, 0), new Vector3(1, 0.7f, 14), m_Landmark);
+            Box(root, "T2_West_Pit_Lip_E", new Vector3(-17, -0.2f, 0), new Vector3(1, 0.7f, 14), m_Landmark);
+            PhysicsProp(root, "T2_West_Blocked_Crossing_Keel", new Vector3(-16.5f, 0.8f, 0), new Vector3(2.8f, 1.4f, 5.5f), m_Bomb);
+            Box(root, "T2_West_Keel_Catch_Floor", new Vector3(-24, -6.3f, 0), new Vector3(13, 0.8f, 15), m_Landmark);
+            Box(root, "T2_West_Loot_Islet", new Vector3(-24, -5.5f, 0), new Vector3(7, 0.8f, 7), m_Landmark);
+            Box(root, "T2_West_Charged_Eject_Ledge", new Vector3(-31, 2, 7), new Vector3(6, 0.8f, 4), m_Bounce);
+            TerrainBubbleNode(root, "T2_West_One_Key_Two_Locks_Cache", new Vector3(-24, 1.8f, 8), 2.8f, 4);
+            Box(root, "T2_West_Low_Return_Tunnel", new Vector3(-12, -3.8f, -13), new Vector3(12, 0.8f, 5), m_Edge);
+
+            // East wing / dual solution: an upper cavity is reached by a single
+            // elastic squeeze. A terrain bubble seals a side cache; either bomb
+            // detonation or elastic feeding opens it. A second lower passage
+            // loops back to the hub, so the challenge never becomes a dead end.
+            Box(root, "T2_East_Calcite_Chamber_Floor", new Vector3(24, -0.25f, 0), new Vector3(18, 0.7f, 22), m_Ground);
+            RoomShell(root, "T2_East_Calcite_Chamber_Shell", new Vector3(24, 0, 0), 18, 22, 6, m_Edge);
+            Box(root, "T2_East_Upper_Cavity_Floor", new Vector3(29, 4.1f, 7), new Vector3(10, 0.8f, 8), m_Landmark);
+            Box(root, "T2_East_Upper_Cavity_Overhang", new Vector3(29, 8, 9), new Vector3(12, 0.8f, 6), m_Edge);
+            Box(root, "T2_East_Squeeze_Wall", new Vector3(18, 2, 2), new Vector3(0.8f, 4, 7), m_Bounce);
+            TerrainBubbleNode(root, "T2_East_Dual_Solution_Side_Cache", new Vector3(30, 2.2f, -6), 3, 5);
+            Box(root, "T2_East_Lower_Return", new Vector3(18, -3.5f, -14), new Vector3(14, 0.8f, 5), m_Edge);
+
+            // North-facing overlook is a compact map marker, not a mandatory
+            // destination; a south drop returns to the hub's lower ring.
+            Box(root, "T2_North_Compass_Overlook", new Vector3(0, 5, 23), new Vector3(14, 0.8f, 8), m_Landmark);
+            Box(root, "T2_North_Overlook_Step", new Vector3(4, 2.5f, 17), new Vector3(7, 0.8f, 5), m_Edge);
+            Box(root, "T2_South_Drop_Catch", new Vector3(0, -5.4f, -22), new Vector3(14, 0.8f, 8), m_Landmark);
+            Box(root, "T2_Abyss_Backdrop_NoCollider", new Vector3(0, -18, 0), new Vector3(86, 0.15f, 86), m_Void, false);
+        }
+
+        private static void BuildMap3TutorialGeometry(Transform root)
+        {
+            // Map3 / Temple of the Ascending Reef. A vertical nautilus wraps
+            // around a deep eye. Ground floor, drowned gallery, middle reef,
+            // upper crown are the same hub seen from different heights.
+            Box(root, "T3_Hub_Ring_Floor_N", new Vector3(0, -0.4f, 9), new Vector3(20, 0.8f, 8), m_Ground);
+            Box(root, "T3_Hub_Ring_Floor_S", new Vector3(0, -0.4f, -9), new Vector3(20, 0.8f, 8), m_Ground);
+            Box(root, "T3_Hub_Ring_Floor_W", new Vector3(-8, -0.4f, 0), new Vector3(8, 0.8f, 10), m_Ground);
+            Box(root, "T3_Hub_Ring_Floor_E", new Vector3(8, -0.4f, 0), new Vector3(8, 0.8f, 10), m_Ground);
+            RoomShell(root, "T3_Hub_Outer_Shell", Vector3.zero, 24, 26, 7, m_Edge);
+            Box(root, "T3_Hub_Drop_Backdrop_NoCollider", new Vector3(0, -15, 0), new Vector3(10, 0.15f, 10), m_Void, false);
+            Box(root, "T3_Hub_Drop_Lip_N", new Vector3(0, -0.1f, 4.5f), new Vector3(10, 0.8f, 1), m_Landmark);
+            Box(root, "T3_Hub_Drop_Lip_S", new Vector3(0, -0.1f, -4.5f), new Vector3(10, 0.8f, 1), m_Landmark);
+            Box(root, "T3_Hub_Drop_Lip_W", new Vector3(-4.5f, -0.1f, 0), new Vector3(1, 0.8f, 8), m_Landmark);
+            Box(root, "T3_Hub_Drop_Lip_E", new Vector3(4.5f, -0.1f, 0), new Vector3(1, 0.8f, 8), m_Landmark);
+            Box(root, "T3_Hub_Lower_Drop_Catch", new Vector3(0, -9, 0), new Vector3(16, 0.8f, 16), m_Edge);
+            TerrainBubbleNode(root, "T3_Hub_Lower_Shell_Lock", new Vector3(0, -6.5f, -5), 3.2f, 5);
+
+            // West / anchor gallery: a staggered sequence of marked rock teeth
+            // teaches attachment and riding in two lifts (3.5m, then 3m). A
+            // ground-level bypass returns to the hub for experimentation.
+            Box(root, "T3_West_Anchor_Gallery_Floor", new Vector3(-24, -0.3f, 0), new Vector3(18, 0.8f, 24), m_Ground);
+            RoomShell(root, "T3_West_Anchor_Gallery_Shell", new Vector3(-24, 0, 0), 18, 24, 7, m_Edge);
+            StickyTarget(root, "T3_West_Anchor_Rock_01", new Vector3(-28, 1.5f, -2), new Vector3(1.2f, 3, 2), m_Sticky);
+            Box(root, "T3_West_Intermediate_Landing_01", new Vector3(-20, 3.2f, 2), new Vector3(7, 0.8f, 6), m_Landmark);
+            StickyTarget(root, "T3_West_Anchor_Rock_02", new Vector3(-17, 4.5f, 7), new Vector3(1.2f, 2.8f, 2), m_Sticky);
+            Box(root, "T3_West_Upper_Observation_Bowl", new Vector3(-24, 7.2f, 10), new Vector3(12, 0.8f, 8), m_Edge);
+            Box(root, "T3_West_Rubble_Ramp_Return", new Vector3(-31, 1.5f, -10), new Vector3(7, 0.8f, 7), m_Landmark);
+            TerrainBubbleNode(root, "T3_West_Side_Cache_Shell", new Vector3(-30, 2, 10), 2.8f, 4);
+
+            // East / moving-frame gallery: bombs can shove a keel across a real
+            // trench; the high sticky route is safer but takes two short lifts.
+            Box(root, "T3_East_Frame_Gallery_Floor_W", new Vector3(17.5f, -0.3f, 0), new Vector3(3, 0.8f, 24), m_Ground);
+            Box(root, "T3_East_Frame_Gallery_Floor_E", new Vector3(30.5f, -0.3f, 0), new Vector3(3, 0.8f, 24), m_Ground);
+            RoomShell(root, "T3_East_Frame_Gallery_Shell", new Vector3(24, 0, 0), 18, 24, 7, m_Edge);
+            Box(root, "T3_East_Frame_Gallery_Trench_Backdrop_NoCollider", new Vector3(24, -9, 0), new Vector3(10, 0.15f, 15), m_Void, false);
+            Box(root, "T3_East_Frame_Gallery_Lower_Catch", new Vector3(24, -6, 0), new Vector3(10, 0.8f, 15), m_Landmark);
+            Box(root, "T3_East_Trench_Lip_W", new Vector3(19, -0.2f, 0), new Vector3(0.8f, 0.8f, 13), m_Landmark);
+            Box(root, "T3_East_Trench_Lip_E", new Vector3(29, -0.2f, 0), new Vector3(0.8f, 0.8f, 13), m_Landmark);
+            PhysicsProp(root, "T3_East_Fallen_Keel_Raft", new Vector3(24, -3.5f, 0), new Vector3(9, 0.8f, 2), m_Bomb);
+            StickyTarget(root, "T3_East_Anchor_Rock_01", new Vector3(19, 1.5f, -7), new Vector3(1.2f, 3, 2), m_Sticky);
+            Box(root, "T3_East_Mid_Transfer_Shelf", new Vector3(24, 3.4f, -5), new Vector3(7, 0.8f, 5), m_Landmark);
+            StickyTarget(root, "T3_East_Anchor_Rock_02", new Vector3(29, 4.7f, 2), new Vector3(1.2f, 2.8f, 2), m_Sticky);
+            Box(root, "T3_East_Upper_Ridge", new Vector3(24, 7.5f, 8), new Vector3(13, 0.8f, 7), m_Edge);
+            Box(root, "T3_East_Elastic_Squeeze_Ridge", new Vector3(17, 2, 9), new Vector3(0.8f, 4, 5), m_Bounce);
+            TerrainBubbleNode(root, "T3_East_Upper_Cache_Shell", new Vector3(30, 7, 9), 2.6f, 4);
+
+            // North crown is a high route (+3.5m lifts); south cave is a
+            // deliberate drop (+8m) with two ledges to break the fall and a
+            // loop that climbs back to the middle ring.
+            Box(root, "T3_North_Mid_Reef_Ring", new Vector3(0, 3.3f, 25), new Vector3(22, 0.8f, 10), m_Landmark);
+            RoomShell(root, "T3_North_Mid_Reef_Shell", new Vector3(0, 3.5f, 25), 22, 10, 5, m_Edge);
+            PathPlatform(root, "T3_North_Vertical_Reef_Lift", new Vector3(0, 0.4f, 16), new Vector3(4.5f, 0.7f, 4.5f), m_Sticky, Vector3.up, 4.5f, 1.25f);
+            StickyTarget(root, "T3_North_Crown_Anchor_01", new Vector3(-6, 4.8f, 18), new Vector3(1.2f, 3, 1.2f), m_Sticky);
+            Box(root, "T3_North_Crown_Intermediate", new Vector3(-2, 6.7f, 22), new Vector3(7, 0.8f, 5), m_Edge);
+            StickyTarget(root, "T3_North_Crown_Anchor_02", new Vector3(4, 8.2f, 25), new Vector3(1.2f, 3, 1.2f), m_Sticky);
+            Box(root, "T3_North_Crown_Panorama", new Vector3(0, 10.5f, 31), new Vector3(14, 0.8f, 7), m_Landmark);
+
+            Box(root, "T3_South_Drop_Chamber_Floor", new Vector3(0, -6, -25), new Vector3(18, 0.8f, 12), m_Ground);
+            RoomShell(root, "T3_South_Drop_Chamber_Shell", new Vector3(0, -6, -25), 18, 12, 6, m_Edge);
+            Box(root, "T3_South_Drop_Step_01", new Vector3(-7, -2.7f, -17), new Vector3(7, 0.8f, 5), m_Landmark);
+            Box(root, "T3_South_Drop_Step_02", new Vector3(6, -4.6f, -21), new Vector3(7, 0.8f, 5), m_Edge);
+            TerrainBubbleNode(root, "T3_South_Tide_Shell_Pocket", new Vector3(-5, -5, -27), 2.8f, 4);
+            Box(root, "T3_Abyss_Backdrop_NoCollider", new Vector3(0, -18, 0), new Vector3(96, 0.15f, 96), m_Void, false);
+        }
+
+        private static void TerrainBubbleNode(Transform root, string name, Vector3 position, float diameter, int capacity)
+        {
+            GameObject bubble = Sphere(root, name, position, diameter, m_PinkWall);
+            PAO.TerrainBubble terrain = bubble.AddComponent<PAO.TerrainBubble>();
+            SerializedObject serialized = new SerializedObject(terrain);
+            serialized.FindProperty("m_Capacity").intValue = capacity;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void RoomShell(Transform root, string name, Vector3 center, float width, float depth, float height, Material material)
+        {
+            float wallY = center.y + height * 0.5f;
+            float wallT = 0.8f;
+
+            // Four walls each leave a broad central doorway. These wall apertures
+            // make the room's cardinal layout legible and retain multiple exits.
+            Box(root, name + "_Wall_WN", new Vector3(center.x - width * 0.5f, wallY, center.z + depth * 0.25f + 1f), new Vector3(wallT, height, depth * 0.5f - 2f), material);
+            Box(root, name + "_Wall_WS", new Vector3(center.x - width * 0.5f, wallY, center.z - depth * 0.25f - 1f), new Vector3(wallT, height, depth * 0.5f - 2f), material);
+            Box(root, name + "_Wall_EN", new Vector3(center.x + width * 0.5f, wallY, center.z + depth * 0.25f + 1f), new Vector3(wallT, height, depth * 0.5f - 2f), material);
+            Box(root, name + "_Wall_ES", new Vector3(center.x + width * 0.5f, wallY, center.z - depth * 0.25f - 1f), new Vector3(wallT, height, depth * 0.5f - 2f), material);
+            Box(root, name + "_Wall_NW", new Vector3(center.x - width * 0.25f - 1f, wallY, center.z + depth * 0.5f), new Vector3(width * 0.5f - 2f, height, wallT), material);
+            Box(root, name + "_Wall_NE", new Vector3(center.x + width * 0.25f + 1f, wallY, center.z + depth * 0.5f), new Vector3(width * 0.5f - 2f, height, wallT), material);
+            Box(root, name + "_Wall_SW", new Vector3(center.x - width * 0.25f - 1f, wallY, center.z - depth * 0.5f), new Vector3(width * 0.5f - 2f, height, wallT), material);
+            Box(root, name + "_Wall_SE", new Vector3(center.x + width * 0.25f + 1f, wallY, center.z - depth * 0.5f), new Vector3(width * 0.5f - 2f, height, wallT), material);
+
+            // A high broken crown reads as a single carved room volume without
+            // covering the playable sightlines or blocking vertical movement.
+            if (height >= 6f)
+            {
+                Box(root, name + "_Broken_Crown_Rib_W", new Vector3(center.x - width * 0.25f, center.y + height + 0.5f, center.z), new Vector3(width * 0.35f, 0.8f, 1.2f), material);
+                Box(root, name + "_Broken_Crown_Rib_E", new Vector3(center.x + width * 0.25f, center.y + height + 0.5f, center.z), new Vector3(width * 0.35f, 0.8f, 1.2f), material);
+            }
+        }
+
+        private static void StickyTarget(Transform root, string name, Vector3 position, Vector3 size, Material material)
+        {
+            GameObject target = Box(root, name, position, size, material);
+            target.AddComponent<PAO.StickySurface>();
+        }
+
+        private static void PhysicsProp(Transform root, string name, Vector3 position, Vector3 size, Material material)
+        {
+            GameObject prop = Box(root, name, position, size, material);
+            Rigidbody body = prop.AddComponent<Rigidbody>();
+            body.mass = Mathf.Max(1f, size.x * size.y * size.z * 0.15f);
+            body.drag = 0.4f;
+            body.angularDrag = 0.8f;
+        }
+
+        private static void PathPlatform(Transform root, string name, Vector3 position, Vector3 size, Material material, Vector3 axis, float distance, float speed)
+        {
+            GameObject platform = Box(root, name, position, size, material);
+            PAO.WhiteboxPathPlatform mover = platform.AddComponent<PAO.WhiteboxPathPlatform>();
+            mover.Configure(axis, distance, speed);
         }
 
         // Map2 / level 3: broad drowned harbor district for the explosion tutorial.

@@ -51,11 +51,11 @@ Material:
     - _WobbleFrequency: 0.7
     - _WobbleSpeed: 1.2
     m_Colors:
-    - _BaseColor: {r: 0.93710685, g: 0, b: 0.32243434, a: 1}
+    - _BaseColor: {r: 0.047481313, g: 0.7646755, b: 0.9150943, a: 1}
     - _EnvColor: {r: 1, g: 0, b: 0.7058821, a: 1}
     - _IridColorA: {r: 0.45, g: 0.95, b: 0.85, a: 1}
     - _IridColorB: {r: 1, g: 0.62, b: 0.92, a: 1}
-    - _OutlineColor: {r: 1, g: 0, b: 0.45257807, a: 0.7294118}
+    - _OutlineColor: {r: 0.04705883, g: 0.76470596, b: 0.91372555, a: 0.7294118}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
-    - _TransmissionTint: {r: 1, g: 0, b: 0.42839193, a: 1}
+    - _TransmissionTint: {r: 0.04705883, g: 0.76470596, b: 0.91372555, a: 1}
   m_BuildTextureStacks: []
