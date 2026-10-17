@@ -750,28 +750,40 @@ namespace PAO
             // 现在特效大小完全由泡泡直径决定：吹得小 = 紧凑一小簇，吹得满 = 铺开一整团。
             // 爆炸半径仍然只用于下面的物理推力，两者不再混在一起。
             //
-            // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
-            // 归一化都自动跟着走；拿不到就退回 1.5（BubbleSettings.maxSize 的默认值）。
-            float sizeReference = 1.5f;
-
-            BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
-                FindObjectsInactive.Exclude);
-
-            if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+            // ---- 爆炸特效：按场景启用 ----
+            //
+            // Bubble 是所有关卡共用的脚本。早先这里无条件调 BubbleBurstVFX，
+            // 等于给 cs 和 Map0~Map5 也一起加了特效 —— 那些是别人做的关卡，
+            // 风格和节奏该由他们定。所以现在过一道场景白名单
+            // （见 SceneScopedEffects），没列进去的场景完全不受影响。
+            //
+            // 注意：视觉范围只影响特效，**不影响上面那段物理爆炸** ——
+            // 冲击力、连线引爆、地形破坏都照旧。
+            if (SceneScopedEffects.BubbleVfxAllowed)
             {
-                sizeReference = launcher.CurrentMaxSize;
+                // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
+                // 归一化都自动跟着走；拿不到就退回 1.5（BubbleSettings.maxSize 的默认值）。
+                float sizeReference = 1.5f;
+
+                BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
+                    FindObjectsInactive.Exclude);
+
+                if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+                {
+                    sizeReference = launcher.CurrentMaxSize;
+                }
+
+                // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
+                // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
+                bool hostPayload = m_BombSettings == null;
+                Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
+
+                BubbleBurstVFX.Spawn(
+                    center,
+                    GetDiameter(),
+                    burstTint,
+                    sizeReference);
             }
-
-            // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
-            // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
-            bool hostPayload = m_BombSettings == null;
-            Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
-
-            BubbleBurstVFX.Spawn(
-                center,
-                GetDiameter(),
-                burstTint,
-                sizeReference);
 
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
             Collider[] hits = Physics.OverlapSphere(center, radius);
@@ -906,7 +918,18 @@ namespace PAO
             // 所以把 Destroy 交给回调 —— 溶解完成时才销毁。
             // 材质是按类型共享的，VFX 内部走 MaterialPropertyBlock 只改这一个泡泡，
             // 不会把场上同类泡泡一起溶掉。
-            BubbleDissolveVFX.Begin(gameObject, Type, delegate { Destroy(gameObject); });
+            //
+            // 【按场景启用】
+            // Bubble 是所有关卡共用的，这个溶解特效只在白名单场景里播
+            // （见 SceneScopedEffects）。别的地图保持原来"到点直接消失"的行为。
+            if (SceneScopedEffects.BubbleVfxAllowed)
+            {
+                BubbleDissolveVFX.Begin(gameObject, Type, delegate { Destroy(gameObject); });
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
 
         /// <summary>

@@ -12,16 +12,24 @@ using UnityEngine.UI;
 namespace PAO.EditorTools
 {
     /// <summary>
-    /// 在 cs.unity（玩法场景）里装上暂停面板与 HUD。
+    /// 给玩法场景装上暂停面板与 HUD。
     ///
     /// 两个界面都做成 Prefab 放在 Assets/GameMain/UI/，本脚本负责：
-    ///   1. cs.unity 原本没有任何 UI 基础设施 → 补上 Canvas（1920x1080 缩放）+ EventSystem
+    ///   1. 场景原本没有 UI 基础设施 → 补上 Canvas（1920x1080 缩放）+ EventSystem
     ///   2. 生成 / 复用 Pause Panel.prefab 与 Level HUD.prefab
-    ///   3. 把两个预制体实例化进 cs.unity，并确保场景里有 BubbleTypeSwitcher
+    ///   3. 把两个预制体实例化进场景，并确保场景里有 BubbleTypeSwitcher
     ///
     /// 按 Esc 由 HUD 里的 BubbleTypeHud 收，开关 Pause Panel 并暂停/恢复时间。
     ///
-    /// 用法：菜单 **PAO → UI → 在 cs 场景装暂停与 HUD**
+    /// 【目标场景】
+    /// 场景名从参数进来，所以任何玩法场景都能用同一套流程。
+    /// 目前两个入口：
+    ///   · **PAO → UI → 在 cs 场景装暂停与 HUD**（默认，走 kTargetScene）
+    ///   · **PAO → UI → 在 shiliuye map 装暂停与 HUD**
+    ///
+    /// 自动钩子**只服务 cs**（见 AutoBuildTick 里的说明）——
+    /// 别的关卡要装就显式点菜单，免得场景被悄悄改动。
+    ///
     /// 幂等：重复执行会复用已有预制体、并替换场景里的旧实例（不会堆叠）。
     /// </summary>
     public static class PauseHudSetup
@@ -49,16 +57,31 @@ namespace PAO.EditorTools
         [MenuItem("PAO/UI/在 cs 场景装暂停与 HUD", false, 24)]
         public static void BuildFromMenu()
         {
-            Build(false, false);
+            Build(false, false, kTargetScene);
+        }
+
+        [MenuItem("PAO/UI/在 shiliuye map 装暂停与 HUD", false, 26)]
+        public static void BuildShiliuyeFromMenu()
+        {
+            Build(false, false, "shiliuye map");
         }
 
         [MenuItem("PAO/UI/重建两个界面预制体", false, 25)]
         public static void RebuildPrefabsFromMenu()
         {
-            Build(false, true);
+            Build(false, true, kTargetScene);
         }
 
-        public static void Build(bool auto, bool forceRebuildPrefabs)
+        /// <summary>
+        /// 在 <paramref name="targetSceneName"/> 里装暂停面板与 HUD。
+        ///
+        /// 【为什么要带场景名参数】
+        /// 早先这个方法把 "cs" 写死在两个地方：入口的校验、以及一串日志文案。
+        /// 结果别的关卡（比如 shiliuye map）没法复用这套安装流程 ——
+        /// 明明 HUD 与暂停界面是每个玩法场景都要的，却只能装进 cs。
+        /// 现在场景名从参数进来，cs 走默认值，行为完全不变。
+        /// </summary>
+        public static void Build(bool auto, bool forceRebuildPrefabs, string targetSceneName)
         {
             // ---------- 0. 前置 ----------
             Sprite round = AssetDatabase.LoadAssetAtPath<Sprite>(kSpriteFolder + "btn_round.png");
@@ -71,9 +94,9 @@ namespace PAO.EditorTools
 
             // 必须在目标场景里操作
             Scene scene = SceneManager.GetActiveScene();
-            if (scene.name != kTargetScene)
+            if (scene.name != targetSceneName)
             {
-                Report(auto, "当前场景是 \"" + scene.name + "\"，请先打开 " + kTargetScene + ".unity 再执行。");
+                Report(auto, "当前场景是 \"" + scene.name + "\"，请先打开 " + targetSceneName + ".unity 再执行。");
                 return;
             }
 
@@ -102,7 +125,7 @@ namespace PAO.EditorTools
                 scaler.matchWidthOrHeight = 0f;
 
                 canvasGo.AddComponent<GraphicRaycaster>();
-                Debug.Log("[PauseHudSetup] cs 场景原本没有 Canvas，已创建 \"" + kCanvasName + "\"。");
+                Debug.Log("[PauseHudSetup] " + scene.name + " 原本没有 Canvas，已创建 \"" + kCanvasName + "\"。");
             }
 
             if (Object.FindObjectOfType<EventSystem>() == null)
@@ -110,7 +133,7 @@ namespace PAO.EditorTools
                 GameObject esGo = new GameObject("EventSystem");
                 esGo.AddComponent<EventSystem>();
                 esGo.AddComponent<StandaloneInputModule>();
-                Debug.Log("[PauseHudSetup] cs 场景原本没有 EventSystem，已创建。");
+                Debug.Log("[PauseHudSetup] " + scene.name + " 原本没有 EventSystem，已创建。");
             }
 
             // ---------- 3. 泡泡类型切换器 ----------
@@ -118,7 +141,7 @@ namespace PAO.EditorTools
             {
                 var switcherGo = new GameObject("Bubble Type Switcher");
                 switcherGo.AddComponent<BubbleTypeSwitcher>();
-                Debug.Log("[PauseHudSetup] cs 场景没有 BubbleTypeSwitcher，已创建。");
+                Debug.Log("[PauseHudSetup] " + scene.name + " 没有 BubbleTypeSwitcher，已创建。");
             }
 
             // ---------- 4. 实例化（先清旧的）----------
@@ -160,7 +183,7 @@ namespace PAO.EditorTools
             EditorSceneManager.SaveOpenScenes();
 
             string summary = string.Format(
-                "cs 场景已装好。\n\n" +
+                scene.name + " 已装好。\n\n" +
                 "预制体：\n  {0}\n  {1}\n\n" +
                 "场景内新增：Canvas + EventSystem + 两个界面实例\n" +
                 "替换的旧实例：{2} 个\n" +
@@ -683,7 +706,13 @@ namespace PAO.EditorTools
 
             try
             {
-                Build(true, false);
+                // 自动钩子**只服务 cs** —— 这里硬用 kTargetScene，不走参数。
+                //
+                // 为什么不给每个新关卡都自动装：自动装会在你打开场景时
+                // 悄悄改场景内容并保存。cs 是既有流程、这么干已经习惯了；
+                // 但别的关卡（比如 shiliuye map）应该由人显式点菜单，
+                // 免得"我什么都没动，场景怎么变了"。
+                Build(true, false, kTargetScene);
             }
             catch (System.Exception e)
             {
