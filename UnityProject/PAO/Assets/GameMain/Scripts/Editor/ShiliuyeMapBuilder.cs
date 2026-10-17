@@ -9,12 +9,6 @@ using UnityEngine.SceneManagement;
 // 这些 PAO 下的类在这里是找不到的（会报 CS0246）。
 using PAO;
 
-// WaterVolume 在 PAO.Underwater 下 —— 那是**另一个分支**，不是 PAO 的子级，
-// 所以上面那个 using PAO 也带不进来，必须单独引。
-// （UnderwaterSceneSetup 不用这行，是因为它自己在 PAO.Underwater.EditorTools，
-//   而子命名空间能看见父命名空间 —— 我们的情形正好相反。）
-using PAO.Underwater;
-
 namespace PAO.EditorTools
 {
     /// <summary>
@@ -190,7 +184,6 @@ namespace PAO.EditorTools
 
             BuildNarration(root);
             BuildSpawnPoint(root);
-            BuildUnderwater();
         }
 
         // ==================== 装饰 ====================
@@ -355,78 +348,7 @@ namespace PAO.EditorTools
                       "整体缩放 " + kDecorScale + " —— 觉得太大/太小就改 kDecorScale。");
         }
 
-        // ==================== 海底氛围 ====================
-
-        /// <summary>
-        /// 让整座塔"泡在水里"。
-        ///
-        /// 【分两层做，因为管的不是一件事】
-        ///   1. <see cref="RenderSettings"/> 的**环境光 + 雾** —— 这是基底。
-        ///      环境光压成深青蓝，几何体的暗部就不会是灰的而是水色；
-        ///      再叠一层指数雾，远处自然糊成水色。**这两条不依赖任何着色器**，
-        ///      就算后处理没装上也有效果。
-        ///   2. <see cref="WaterVolume"/> —— 它把参数推成全局变量，
-        ///      供焦散 / 体积光那套后处理使用。这一层是"加分的"：
-        ///      没装到 URP Renderer 上就看不到，但基底还在。
-        ///
-        /// 【为什么水面高度要挂在塔顶之上】
-        /// 水面在头顶，玩家全程都在水下 —— 这样不需要"入水/出水"的过渡，
-        /// 也不用担心开局站在岸上。玩法是爬塔，本来也不该出水。
-        /// </summary>
-        private static void BuildUnderwater()
-        {
-            // 塔顶高度 + 一截，保证整座塔完全浸没
-            float towerTop = kFloorCount * kFloorHeight;
-            float waterLevel = towerTop + 12f;
-
-            // ---- 光照 / 水下效果：撤掉 ----
-            //
-            // 这里**不再配置任何光照和水下效果**。清理动作放在 Build() 里，
-            // 用"从旧版本升上来"当条件只跑一次 —— 理由见 Build() 里的说明。
-            //
-            // 底下 ApplyWaterSettings 留着（参数调过一轮），以后想加水下效果时
-            // 把下面那段创建 Underwater 的代码恢复、或直接用工程自带的
-            // 「工具 → PAO → 水下 → 一键搭建水下」。
-        }
-
-        /// <summary>
-        /// 创建 WaterVolume。**当前没有被调用** —— 水下效果暂时撤掉了。
-        ///
-        /// 保留它是因为参数都调过一轮了（滤镜 0.38、雾 0.022 那套偏淡的值），
-        /// 以后想加回来时不用从头调。要启用就把 BuildUnderwater 里的
-        /// <c>EnsureWaterVolume(waterLevel);</c> 那行注释去掉。
-        /// </summary>
-        private static void EnsureWaterVolume(float waterLevel)
-        {
-            Scene scene = SceneManager.GetActiveScene();
-            GameObject existing = GameObject.Find("Underwater");
-
-            if (existing != null)
-            {
-                // 已经有就只更新参数，不重建（避免把美术手调过的子物体弄丢）
-                WaterVolume volume = existing.GetComponent<WaterVolume>();
-
-                if (volume != null)
-                {
-                    ApplyWaterSettings(volume, waterLevel);
-                    volume.PushGlobals();
-                }
-
-                return;
-            }
-
-            var go = new GameObject("Underwater");
-            SceneManager.MoveGameObjectToScene(go, scene);
-            go.transform.position = new Vector3(0f, waterLevel, 0f);
-
-            WaterVolume created = go.AddComponent<WaterVolume>();
-            ApplyWaterSettings(created, waterLevel);
-
-            // 手动推一次 —— 不然要等进 Play 才看得到（OnEnable 在编辑器里不一定跑）
-            created.PushGlobals();
-
-            Debug.Log("[ShiliuyeMap] 水面已配置：高度 " + waterLevel + "m。");
-        }
+        // ==================== 海底氛围清理 ====================
 
         /// <summary>
         /// 把光照恢复成 Unity 的默认值，清掉早先那套"水下环境光 + 雾"。
@@ -459,10 +381,10 @@ namespace PAO.EditorTools
         }
 
         /// <summary>
-        /// 删掉场景里那个 <c>Underwater</c> 物体（水面 + WaterVolume）。
+        /// 删掉场景里遗留的 <c>Underwater</c> 物体（水面与旧水下效果组件）。
         ///
         /// 和水下效果一起撤掉。它**不属于地形根物体**，所以重搭地形不会顺带删它 ——
-        /// 得单独处理，否则会留一个孤零零的 WaterVolume 在场景里继续推全局变量，
+        /// 得单独处理，否则旧水下组件仍可能在场景里继续推全局变量，
         /// 画面还是蒙着一层青。
         /// </summary>
         private static void RemoveUnderwaterObject()
@@ -476,48 +398,6 @@ namespace PAO.EditorTools
 
             Object.DestroyImmediate(underwater);
             Debug.Log("[ShiliuyeMap] 已移除场景里的 Underwater 物体（水下滤镜 / 水面）。");
-        }
-
-        /// <summary>水面 / 滤镜 / 焦散 / 体积光的参数。海边色调，强度压在中档。</summary>
-        private static void ApplyWaterSettings(WaterVolume v, float waterLevel)
-        {
-            // ---- 水面 ----
-            v.waterLevel = waterLevel;
-            v.waterSize = 90f;          // 比塔（12m）大得多，抬头看不到边缘
-
-            // ---- 水下滤镜 ----
-            //
-            // 【压到 0.38，比默认值 0.65 低得多】
-            // 这是"画面看起来怪"的另一个来源：滤镜一浓，整个画面就蒙一层青，
-            // 白盒的灰阶被压成蓝灰，障碍物的轮廓也跟着糊。
-            // 爬塔要靠眼睛找横梁和转杆的缝，所以宁可淡一点。
-            // 想要更浓的水感，把这个值往上调就行。
-            v.underwaterStrength = 0.38f;
-            v.fadeInDepth = 1.2f;
-            v.fadeOutAbove = 0.2f;
-
-            // 浅处偏青、深处偏蓝，但都比之前淡 —— 免得把白盒染成一片蓝
-            v.shallowColor = new Color(0.50f, 0.78f, 0.84f);
-            v.deepColor = new Color(0.12f, 0.32f, 0.44f);
-
-            // ---- 雾 ----
-            // 从 0.045 降到 0.022：原来的浓度在 12m 宽的井道里，
-            // 对面墙壁就已经明显发灰了，障碍物不好读。
-            v.fogDensity = 0.022f;
-            v.depthDarkening = 1.15f;
-
-            // ---- 焦散：塔壁上那层晃动的光网 ----
-            // 这是"在水里"最直接也最不干扰阅读的一条线索，保留
-            v.causticsEnabled = true;
-            v.causticsIntensity = 0.95f;
-            v.causticsScale = 3.6f;
-            v.causticsSpeed = 0.5f;
-            v.causticsColor = new Color(0.80f, 1f, 0.97f);
-
-            // ---- 体积光：从水面向下打的光柱 ----
-            v.godRaysEnabled = true;
-            v.godRayIntensity = 1.5f;
-            v.sunDirection = new Vector3(-0.2f, 1f, -0.3f);
         }
 
         /// <summary>
