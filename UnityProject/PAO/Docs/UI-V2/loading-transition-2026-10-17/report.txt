@@ -1,0 +1,28 @@
+Passed: 26
+Real Menu scene starts UIRuntime.
+Startup is covered by the bubble curtain.
+Menu camera clears to black.
+Restored legacy objects are preserved and hidden by runtime.
+Editor backdrop is opaque black and covers all old controls.
+Bubble membranes render visibly in loading-1920x1080.png
+Rendered loading-1920x1080.png
+Bubble membranes render visibly in loading-960x540.png
+Rendered loading-960x540.png
+Bubble membranes render visibly in loading-800x900.png
+Rendered loading-800x900.png
+Twenty-four bubbles use the same bounded simulation.
+Sixty simulated seconds remain finite with bounded membrane deformation and recycling.
+Overlapping membranes separate with a compliant contact response.
+Contact excites spring deformation.
+Bubbles move with timeScale zero.
+Reduced motion freezes bubble movement.
+Scene request immediately blocks input and starts curtain.
+Escape cannot dismiss an active load.
+Async transition reaches gameplay.
+HUD is ready and gameplay time resumes after reveal.
+Gameplay pause is active before return load.
+Return from pause reaches Menu without freezing time.
+Repeated loads reuse exactly one transition canvas.
+Unavailable scene request leaves the menu usable.
+Reduced-motion load completes and releases gameplay.
+Errors: 0

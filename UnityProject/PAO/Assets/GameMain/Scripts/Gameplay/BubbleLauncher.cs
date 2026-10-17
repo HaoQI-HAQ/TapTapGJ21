@@ -282,6 +282,7 @@ namespace PAO
 
             m_Charging = true;
             m_ChargeTime = 0f;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleCharge, transform.position);
 
             // 蓄力期间锁住类型切换：泡泡是这一刻用当时的参数造出来的，
             // 中途换类型会让构造参数和当前类型对不上。
@@ -373,6 +374,7 @@ namespace PAO
             Vector3 direction = GetSpawnRotation() * Vector3.forward;
 
             ActivateBubble(bubble, settings, type, progress, size, direction * speed, false);
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleLaunch, bubble.transform.position, Mathf.Lerp(.45f, 1f, progress));
         }
 
         /// <summary>
@@ -410,6 +412,8 @@ namespace PAO
             {
                 behaviour.OnLaunchedFromHold();
             }
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleLaunch, bubble.transform.position,
+                Mathf.Lerp(.55f, 1f, m_HeldChargeProgress));
         }
 
         /// <summary>滞留中的泡泡（没有则为 null）。UI 想提示可以读它。</summary>

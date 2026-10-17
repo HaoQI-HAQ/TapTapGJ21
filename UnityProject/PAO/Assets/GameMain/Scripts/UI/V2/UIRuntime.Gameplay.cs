@@ -418,6 +418,7 @@ namespace PAO.UI.V2
         public void ShowFailure()
         {
             if (resultShown) return; resultShown = true;
+            if (tide == null) PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.ChapterFailure, Vector3.zero);
             UIPage page = Push(T("水流暂时淹没了路径", "The current covered the path"),
                 T("换一种泡泡组合，再试一次。", "Try a different combination of bubbles."), false, UIPageDesign.Failure);
             page.CanClose = false;
@@ -433,6 +434,7 @@ namespace PAO.UI.V2
         {
             if (!IsGameplay || resultShown || loading) return false;
             resultShown = true; UIRunState.Complete(lastScene); SaveSnapshot(UIRunState.AutoSlot);
+            if (tide == null) PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.ChapterComplete, Vector3.zero);
             int index = Config.IndexOf(lastScene);
             bool ending = index >= 0 && index == Config.chapters.Length - 1;
             UIPage page = Push(T("这一段水流，已有回响", "This current now has an echo"), ChapterName(lastScene), false, UIPageDesign.Completion);

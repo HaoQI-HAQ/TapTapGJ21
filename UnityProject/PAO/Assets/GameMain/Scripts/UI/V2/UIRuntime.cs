@@ -27,6 +27,8 @@ namespace PAO.UI.V2
         private readonly List<Behaviour> frozenInputs = new List<Behaviour>();
         private bool paused;
         private bool loading;
+        private UIBubbleTransition loadingTransition;
+        private int sceneInitialization;
         private float previousTime;
         private CursorLockMode previousCursor;
         private bool previousCursorVisible;
@@ -81,6 +83,8 @@ namespace PAO.UI.V2
             canvasRect.gameObject.AddComponent<GraphicRaycaster>();
             safeRoot = ui.Rect("Safe Area", canvasRect); UIWidgets.Stretch(safeRoot);
             safeRoot.gameObject.AddComponent<UISafeArea>();
+            loadingTransition = UIBubbleTransition.Create(transform, menuTheme);
+            loadingTransition.Begin(true);
             SceneManager.sceneLoaded += OnSceneLoaded;
             SaveSystem.SlotLoaded += OnLegacyLoad;
             UISettings.Changed += ApplyGameplaySettings;
@@ -93,19 +97,27 @@ namespace PAO.UI.V2
         {
             if (mode == LoadSceneMode.Additive) return;
             ReleasePause(); UnbindGameplay(); ClearPages(); ClearHud();
-            lastScene = scene.name; loading = false;
+            int initialization = ++sceneInitialization;
+            lastScene = scene.name; loading = true;
+            loadingTransition.HoldOpaque();
             nextAutoSave = Time.unscaledTime + 60f;
             canvas.gameObject.SetActive(Config.Supports(scene.name));
-            if (!Config.Supports(scene.name)) { IsGameplay = false; return; }
+            if (!Config.Supports(scene.name))
+            {
+                IsGameplay = false;
+                StartCoroutine(FinishSceneTransition(initialization));
+                return;
+            }
             IsGameplay = scene.name != Config.menuScene;
             Config = IsGameplay ? gameplayTheme : menuTheme; ui = new UIWidgets(Config);
             objectiveOverride = null;
             if (UIRunState.PendingLoad != null) UIRunState.Apply(UIRunState.PendingLoad);
             EnsureEventSystem(scene);
-            StartCoroutine(InitializeScene(scene));
+            HideLegacyUI();
+            StartCoroutine(InitializeScene(scene, initialization));
         }
 
-        private IEnumerator InitializeScene(Scene scene)
+        private IEnumerator InitializeScene(Scene scene, int initialization)
         {
             if (IsGameplay) PrepareChapter(scene);
             // Let existing gameplay Start methods initialize their camera and dynamically created labels.
@@ -129,7 +141,9 @@ namespace PAO.UI.V2
             ApplyGameplaySettings();
             if (!IsGameplay)
             {
-                Cursor.lockState = CursorLockMode.None; Cursor.visible = true; ShowMenu(); yield break;
+                Cursor.lockState = CursorLockMode.None; Cursor.visible = true; ShowMenu();
+                yield return FinishSceneTransition(initialization);
+                yield break;
             }
             SaveSlotData pending = UIRunState.PendingLoad;
             UIRunState.PendingLoad = null;
@@ -148,7 +162,8 @@ namespace PAO.UI.V2
             }
             BuildHud();
             foreach (AudioSource audio in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
-                if (audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
+                if (audio.GetComponentInParent<PAO.AV.PAOAudioDirector>() == null &&
+                    audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
             if (pending != null)
             {
                 if (UISettings.Current.detailedHints) Toast(T("记录已恢复", "Record restored"));
@@ -158,6 +173,27 @@ namespace PAO.UI.V2
                 UIInput.MovementHint() + T(" 移动 · 跳跃 ", " Move · Jump ") + UIInput.Prompt(UIInput.Jump) +
                 T("\n蓄力 ", "\nCharge ") + UIInput.Prompt(UIInput.Charge) + T(" · Esc / Menu 暂停 · ", " · Esc / Menu Pause · ") + UIInput.Prompt(UIInput.Help) + T(" 查看教学", " for help"));
             if (SaveOnNextEntry) { SaveOnNextEntry = false; SaveSnapshot(UIRunState.AutoSlot); }
+            yield return FinishSceneTransition(initialization);
+        }
+
+        private IEnumerator FinishSceneTransition(int initialization)
+        {
+            if (initialization != sceneInitialization) yield break;
+            SetPause(true);
+            if (pages.Count > 0) pages[pages.Count - 1].SetInteractable(false);
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+            // Keep an opaque curtain across scene activation, Start(), save restoration and the first HUD frame.
+            yield return null;
+            if (initialization != sceneInitialization) yield break;
+            yield return loadingTransition.Reveal();
+            if (initialization != sceneInitialization) yield break;
+            loading = false; resumeInputFrame = Time.frameCount;
+            if (pages.Count == 0) ReleasePause();
+            else
+            {
+                pages[pages.Count - 1].SetInteractable(true);
+                pages[pages.Count - 1].RestoreFocus();
+            }
         }
 
         private static void EnsureEventSystem(Scene scene)
@@ -189,6 +225,7 @@ namespace PAO.UI.V2
         {
             if (Config == null || !canvas.gameObject.activeSelf) return;
             UIInput.Poll();
+            if (loading) return;
             HandleDeviceDisconnect();
             if (UpdateBindingCapture()) return;
             UpdateControllerTabs();
@@ -293,6 +330,7 @@ namespace PAO.UI.V2
             page.Footer = ui.Row("Actions", body); UIWidgets.Size(page.Footer, 72);
             page.Footer.GetComponent<LayoutElement>().preferredHeight = -1;
             pages.Add(page); page.Show();
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UISoftOpen, Vector3.zero, .6f);
             SetPause(true);
             if (hud != null) hud.gameObject.SetActive(false);
             return page;
@@ -306,6 +344,7 @@ namespace PAO.UI.V2
         private void Pop()
         {
             if (pages.Count == 0) return;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UIBack, Vector3.zero, .55f);
             UIPage page = pages[pages.Count - 1]; pages.RemoveAt(pages.Count - 1);
             if (page.BeforeClose != null) page.BeforeClose();
             page.Hide(); Destroy(page.gameObject);
@@ -397,34 +436,28 @@ namespace PAO.UI.V2
             StartCoroutine(LoadSceneRoutine(scene));
         }
 
-        private UIPage CreateLoadingPage(out Text progress, out Image fill)
-        {
-            UIPage page = Push(T("正在进入意识之海", "Entering the sea"), T("请稍候", "Please wait"), true, UIPageDesign.Loading);
-            ui.Emblem(page.Content, UIGuideSymbol.Current, T("循着水流", "FOLLOWING THE CURRENT"));
-            Image track = ui.Surface("Loading track", page.Content, Config.mist, true); UIWidgets.Size(track.transform, 12);
-            fill = ui.Surface("Loading current", track.transform, Config.teal, true);
-            fill.rectTransform.anchorMin = Vector2.zero; fill.rectTransform.anchorMax = new Vector2(0, 1);
-            fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
-            progress = ui.Label(page.Content, "0%", 40, null, TextAnchor.MiddleCenter);
-            return page;
-        }
         private IEnumerator LoadSceneRoutine(string scene)
         {
-            Text progress; Image fill; CreateLoadingPage(out progress, out fill);
+            SetPause(true);
+            if (pages.Count > 0) pages[pages.Count - 1].SetInteractable(false);
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+            loadingTransition.Begin(false);
+            yield return loadingTransition.Cover();
             AsyncOperation operation = null;
             try { operation = SceneManager.LoadSceneAsync(scene); }
             catch (Exception error) { Debug.LogException(error); }
             if (operation == null)
             {
                 SaveSlotData retrySave = UIRunState.PendingLoad;
-                loading = false; UIRunState.PendingLoad = null; Pop();
+                loading = false; UIRunState.PendingLoad = null;
+                loadingTransition.HideImmediately();
+                if (pages.Count > 0) pages[pages.Count - 1].SetInteractable(true);
                 Confirm(T("无法进入", "Unable to enter"), T("加载失败。是否重试？", "Loading failed. Retry?"), () => LoadScene(scene, retrySave));
                 yield break;
             }
             while (!operation.isDone)
             {
-                if (progress != null) progress.text = Mathf.RoundToInt(operation.progress / 0.9f * 100) + "%";
-                if (fill != null) fill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(operation.progress / .9f), 1);
+                loadingTransition.SetProgress(Mathf.Clamp01(operation.progress / .9f) * .9f);
                 yield return null;
             }
         }

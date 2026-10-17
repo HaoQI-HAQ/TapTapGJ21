@@ -49,6 +49,10 @@ namespace PAO
         [Tooltip("暂停菜单打开时由外部设为 false，避免在菜单里误切类型")]
         [SerializeField] private bool m_InputEnabled = true;
 
+        [Header("调试")]
+        [Tooltip("打印每次切换类型的日志。关掉可避免刷屏（默认关）")]
+        [SerializeField] private bool m_LogSwitches = false;
+
         private static readonly string[] s_DisplayNames = { "浮粘泡泡", "弹力泡泡", "炸弹泡泡" };
 
         private static readonly Color[] s_TypeColors =
@@ -182,14 +186,21 @@ namespace PAO
 
             if (Current == type)
             {
-                Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ") 被忽略：已经是当前类型。", this);
+                if (m_LogSwitches)
+                {
+                    Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ") 被忽略：已经是当前类型。", this);
+                }
+
                 return;
             }
 
-            Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ")，原类型 " + Current +
-                      "，InputEnabled=" + m_InputEnabled + "，enabled=" + enabled, this);
+            if (m_LogSwitches)
+            {
+                Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ")，原类型 " + Current, this);
+            }
 
             Current = type;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleSwitch, transform.position);
             Refresh();
 
             // 通知外界（HUD 的亮圈就靠这一句跟着变）

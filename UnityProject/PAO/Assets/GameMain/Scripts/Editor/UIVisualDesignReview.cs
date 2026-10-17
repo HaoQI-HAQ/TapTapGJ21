@@ -121,8 +121,12 @@ namespace PAO.EditorTools
             }, 800, 900, false, 1.3f, 0, r => Call(r, "UpdateTransientUI"));
             Render("loading", true, r =>
             {
-                object[] args = { null, null }; Call(r, "CreateLoadingPage", args);
-                ((Text)args[0]).text = "58%"; ((Image)args[1]).rectTransform.anchorMax = new Vector2(.58f, 1);
+                Canvas capture = r.GetComponentInChildren<Canvas>();
+                UIBubbleTransition transition = UIBubbleTransition.Create(r.transform, r.Config);
+                transition.Begin(true); transition.SetProgress(.58f);
+                Canvas curtain = transition.GetComponent<Canvas>();
+                curtain.renderMode = RenderMode.ScreenSpaceCamera;
+                curtain.worldCamera = capture.worldCamera; curtain.planeDistance = 1;
             });
             Render("menu-contrast", false, r => Call(r, "ShowMenu"), 1600, 900, true);
             Render("pause-contrast", true, r => r.ShowPause(), 1600, 900, true);

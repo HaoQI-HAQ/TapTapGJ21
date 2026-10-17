@@ -67,6 +67,18 @@ namespace PAO
             get { return m_IsRiding; }
         }
 
+        /// <summary>
+        /// 正在乘坐的是不是指定的这颗泡泡。
+        ///
+        /// 给障碍物用：障碍要判断"撞到的是不是我载着玩家那颗"，
+        /// 而不是场上任意一颗飘着的泡泡 —— 后者被撞破会把玩家放到地上，
+        /// 但玩家根本没受影响，看着莫名其妙。
+        /// </summary>
+        public bool IsRidingThis(Bubble bubble)
+        {
+            return m_IsRiding && bubble != null && m_RidingBubble == bubble;
+        }
+
         public void EndInteraction()
         {
             if (m_IsControlling) ExitControl(false);
