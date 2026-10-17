@@ -77,7 +77,7 @@ Material:
     - _GradientOffset: 1
     - _GradientSmoothness: 0.05
     - _MainWaveAmount: 7
-    - _MainWaveScale: 3
+    - _MainWaveScale: 4
     - _MaxFlutter: 1
     - _Metallic: 0
     - _MinFlutter: 1

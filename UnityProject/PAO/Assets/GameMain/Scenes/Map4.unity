@@ -17,7 +17,7 @@ RenderSettings:
   m_Fog: 1
   m_FogColor: {r: 0.43503022, g: 0.7219128, b: 0.8867924, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogDensity: 0.02
   m_LinearFogStart: 0
   m_LinearFogEnd: 50
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -20566,11 +20566,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6a35e1358b1ed984c9937dec1560518d, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  m_Speaker:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Speaker: 
   m_Text: "\u6C89\u5728\u6D77\u6C9F\u91CC\u7684\u788E\u7247\uFF0C\u4ECD\u8BB0\u5F97\u4F60\u7ECF\u8FC7\u65F6\u7559\u4E0B\u7684\u56DE\u58F0\u3002"
-  m_AudioKey:
+  m_AudioKey: 
   m_VoiceClip: {fileID: 0}
   m_Duration: 0
   m_Once: 1
@@ -76553,11 +76553,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6a35e1358b1ed984c9937dec1560518d, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  m_Speaker:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Speaker: 
   m_Text: "\u6CE1\u6CE1\u76F8\u9047\u3001\u878D\u5408\uFF0C\u518D\u5411\u5916\u6D8C\u53BB\u3002\u65B0\u7684\u8DEF\u5F84\u5C31\u5728\u8FD9\u4E9B\u56DE\u54CD\u4E4B\u95F4\u3002"
-  m_AudioKey:
+  m_AudioKey: 
   m_VoiceClip: {fileID: 0}
   m_Duration: 0
   m_Once: 1
@@ -83757,11 +83757,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6a35e1358b1ed984c9937dec1560518d, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  m_Speaker:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Speaker: 
   m_Text: "\u8D70\u8FC7\u7684\u6C34\u57DF\u5728\u8FD9\u91CC\u91CD\u65B0\u6C47\u805A\u3002\u8BD5\u7740\u8BA9\u4E0D\u540C\u7684\u6CE1\u6CE1\u5F7C\u6B64\u56DE\u5E94\u3002"
-  m_AudioKey:
+  m_AudioKey: 
   m_VoiceClip: {fileID: 0}
   m_Duration: 0
   m_Once: 1
@@ -119166,8 +119166,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b7d4af295d6c4df38b6906a4c117e2cb, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_RingMaterial: {fileID: 2100000, guid: 7e1d9d5c504b74946bd4295d92775d10, type: 2}
   m_PearlMaterial: {fileID: 2100000, guid: 45545630a46b33c4481ed0a1c30db588, type: 2}
   m_EffectScale: 1
@@ -142797,7 +142797,7 @@ Light:
   m_Type: 1
   m_Shape: 0
   m_Color: {r: 0.8443396, g: 0.9827044, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 2
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -142855,13 +142855,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1708225758}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.46316126, y: -0.48452276, z: 0.46291292, w: 0.58002675}
+  m_LocalRotation: {x: 0.50227404, y: -0.4438483, z: 0.5100595, w: 0.5390351}
   m_LocalPosition: {x: 100.24, y: -10.9, z: -3.84}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 80.359, y: -52.722, z: 31.77}
+  m_LocalEulerAnglesHint: {x: 83.861, y: 18.469, z: 103.452}
 --- !u!114 &1708225761
 MonoBehaviour:
   m_ObjectHideFlags: 0
