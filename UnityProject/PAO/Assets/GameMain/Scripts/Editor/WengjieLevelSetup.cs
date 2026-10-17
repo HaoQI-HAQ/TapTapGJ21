@@ -5009,6 +5009,11 @@ namespace PAO.EditorTools
                 SerializedObject so = new SerializedObject(node);
                 so.FindProperty("m_Speaker").stringValue = (string)nodes[i][1];
                 so.FindProperty("m_Line").stringValue = (string)nodes[i][2];
+
+                // 旁白配音：命名约定 vo_N.wav，和节点索引一一对应
+                string clipPath = "Assets/GameMain/Audio/WengjieVO/vo_" + i + ".wav";
+                AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>(clipPath);
+                if (clip != null) so.FindProperty("m_Voice").objectReferenceValue = clip;
                 so.FindProperty("m_Delay").floatValue = 0.2f;
                 so.FindProperty("m_Once").boolValue = true;
                 so.ApplyModifiedPropertiesWithoutUndo();
