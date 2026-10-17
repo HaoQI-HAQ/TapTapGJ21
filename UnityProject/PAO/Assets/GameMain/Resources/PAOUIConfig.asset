@@ -19,6 +19,7 @@ MonoBehaviour:
   - Control UI
   - UI Preview
   - shiliuye map
+  - wengjie
   font: {fileID: 12800000, guid: de3370e671e14324f862fc20e980764f, type: 3}
   round: {fileID: 21300000, guid: 374bcb791de34d3fbbf71f82bb7e93cc, type: 3}
   ring: {fileID: 21300000, guid: cd0af2a71ce44c01ad927f2350313b17, type: 3}
@@ -79,4 +80,10 @@ MonoBehaviour:
     title: 水域 06
     description: 抵达最后一段水流，回看旅程留下的回声。
     objective: 抵达终点，回看你的旅程。
+  - scene: wengjie
+    spawnAnchor: Spawn
+    goalAnchor: B_Goal
+    title: 水域 07
+    description: 一口正在被灌满的井。三条路都通向它，但没有一条是免费的。
+    objective: 在潮水淹没祭坛之前，爬上峡谷的最高处。
   credits: "泡涌 · 意识之海\nTapTap Game Jam 21\n\n感谢每一位参与创作与体验的朋友。"
