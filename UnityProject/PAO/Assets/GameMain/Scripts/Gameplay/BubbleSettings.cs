@@ -53,6 +53,9 @@ namespace PAO
 
         [Tooltip("最大泡泡（蓄满）消耗的泡泡值")]
         public int maxCost = 12;
+
+        [Tooltip("剩余寿命少于这个秒数就不允许钻进去（防止「快消失时进去续命」）")]
+        public float rideMinLifeTime = 1f;
     }
 
     /// <summary>
@@ -90,6 +93,9 @@ namespace PAO
 
         [Tooltip("滞留（还在嘴上）时带着玩家上升的速度（米/秒）。和发射后那套无关，单独调")]
         public float heldLiftSpeed = 3f;
+
+        [Tooltip("在嘴上（滞留）时的独立存活时间（秒）。0 = 沿用 lifeTime")]
+        public float heldLifeTime = 5f;
     }
 
     /// <summary>

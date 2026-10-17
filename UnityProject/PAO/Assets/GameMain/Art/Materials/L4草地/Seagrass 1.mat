@@ -108,7 +108,7 @@ Material:
     - __dirty: 0
     m_Colors:
     - _AOColor: {r: 0, g: 0, b: 0, a: 0}
-    - _BottomColor: {r: 0, g: 0.8509804, b: 0.75508547, a: 0}
+    - _BottomColor: {r: 0.48243728, g: 0.59119487, b: 0.37367973, a: 0}
     - _Color: {r: 0.21960784, g: 0.69803923, b: 0.44154388, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SecondaryWindDirection: {r: 0, g: 0, b: 0, a: 0}

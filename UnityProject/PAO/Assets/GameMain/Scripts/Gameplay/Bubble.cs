@@ -65,6 +65,10 @@ namespace PAO
 
         // 吹出这颗泡泡花掉的泡泡值。粘成地形后被炸掉时按它返还。
         private int m_PaidCost;
+
+        // 寿命到点的绝对时间（Time.time 基准）。没排过就是 -1。
+        // 记绝对时间而不是用 Invoke，是为了能查「还剩多久」。
+        private float m_LifeEndTime = -1f;
         private PlayerController m_LiftTarget;              // 滞留时被我提着的玩家
         private Vector3 m_HeldLocalOffset;                  // 滞留时相对玩家的局部位置，松手瞬间记下就不再变
 
@@ -392,6 +396,13 @@ namespace PAO
                     return false;
                 }
 
+                // 剩余寿命太少就别让人进去了 ——
+                // 不然刚钻进去泡泡就没了，还能被用来「快消失时进去续命」。
+                if (RemainingLifeTime < GetRideMinLifeTime())
+                {
+                    return false;
+                }
+
                 // 体内装了炸弹就不能钻进去了，太危险
                 if (m_AbsorbedBomb != null)
                 {
@@ -505,7 +516,11 @@ namespace PAO
                 if (m_StickySettings != null && m_StickySettings.rideFloatDuration > 0f)
                 {
                     CancelInvoke("OnFloatTimeout");
-                    Invoke("OnFloatTimeout", m_StickySettings.rideFloatDuration);
+                    // 取「剩余寿命」和「rideFloatDuration」的较小值 —— 不凭空续命。
+                    // 泡泡飞了大半辈子才进来，就只能玩剩下的那点时间。
+                    float floatDuration = Mathf.Min(RemainingLifeTime, m_StickySettings.rideFloatDuration);
+
+                    Invoke("OnFloatTimeout", floatDuration);
                 }
             }
 
@@ -869,6 +884,8 @@ namespace PAO
         public void ScheduleLifeEnd(float lifeTime)
         {
             CancelInvoke("OnLifeEnd");
+            // 记下到点时间，供 RemainingLifeTime 查询
+            m_LifeEndTime = Time.time + Mathf.Max(0.1f, lifeTime);
             Invoke("OnLifeEnd", Mathf.Max(0.1f, lifeTime));
         }
 
@@ -1860,6 +1877,40 @@ namespace PAO
             }
 
             m_PaidCost = 0;
+        }
+        /// <summary>
+        /// 距离自然消失还剩多少秒。没排过寿命就当成「无限」。
+        /// 用来防止「泡泡快没了还钻进去续命」。
+        /// </summary>
+        public float RemainingLifeTime
+        {
+            get
+            {
+                if (m_LifeEndTime < 0f)
+                {
+                    return float.PositiveInfinity;
+                }
+
+                return Mathf.Max(0f, m_LifeEndTime - Time.time);
+            }
+        }
+        /// <summary>
+        /// 这颗泡泡要求的最低剩余寿命（秒）。没配就是 0。
+        /// 钻进去之前会拿它和 RemainingLifeTime 比，防止「快消失时进去续命」。
+        /// </summary>
+        private float GetRideMinLifeTime()
+        {
+            if (m_StickySettings != null)
+            {
+                return m_StickySettings.rideMinLifeTime;
+            }
+
+            if (m_BouncySettings != null)
+            {
+                return m_BouncySettings.rideMinLifeTime;
+            }
+
+            return 0f;
         }
     }
 }

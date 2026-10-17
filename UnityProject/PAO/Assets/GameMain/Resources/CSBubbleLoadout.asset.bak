@@ -1,0 +1,89 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99e61f232889420f9c258bb36b95dc12, type: 3}
+  m_Name: CSBubbleLoadout
+  m_EditorClassIdentifier:
+  maxChargeTime: 2
+  holdThreshold: 1
+  spawnOffset: {x: 0, y: 0.15, z: 0.3}
+  growthPushFactor: 1
+  growthPushDirection: {x: 0, y: 0, z: 1}
+  sticky:
+    prefab: {fileID: 341690582057091424, guid: e9f2f5ae1bff9df44b57f8043defaea4, type: 3}
+    color: {r: 0.55, g: 0.85, b: 1, a: 1}
+    minSize: 0.2
+    maxSize: 1.6
+    minLaunchSpeed: 0.4
+    maxLaunchSpeed: 0.1
+    smallRiseSpeed: 0.3
+    largeRiseSpeed: 0.3
+    drag: 0.8
+    useGravity: 0
+    lifeTime: 20
+    minCost: 2
+    maxCost: 12
+    stickBreakForce: 500
+    stickSticky: 1
+    stickBouncy: 1
+    stickBomb: 1
+    rideMinSize: 1
+    rideExtraRiseSpeed: 1
+    rideFloatDuration: 6
+    controlMoveForce: 7
+    heldLiftSpeed: 1
+  bouncy:
+    prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f, type: 3}
+    color: {r: 1, g: 0, b: 0.910151, a: 1}
+    minSize: 0.3
+    maxSize: 1.1
+    minLaunchSpeed: 4
+    maxLaunchSpeed: 0.1
+    smallRiseSpeed: 0
+    largeRiseSpeed: 0
+    drag: 0.8
+    useGravity: 0
+    lifeTime: 10
+    minCost: 2
+    maxCost: 12
+    bounciness: 0.9
+    maxBounceCount: 0
+    fillAmountMin: 1
+    fillAmountMax: 3
+    rideMinSize: 1
+    rideMoveForce: 5
+    ejectSpeed: 14
+    ejectAngle: 35
+    squeezeThreshold: 0.06
+    squeezeMinScale: 0.55
+    squeezeLaunchSpeedMin: 7
+    squeezeLaunchSpeedMax: 22
+    riderLaunchRatio: 1
+    riderLaunchDuration: 0.7
+  bomb:
+    prefab: {fileID: 4259276435024632764, guid: 6442c7ee7072375448a2e290e59a82da, type: 3}
+    color: {r: 0.55, g: 0.85, b: 1, a: 1}
+    minSize: 0.2
+    maxSize: 0.6
+    minLaunchSpeed: 0.5
+    maxLaunchSpeed: 0.5
+    smallRiseSpeed: 0
+    largeRiseSpeed: 0
+    drag: 0.8
+    useGravity: 0
+    lifeTime: 13
+    minCost: 10
+    maxCost: 20
+    blastRadius: 0.3
+    blastForce: 12
+    fuseTime: 2
+    detonateTerrains: 1
+    absorbedBlastMultiplier: 9
