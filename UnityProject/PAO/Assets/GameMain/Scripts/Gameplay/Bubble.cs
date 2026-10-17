@@ -796,16 +796,15 @@ namespace PAO
                     sizeReference = launcher.CurrentMaxSize;
                 }
 
-                // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
-                // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
-                bool hostPayload = m_BombSettings == null;
-                Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
-
-                BubbleBurstVFX.Spawn(
-                    center,
-                    GetDiameter(),
-                    burstTint,
-                    sizeReference);
+                // 能量爆炸：蓝白球状爆发 + 冲击环 + 放射光条 + 余烬。
+                //
+                // 【为什么换掉了原来的 BubbleBurstVFX】
+                // 那一版是"水彩洇开"式的一团彩块（安静、柔和），
+                // 和炸弹泡泡"能量爆发"的定位对不上。策划要的是那种
+                // 瞬间撑开、过曝发亮的能量炸开感，所以换成了 EnergyExplosionVFX。
+                //
+                // 两版都留着：BubbleBurstVFX 没删，想回退改这一行就行。
+                EnergyExplosionVFX.Spawn(center, GetDiameter(), sizeReference);
             }
 
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
