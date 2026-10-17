@@ -91,6 +91,8 @@ namespace PAO
         private float m_Yaw;                    // 摄像机水平角（独立于角色朝向）
         private float m_Pitch;                  // 摄像机俯仰角
         private float m_VerticalSpeed;          // 垂直速度（由重力累积而来）
+        private bool m_WasGrounded;
+        private float m_StepTimer;
         private float m_CurrentCameraDistance;  // 摄像机当前实际距离
 
         /// <summary>
@@ -390,7 +392,22 @@ namespace PAO
             }
 
             // 重力与跳跃
-            if (m_Controller.isGrounded)
+            bool grounded = m_Controller.isGrounded;
+            if (grounded && !m_WasGrounded && m_VerticalSpeed < -3f)
+                PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerLand, transform.position,
+                    Mathf.InverseLerp(3f, 14f, -m_VerticalSpeed));
+            m_WasGrounded = grounded;
+            if (grounded && moveDirection.sqrMagnitude > .08f)
+            {
+                m_StepTimer -= Time.deltaTime * (speed / Mathf.Max(.1f, m_MoveSpeed));
+                if (m_StepTimer <= 0f)
+                {
+                    m_StepTimer = .43f;
+                    PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerStep, transform.position, .45f);
+                }
+            }
+            else m_StepTimer = 0f;
+            if (grounded)
             {
                 // 落地时保持一个向下的微小速度，确保稳定贴地
                 if (m_VerticalSpeed < 0f)
@@ -402,6 +419,8 @@ namespace PAO
                 {
                     // 由目标高度反推初速度：v = sqrt(2 * g * h)
                     m_VerticalSpeed = Mathf.Sqrt(m_JumpHeight * -2f * m_Gravity);
+                    m_WasGrounded = false;
+                    PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerJump, transform.position);
                 }
             }
 

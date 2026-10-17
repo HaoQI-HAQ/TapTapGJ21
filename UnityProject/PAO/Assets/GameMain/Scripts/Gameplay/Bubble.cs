@@ -96,6 +96,10 @@ namespace PAO
 
         private void OnCollisionEnter(Collision collision)
         {
+            float impact = Mathf.Clamp01(collision.relativeVelocity.magnitude / 9f);
+            if (impact > .13f)
+                PAO.AV.FeedbackBus.Emit(Type == BubbleType.Bouncy ? PAO.AV.FeedbackCue.BubbleBounce :
+                    PAO.AV.FeedbackCue.BubbleCollision, transform.position, impact);
             // 已经在容器里的泡泡只处理同类粘连，不再走外面的撞击逻辑
             if (m_Container != null)
             {
@@ -226,6 +230,8 @@ namespace PAO
             joint.connectedBody = otherBody;
             joint.breakForce = m_StickySettings.stickBreakForce;
             joint.breakTorque = m_StickySettings.stickBreakForce;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleMerge, transform.position,
+                Mathf.Lerp(.4f, 1f, SizeProgress));
 
             // 对方已经是「固定住」的了（粘在地形上，或者属于某座已经成形的桥），
             // 那我也跟着固定：不消失、不飘走，成为桥的一部分。
@@ -723,6 +729,8 @@ namespace PAO
             }
 
             Vector3 center = transform.position;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleBurst, center,
+                Mathf.Clamp01(GetDiameter() / 1.5f));
             if (bombSettings == null)
             {
                 Destroy(gameObject);
@@ -1130,6 +1138,7 @@ namespace PAO
 
             m_AbsorbedBomb = bomb;
             m_AbsorbedBombArmed = false;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleMerge, transform.position, .9f);
 
             // 让它自己飞进来、停在球心（和地形泡泡吸收弹力泡泡是同一套）
             bomb.OnAbsorbedInto(this);

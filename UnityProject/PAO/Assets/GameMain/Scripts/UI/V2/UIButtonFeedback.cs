@@ -51,7 +51,8 @@ namespace PAO.UI.V2
             bool available = button != null && button.IsInteractable();
             if (available != wasInteractable) { wasInteractable = available; Refresh(); }
         }
-        public void OnPointerEnter(PointerEventData data) { hovered = true; Refresh(); }
+        public void OnPointerEnter(PointerEventData data)
+        { hovered = true; Refresh(); PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UIHover, Vector3.zero, .35f); }
         public void OnPointerExit(PointerEventData data) { hovered = pressed = false; Refresh(); }
         public void OnPointerDown(PointerEventData data)
         { if (data.button == PointerEventData.InputButton.Left && Available()) { pressed = true; Refresh(); Ripple(); } }
@@ -99,6 +100,7 @@ namespace PAO.UI.V2
         }
         private void Ripple()
         {
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UIConfirm, Vector3.zero);
             if (pulse != null) pulse.Kill(); pulse = null;
             if (ripple == null || UISettings.Current.reducedMotion) return;
             ripple.rectTransform.localScale = Vector3.one * .4f;

@@ -75,6 +75,11 @@ CBUFFER_END
 TEXTURECUBE(_Cube);
 SAMPLER(sampler_Cube);
 
+// Runtime scene response. The values are zero when PAOVisualDirector is absent.
+float _PAO_Mood;
+float _PAO_Energy;
+float4 _PAO_Impulse; // world position xyz, decaying spatial reach w
+
 struct Attributes
 {
     float4 positionOS : POSITION;
@@ -211,7 +216,7 @@ Varyings Vert(Attributes input)
     {
         float3 dirOS = normalize(posOS + 1e-5);
         wob = WobbleAmount(dirOS * _WobbleFrequency, _Time.y * _WobbleSpeed);
-        posOS += dirOS * (wob * _WobbleAmplitude);
+        posOS += dirOS * (wob * _WobbleAmplitude * (1.0 + saturate(_PAO_Energy) * 0.25));
     }
 #endif
 
@@ -365,6 +370,13 @@ half4 Frag(Varyings i) : SV_Target
     col += trans;
     col += _BaseColor.rgb * rim * 0.45;
 
+    float impulseReach = max(_PAO_Impulse.w, 0.001);
+    float impulse = saturate(_PAO_Impulse.w * 0.30) *
+                    saturate(1.0 - distance(i.positionWS, _PAO_Impulse.xyz) / impulseReach);
+    float3 moodAccent = lerp(float3(1.0, 0.55, 0.78), float3(0.55, 1.0, 0.92),
+                             saturate(_PAO_Mood * 0.5 + 0.5));
+    col += moodAccent * (saturate(_PAO_Energy) * 0.08 + impulse * 0.42);
+
     // 中心几乎全透、边缘收拢变实。这一步也走色阶，边缘会有一圈清晰的"壳"
     float alphaBand = XStep(saturate(fresnel * 0.8 + specBand + spec2Band),
                             _ToonSteps, _ToonSoftness);
@@ -372,6 +384,7 @@ half4 Frag(Varyings i) : SV_Target
     a = max(a, _Opacity * 0.05);
 
     a *= faceFade;
+    a = saturate(a + impulse * 0.09);
 
     // ---- 溶解发光边 ----
     //

@@ -172,6 +172,7 @@ namespace PAO
         private void Open()
         {
             m_Opened = true;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.Pickup, transform.position);
 
             // ---- 打开的效果 ----
             //
@@ -221,6 +222,7 @@ namespace PAO
         {
             if (m_OpenSound == null)
             {
+                if (PAO.AV.PAOAudioDirector.Instance != null) return;
                 if (m_Log)
                 {
                     Debug.Log("[ChestAbilityPickup] \"" + name + "\" 没有配开箱音。" +

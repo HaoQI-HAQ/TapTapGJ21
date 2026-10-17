@@ -1,0 +1,152 @@
+Passed: 150
+Failures: 0
+PASS audio manifest has 32 resources
+PASS import settings preserve PCM and sample rate: Music/Map4_Base
+PASS audio imports and loads: Music/Map4_Base
+PASS audio format: Music/Map4_Base
+PASS sample count: Music/Map4_Base
+PASS import settings preserve PCM and sample rate: Music/Map4_Pulse
+PASS audio imports and loads: Music/Map4_Pulse
+PASS audio format: Music/Map4_Pulse
+PASS sample count: Music/Map4_Pulse
+PASS import settings preserve PCM and sample rate: Music/Map4_Tension
+PASS audio imports and loads: Music/Map4_Tension
+PASS audio format: Music/Map4_Tension
+PASS sample count: Music/Map4_Tension
+PASS import settings preserve PCM and sample rate: Ambience/Map4_Reef
+PASS audio imports and loads: Ambience/Map4_Reef
+PASS audio format: Ambience/Map4_Reef
+PASS sample count: Ambience/Map4_Reef
+PASS import settings preserve PCM and sample rate: Ambience/Map4_Vent
+PASS audio imports and loads: Ambience/Map4_Vent
+PASS audio format: Ambience/Map4_Vent
+PASS sample count: Ambience/Map4_Vent
+PASS import settings preserve PCM and sample rate: Ambience/Map4_Trench
+PASS audio imports and loads: Ambience/Map4_Trench
+PASS audio format: Ambience/Map4_Trench
+PASS sample count: Ambience/Map4_Trench
+PASS import settings preserve PCM and sample rate: Music/Menu_Base
+PASS audio imports and loads: Music/Menu_Base
+PASS audio format: Music/Menu_Base
+PASS sample count: Music/Menu_Base
+PASS import settings preserve PCM and sample rate: Music/Map0_Base
+PASS audio imports and loads: Music/Map0_Base
+PASS audio format: Music/Map0_Base
+PASS sample count: Music/Map0_Base
+PASS import settings preserve PCM and sample rate: Music/Map1_Base
+PASS audio imports and loads: Music/Map1_Base
+PASS audio format: Music/Map1_Base
+PASS sample count: Music/Map1_Base
+PASS import settings preserve PCM and sample rate: Music/Map2_Base
+PASS audio imports and loads: Music/Map2_Base
+PASS audio format: Music/Map2_Base
+PASS sample count: Music/Map2_Base
+PASS import settings preserve PCM and sample rate: Music/Map3_Base
+PASS audio imports and loads: Music/Map3_Base
+PASS audio format: Music/Map3_Base
+PASS sample count: Music/Map3_Base
+PASS import settings preserve PCM and sample rate: Music/Map5_Base
+PASS audio imports and loads: Music/Map5_Base
+PASS audio format: Music/Map5_Base
+PASS sample count: Music/Map5_Base
+PASS import settings preserve PCM and sample rate: SFX/BubbleCharge
+PASS audio imports and loads: SFX/BubbleCharge
+PASS audio format: SFX/BubbleCharge
+PASS sample count: SFX/BubbleCharge
+PASS import settings preserve PCM and sample rate: SFX/BubbleLaunch
+PASS audio imports and loads: SFX/BubbleLaunch
+PASS audio format: SFX/BubbleLaunch
+PASS sample count: SFX/BubbleLaunch
+PASS import settings preserve PCM and sample rate: SFX/BubbleCollision
+PASS audio imports and loads: SFX/BubbleCollision
+PASS audio format: SFX/BubbleCollision
+PASS sample count: SFX/BubbleCollision
+PASS import settings preserve PCM and sample rate: SFX/BubbleMerge
+PASS audio imports and loads: SFX/BubbleMerge
+PASS audio format: SFX/BubbleMerge
+PASS sample count: SFX/BubbleMerge
+PASS import settings preserve PCM and sample rate: SFX/BubbleBounce
+PASS audio imports and loads: SFX/BubbleBounce
+PASS audio format: SFX/BubbleBounce
+PASS sample count: SFX/BubbleBounce
+PASS import settings preserve PCM and sample rate: SFX/BubbleBurst
+PASS audio imports and loads: SFX/BubbleBurst
+PASS audio format: SFX/BubbleBurst
+PASS sample count: SFX/BubbleBurst
+PASS import settings preserve PCM and sample rate: SFX/BubblePop
+PASS audio imports and loads: SFX/BubblePop
+PASS audio format: SFX/BubblePop
+PASS sample count: SFX/BubblePop
+PASS import settings preserve PCM and sample rate: SFX/BubbleSwitch
+PASS audio imports and loads: SFX/BubbleSwitch
+PASS audio format: SFX/BubbleSwitch
+PASS sample count: SFX/BubbleSwitch
+PASS import settings preserve PCM and sample rate: SFX/PlayerJump
+PASS audio imports and loads: SFX/PlayerJump
+PASS audio format: SFX/PlayerJump
+PASS sample count: SFX/PlayerJump
+PASS import settings preserve PCM and sample rate: SFX/PlayerLand
+PASS audio imports and loads: SFX/PlayerLand
+PASS audio format: SFX/PlayerLand
+PASS sample count: SFX/PlayerLand
+PASS import settings preserve PCM and sample rate: SFX/PlayerStep
+PASS audio imports and loads: SFX/PlayerStep
+PASS audio format: SFX/PlayerStep
+PASS sample count: SFX/PlayerStep
+PASS import settings preserve PCM and sample rate: SFX/Pickup
+PASS audio imports and loads: SFX/Pickup
+PASS audio format: SFX/Pickup
+PASS sample count: SFX/Pickup
+PASS import settings preserve PCM and sample rate: SFX/TideRising
+PASS audio imports and loads: SFX/TideRising
+PASS audio format: SFX/TideRising
+PASS sample count: SFX/TideRising
+PASS import settings preserve PCM and sample rate: SFX/TideWin
+PASS audio imports and loads: SFX/TideWin
+PASS audio format: SFX/TideWin
+PASS sample count: SFX/TideWin
+PASS import settings preserve PCM and sample rate: SFX/TideLose
+PASS audio imports and loads: SFX/TideLose
+PASS audio format: SFX/TideLose
+PASS sample count: SFX/TideLose
+PASS import settings preserve PCM and sample rate: SFX/Narration
+PASS audio imports and loads: SFX/Narration
+PASS audio format: SFX/Narration
+PASS sample count: SFX/Narration
+PASS import settings preserve PCM and sample rate: SFX/UIHover
+PASS audio imports and loads: SFX/UIHover
+PASS audio format: SFX/UIHover
+PASS sample count: SFX/UIHover
+PASS import settings preserve PCM and sample rate: SFX/UIConfirm
+PASS audio imports and loads: SFX/UIConfirm
+PASS audio format: SFX/UIConfirm
+PASS sample count: SFX/UIConfirm
+PASS import settings preserve PCM and sample rate: SFX/UIBack
+PASS audio imports and loads: SFX/UIBack
+PASS audio format: SFX/UIBack
+PASS sample count: SFX/UIBack
+PASS import settings preserve PCM and sample rate: SFX/UISoftOpen
+PASS audio imports and loads: SFX/UISoftOpen
+PASS audio format: SFX/UISoftOpen
+PASS sample count: SFX/UISoftOpen
+PASS six Map4 music and ambience stems have sample-aligned length
+PASS Map4 scene opens
+PASS Map4 contains exactly one VisualDirector
+PASS Map4 contains three narration triggers
+PASS VisualDirector retains both PAO FeedbackVFX materials
+PASS Map4 narration catalog loads with three transcript entries
+PASS PAO FeedbackVFX shader imports and is supported
+PASS Map4 references at least three glTF model assets
+PASS glTF model imports: Assets/GameMain/Art/Models/SM_L4_yi_ ji_1glb.glb
+PASS glTF model imports: Assets/GameMain/Art/Models/SM_L4_yi_ ji_2glb.glb
+PASS glTF model imports: Assets/GameMain/Art/Models/SM_L4_shan_ shi.glb
+PASS runtime audio director bootstraps
+PASS runtime scene state bootstraps
+PASS runtime visual director enables in Map4
+PASS existing gameplay HUD bootstraps
+PASS Map4 default player spawns
+PASS Map4 runtime schedules six music and ambience stems
+PASS all six Map4 stems play after DSP scheduling
+PASS narration playback API accepts the imported synthesized test cue
+PASS BubbleBurst starts a world sound voice
+PASS bubble burst event produces visible particles
