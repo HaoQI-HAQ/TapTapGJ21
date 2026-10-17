@@ -85,6 +85,13 @@ namespace PAO
         [Tooltip("进入运行时锁定并隐藏鼠标光标")]
         [SerializeField] private bool m_LockCursorOnStart = true;
 
+        [Tooltip("光标意外脱离锁定（编辑器切窗口、失焦、多显示器换焦点等）后自动重新锁定，\n" +
+                 "延迟从 0.35 秒起逐次加倍。关掉则只保留手动点击重新锁定")]
+        [SerializeField] private bool m_AutoRelockCursor = true;
+
+        [Tooltip("鼠标静止时点击画面即可重新锁定光标（不需要按 Esc 或打开暂停面板）")]
+        [SerializeField] private bool m_ClickToRelock = true;
+
         private readonly RaycastHit[] m_HitBuffer = new RaycastHit[8];
 
         private CharacterController m_Controller;
@@ -126,6 +133,43 @@ namespace PAO
 
         public float LookSensitivityMultiplier { get; set; } = 1f;
         public bool InvertVerticalLook { get; set; }
+
+        /// <summary>
+        /// 锁定的光标是否应该在「回到游戏」时自动重新锁上。
+        /// 由 UIRuntime 统一管理：任何界面打开时设为 false（光标交给玩家点按钮），
+        /// 回到游戏时恢复为 true；玩家在菜单里选了「解锁鼠标」则是 false 且不再自动接管。
+        /// </summary>
+        public bool ReleaseCursorForMenus { get; set; }
+
+        /// <summary>
+        /// 脚本主动要求的锁定状态。Esc / 菜单里解锁后为 false，
+        /// 之后只有重新锁定（点击画面、菜单里打开视角锁定）才会回到 true。
+        /// </summary>
+        public bool CursorWanted { get { return m_CursorLockDesired && !ReleaseCursorForMenus; } }
+
+        private bool m_CursorLockDesired;       // Esc / 菜单解锁后会变 false
+        private int m_CursorRelockAttempts;
+        private float m_NextCursorRelockTime;
+
+        /// <summary>
+        /// 重新锁定光标并隐藏鼠标。暂停菜单里的「锁定鼠标」按钮、点击画面都会走到这里。
+        /// </summary>
+        public void LockCursor()
+        {
+            m_CursorLockDesired = true;
+            m_CursorRelockAttempts = 0;
+            m_NextCursorRelockTime = 0f;
+            // 有界面开着的时候（暂停、设置……）别抢光标，交给玩家点按钮；
+            // 界面关掉的下一帧 ReleaseCursorForMenus 变回 false，UpdateCursorLock 会自动补锁。
+            if (!ReleaseCursorForMenus) SetCursorLocked(true);
+        }
+
+        /// <summary>解锁光标（Esc 或菜单里选「解锁鼠标」）。</summary>
+        public void UnlockCursor()
+        {
+            m_CursorLockDesired = false;
+            SetCursorLocked(false);
+        }
 
         /// <summary>
         /// 当前有没有移动输入（WASD 是否按着）。
@@ -194,14 +238,17 @@ namespace PAO
             }
 
             m_CurrentCameraDistance = m_CameraDistance;
+            m_CursorLockDesired = m_LockCursorOnStart;
         }
 
         private void OnEnable()
         {
-            if (m_LockCursorOnStart)
-            {
-                SetCursorLocked(true);
-            }
+            // 暂停面板、设置之类的界面会把本组件临时禁用再启用。
+            // 重新启用时只在「玩家本来就想要锁定、且没有界面开着」时补锁，
+            // 否则从菜单里解锁过的光标一回到游戏又被藏起来了。
+            SetCursorLocked(m_LockCursorOnStart && m_CursorLockDesired && !ReleaseCursorForMenus);
+            m_CursorRelockAttempts = 0;
+            m_NextCursorRelockTime = 0f;
         }
 
         private void OnDisable()
@@ -210,17 +257,96 @@ namespace PAO
             SetCursorLocked(false);
         }
 
+        private void OnApplicationFocus(bool focused)
+        {
+            // 切回窗口时 Unity 不会自动恢复强制锁定（失焦那次解锁往往就发生在切出去的时候），
+            // 这里立刻补锁一次，避免「切回来鼠标还在外面漂」。
+            if (focused && CursorWanted)
+            {
+                m_CursorRelockAttempts = 0;
+                m_NextCursorRelockTime = 0f;
+                SetCursorLocked(true);
+            }
+        }
+
         private void Update()
         {
             if (PAO.UI.V2.UIInput.Blocked) return;
+            UpdateCursorLock();
             UpdateLookInput();
             UpdateMove();
+        }
 
-            // Esc 解锁光标，方便在编辑器里退出 Play
-            if (Input.GetKeyDown(KeyCode.Escape))
+        /// <summary>
+        /// 让光标始终待在锁定状态。
+        ///
+        /// 【为什么需要这段】
+        /// 原先只在 OnEnable 里锁一次、Esc 再解锁一次，之后就不管了。
+        /// 可 Windows 编辑器里只要有一次外部原因把锁解除 —— 切换窗口 / Alt+Tab、
+        /// Game 视图失焦、分辨率与全屏模式切换（Screen.SetResolution）、
+        /// 拖到第二块屏幕 —— 光标就会留在外面自由移动：
+        /// 视角仍然能转，但鼠标会漂到屏幕边缘被裁掉，甚至点回编辑器，
+        /// 而且没有任何代码会把它锁回来，看起来就像「鼠标脱离了游戏」。
+        ///
+        /// 【现在的策略】
+        ///   1. 有界面（暂停、设置、结算……）时由 UIRuntime 负责解锁，这里不抢；
+        ///   2. 回到游戏后如果发现锁没了，等一小会儿就自动补锁，失败则延迟加倍重试
+        ///      （刚切回窗口的那一帧系统可能还没准备好，立刻锁会静默失败）；
+        ///   3. 鼠标静止时点一下画面也能立刻重新锁定，作为兜底。
+        /// UIRuntime 在打开任意界面时会把 ReleaseCursorForMenus 置为 true，
+        /// 那种情况下这里一律不抢光标。
+        /// </summary>
+        private void UpdateCursorLock()
+        {
+            if (!CursorWanted || !Application.isFocused)
             {
-                SetCursorLocked(false);
+                return;
             }
+
+            if (Cursor.lockState == CursorLockMode.Locked)
+            {
+                m_CursorRelockAttempts = 0;
+                return;
+            }
+
+            if (ReleaseCursorForMenus)
+            {
+                return;
+            }
+
+            // 鼠标已经回到 Game 视图里点了一下：立刻锁，不用等自动补锁的延迟
+            bool clicked = m_ClickToRelock && Input.GetMouseButtonDown(0) && IsPointerInsideGameView();
+            if (!m_AutoRelockCursor && !clicked)
+            {
+                return;
+            }
+
+            if (!clicked && Time.unscaledTime < m_NextCursorRelockTime)
+            {
+                return;
+            }
+
+            if (clicked) m_CursorRelockAttempts = 0;
+
+            SetCursorLocked(true);
+            m_CursorRelockAttempts++;
+            m_NextCursorRelockTime = Time.unscaledTime +
+                Mathf.Min(4f, 0.35f * Mathf.Pow(1.7f, m_CursorRelockAttempts - 1));
+        }
+
+        /// <summary>
+        /// 鼠标是否在 Game 视图内。编辑器里把视角锁定关掉后，
+        /// 玩家要能正常点编辑器面板，所以那种情况下不做「点一下重新锁定」。
+        /// </summary>
+        private static bool IsPointerInsideGameView()
+        {
+#if UNITY_EDITOR
+            // GameView 是 internal，不能直接做类型判断，只能比类型名。
+            UnityEditor.EditorWindow window = UnityEditor.EditorWindow.mouseOverWindow;
+            return window != null && window.GetType().FullName == "UnityEditor.GameView";
+#else
+            return true;
+#endif
         }
 
         /// <summary>
@@ -522,6 +648,7 @@ namespace PAO
         {
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
+            if (locked) m_CursorLockDesired = true;
         }
     }
 }
