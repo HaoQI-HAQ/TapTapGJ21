@@ -60,6 +60,16 @@ CBUFFER_START(UnityPerMaterial)
     // ---- 描边 ----
     float4 _OutlineColor;
     float  _OutlineWidth;
+
+    // ---- 溶解 ----
+    // 必须在这个 CBUFFER 里：SRP Batcher 要求材质上出现的属性全部集中定义，
+    // 少一个（哪怕没用到）都会让整个 shader 变成 "not compatible"。
+    float  _DissolveEnabled;
+    float  _DissolveAmount;
+    float  _DissolveNoise;
+    float  _DissolveEdge;
+    float4 _DissolveEdgeColor;
+    float  _DissolveEdgeBoost;
 CBUFFER_END
 
 TEXTURECUBE(_Cube);
@@ -116,6 +126,74 @@ float WobbleAmount(float3 dirOS, float t)
     return n * (1.0 / 3.0);
 }
 
+// ======================= 溶解 =======================
+//
+// 【设计要点：只裁掉像素，不改任何着色】
+// 这个函数只做两件事：
+//   1. 算出这个像素处在溶解边界的哪一边 —— 该死掉的直接 clip 掉
+//   2. 算出"离边界多近" —— 越近越亮，做出一条发光的燃烧边
+//
+// 除此之外的所有着色（彩虹虹彩、卡通色阶、高光、边缘光、透射）**完全不变**。
+// 所以溶解期间泡泡还是原来那个泡泡，只是被一点点吃掉 —— 这正是要的效果。
+//
+// 【噪声为什么用 positionOS】
+// Varyings 里已经带了顶点局部坐标，拿它算噪声不用额外传 UV，
+// 而且泡泡是球体，用局部坐标能让"吃掉"的边界贴合球面、不会随视角滑动。
+
+// 便宜的哈希 + 双线性插值噪声。三倍频叠加，边界才有有机的碎边，
+// 单层噪声出来是一坨一坨的圆斑，很假。
+float Hash21_D(float2 p)
+{
+    p = frac(p * float2(127.1, 311.7));
+    p += dot(p, p + 34.23);
+    return frac(p.x * p.y);
+}
+
+float ValueNoise_D(float2 p)
+{
+    float2 i = floor(p);
+    float2 f = frac(p);
+    f = f * f * (3.0 - 2.0 * f);
+
+    float a = Hash21_D(i);
+    float b = Hash21_D(i + float2(1.0, 0.0));
+    float c = Hash21_D(i + float2(0.0, 1.0));
+    float d = Hash21_D(i + float2(1.0, 1.0));
+
+    return lerp(lerp(a, b, f.x), lerp(c, d, f.x), f.y);
+}
+
+float DissolveNoise(float3 posOS)
+{
+    float s = max(_DissolveNoise, 0.001);
+    float2 p = posOS.xy * s + posOS.z * s * 0.6;
+
+    float n1 = ValueNoise_D(p);
+    float n2 = ValueNoise_D(p * 2.13 + 7.7);
+    float n3 = ValueNoise_D(p * 4.41 + 23.3);
+
+    return saturate(n1 * 0.55 + n2 * 0.30 + n3 * 0.15);
+}
+
+/// 溶解边界处的"余量"。&gt; 0 表示这个像素还在；&lt;= 0 表示该被裁掉。
+///
+/// 【为什么不在这个函数里 clip】
+/// clip/discard 写在辅助函数里能工作，但编译器对"带 discard 的嵌套调用"
+/// 的处理不如直接写在片元里稳妥（某些 target 下会额外警告或退化成慢路径）。
+/// 所以这里只算数值，裁不裁由 Frag 决定 —— 见下面的 discard。
+float DissolveMargin(float3 posOS)
+{
+    float noise = DissolveNoise(posOS);
+    float threshold = _DissolveAmount * 1.02 - 0.01;
+    return noise - threshold;
+}
+
+/// 溶解边界的亮度：0 = 离得远，1 = 正好在边界上（会被染成发光边）。
+float DissolveEdgeGlow(float amount)
+{
+    return 1.0 - smoothstep(0.0, max(_DissolveEdge, 0.001), amount);
+}
+
 Varyings Vert(Attributes input)
 {
     Varyings o = (Varyings)0;
@@ -168,7 +246,32 @@ half4 Frag(Varyings i) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(i);
 
+    // ---- 溶解裁剪：必须在所有分支之前 ----
+    //
+    // 三个 Pass（描边 / 背面 / 正面）都要裁，否则泡泡溶解时会剩下一圈
+    // 描边外壳和背面膜 —— 那就是"变成碎片"的样子，正是要避免的。
+    // 所以放在 #ifdef 之前，让三个 Pass 共用同一套裁剪。
+    //
+    // 正常泡泡（_DissolveEnabled = 0）时 dissolveEdge 恒为 0，
+    // 下面的 discard 一次都不会触发，不会为这个功能付任何代价。
+    float dissolveEdge = 0.0;
+
+    if (_DissolveEnabled > 0.5)
+    {
+        float dissolveMargin = DissolveMargin(i.positionOS);
+
+        // 低于阈值的像素直接丢掉 —— 这一步才叫"被吃掉"。
+        // discard 写在片元里，比塞进辅助函数里更稳。
+        if (dissolveMargin < 0.0)
+        {
+            discard;
+        }
+
+        dissolveEdge = DissolveEdgeGlow(dissolveMargin);
+    }
+
 #ifdef PAO_OUTLINE
+    // 描边也跟着溶解，但不加发光边（它本来就是个深色外壳）
     return half4(_OutlineColor.rgb, _OutlineColor.a);
 #else
 
@@ -269,6 +372,20 @@ half4 Frag(Varyings i) : SV_Target
     a = max(a, _Opacity * 0.05);
 
     a *= faceFade;
+
+    // ---- 溶解发光边 ----
+    //
+    // 只在溶解进行时叠加（dissolveEdge 为 0 时这段等价于什么都不加）。
+    // 颜色用 _DissolveEdgeColor，默认接近白 —— 和泡泡本身的水色系不冲突，
+    // 看起来像"边缘在发亮、然后消失"，而不是换了种材质。
+    //
+    // 顺带把边缘的 alpha 抬到 1：边界那一圈是"最薄、正在断掉"的地方，
+    // 半透明会让它糊掉，看不出裁切形状。
+    if (dissolveEdge > 0.001)
+    {
+        col += _DissolveEdgeColor.rgb * (dissolveEdge * _DissolveEdgeBoost);
+        a = max(a, dissolveEdge);
+    }
 
     return half4(col, a);
 #endif

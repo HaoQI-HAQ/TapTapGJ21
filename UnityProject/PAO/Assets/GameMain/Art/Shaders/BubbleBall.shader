@@ -60,6 +60,30 @@ Shader "PAO/BubbleBall"
         [Header(Outline)]
         _OutlineColor     ("描边颜色", Color) = (0.10, 0.12, 0.20, 1.0)
         _OutlineWidth     ("描边宽度（米）", Range(0, 0.2)) = 0.012
+
+        // ---- 溶解 ----
+        //
+        // 【为什么做在这个着色器里，而不是单独一个溶解着色器】
+        // 早先到点消失时会把这个材质换成 PAO/BubbleDissolve（一个只有
+        // "底色 + 发光边"的简化着色器）。结果溶解的那一秒泡泡突然变成
+        // 一块扁平的蓝色碎片 —— 彩虹虹彩、卡通高光、边缘光全没了，
+        // 玩家看到的是"泡泡变成了另一个东西"，而不是"泡泡正在消失"。
+        //
+        // 所以溶解改成做在 BubbleBall 里：**除了一处被裁掉，其它像素的着色
+        // 完全没有变**。溶解期间泡泡还是原来那个泡泡。
+        //
+        // _DissolveEnabled 是给 MaterialPropertyBlock 用的开关：
+        //   = 0 时完全跳过裁剪（正常泡泡，一点额外开销都没有）
+        //   = 1 时按 _DissolveAmount 裁
+        // 之所以不能只看 _DissolveAmount > 0，是因为 0 既是"没开始溶"、
+        // 也可能是"刚起步"，用一个显式开关更清楚。
+        [Header(Dissolve)]
+        _DissolveEnabled  ("溶解开关（0=正常泡泡，1=按进度裁）", Range(0, 1)) = 0
+        _DissolveAmount   ("溶解进度（0=完好，1=消失）", Range(0, 1)) = 0
+        _DissolveNoise    ("溶解纹理密度", Range(0.1, 20)) = 5.0
+        _DissolveEdge     ("溶解边缘发光宽度", Range(0, 0.4)) = 0.045
+        _DissolveEdgeColor("溶解边缘颜色", Color) = (1.0, 0.98, 0.96, 1.0)
+        _DissolveEdgeBoost("溶解边缘亮度", Range(0, 6)) = 1.8
     }
 
     SubShader
