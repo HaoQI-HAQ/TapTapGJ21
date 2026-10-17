@@ -497,14 +497,28 @@ namespace PAO
             }
 
             // 交给泡泡自己计时，这样进了地形容器后还能取消掉，
-            // 否则它会在容器里凭空消失
+            // 交给泡泡自己计时，这样进了地形容器后还能取消掉，
+            // 否则它会在容器里凭空消失。
+            //
+            // 滞留（在嘴上）时改用嘴上专用寿命：蓄力花掉的那几秒
+            // 不该算进「嘴上还能待多久」。
+            float lifeSeconds = settings.lifeTime;
+            if (isHeld)
+            {
+                StickyBubbleSettings stickyHeld = settings as StickyBubbleSettings;
+                if (stickyHeld != null && stickyHeld.heldLifeTime > 0f)
+                {
+                    lifeSeconds = stickyHeld.heldLifeTime;
+                }
+            }
+
             if (behaviour != null)
             {
-                behaviour.ScheduleLifeEnd(settings.lifeTime);
+                behaviour.ScheduleLifeEnd(lifeSeconds);
             }
             else
             {
-                Destroy(bubble, settings.lifeTime);
+                Destroy(bubble, lifeSeconds);
             }
         }
 

@@ -30,8 +30,6 @@ namespace PAO.UI.V2
         private UIBubbleTransition loadingTransition;
         private int sceneInitialization;
         private float previousTime;
-        private CursorLockMode previousCursor;
-        private bool previousCursorVisible;
         private bool previousLauncherBlocked;
         private BubbleTypeSwitcher switcher;
         private BubbleLauncher launcher;
@@ -141,7 +139,7 @@ namespace PAO.UI.V2
             ApplyGameplaySettings();
             if (!IsGameplay)
             {
-                Cursor.lockState = CursorLockMode.None; Cursor.visible = true; ShowMenu();
+                ApplyCursorLock(false); ShowMenu();
                 yield return FinishSceneTransition(initialization);
                 yield break;
             }
@@ -251,7 +249,24 @@ namespace PAO.UI.V2
 
         private void LateUpdate()
         {
-            if (IsBlockingGameplay || !IsGameplay) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+            // 光标状态每帧从「是不是游戏内 + 有没有界面开着」重新算出来，
+            // 而不是沿用某个时刻的快照。
+            //
+            // 【为什么不能沿用快照】
+            // 以前 SetPause 把当时的 Cursor.lockState 记下来、ReleasePause 原样写回。
+            // 可暂停、结算、教学这些页面在游戏一开局就会打开，那一刻光标本来就是解锁的，
+            // 于是「暂停 → 继续」就把解锁状态写了回去；而 PlayerController 只在 OnEnable
+            // 锁一次，之后没有任何代码补锁 —— 玩家按一次 Esc 再继续、或者从结算页回到
+            // 游戏，光标就永久留在外面自由漂移，视角却还跟着鼠标转，
+            // 看起来就是「鼠标脱离了游戏」。
+            // 失焦（切到别的窗口）时不写 Cursor：Windows 上反复锁定会让系统光标被拽住，
+            // 玩家反而更难切回游戏。聚焦时 OnApplicationFocus + 这里的每帧补锁会立刻接手。
+            if (Application.isFocused)
+            {
+                bool locked = IsGameplay && pages.Count == 0 && !loading;
+                ApplyCursorLock(locked);
+                if (player != null) player.ReleaseCursorForMenus = !locked;
+            }
             UpdateVisualGuidance();
         }
 
@@ -382,18 +397,24 @@ namespace PAO.UI.V2
         {
             if (!value || paused || !IsGameplay) return;
             paused = true; previousTime = Time.timeScale;
-            previousCursor = Cursor.lockState; previousCursorVisible = Cursor.visible;
+            // 不再记 Cursor.lockState 快照：界面打开时一律解锁，关掉时由 ReleasePause / LateUpdate 重算。
             Time.timeScale = 0;
             if (launcher != null) { previousLauncherBlocked = launcher.InputBlocked; launcher.InputBlocked = true; }
             foreach (Behaviour input in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
             {
                 // Bomb labels use OnGUI, so pausing time or hiding the HUD cannot hide them.
+                // 玩家控制器禁用期间不能再抢光标，否则刚一恢复就又被它锁回去。
                 if (input.enabled && (input is PlayerController ||
                     input is BubbleTypeSwitcher || input is BubbleRideInteractor ||
                     input is BombBubbleManager || input is tiaozhuan))
-                { input.enabled = false; frozenInputs.Add(input); }
+                {
+                    input.enabled = false;
+                    PlayerController playerInput = input as PlayerController;
+                    if (playerInput != null) playerInput.ReleaseCursorForMenus = true;
+                    frozenInputs.Add(input);
+                }
             }
-            Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
+            ApplyCursorLock(false);
         }
 
         private void ReleasePause()
@@ -402,7 +423,25 @@ namespace PAO.UI.V2
             foreach (Behaviour input in frozenInputs) if (input != null) input.enabled = true;
             frozenInputs.Clear(); Time.timeScale = previousTime;
             if (launcher != null) launcher.InputBlocked = previousLauncherBlocked;
-            Cursor.lockState = previousCursor; Cursor.visible = previousCursorVisible; paused = false;
+            paused = false;
+            // 界面全部关掉之后立刻把光标收回游戏，不再回写打开界面时记下的旧状态。
+            bool locked = IsGameplay && pages.Count == 0 && !loading;
+            ApplyCursorLock(locked);
+            if (player != null)
+            {
+                player.ReleaseCursorForMenus = !locked;
+                if (locked) player.LockCursor(); else player.UnlockCursor();
+            }
+        }
+
+        /// <summary>
+        /// 统一的光标开关，唯一真正写 Cursor.lockState 的地方（菜单场景除外）。
+        /// 锁定时顺带隐藏光标；解锁时恢复显示。
+        /// </summary>
+        private static void ApplyCursorLock(bool locked)
+        {
+            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !locked;
         }
 
         private void MoveFocus(int direction)

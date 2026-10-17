@@ -279,7 +279,20 @@ namespace PAO.UI.V2
             {
                 UIPage top = pages[pages.Count - 1];
                 top.NoticeArea.gameObject.SetActive(visible);
-                if (visible) top.NoticeLabel.text = noticeText.text;
+                if (visible)
+                {
+                    // 只在文字变化时重算尺寸，避免暂停期间每帧触发一次布局重建。
+                    bool textChanged = top.NoticeLabel.text != noticeText.text;
+                    top.NoticeLabel.text = noticeText.text;
+                    if (textChanged)
+                    {
+                        // 提示框高度跟随文字：长提示（例如「设置已保存」这种两段文字）
+                        // 在固定高度里会被裁掉尾巴，看起来像只有半句话。
+                        Vector2 areaSize = top.NoticeArea.sizeDelta;
+                        top.NoticeArea.sizeDelta = new Vector2(areaSize.x,
+                            Mathf.Max(64f, top.NoticeLabel.preferredHeight + 24f));
+                    }
+                }
             }
             if (noticeRemaining > 0) UIWidgets.Size(noticeRoot, Mathf.Max(64, noticeText.preferredHeight + 40));
             if (subtitleRoot != null) subtitleRoot.SetAsLastSibling();
