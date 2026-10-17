@@ -12,10 +12,10 @@ namespace PAO.UI.V2
         private Sequence reveal;
         private float ruleWidth;
 
-        public void Configure(bool opening)
+        public void Configure(bool opening, float width = 0)
         {
             ink = gameObject.AddComponent<CanvasGroup>();
-            ruleWidth = opening ? 320 : 260;
+            ruleWidth = width > 0 ? width : opening ? 320 : 260;
             var line = new GameObject("Wordmark rule", typeof(RectTransform), typeof(Image));
             line.layer = 5; line.transform.SetParent(transform, false);
             rule = (RectTransform)line.transform;
@@ -496,6 +496,284 @@ namespace PAO.UI.V2
         {
             GetComponent<Text>().text = UIInput.ControllerActive ? UISettings.Text("左摇杆 / 十字键  选择\nA  确认    B  返回", "Stick / D-pad  Navigate\nA  Confirm    B  Back") :
                 UISettings.Text("方向键 / Tab  选择\nEnter  确认    Esc  返回", "Arrows / Tab  Navigate\nEnter  Confirm    Esc  Back");
+        }
+    }
+
+    // Cover-fit the painted menu sheet behind every control. The illustration stays in place under high contrast:
+    // it is a pale watercolour, so black text keeps its contrast while the page still reads as one painting.
+    public sealed class UIBackdropCover : MonoBehaviour
+    {
+        public Vector2 focus = new Vector2(.5f, .5f);
+        private Image art;
+
+        private void Awake() { art = GetComponent<Image>(); }
+
+        private void LateUpdate()
+        {
+            if (art == null || art.sprite == null) return;
+            RectTransform parent = transform.parent as RectTransform;
+            if (parent == null) return;
+            Vector2 area = parent.rect.size;
+            if (area.x < 1 || area.y < 1) return;
+            float aspect = art.sprite.rect.width / Mathf.Max(1, art.sprite.rect.height);
+            float width = area.x, height = area.y;
+            if (aspect > area.x / area.y) width = area.y * aspect; else height = area.x / aspect;
+            RectTransform rect = (RectTransform)transform;
+            // Centre anchors first: a stretched rect would add the page size on top of sizeDelta.
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+            rect.pivot = new Vector2(.5f, .5f);
+            rect.sizeDelta = new Vector2(width, height);
+            // Slide the excess outside the page so the requested part of the painting stays framed.
+            rect.anchoredPosition = new Vector2((.5f - focus.x) * (width - area.x), (.5f - focus.y) * (height - area.y));
+        }
+    }
+
+    // Poster composition: the wordmark is centred over the upper illustration, the entries sit low on the right,
+    // and both collapse to a centred column when the window is taller than it is wide.
+    public sealed class UIMenuPosterLayout : MonoBehaviour
+    {
+        public Text title;
+        public RectTransform list;
+        public RectTransform prompt;
+        public UIMenuHeroFit fit;
+        private Vector2 previous;
+        private bool narrow;
+
+        public void Configure(Text heading, RectTransform actionList, UIMenuHeroFit hero)
+        {
+            title = heading; list = actionList; fit = hero;
+            previous = Vector2.zero; Apply();
+        }
+
+        public void Refresh() { previous = Vector2.zero; Apply(); }
+
+        private void LateUpdate() { Apply(); }
+
+        private void Apply()
+        {
+            RectTransform page = (RectTransform)transform;
+            Vector2 size = page.rect.size;
+            if (size.x < 1 || size.y < 1) return;
+            bool portrait = size.x / size.y < 1.15f;
+            if (size == previous && portrait == narrow) return;
+            previous = size; narrow = portrait;
+
+            if (title != null)
+            {
+                float width = portrait ? Mathf.Max(120, size.x - 64) : Mathf.Min(920, size.x * .74f);
+                if (fit != null) fit.maximumWidth = width;
+                RectTransform rect = title.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(.5f, portrait ? .78f : .76f);
+                rect.pivot = new Vector2(.5f, .5f); rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(width, portrait ? 280 : 340);
+            }
+            if (list != null)
+            {
+                list.anchorMin = portrait ? new Vector2(.06f, .06f) : new Vector2(.60f, .08f);
+                list.anchorMax = portrait ? new Vector2(.94f, .50f) : new Vector2(.965f, .52f);
+                list.offsetMin = list.offsetMax = Vector2.zero;
+            }
+            if (prompt != null)
+            {
+                RectTransform rect = prompt;
+                rect.anchorMin = rect.anchorMax = new Vector2(.5f, .50f);
+                rect.pivot = new Vector2(.5f, .5f); rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(320, 84);
+            }
+        }
+    }
+
+    // Legacy Text has no letter spacing. This mesh effect pushes every glyph right by its index, so a
+    // short label can occupy the same block width as a long one instead of looking smaller.
+    public sealed class UITextTracking : BaseMeshEffect
+    {
+        public float emWidths = 4f;
+        private float tracking;
+        private Text label;
+
+        public float TargetWidth { get { return label != null ? label.fontSize * emWidths : 0f; } }
+
+        private void LateUpdate()
+        {
+            if (label == null) label = GetComponent<Text>();
+            if (label == null) return;
+            int characters = string.IsNullOrEmpty(label.text) ? 0 : label.text.Length;
+            float natural = label.preferredWidth;
+            float target = label.fontSize * emWidths;
+            float value = characters > 1 && natural > 1f && target > natural
+                ? Mathf.Clamp((target - natural) / (characters - 1), 0f, label.fontSize * 2.2f) : 0f;
+            if (Mathf.Abs(value - tracking) < .01f) return;
+            tracking = value;
+            label.SetVerticesDirty();
+        }
+
+        public override void ModifyMesh(VertexHelper mesh)
+        {
+            if (!IsActive() || Mathf.Approximately(tracking, 0f)) return;
+            if (label == null) label = GetComponent<Text>();
+            // Legacy Text emits four vertices per glyph. Bail out rather than scramble a different layout.
+            if (label == null || label.text == null || mesh.currentVertCount != label.text.Length * 4) return;
+            UIVertex vertex = default;
+            for (int i = 0; i < mesh.currentVertCount; i++)
+            {
+                mesh.PopulateUIVertex(ref vertex, i);
+                vertex.position.x += tracking * (i / 4);
+                mesh.SetUIVertex(vertex, i);
+            }
+        }
+    }
+
+    // Frameless menu row: the whole row eases to the right and a hairline grows under the label on hover
+    // or keyboard focus. Idle rows sit slightly back in tone, so the active entry reads without any box.
+    public sealed class UIMenuRowMotion : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+        IPointerDownHandler, IPointerUpHandler, ISelectHandler, IDeselectHandler
+    {
+        private RectTransform content;
+        private UIGuideGraphic icon;
+        private Text label;
+        private Image rule;
+        private Vector2 home;
+        private Sequence response;
+        private string measuredText;
+        private int measuredSize = -1;
+        private float measuredWidth = -1, textWidth = -1;
+        private float reveal;
+        private bool hovered, focused, pressed, available = true;
+
+        public void Configure(RectTransform row, UIGuideGraphic symbol, Text text, Image underline)
+        {
+            content = row; icon = symbol; label = text; rule = underline;
+            if (content != null) home = content.anchoredPosition;
+            Respond(); Place();
+        }
+
+        private void Update() { RefreshAvailability(); }
+        private void LateUpdate() { Place(); }
+
+        // Without a surface there is no disabled tint, so an unavailable entry is dimmed by hand.
+        private void RefreshAvailability()
+        {
+            Button button = GetComponent<Button>();
+            bool now = button == null || button.IsInteractable();
+            if (now == available) return;
+            available = now; Respond();
+        }
+
+        public void OnPointerEnter(PointerEventData data) { hovered = true; Respond(); }
+        public void OnPointerExit(PointerEventData data) { hovered = pressed = false; Respond(); }
+        public void OnPointerDown(PointerEventData data)
+        { if (data.button == PointerEventData.InputButton.Left) { pressed = true; Respond(); } }
+        public void OnPointerUp(PointerEventData data)
+        { if (data.button == PointerEventData.InputButton.Left) { pressed = false; Respond(); } }
+        public void OnSelect(BaseEventData data) { focused = true; Respond(); }
+        public void OnDeselect(BaseEventData data) { focused = pressed = false; Respond(); }
+
+        private void Respond()
+        {
+            if (response != null) response.Kill(); response = null;
+            if (content == null) return;
+            bool active = available && (hovered || focused);
+            float target = active ? 1f : 0f;
+            float shift = active ? (pressed ? 6 : 12) : 0;
+            float rest = UISettings.Current != null && UISettings.Current.highContrast ? 1f : .78f;
+            float tone = available ? Mathf.Lerp(rest, 1f, target) : .34f;
+
+            if (UISettings.Current == null || UISettings.Current.reducedMotion)
+            {
+                reveal = target;
+                content.anchoredPosition = home + Vector2.right * shift;
+                Tint(tone); Place();
+                return;
+            }
+            response = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
+            response.Join(DOTween.To(() => reveal, value => { reveal = value; Place(); }, target, .2f).SetEase(Ease.OutCubic));
+            response.Join(content.DOAnchorPosX(home.x + shift, .22f).SetEase(Ease.OutCubic));
+            if (label != null) response.Join(label.DOFade(tone, .18f));
+            if (icon != null) response.Join(icon.DOFade(tone, .18f));
+            response.OnKill(() => response = null);
+        }
+
+        private void Tint(float alpha)
+        {
+            if (label != null) { Color tint = label.color; tint.a = alpha; label.color = tint; }
+            if (icon != null) { Color tint = icon.color; tint.a = alpha; icon.color = tint; }
+        }
+
+        private void Place()
+        {
+            if (label == null || rule == null) return;
+            RectTransform area = (RectTransform)label.transform;
+            float availableWidth = Mathf.Max(0, area.rect.width);
+            if (availableWidth < 1) return;
+            if (label.text != measuredText || label.fontSize != measuredSize || !Mathf.Approximately(availableWidth, measuredWidth))
+            {
+                measuredText = label.text; measuredSize = label.fontSize; measuredWidth = availableWidth;
+                UITextTracking tracking = label.GetComponent<UITextTracking>();
+                float natural = tracking != null ? Mathf.Max(tracking.TargetWidth, label.preferredWidth) : label.preferredWidth;
+                textWidth = Mathf.Min(natural + 10, availableWidth);
+            }
+            if (textWidth <= 0) return;
+            RectTransform line = rule.rectTransform;
+            line.anchorMin = line.anchorMax = new Vector2(0, .5f);
+            line.pivot = new Vector2(0, 1);
+            line.anchoredPosition = new Vector2(-4, -label.fontSize * .56f);
+            line.sizeDelta = new Vector2(textWidth * reveal, 2);
+            Color ink = rule.color; ink.a = reveal * .9f; rule.color = ink;
+        }
+    }
+
+    // Small text with a rule that reads as a hyperlink and still shows hover and keyboard focus.
+    public sealed class UILinkUnderline : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+        ISelectHandler, IDeselectHandler
+    {
+        private Text label;
+        private Image rule;
+        private Tween motion;
+        private float reveal = .42f;
+        private string measuredText;
+        private int measuredSize = -1;
+        private float measuredWidth = -1, textWidth = -1;
+        private bool hovered, focused;
+
+        public void Configure(Text text, Image underline) { label = text; rule = underline; Place(); }
+        private void OnEnable() { UISettings.Changed += Place; }
+        private void OnDisable() { UISettings.Changed -= Place; if (motion != null) motion.Kill(); motion = null; }
+        private void LateUpdate() { Place(); }
+
+        public void OnPointerEnter(PointerEventData data) { hovered = true; Respond(true); }
+        public void OnPointerExit(PointerEventData data) { hovered = false; Respond(focused); }
+        public void OnSelect(BaseEventData data) { focused = true; Respond(true); }
+        public void OnDeselect(BaseEventData data) { focused = false; Respond(hovered); }
+
+        private void Respond(bool active)
+        {
+            if (motion != null) motion.Kill(); motion = null;
+            float target = active ? 1 : .42f;
+            if (UISettings.Current == null || UISettings.Current.reducedMotion) { reveal = target; Place(); return; }
+            motion = DOTween.To(() => reveal, value => { reveal = value; Place(); }, target, .18f)
+                .SetEase(Ease.OutCubic).SetUpdate(true).SetLink(gameObject)
+                .OnKill(() => motion = null);
+        }
+
+        private void Place()
+        {
+            if (label == null || rule == null) return;
+            RectTransform area = (RectTransform)label.transform;
+            float available = Mathf.Max(0, area.rect.width);
+            if (available < 1) return;
+            // Text generation is not free: only re-measure when the string, size or box actually changed.
+            if (label.text != measuredText || label.fontSize != measuredSize || !Mathf.Approximately(available, measuredWidth))
+            {
+                measuredText = label.text; measuredSize = label.fontSize; measuredWidth = available;
+                textWidth = Mathf.Min(label.preferredWidth + 10, available);
+            }
+            if (textWidth <= 0) return;
+            RectTransform line = rule.rectTransform;
+            line.anchorMin = line.anchorMax = new Vector2(1, .5f);
+            line.pivot = new Vector2(1, 1);
+            line.sizeDelta = new Vector2(Mathf.Max(1, textWidth * Mathf.Lerp(.42f, 1, reveal)), 2);
+            line.anchoredPosition = new Vector2(0, -label.fontSize * .52f);
+            Color ink = rule.color; ink.a = Mathf.Lerp(.32f, 1, reveal); rule.color = ink;
         }
     }
 }

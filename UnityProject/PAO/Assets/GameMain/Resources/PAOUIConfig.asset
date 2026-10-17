@@ -24,6 +24,7 @@ MonoBehaviour:
   ring: {fileID: 21300000, guid: cd0af2a71ce44c01ad927f2350313b17, type: 3}
   menuArt: {fileID: 21300000, guid: 169436f812e74325af4aac2b38f9465c, type: 3}
   menuPaperArt: {fileID: 21300000, guid: a18807a3a5c847148178ac0a5edc85b4, type: 3}
+  menuBackdrop: {fileID: 21300000, guid: 7c4a1f0b93d24e5cb8a61d2f4c7e90ab, type: 3}
   paperStyle: 0
   abilityIcons:
   - {fileID: 21300000, guid: d2e3f4a5b6c708192a3b4c5d6e7f8091, type: 3}

@@ -69,7 +69,9 @@ namespace PAO.UI.V2
                 theme.ink = theme.text = theme.teal = Color.black;
                 theme.round = null;
             }
-            menuTheme.menuArt = null;
+            // The main menu uses the dedicated painted backdrop; gameplay pages keep the white document stock.
+            menuTheme.menuArt = config.menuBackdrop != null ? config.menuBackdrop :
+                config.menuPaperArt != null ? config.menuPaperArt : config.menuArt;
             menuTheme.chapters = config.chapters; menuTheme.endings = config.endings;
             Config = config; ui = new UIWidgets(config);
             RectTransform canvasRect = ui.Rect("UI Canvas V2", transform);
@@ -301,9 +303,21 @@ namespace PAO.UI.V2
                 var gradient = background.gameObject.AddComponent<UIFluidGradient>();
                 gradient.top = UIDesignPalette.Paper;
                 gradient.bottom = UIDesignPalette.Paper;
-                UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
-                artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
-                artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
+                if (design == UIPageDesign.Menu && Config.menuArt != null)
+                {
+                    // Full-bleed painted backdrop: the wordmark and entries sit straight on the illustration.
+                    Image backdrop = ui.Surface("Menu backdrop", background.transform, Color.white);
+                    backdrop.sprite = Config.menuArt; backdrop.type = Image.Type.Simple;
+                    backdrop.preserveAspect = false; backdrop.raycastTarget = false;
+                    UIWidgets.Stretch(backdrop.rectTransform);
+                    backdrop.gameObject.AddComponent<UIBackdropCover>();
+                }
+                else
+                {
+                    UIPageArtwork artwork = ui.Rect("Page illustration · " + design, background.transform).gameObject.AddComponent<UIPageArtwork>();
+                    artwork.design = design; artwork.color = new Color(UIDesignPalette.Accent(design).r, UIDesignPalette.Accent(design).g, UIDesignPalette.Accent(design).b, .24f);
+                    artwork.raycastTarget = false; UIWidgets.Stretch(artwork.rectTransform);
+                }
             }
             // The atlas design uses clean white stock and black drafting lines.
             RectTransform body = ui.Column("Page", background.transform, compact ? 32 : 24, 16);
