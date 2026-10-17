@@ -200,6 +200,7 @@ namespace PAO
             }
 
             Current = type;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleSwitch, transform.position);
             Refresh();
 
             // 通知外界（HUD 的亮圈就靠这一句跟着变）

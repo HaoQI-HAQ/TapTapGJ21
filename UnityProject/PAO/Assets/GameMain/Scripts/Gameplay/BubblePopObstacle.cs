@@ -171,6 +171,7 @@ namespace PAO
         private void PoppingBubble(Bubble bubble)
         {
             m_Popped = true;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubblePop, bubble.transform.position);
 
             if (m_Log || m_LogTouch)
             {
@@ -218,6 +219,7 @@ namespace PAO
         private void Pop(BubbleRideInteractor interactor)
         {
             m_Popped = true;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubblePop, transform.position);
 
             // EndInteraction 内部会：ExitRide → Explode → 恢复角色控制
             // 于是玩家从破掉的泡泡里掉下去，正是我们要的效果

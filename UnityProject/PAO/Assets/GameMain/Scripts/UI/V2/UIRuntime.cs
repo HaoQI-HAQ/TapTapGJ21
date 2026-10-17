@@ -162,7 +162,8 @@ namespace PAO.UI.V2
             }
             BuildHud();
             foreach (AudioSource audio in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
-                if (audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
+                if (audio.GetComponentInParent<PAO.AV.PAOAudioDirector>() == null &&
+                    audio.GetComponent<UIAudioChannel>() == null) audio.gameObject.AddComponent<UIAudioChannel>().InferChannel();
             if (pending != null)
             {
                 if (UISettings.Current.detailedHints) Toast(T("记录已恢复", "Record restored"));
@@ -329,6 +330,7 @@ namespace PAO.UI.V2
             page.Footer = ui.Row("Actions", body); UIWidgets.Size(page.Footer, 72);
             page.Footer.GetComponent<LayoutElement>().preferredHeight = -1;
             pages.Add(page); page.Show();
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UISoftOpen, Vector3.zero, .6f);
             SetPause(true);
             if (hud != null) hud.gameObject.SetActive(false);
             return page;
@@ -342,6 +344,7 @@ namespace PAO.UI.V2
         private void Pop()
         {
             if (pages.Count == 0) return;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.UIBack, Vector3.zero, .55f);
             UIPage page = pages[pages.Count - 1]; pages.RemoveAt(pages.Count - 1);
             if (page.BeforeClose != null) page.BeforeClose();
             page.Hide(); Destroy(page.gameObject);

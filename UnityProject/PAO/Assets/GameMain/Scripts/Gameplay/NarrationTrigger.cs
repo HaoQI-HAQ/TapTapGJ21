@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace PAO
 {
@@ -31,6 +33,11 @@ namespace PAO
         [Tooltip("正文。太长的话考虑换行，HUD 那个条是窄的")]
         [TextArea(2, 5)]
         [SerializeField] private string m_Text = "";
+
+        [Tooltip("Optional stable narration audio ID; defaults to SceneName/ObjectName")]
+        [SerializeField] private string m_AudioKey = "";
+        [Tooltip("Optional direct voice clip. Otherwise PAOAudio/NarrationLibrary resolves the ID.")]
+        [SerializeField] private AudioClip m_VoiceClip;
 
         [Tooltip("停留时长（秒）。0 = 按字数自动算，负数 = 常驻直到被别的旁白顶掉")]
         [SerializeField] private float m_Duration = 0f;
@@ -109,16 +116,28 @@ namespace PAO
             {
                 // 延迟期间用 unscaled：暂停时（timeScale = 0）不该把计时冻住
                 m_Armed = true;
-                Invoke("Play", m_Delay);
+                StartCoroutine(PlayDelayed());
                 return;
             }
 
             Play();
         }
 
+        private IEnumerator PlayDelayed()
+        {
+            yield return new WaitForSecondsRealtime(m_Delay);
+            if (isActiveAndEnabled && m_Armed) Play();
+        }
+
         private void Play()
         {
             m_Armed = false;
+
+            string audioKey = string.IsNullOrEmpty(m_AudioKey)
+                ? SceneManager.GetActiveScene().name + "/" + name : m_AudioKey;
+            float voiceLength = PAO.AV.PAOAudioDirector.Instance != null
+                ? PAO.AV.PAOAudioDirector.Instance.PlayNarration(audioKey, m_VoiceClip) : 0f;
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.Narration, transform.position);
 
             UI.V2.UIRuntime runtime = UI.V2.UIRuntime.Instance;
 
@@ -135,7 +154,9 @@ namespace PAO
                 return;
             }
 
-            runtime.ShowNarration(m_Speaker, m_Text, m_Duration);
+            float displayDuration = m_Duration == 0f && voiceLength > 0f
+                ? Mathf.Max(voiceLength + .5f, Mathf.Max(5f, m_Text.Length * .12f)) : m_Duration;
+            runtime.ShowNarration(m_Speaker, m_Text, displayDuration);
 
             if (m_Log)
             {
