@@ -28,7 +28,7 @@ MonoBehaviour:
     largeRiseSpeed: 0.3
     drag: 0.8
     useGravity: 0
-    lifeTime: 20
+    lifeTime: 5
     minCost: 2
     maxCost: 12
     stickBreakForce: 500
@@ -37,9 +37,10 @@ MonoBehaviour:
     stickBomb: 1
     rideMinSize: 1
     rideExtraRiseSpeed: 1
-    rideFloatDuration: 6
+    rideFloatDuration: 5
     controlMoveForce: 7
     heldLiftSpeed: 1
+    heldLifeTime: 5
   bouncy:
     prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f, type: 3}
     color: {r: 1, g: 0, b: 0.910151, a: 1}

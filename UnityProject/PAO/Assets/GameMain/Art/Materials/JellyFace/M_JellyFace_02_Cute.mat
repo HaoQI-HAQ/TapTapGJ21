@@ -60,10 +60,10 @@ Material:
     - _DstBlend: 0
     - _EmissionEnabled: 1
     - _Metallic: 1
-    - _NormalScale: 0.2
+    - _NormalScale: 0
     - _Opacity: 1
     - _OutlineEnabled: 0
-    - _OutlineWidth: 0.05
+    - _OutlineWidth: 0
     - _Roughness: 1
     - _SrcBlend: 1
     - _TransparentMode: 0

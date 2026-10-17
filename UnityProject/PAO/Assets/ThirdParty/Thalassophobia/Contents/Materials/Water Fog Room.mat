@@ -33,8 +33,8 @@ Material:
     - _ColorStart4: 2.4
     - _FogDepthMultiplier: 0.35
     - _FogIntensity: 0.85
-    - _FogOffset: 1
-    - _FogSmoothness: 1
+    - _FogOffset: 0.08
+    - _FogSmoothness: -0.93
     - _LightFalloff: 5.5
     - _Smoothness: 2
     - _SpecularHighlights: 1
