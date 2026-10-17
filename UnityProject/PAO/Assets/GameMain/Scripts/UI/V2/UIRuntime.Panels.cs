@@ -59,8 +59,27 @@ namespace PAO.UI.V2
             page.Footer.gameObject.SetActive(false);
             Text title = ui.Label(page.transform, T("暂停", "PAUSED"), 94, Color.black, TextAnchor.MiddleCenter);
             title.name = "Pause overlay title"; title.fontStyle = FontStyle.Bold;
-            Anchor(title.rectTransform, new Vector2(.5f, .91f), Vector2.zero, new Vector2(720, 138), new Vector2(.5f, .5f));
+            // 标题框高度是写死的 138，但字号会乘上设置里的「文字大小」（textScale）。
+            // textScale 一调大（比如 1.2），94 号字变成 114 号，行高约 140 就超过 138，
+            // 而 Label 默认 verticalOverflow = Truncate —— 整行会被裁掉，标题直接消失。
+            // 中文比拉丁字母更容易撞上这条线，看起来就像「中文标题没字体」。
+            // 所以标题必须允许溢出绘制，高度也不写死。
+            title.verticalOverflow = VerticalWrapMode.Overflow;
+            Anchor(title.rectTransform, new Vector2(.5f, .91f), Vector2.zero, new Vector2(720, 180), new Vector2(.5f, .5f));
             title.transform.SetAsLastSibling();
+            // 提示条（Toast）显式摆到左下角。
+            // 暂停页把 Page 的 VerticalLayoutGroup 关掉了，凡是靠它排版的子物体都不会
+            // 再被摆放 —— NoticeArea 会停在 RectTransform 默认的 100×100、屏幕正中央，
+            // 提示文字被这个尺寸挤成两行还截断，看起来就是一个压在角色身上的怪弹窗。
+            // 其余页面仍然交给布局组排版，这里只处理暂停页。
+            RectTransform noticeArea = page.NoticeArea;
+            if (noticeArea != null)
+            {
+                noticeArea.anchorMin = noticeArea.anchorMax = Vector2.zero;
+                noticeArea.pivot = Vector2.zero;
+                noticeArea.anchoredPosition = new Vector2(32f, 32f);
+                noticeArea.sizeDelta = new Vector2(Mathf.Min(560f, Mathf.Max(240f, safeRoot.rect.width - 64f)), 72f);
+            }
             panel.gameObject.AddComponent<UIPauseReveal>().Configure();
             Finish(page);
         }
