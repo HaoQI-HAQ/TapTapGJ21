@@ -23,39 +23,112 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Cube:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ExpressionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OpacityMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoughnessMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlphaClip: 0
+    - _Ambient: 0.6
+    - _AmbientBoost: 1.25
+    - _CoreBoost: 2.6
+    - _CoreSolid: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DirectBoost: 0.55
+    - _DissolveAmount: 0
+    - _DstBlend: 0
+    - _EdgeIntensity: 3.2
+    - _EdgeSoftness: 0.62
+    - _EdgeWidth: 0.055
+    - _EmissionEnabled: 0
     - _EnvIntensity: 0.92
     - _FlowSpeed: 0.35
+    - _GlowStrength: 0.55
+    - _GlowWidth: 0.45
+    - _GrainScale: 22
+    - _GrainStrength: 0.22
+    - _GrainStretch: 1.45
     - _Iridescence: 3.56
     - _IridescenceScale: 6.3
+    - _Metallic: 1
+    - _NoiseScale: 8
+    - _NoiseSoftness: 0.22
+    - _NormalScale: 1
     - _NormalWobble: 0.18
     - _Opacity: 1
+    - _OutlineEnabled: 0
     - _OutlineWidth: 0.003
+    - _Radius: 1
     - _RimIntensity: 0
     - _RimPower: 7.5
+    - _RimStrength: 0.9
     - _RimThreshold: 0.62
+    - _Roughness: 1
+    - _ShadowSoft: 0.55
     - _Spec2Intensity: 1.44
     - _SpecIntensity: 0.7
     - _SpecPower: 1
+    - _SpecStrength: 1.1
     - _SpecThreshold: 0.97
+    - _SphereAmount: 1
+    - _SrcBlend: 1
     - _ThicknessNoise: 0.98
     - _ToonSoftness: 0.042
     - _ToonSteps: 2.1
     - _Transmission: 2
+    - _TransparentMode: 0
+    - _UseOpacityMap: 0
+    - _WobbleAmp: 0.06
     - _WobbleAmplitude: 0.03
     - _WobbleFrequency: 0.7
     - _WobbleSpeed: 1.2
+    - _ZWrite: 1
     m_Colors:
+    - _AmbientTint: {r: 0.52, g: 0.6399999, b: 0.8, a: 1}
     - _BaseColor: {r: 0.047481313, g: 0.7646755, b: 0.9150943, a: 1}
+    - _EdgeColor: {r: 1, g: 0.97999996, b: 0.96, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EnvColor: {r: 1, g: 0, b: 0.7058821, a: 1}
+    - _ExpressionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FadeTint: {r: 0.72, g: 0.88, b: 1, a: 1}
+    - _GlowColor: {r: 1, g: 1, b: 1, a: 1}
     - _IridColorA: {r: 0.45, g: 0.95, b: 0.85, a: 1}
     - _IridColorB: {r: 1, g: 0.62, b: 0.92, a: 1}
+    - _LightDir: {r: 0, g: 0.6, b: 0.7, a: 1}
     - _OutlineColor: {r: 0.04705883, g: 0.76470596, b: 0.91372555, a: 0.7294118}
+    - _RimColor: {r: 1, g: 0.92, b: 0.94, a: 1}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SpecOffset: {r: 0, g: 0.19999996, b: 0, a: 0}
+    - _Tint: {r: 0.72, g: 0.9, b: 1, a: 1}
     - _TransmissionTint: {r: 0.04705883, g: 0.76470596, b: 0.91372555, a: 1}
   m_BuildTextureStacks: []
