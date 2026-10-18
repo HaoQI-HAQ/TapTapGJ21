@@ -5813,7 +5813,7 @@ namespace PAO.EditorTools
                         if (d < best) best = d;
                     }
 
-                    if (best < 8f)
+                    if (best < 16f)
                     {
                         Object.DestroyImmediate(all[i].gameObject);
                         removed++;
@@ -5828,7 +5828,7 @@ namespace PAO.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            Debug.Log("[Wengjie] 通透处理：清掉主路 8 米内海草 " + removed + " 丛，雾 0.006→0.0035，环境光 0.65→0.85");
+            Debug.Log("[Wengjie] 通透处理：清掉主路 16 米内海草 " + removed + " 丛，雾 0.006→0.0035，环境光 0.65→0.85");
         }
     }
 }
@@ -6396,6 +6396,223 @@ namespace PAO.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("[Wengjie] 机关已调成超级弹：" + tuned + " 组（弹簧 5000 / 阻尼 4 / 弹性 1.0 / 连续碰撞）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 头顶水面 + 地面焦散：
+    ///   头顶：一整块 Water Surface 铺在 y=78，从水下往上看就是晃动的波光
+    ///   地面：Caustics 投影器放在各层地面上方 6 米，朝下照
+    /// </summary>
+    public static class WengjieWaterDetail
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kWaterPath = "Assets/ThirdParty/Thalassophobia/Contents/Prefabs/Water Surface.prefab";
+        private const string kCausticsPath = "Assets/ThirdParty/Thalassophobia/Contents/Prefabs/Caustics.prefab";
+        private const string kRoot = "Wengjie_WaterDetail";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 头顶水面+地面焦散", priority = 134)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            GameObject waterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(kWaterPath);
+            GameObject causticsPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(kCausticsPath);
+            if (waterPrefab == null) { Debug.LogError("[Wengjie] 找不到 Water Surface"); return; }
+
+            // ---------- 头顶水面：整张铺满 ----------
+            GameObject sky = (GameObject)PrefabUtility.InstantiatePrefab(waterPrefab);
+            sky.name = "Water_Overhead";
+            SceneManager.MoveGameObjectToScene(sky, scene);
+            sky.transform.SetParent(root.transform, true);
+            sky.transform.position = new Vector3(0f, 78f, 110f);
+            sky.transform.rotation = Quaternion.Euler(180f, 0f, 0f);   // 翻转，从下面才看得见
+            sky.transform.localScale = new Vector3(9f, 1f, 7f);        // 放大约 9 倍覆盖全图
+
+            // ---------- 地面焦散 ----------
+            Vector3[] groundSpots =
+            {
+                new Vector3(0f, 6f, -16f),    // 河岸
+                new Vector3(38f, 12f, 67f),   // 坡道
+                new Vector3(0f, 18f, 45f),    // 村台
+                new Vector3(0f, 18f, 110f),   // 街市
+                new Vector3(0f, 32f, 130f),   // 屋顶
+                new Vector3(0f, 40f, 200f),   // 井
+            };
+
+            int caustics = 0;
+            if (causticsPrefab != null)
+            {
+                for (int i = 0; i < groundSpots.Length; i++)
+                {
+                    GameObject c = (GameObject)PrefabUtility.InstantiatePrefab(causticsPrefab);
+                    c.name = "Caustics_" + i;
+                    SceneManager.MoveGameObjectToScene(c, scene);
+                    c.transform.SetParent(root.transform, true);
+                    c.transform.position = groundSpots[i];
+                    c.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                    c.transform.localScale = Vector3.one * 4f;
+                    caustics++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 头顶水面 1 块（y=78 倒转）+ 地面焦散 " + caustics + " 处");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 地面焦散（不依赖 Decal）：用带焦散贴图的半透明面片平铺在地面上，
+    /// 加法混合，看起来就是光斑打在石头上的样子。
+    /// 比方向光 cookie 准确（可以随便放多处），比 Decal 省事（不用改渲染管线）。
+    /// </summary>
+    public static class WengjieGroundCaustics
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kTexPath = "Assets/GameMain/Art/Materials/T_Caustics_36.PNG";
+        private const string kMatPath = "Assets/GameMain/Art/Materials/M_Wengjie_GroundCaustics.mat";
+        private const string kRoot = "Wengjie_GroundCaustics";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 地面焦散（面片）", priority = 135)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            // ---------- 材质 ----------
+            Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(kTexPath);
+            Material mat = AssetDatabase.LoadAssetAtPath<Material>(kMatPath);
+
+            if (mat == null)
+            {
+                Shader shader = Shader.Find("Legacy Shaders/Particles/Additive");
+                if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
+                if (shader == null) shader = Shader.Find("Sprites/Default");
+                mat = new Material(shader);
+                mat.name = "M_Wengjie_GroundCaustics";
+                if (tex != null) mat.mainTexture = tex;
+                mat.mainTextureScale = new Vector2(18f, 18f);
+                mat.mainTextureOffset = Vector2.zero;
+                mat.renderQueue = 3000;
+                AssetDatabase.CreateAsset(mat, kMatPath);
+            }
+            if (tex != null && mat.mainTexture == null) mat.mainTexture = tex;
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            Vector3[] spots =
+            {
+                new Vector3(0f, 0.06f, -16f),
+                new Vector3(38f, 6.6f, 67f),
+                new Vector3(0f, 12.6f, 45f),
+                new Vector3(0f, 12.6f, 110f),
+                new Vector3(0f, 26.6f, 130f),
+                new Vector3(0f, 34.6f, 200f),
+            };
+
+            float[] sizes = { 14f, 10f, 22f, 24f, 14f, 26f };
+
+            for (int i = 0; i < spots.Length; i++)
+            {
+                var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                quad.name = "Caustic_Quad_" + i;
+                DestroyCollider(quad);
+                quad.transform.SetParent(root.transform, false);
+                quad.transform.position = spots[i];
+                quad.transform.rotation = Quaternion.Euler(90f, i * 37f, 0f);
+                quad.transform.localScale = Vector3.one * sizes[i];
+                quad.GetComponent<Renderer>().sharedMaterial = mat;
+            }
+
+            // 旧的失效方向光 Caustics 清掉
+            int removed = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int k = all.Length - 1; k >= 0; k--)
+                {
+                    if (!all[k].name.StartsWith("Caustics_", System.StringComparison.Ordinal)) continue;
+                    if (all[k].GetComponent<Light>() == null) continue;
+                    Object.DestroyImmediate(all[k].gameObject);
+                    removed++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 地面焦散已铺：" + spots.Length + " 处（加法混合面片），清掉失效方向光 " + removed + " 个");
+        }
+
+        private static void DestroyCollider(GameObject go)
+        {
+            Collider c = go.GetComponent<Collider>();
+            if (c != null) Object.DestroyImmediate(c);
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>头顶水面改成 2×4 拼接：每块均匀放大 10 倍（不拉伸 UV），拼成 200×400 覆盖全图。</summary>
+    public static class WengjieWaterGrid
+    {
+        private const string kPrefab = "Assets/ThirdParty/Thalassophobia/Contents/Prefabs/Water Surface.prefab";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 水面拼接", priority = 136)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene("Assets/GameMain/Scenes/wengjie.unity", OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find("Wengjie_WaterDetail");
+            if (old != null) Object.DestroyImmediate(old);
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(kPrefab);
+            if (prefab == null) { Debug.LogError("[Wengjie] 找不到 Water Surface"); return; }
+
+            var root = new GameObject("Wengjie_WaterDetail");
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            int n = 0;
+            for (int ix = 0; ix < 2; ix++)
+            {
+                for (int iz = 0; iz < 4; iz++)
+                {
+                    GameObject w = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                    SceneManager.MoveGameObjectToScene(w, scene);
+                    w.transform.SetParent(root.transform, true);
+                    w.name = "Water_" + ix + "_" + iz;
+                    w.transform.rotation = Quaternion.identity;
+                    w.transform.position = new Vector3(-50f + ix * 100f, 86f, -25f + iz * 100f);
+                    w.transform.localScale = Vector3.one * 10f;   // 均匀缩放，UV 不拉伸
+                    n++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+            Debug.Log("[Wengjie] 水面已改成拼接：" + n + " 块（均匀 10 倍，覆盖 200×400）");
         }
     }
 }
