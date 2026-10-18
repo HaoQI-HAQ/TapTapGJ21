@@ -276,7 +276,8 @@ namespace PAO.UI.V2
                 goalCue.anchoredPosition = position; goalSymbol.Symbol = clear ? UIGuideSymbol.Goal : UIGuideSymbol.Arrow;
                 goalSymbol.rectTransform.localRotation = clear ? Quaternion.identity : Quaternion.Euler(0, 0, heading);
                 // A quiet direction cue; full destination detail is available in Help.
-                goalHalo.color = new Color(Config.teal.r, Config.teal.g, Config.teal.b, UISettings.Current.highContrast ? 1 : .8f);
+                goalHalo.color = new Color(Config.teal.r, Config.teal.g, Config.teal.b,
+                    UISettings.Current != null && UISettings.Current.highContrast ? 1 : .8f);
             }
 
             interactionCues.RemoveAll(cue => cue.owner == null || !cue.owner.gameObject.activeInHierarchy ||
@@ -300,9 +301,14 @@ namespace PAO.UI.V2
                 if (chapterGoal != null && best.owner.transform == chapterGoal) goalCue.gameObject.SetActive(false);
             }
 
-            tutorialCue.gameObject.SetActive(tutorialRemaining > 0 && (!pulseIsTutorial || UISettings.Current.tutorials));
+            // 引导控件可能还没建出来（例如直接从编辑器 Play 关卡、引导初始化中断）。
+            // 缺了就跳过，别每帧抛空引用——那会把整个 UIRuntime 的 Update 链打断。
+            if (tutorialCue == null) return;
+            tutorialCue.gameObject.SetActive(tutorialRemaining > 0 &&
+                (UISettings.Current == null || !pulseIsTutorial || UISettings.Current.tutorials));
             if (tutorialCue.gameObject.activeSelf)
             {
+                if (tutorialKey == null || tutorialSymbol == null) { tutorialCue.gameObject.SetActive(false); return; }
                 tutorialKey.root.gameObject.SetActive(false);
                 if (tutorialAction >= 0) SetGuideKey(tutorialKey, tutorialAction);
                 float width = tutorialAction < 0 ? 80 : tutorialKey.root.sizeDelta.x + 96;
@@ -312,7 +318,7 @@ namespace PAO.UI.V2
                 if (tutorialAction == UIInput.Forward && UIInput.Move().sqrMagnitude > .01f) tutorialRemaining = Mathf.Min(tutorialRemaining, .5f);
                 tutorialRemaining -= Time.unscaledDeltaTime;
                 float alpha = Mathf.Clamp01(tutorialRemaining / .4f);
-                tutorialGroup.alpha = alpha;
+                if (tutorialGroup != null) tutorialGroup.alpha = alpha;
             }
         }
         private void ClearVisualGuidance()

@@ -48,7 +48,9 @@ Shader "PAO/Sunshafts"
 
             Blend SrcAlpha One     // 加法混合（带 alpha 权重）
             ZWrite Off
-            ZTest Always           // 光柱风格化：永远画在最上层，不被水面顶盖挡住
+            // 只做「场景里的光」：正常被地形/角色/建筑遮挡，不做全屏滤镜。
+            // （水面顶盖材质改成 ZWrite Off + 队列 2999，所以不会再挡光柱。）
+            ZTest LEqual
             Cull Off
 
             HLSLPROGRAM

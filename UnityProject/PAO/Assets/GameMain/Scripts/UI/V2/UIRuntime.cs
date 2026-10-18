@@ -60,6 +60,10 @@ namespace PAO.UI.V2
 
         public void Initialize(UIConfig config)
         {
+            // 直接从编辑器 Play 某个关卡时（不经过主菜单），UISettings 可能还没初始化。
+            // 所有 UI 代码都默认它存在，这里兜底，避免字幕/引导一读就被空引用打断。
+            if (UISettings.Current == null) UISettings.Initialize();
+
             Instance = this; gameplayTheme = Instantiate(config); gameplayTheme.name = "Monochrome gameplay theme";
             menuTheme = Instantiate(config); menuTheme.name = "Document menu theme";
             foreach (UIConfig theme in new[] { gameplayTheme, menuTheme })
