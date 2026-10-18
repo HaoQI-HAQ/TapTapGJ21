@@ -28,6 +28,9 @@ namespace PAO
         [Tooltip("掉到这个高度以下就重生（米）")]
         [SerializeField] private float m_KillHeight = -12f;
 
+        [Tooltip("勾上后，判定高度 = 本物体所在高度 + 上面的 Kill Height。把深渊做成预制体随处摆时用这个")]
+        [SerializeField] private bool m_RelativeToThisHeight = false;
+
         [Tooltip("连续低于判定高度多久才重生（秒）。给一点缓冲，避免边缘试探时误触发")]
         [SerializeField] private float m_GraceTime = 0.35f;
 
@@ -43,6 +46,12 @@ namespace PAO
         private Vector3 m_FallbackSpawn;
         private Quaternion m_FallbackRotation = Quaternion.identity;
         private float m_BelowTime;
+
+        /// <summary>当前的判定高度。相对模式下跟着本物体的高度走。</summary>
+        public float CurrentKillHeight
+        {
+            get { return m_RelativeToThisHeight ? transform.position.y + m_KillHeight : m_KillHeight; }
+        }
 
         private void Start()
         {
@@ -66,7 +75,7 @@ namespace PAO
                 return;
             }
 
-            if (m_Player.transform.position.y > m_KillHeight)
+            if (m_Player.transform.position.y > CurrentKillHeight)
             {
                 m_BelowTime = 0f;
                 return;
@@ -97,10 +106,11 @@ namespace PAO
         }
 
         /// <summary>由搭建脚本调用，写入判定高度和重生点。</summary>
-        public void Configure(float killHeight, Transform spawnPoint)
+        public void Configure(float killHeight, Transform spawnPoint, bool relativeToThisHeight = false)
         {
             m_KillHeight = killHeight;
             m_SpawnPoint = spawnPoint;
+            m_RelativeToThisHeight = relativeToThisHeight;
         }
     }
 }

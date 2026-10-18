@@ -188,6 +188,19 @@ namespace PAO
         /// </summary>
         public bool CursorWanted { get { return m_CursorLockDesired && !ReleaseCursorForMenus; } }
 
+        /// <summary>
+        /// 演出期间临时锁住移动和视角（门边镜头切换会设它）。
+        ///
+        /// 【和 UIInput.Blocked 的区别】
+        /// Blocked 是整套 UI 输入都被面板挡住；这里只停玩家自己，
+        /// 时间、其他机关、UI 都照常。锁住时光标保持原状。
+        ///
+        /// 【为什么在 Update 里提前 return】
+        /// 门边镜头显示的是另一台摄像机，玩家在画面外走开很难看。
+        /// 不移动、不转视角，切回来时位置和朝向完全没变。
+        /// </summary>
+        public bool ControlLocked { get; set; }
+
         private bool m_CursorLockDesired;       // Esc / 菜单解锁后会变 false
         private int m_CursorRelockAttempts;
         private float m_NextCursorRelockTime;
@@ -318,6 +331,14 @@ namespace PAO
         {
             if (PAO.UI.V2.UIInput.Blocked) return;
             UpdateCursorLock();
+
+            // 门边镜头等演出期间：位置和视角都不动，切回来才不会跳。
+            if (ControlLocked)
+            {
+                HasMoveInput = false;
+                return;
+            }
+
             UpdateLookInput();
             UpdateMove();
         }

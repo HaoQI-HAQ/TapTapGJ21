@@ -22,31 +22,34 @@ Shader "PAO/UnderwaterCeiling"
     Properties
     {
         [Header(Color)]
-        _HorizonColor     ("远处 / 掠射水色", Color) = (0.09, 0.29, 0.42, 1)
-        _SurfaceColor     ("水面本体色",       Color) = (0.38, 0.78, 0.93, 1)
-        _WindowColor      ("正上方透光色",     Color) = (0.80, 0.96, 1.00, 1)
-        _RippleColor      ("波纹亮线色",       Color) = (1.00, 1.00, 1.00, 1)
-        _SkirtBottomColor ("裙边底部色",       Color) = (0.02, 0.08, 0.14, 1)
-
-        [Header(Window)]
-        _WindowPower     ("天窗集中程度（越大越只在正上方）", Range(0.5, 8)) = 2.2
-        _WindowStrength  ("天窗强度",                         Range(0, 1))   = 0.85
+        _DeepColor     ("深水 / 远处色",                    Color) = (0.02, 0.12, 0.34, 1)
+        _ShallowColor  ("品牌蓝（CartoonWater 的 Shallow）", Color) = (0.00, 0.393, 0.992, 1)
+        _LightColor    ("天顶透光色",                        Color) = (0.72, 0.93, 1.00, 1)
+        _RippleColor   ("波纹色（原版是白）",                Color) = (1.00, 1.00, 1.00, 1)
+        _FoamColor     ("泡沫色（原版是白）",                Color) = (1.00, 1.00, 1.00, 1)
 
         [Header(Ripple)]
-        _RippleScale     ("波纹密度（细胞 / 米）", Range(0.02, 2))  = 0.20
-        _RippleSpeed     ("波纹速度",             Range(0, 3))     = 0.35
-        _RippleStrength  ("波纹强度",             Range(0, 2))     = 0.45
-        _RippleWidth     ("亮线宽度",             Range(0.01, 0.8)) = 0.30
-        _RippleFadeStart ("波纹开始淡出的距离（米）", Float) = 40
-        _RippleFadeEnd   ("波纹完全消失的距离（米）", Float) = 150
+        _RippleTiling    ("波纹 UV 缩放（越小格子越大）", Range(0.001, 0.5)) = 0.08
+        _RippleDensity   ("Voronoi 细胞密度",             Range(0.1, 40))    = 4
+        _RippleSpeed     ("滚动速度",                     Range(0, 4))       = 1.5
+        _RippleSlimness  ("锐利度（原版 5.1）",           Range(0.5, 14))    = 5.1
+        _RippleAlpha     ("波纹强度（原版 1.26）",        Range(0, 3))       = 1.26
+        _ShearStrength   ("径向扭曲强度",                 Range(0, 0.05))    = 0.003
+        _RippleFadeStart ("波纹开始淡出的距离（米）", Float) = 60
+        _RippleFadeEnd   ("波纹完全消失的距离（米）", Float) = 200
 
-        [Header(Swell)]
-        _SwellScale    ("大起伏空间频率（越小波长越长）", Range(0.001, 0.5)) = 0.055
-        _SwellStrength ("大起伏压暗幅度",                Range(0, 1))        = 0.68
+        [Header(Foam)]
+        _FoamScale    ("泡沫密度（越小块越大）", Range(0.001, 2)) = 0.25
+        _FoamSpeed    ("泡沫移动速度",           Float) = 0.6
+        _FoamCutoff   ("泡沫阈值",               Range(0, 1)) = 0.62
+        _FoamStrength ("泡沫强度",               Range(0, 1)) = 0.28
+
+        [Header(Window)]
+        _WindowPower ("天顶收敛快慢（越大越集中在正上方）", Range(0.5, 8)) = 2.6
 
         [Header(Fade)]
-        _FadeStart ("开始收敛到远处水色的距离（米）", Float) = 90
-        _FadeEnd   ("完全收敛的距离（米）",           Float) = 240
+        _FadeStart ("开始收敛到深水色的距离（米）", Float) = 150
+        _FadeEnd   ("完全收敛的距离（米）",         Float) = 320
 
         [Header(Misc)]
         _Dither ("色带打散强度", Range(0, 0.02)) = 0.004
