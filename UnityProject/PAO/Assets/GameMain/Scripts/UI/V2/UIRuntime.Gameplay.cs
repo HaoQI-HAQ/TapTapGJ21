@@ -177,36 +177,50 @@ namespace PAO.UI.V2
         {
             if (string.IsNullOrWhiteSpace(text)) { HideNarration(); return; }
             if (hudMessages == null) return;
-            if (subtitleRoot == null)
-            {
-                subtitleRoot = ui.Column("Narration popup", hudMessages, 18, 6);
-                AddHudBacking(subtitleRoot);
-                subtitleRoot.gameObject.AddComponent<UISubtitleBackground>().Configure(Color.black);
-                narrationSpeaker = ui.Label(subtitleRoot, "", 20, Color.white, TextAnchor.MiddleCenter);
-                narrationSpeaker.fontStyle = FontStyle.Bold;
-                subtitleText = ui.Label(subtitleRoot, "", 30, Color.white, TextAnchor.MiddleCenter);
-                subtitleText.lineSpacing = 1.12f;
-                subtitleMotion = subtitleRoot.gameObject.AddComponent<UICinematicSubtitleMotion>();
-                subtitleMotion.Configure(subtitleText, narrationSpeaker);
-                Outline textEdge = subtitleText.gameObject.AddComponent<Outline>();
-                textEdge.effectColor = new Color(0, 0, 0, .92f);
-                textEdge.effectDistance = new Vector2(1, -1);
-                Shadow textShadow = subtitleText.gameObject.AddComponent<Shadow>();
-                textShadow.effectColor = new Color(0, 0, 0, .72f);
-                textShadow.effectDistance = new Vector2(0, -2);
-                subtitleRoot.SetAsLastSibling();
-            }
+            EnsureNarrationRoot();
             narrationSpeaker.text = speaker;
             // A generic narrator tag adds no information to a cinematic subtitle.
             bool namedSpeaker = !string.IsNullOrWhiteSpace(speaker) && speaker != "旁白" &&
                 !string.Equals(speaker, "Narrator", StringComparison.OrdinalIgnoreCase);
             narrationSpeaker.gameObject.SetActive(namedSpeaker);
-            float revealDuration = subtitleMotion.Present(text);
+            float revealDuration = subtitleMotion != null ? subtitleMotion.Present(text) : 0;
             subtitleExitImmediately = duration > 0 && duration <= .2f;
             subtitleUntil = duration < 0 ? float.PositiveInfinity : Time.unscaledTime +
                 (duration > 0 ? duration : revealDuration + Mathf.Max(5, text.Length * .12f));
             RefreshNarration();
             PositionGameplayHud();
+        }
+
+        /// <summary>
+        /// 字幕控件（含 CanvasGroup / 动画组件）可能被 UI 重建或场景切换销毁。
+        /// 每次显示前检查：缺了哪个就整组重建，避免“字幕不见了”。
+        /// </summary>
+        private void EnsureNarrationRoot()
+        {
+            if (subtitleRoot != null && subtitleMotion != null && subtitleText != null && narrationSpeaker != null)
+            {
+                subtitleMotion.Configure(subtitleText, narrationSpeaker);
+                return;
+            }
+
+            if (subtitleRoot != null) Destroy(subtitleRoot.gameObject);
+
+            subtitleRoot = ui.Column("Narration popup", hudMessages, 18, 6);
+            // 电影字幕：不铺底板，只留文字 —— 可读性交给 Outline + Shadow。
+            // 底板会把字幕从画面里「浮起来」变成对话框，破坏沉浸感。
+            narrationSpeaker = ui.Label(subtitleRoot, "", 20, Color.white, TextAnchor.MiddleCenter);
+            narrationSpeaker.fontStyle = FontStyle.Bold;
+            subtitleText = ui.Label(subtitleRoot, "", 30, Color.white, TextAnchor.MiddleCenter);
+            subtitleText.lineSpacing = 1.12f;
+            subtitleMotion = subtitleRoot.gameObject.AddComponent<UICinematicSubtitleMotion>();
+            subtitleMotion.Configure(subtitleText, narrationSpeaker);
+            Outline textEdge = subtitleText.gameObject.AddComponent<Outline>();
+            textEdge.effectColor = new Color(0, 0, 0, .92f);
+            textEdge.effectDistance = new Vector2(1, -1);
+            Shadow textShadow = subtitleText.gameObject.AddComponent<Shadow>();
+            textShadow.effectColor = new Color(0, 0, 0, .72f);
+            textShadow.effectDistance = new Vector2(0, -2);
+            subtitleRoot.SetAsLastSibling();
         }
 
         public void HideNarration()
@@ -219,7 +233,8 @@ namespace PAO.UI.V2
         private void RefreshNarration()
         {
             if (subtitleRoot == null) return;
-            bool enabled = UISettings.Current.subtitles && !IsBlockingGameplay;
+            UISettingsData settings = UISettings.Current;
+            bool enabled = (settings == null || settings.subtitles) && !IsBlockingGameplay;
             bool withinTime = Time.unscaledTime < subtitleUntil;
             if (!enabled)
             {
@@ -234,11 +249,11 @@ namespace PAO.UI.V2
             else if (subtitleMotion != null)
             {
                 if (subtitleRoot.gameObject.activeSelf && !subtitleMotion.IsDismissing)
-                    subtitleMotion.Dismiss(subtitleExitImmediately || UISettings.Current.reducedMotion);
+                    subtitleMotion.Dismiss(subtitleExitImmediately || (settings != null && settings.reducedMotion));
             }
             else subtitleRoot.gameObject.SetActive(false);
             float height = 36 + ResourceTextHeight(subtitleText);
-            if (narrationSpeaker.gameObject.activeSelf) height += ResourceTextHeight(narrationSpeaker) + 6;
+            if (narrationSpeaker != null && narrationSpeaker.gameObject.activeSelf) height += ResourceTextHeight(narrationSpeaker) + 6;
             UIWidgets.Size(subtitleRoot, Mathf.Max(90, height));
         }
 
@@ -250,7 +265,8 @@ namespace PAO.UI.V2
 
         private void UpdateTransientUI()
         {
-            if (!UISettings.Current.detailedHints)
+            UISettingsData settings = UISettings.Current;
+            if (settings != null && !settings.detailedHints)
             {
                 tutorialNotices.Clear();
                 if (noticeIsTutorial) noticeRemaining = 0;
@@ -279,7 +295,20 @@ namespace PAO.UI.V2
             {
                 UIPage top = pages[pages.Count - 1];
                 top.NoticeArea.gameObject.SetActive(visible);
-                if (visible) top.NoticeLabel.text = noticeText.text;
+                if (visible)
+                {
+                    // 只在文字变化时重算尺寸，避免暂停期间每帧触发一次布局重建。
+                    bool textChanged = top.NoticeLabel.text != noticeText.text;
+                    top.NoticeLabel.text = noticeText.text;
+                    if (textChanged)
+                    {
+                        // 提示框高度跟随文字：长提示（例如「设置已保存」这种两段文字）
+                        // 在固定高度里会被裁掉尾巴，看起来像只有半句话。
+                        Vector2 areaSize = top.NoticeArea.sizeDelta;
+                        top.NoticeArea.sizeDelta = new Vector2(areaSize.x,
+                            Mathf.Max(64f, top.NoticeLabel.preferredHeight + 24f));
+                    }
+                }
             }
             if (noticeRemaining > 0) UIWidgets.Size(noticeRoot, Mathf.Max(64, noticeText.preferredHeight + 40));
             if (subtitleRoot != null) subtitleRoot.SetAsLastSibling();
@@ -289,7 +318,8 @@ namespace PAO.UI.V2
 
         public void ShowTutorial(string id, string title, string body)
         {
-            if (hud == null || !UISettings.Current.tutorials || UIRunState.Progress.tutorialsSeen.Contains(id)) return;
+            if (hud == null || (UISettings.Current != null && !UISettings.Current.tutorials) ||
+                UIRunState.Progress.tutorialsSeen.Contains(id)) return;
             UIRunState.Progress.tutorialsSeen.Add(id);
             ShowVisualTutorial(id);
         }
@@ -332,7 +362,7 @@ namespace PAO.UI.V2
         public void CollectMemory(MemoryEntry memory)
         {
             if (!UIRunState.AddMemory(memory)) return;
-            if (UISettings.Current.detailedHints) Toast(T("获得意识碎片 · ", "Memory found · ") + memory.title);
+            if (UISettings.Current != null && UISettings.Current.detailedHints) Toast(T("获得意识碎片 · ", "Memory found · ") + memory.title);
             else PulseVisualCue(UIGuideSymbol.Memory);
         }
 

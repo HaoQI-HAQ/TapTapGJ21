@@ -1,0 +1,2848 @@
+{
+  "TBox_Dungeon_Stone": {
+    "aabbMax": {
+      "X": 0.6625980138778687,
+      "Y": 1.0839799642562866,
+      "Z": 0.5297849774360657
+    },
+    "aabbMin": {
+      "X": -0.6625980138778687,
+      "Y": -0.012160999700427055,
+      "Z": -0.5483400225639343
+    },
+    "attackPower": 0,
+    "bfres": "Obj_TBox_Dungeon_Stone",
+    "boundingForTraverse": 1.09614098072052,
+    "bugMask": 3,
+    "elink": "TBox_Dungeon",
+    "generalLife": 100,
+    "instSize": 114496,
+    "lookAtOffsetY": 0.20000000298023224,
+    "mainModel": "TBox_Dungeon_Stone",
+    "name": "TBox_Dungeon_Stone",
+    "pictureBookLiveSpot1": 20,
+    "pictureBookLiveSpot2": -1,
+    "pictureBookSpecialDrop": 25,
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 0.10000000149011612,
+    "slink": "TBox_Dungeon_Stone",
+    "sortKey": 70011,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "TBox_Field_Iron",
+    "tags": {
+      "tag0fee9a49": 267295305,
+      "tag21ebb4ab": 569095339,
+      "tag28a3a540": 681813312,
+      "tag4186e30f": 1099358991,
+      "tag9dc91bb3": 2647202739,
+      "tagbb8d80c2": 3146612930
+    },
+    "traverseDist": 1000.0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_CandleStandA_01": {
+    "aabbMax": {
+      "X": 0.5279639959335327,
+      "Y": 1.334280014038086,
+      "Z": 0.5101010203361511
+    },
+    "aabbMin": {
+      "X": -0.5240939855575562,
+      "Y": -0.6644179821014404,
+      "Z": -1.1455600261688232
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Candle_A",
+    "boundingForTraverse": 1.9986979961395264,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159112,
+    "mainModel": "DgnObj_Hrl_CandleStandA_01",
+    "name": "DgnObj_Hrl_CandleStandA_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.4172990024089813,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "traverseDist": 1000.0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "BlockCrack4x4x4": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 4.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_BlockCrack_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 3,
+    "cursorOffsetY": 0.5,
+    "elink": "BlockCrack4x4x4",
+    "generalLife": 1,
+    "instSize": 102088,
+    "mainModel": "DgnObj_BlockCrack_A_02",
+    "name": "BlockCrack4x4x4",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 2.0,
+    "slink": "BlockCrack",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "traverseDist": 200.0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_DownloadTerminal_A_01": {
+    "aabbMax": {
+      "X": 0.582518994808197,
+      "Y": 1.7363300323486328,
+      "Z": 0.5683590173721313
+    },
+    "aabbMin": {
+      "X": -0.5942379832267761,
+      "Y": -0.019912999123334885,
+      "Z": -0.5917969942092896
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_DRCStoneStand_A",
+    "boundingForTraverse": 1.7562429904937744,
+    "bugMask": 3,
+    "cursorOffsetY": 0.10000000149011612,
+    "elink": "DgnObj_Terminal_A_01",
+    "generalLife": 100,
+    "instSize": 132920,
+    "lookAtOffsetY": 0.4000000059604645,
+    "mainModel": "DgnObj_DRCStoneStand_A_01",
+    "name": "DgnObj_DownloadTerminal_A_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.601610004901886,
+    "slink": "TerminalDownload",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag28a3a540": 681813312
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_BoxShutterBase_A_01": {
+    "aabbMax": {
+      "X": 2.1763999462127686,
+      "Y": 2.8008499145507812,
+      "Z": 8.5764799118042
+    },
+    "aabbMin": {
+      "X": -2.1763999462127686,
+      "Y": 0.0,
+      "Z": -2.916520118713379
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_BoxShutter_A",
+    "boundingForTraverse": 2.8008499145507812,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159800,
+    "mainModel": "DgnObj_BoxShutterBase_A_01",
+    "name": "DgnObj_BoxShutterBase_A_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.5745390057563782,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_GoalSystem_A_01": {
+    "aabbMax": {
+      "X": 4.994969844818115,
+      "Y": 14.5,
+      "Z": 7.079360008239746
+    },
+    "aabbMin": {
+      "X": -4.994969844818115,
+      "Y": 0.0,
+      "Z": -4.994969844818115
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_GoalSystem_A",
+    "boundingForTraverse": 14.5,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "elink": "DgnObj_Hrl_GoalSystem_A_01",
+    "generalLife": 100,
+    "instSize": 547688,
+    "mainModel": "DgnObj_Hrl_GoalSystem_A_01",
+    "name": "DgnObj_Hrl_GoalSystem_A_01",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 4.540229797363281,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_RailLift_6x6_01": {
+    "aabbMax": {
+      "X": 3.0,
+      "Y": 0.024608999490737915,
+      "Z": 3.0
+    },
+    "aabbMin": {
+      "X": -3.0,
+      "Y": -0.7156640291213989,
+      "Z": -3.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_RailLift_A",
+    "boundingForTraverse": 0.7402729988098145,
+    "bugMask": 3,
+    "elink": "Lift",
+    "generalLife": 100,
+    "instSize": 190744,
+    "mainModel": "DgnObj_Hrl_RailLift_6x6_01",
+    "name": "DgnObj_Hrl_RailLift_6x6_01",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": -0.43271100521087646,
+    "slink": "DgnObj_Hrl_RailLift",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag2c608f30": 744525616,
+      "tag7dd56981": 2111138177,
+      "tagc2ac3213": 3266064915
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_BoxShutter_4x4x4": {
+    "aabbMax": {
+      "X": 2.081199884414673,
+      "Y": 4.0,
+      "Z": 2.081199884414673
+    },
+    "aabbMin": {
+      "X": -2.081199884414673,
+      "Y": -12.0,
+      "Z": -2.081199884414673
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_BoxShutter_A",
+    "boundingForTraverse": 16.0,
+    "bugMask": 3,
+    "elink": "BoxShutter",
+    "generalLife": 100,
+    "instSize": 117832,
+    "mainModel": "DgnObj_BoxShutter4x4_A_01",
+    "name": "DgnObj_BoxShutter_4x4x4",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": -4.0,
+    "slink": "BoxShutter",
+    "sortKey": -6,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag7dd56981": 2111138177
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "AncientBall": {
+    "aabbMax": {
+      "X": 0.5,
+      "Y": 0.5,
+      "Z": 0.5
+    },
+    "aabbMin": {
+      "X": -0.5,
+      "Y": -0.5,
+      "Z": -0.5
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_AncientBall_A",
+    "boundingForTraverse": 1.0,
+    "bugMask": 3,
+    "elink": "AncientBall",
+    "generalLife": 100,
+    "instSize": 108424,
+    "mainModel": "DgnObj_Hrl_AncientBall_01",
+    "name": "AncientBall",
+    "profile": "MapDynamicActive",
+    "slink": "AncientBall",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag0fee9a49": 267295305,
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915,
+      "tagff2ecb67": 4281256807
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_DownloadTerminalBody_A_01": {
+    "aabbMax": {
+      "X": 1.9788800477981567,
+      "Y": 7.0,
+      "Z": 1.9788800477981567
+    },
+    "aabbMin": {
+      "X": -1.9788800477981567,
+      "Y": 2.5243399143218994,
+      "Z": -1.9788800477981567
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_ItemDownloadTerminalBody_B",
+    "boundingForTraverse": 4.4756598472595215,
+    "bugMask": 3,
+    "cursorOffsetY": 0.5,
+    "elink": "DgnObj_ItemDownloadTerminalBody_B",
+    "generalLife": 100,
+    "instSize": 97520,
+    "mainModel": "DgnObj_ItemDownloadTerminalBody_B_01",
+    "name": "DgnObj_DownloadTerminalBody_A_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 5.913400173187256,
+    "slink": "TerminalBody",
+    "sortKey": -1,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Warpin_2x2_01": {
+    "aabbMax": {
+      "X": 2.732100009918213,
+      "Y": 1.2625199556350708,
+      "Z": 2.732100009918213
+    },
+    "aabbMin": {
+      "X": -2.732100009918213,
+      "Y": 0.0,
+      "Z": -3.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Warpin_A",
+    "boundingForTraverse": 1.2625199556350708,
+    "bugMask": 3,
+    "elink": "DgnObj_Hrl_Warpin_2x2_01",
+    "generalLife": 100,
+    "instSize": 209448,
+    "mainModel": "DgnObj_Hrl_Warpin_2x2_01",
+    "name": "DgnObj_Hrl_Warpin_2x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.23383499681949615,
+    "slink": "DgnObj_Hrl_Warpin",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "traverseDist": 1000.0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x6Top_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 6.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x6Top_01",
+    "name": "DgnObj_Hrl_Box4x4x6Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box4x4x6_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 6.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x6_01",
+    "name": "DgnObj_hrl_Box4x4x6_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x4Top_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 4.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x4Top_01",
+    "name": "DgnObj_Hrl_Box4x4x4Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_BoxCover8x8_01": {
+    "aabbMax": {
+      "X": 4.0,
+      "Y": 0.0,
+      "Z": 4.0
+    },
+    "aabbMin": {
+      "X": -3.999969959259033,
+      "Y": -0.03999999910593033,
+      "Z": -4.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.03999999910593033,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_BoxCover8x8_01",
+    "name": "DgnObj_Hrl_BoxCover8x8_01",
+    "profile": "MapConstPassive",
+    "sortKey": 4,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x6Under_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 6.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x6Under_01",
+    "name": "DgnObj_Hrl_Box4x4x6Under_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_BoxCover4x8_01": {
+    "aabbMax": {
+      "X": 4.0,
+      "Y": 0.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -4.0,
+      "Y": -0.03999999910593033,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.03999999910593033,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_BoxCover4x8_01",
+    "name": "DgnObj_Hrl_BoxCover4x8_01",
+    "profile": "MapConstPassive",
+    "sortKey": 4,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x4Center_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 4.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box4x4x4Center_01",
+    "name": "DgnObj_Hrl_Box4x4x4Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 2,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box4x4x4_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 4.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x4_01",
+    "name": "DgnObj_hrl_Box4x4x4_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_BoxCover4x4_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": -0.03999999910593033,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.03999999910593033,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_BoxCover4x4_01",
+    "name": "DgnObj_Hrl_BoxCover4x4_01",
+    "profile": "MapConstPassive",
+    "sortKey": 4,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2Wainscot_01": {
+    "aabbMax": {
+      "X": 1.126389980316162,
+      "Y": 0.8999999761581421,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.126389980316162,
+      "Y": 0.0,
+      "Z": 0.8769069910049438
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.8999999761581421,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 109800,
+    "mainModel": "DgnObj_Hrl_Box2x2Wainscot_01",
+    "name": "DgnObj_Hrl_Box2x2Wainscot_01",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Pillar1x1x4_01": {
+    "aabbMax": {
+      "X": 0.5177929997444153,
+      "Y": 5.300650119781494,
+      "Z": 0.5177929997444153
+    },
+    "aabbMin": {
+      "X": -0.5177929997444153,
+      "Y": 0.0,
+      "Z": -0.5177929997444153
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Pillar_A",
+    "boundingForTraverse": 5.300650119781494,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 134512,
+    "mainModel": "DgnObj_Pillar_A_01",
+    "name": "DgnObj_hrl_Pillar1x1x4_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.3143999576568604,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x4Under_01": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 4.0,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.1763900518417358,
+      "Y": 0.0,
+      "Z": -1.1763900518417358
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box2x2x4Under_01",
+    "name": "DgnObj_Hrl_Box2x2x4Under_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4Wainscot_01": {
+    "aabbMax": {
+      "X": 2.1262400150299072,
+      "Y": 0.8999999761581421,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1268999576568604,
+      "Y": 0.0,
+      "Z": 1.8767399787902832
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.8999999761581421,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 109800,
+    "mainModel": "DgnObj_Hrl_Box4x4Wainscot_01",
+    "name": "DgnObj_Hrl_Box4x4Wainscot_01",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box2x2x6_01": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 6.0,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.1763900518417358,
+      "Y": 0.0,
+      "Z": -1.1763900518417358
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box2x2x6_01",
+    "name": "DgnObj_hrl_Box2x2x6_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Road4x4_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.04500000178813934,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.04500000178813934,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Road4x4_01",
+    "name": "DgnObj_Hrl_Road4x4_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x4Top_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 4.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box2x2x4Top_01",
+    "name": "DgnObj_Hrl_Box2x2x4Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x6Under_01": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 6.0,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.1763900518417358,
+      "Y": 0.0,
+      "Z": -1.1763900518417358
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box2x2x6Under_01",
+    "name": "DgnObj_Hrl_Box2x2x6Under_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_BoxCover2x2_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 0.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": -0.03999999910593033,
+      "Z": -1.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.03999999910593033,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_BoxCover2x2_01",
+    "name": "DgnObj_Hrl_BoxCover2x2_01",
+    "profile": "MapConstPassive",
+    "sortKey": 4,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x4Under_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 4.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x4Under_01",
+    "name": "DgnObj_Hrl_Box4x4x4Under_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x2Center_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box4x4x2Center_01",
+    "name": "DgnObj_Hrl_Box4x4x2Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 2,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x1Top_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 1.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x1Top_01",
+    "name": "DgnObj_Hrl_Box4x4x1Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.5,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x12_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 12.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 12.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x12_01",
+    "name": "DgnObj_Hrl_Box4x4x12_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 6.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_03": {
+    "aabbMax": {
+      "X": 0.8477720022201538,
+      "Y": 3.5223400592803955,
+      "Z": 0.09795500338077545
+    },
+    "aabbMin": {
+      "X": -0.9100279808044434,
+      "Y": -0.28576698899269104,
+      "Z": -0.0005619999719783664
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 3.8081068992614746,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_03",
+    "name": "DgnObj_Hrl_WallMarkB_03",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box8x8x4_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 4.0,
+      "Z": 4.176219940185547
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -4.176400184631348
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 204184,
+    "mainModel": "DgnObj_Hrl_Box8x8x4_01",
+    "name": "DgnObj_hrl_Box8x8x4_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 4,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Stair4x4x2_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 2.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 228840,
+    "mainModel": "DgnObj_Hrl_Stair4x4x2_01",
+    "name": "DgnObj_hrl_Stair4x4x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.6880300045013428,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Slope8x4x2_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 204184,
+    "mainModel": "DgnObj_Hrl_Slope8x4x2_01",
+    "name": "DgnObj_Hrl_Slope8x4x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.6222339868545532,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_RoadEnd4x4_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.04500000178813934,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.04500000178813934,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_RoadEnd4x4_01",
+    "name": "DgnObj_Hrl_RoadEnd4x4_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x4Center_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 4.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box2x2x4Center_01",
+    "name": "DgnObj_Hrl_Box2x2x4Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 2,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Ladder_1x4": {
+    "aabbMax": {
+      "X": 0.6410959959030151,
+      "Y": 4.2652201652526855,
+      "Z": 0.20000000298023224
+    },
+    "aabbMin": {
+      "X": -0.6399999856948853,
+      "Y": 0.0,
+      "Z": -0.2575109899044037
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.2652201652526855,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Ladder_1x4",
+    "name": "DgnObj_Hrl_Ladder_1x4",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x6Center_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 6.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box4x4x6Center_01",
+    "name": "DgnObj_Hrl_Box4x4x6Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 2,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x4_02": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 4.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.1763900518417358,
+      "Y": 0.0,
+      "Z": -1.1763900518417358
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box2x2x4_02",
+    "name": "DgnObj_Hrl_Box2x2x4_02",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.239150047302246,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box4x4x2_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 2.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x2_01",
+    "name": "DgnObj_hrl_Box4x4x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x6Center_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 6.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box2x2x6Center_01",
+    "name": "DgnObj_Hrl_Box2x2x6Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 2,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_RoadTJunction4x4_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.04500000178813934,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.04500000178813934,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_RoadTJunction4x4_01",
+    "name": "DgnObj_Hrl_RoadTJunction4x4_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_TerminalRug_A_01": {
+    "aabbMax": {
+      "X": 1.4038900136947632,
+      "Y": 0.04985500127077103,
+      "Z": 1.4038900136947632
+    },
+    "aabbMin": {
+      "X": -1.4038900136947632,
+      "Y": 0.0,
+      "Z": -1.4038900136947632
+    },
+    "bfres": "DgnObj_TerminalRug_A",
+    "boundingForTraverse": 0.04985500127077103,
+    "bugMask": 0,
+    "cursorOffsetY": 0.5,
+    "instSize": 75656,
+    "mainModel": "DgnObj_TerminalRug_A_01",
+    "name": "DgnObj_TerminalRug_A_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x2Top_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x2Top_01",
+    "name": "DgnObj_Hrl_Box4x4x2Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkC_01": {
+    "aabbMax": {
+      "X": 1.8930200338363647,
+      "Y": 3.732919931411743,
+      "Z": 0.06864900141954422
+    },
+    "aabbMin": {
+      "X": -1.9032399654388428,
+      "Y": -0.07756300270557404,
+      "Z": -0.00317499996162951
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 3.810482978820801,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89408,
+    "mainModel": "DgnObj_Hrl_WallMarkC_01",
+    "name": "DgnObj_Hrl_WallMarkC_01",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkC_02": {
+    "aabbMax": {
+      "X": 0.9465109705924988,
+      "Y": 1.8664599657058716,
+      "Z": 0.06754600256681442
+    },
+    "aabbMin": {
+      "X": -0.951619029045105,
+      "Y": -0.038780998438596725,
+      "Z": -0.0015869999770075083
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.9052410125732422,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89408,
+    "mainModel": "DgnObj_Hrl_WallMarkC_02",
+    "name": "DgnObj_Hrl_WallMarkC_02",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_04": {
+    "aabbMax": {
+      "X": 2.8799800872802734,
+      "Y": 10.36870002746582,
+      "Z": 0.10697899758815765
+    },
+    "aabbMin": {
+      "X": -2.6714301109313965,
+      "Y": -1.2498400211334229,
+      "Z": -0.00015300000086426735
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 11.618539810180664,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_04",
+    "name": "DgnObj_Hrl_WallMarkB_04",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x4_02": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 4.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x4_02",
+    "name": "DgnObj_Hrl_Box4x4x4_02",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.141079902648926,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_07": {
+    "aabbMax": {
+      "X": 1.0326600074768066,
+      "Y": 1.6134300231933594,
+      "Z": 0.09847400337457657
+    },
+    "aabbMin": {
+      "X": -0.8029369711875916,
+      "Y": -0.7292829751968384,
+      "Z": -0.0005830000154674053
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.3427131175994873,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_07",
+    "name": "DgnObj_Hrl_WallMarkB_07",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_02": {
+    "aabbMax": {
+      "X": 1.4326599836349487,
+      "Y": 4.313429832458496,
+      "Z": 0.10367099940776825
+    },
+    "aabbMin": {
+      "X": -1.5743600130081177,
+      "Y": -1.0713399648666382,
+      "Z": -0.0005830000154674053
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 5.384769916534424,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_02",
+    "name": "DgnObj_Hrl_WallMarkB_02",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Slope4x4x2Under_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Slope4x4x2Under_01",
+    "name": "DgnObj_Hrl_Slope4x4x2Under_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x2Top_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 2.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box2x2x2Top_01",
+    "name": "DgnObj_Hrl_Box2x2x2Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_CandlePoleC_01": {
+    "aabbMax": {
+      "X": 0.5130730271339417,
+      "Y": 1.8165099620819092,
+      "Z": 0.5130730271339417
+    },
+    "aabbMin": {
+      "X": -0.5130730271339417,
+      "Y": 0.0,
+      "Z": -0.5130730271339417
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Candle_A",
+    "boundingForTraverse": 1.8165099620819092,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159464,
+    "mainModel": "DgnObj_Hrl_CandlePoleC_01",
+    "name": "DgnObj_Hrl_CandlePoleC_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.7266929745674133,
+    "sortKey": -1,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_06": {
+    "aabbMax": {
+      "X": 0.6335399746894836,
+      "Y": 0.8202319741249084,
+      "Z": 0.07737799733877182
+    },
+    "aabbMin": {
+      "X": -0.6785929799079895,
+      "Y": -0.9126889705657959,
+      "Z": -0.00027099999715574086
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.7329210042953491,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_06",
+    "name": "DgnObj_Hrl_WallMarkB_06",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2Wainscot_02": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 0.8999999761581421,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.126389980316162,
+      "Y": 0.0,
+      "Z": -1.126389980316162
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.8999999761581421,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 109800,
+    "mainModel": "DgnObj_Hrl_Box2x2Wainscot_02",
+    "name": "DgnObj_Hrl_Box2x2Wainscot_02",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_BombPipe_A_01": {
+    "aabbMax": {
+      "X": 0.7816240191459656,
+      "Y": 0.956758975982666,
+      "Z": 3.9496500492095947
+    },
+    "aabbMin": {
+      "X": -0.7816230058670044,
+      "Y": -2.0,
+      "Z": -0.41178300976753235
+    },
+    "bfres": "DgnObj_BombPipe_A",
+    "boundingForTraverse": 2.956758975982666,
+    "bugMask": 0,
+    "cursorOffsetY": 0.5,
+    "instSize": 116672,
+    "mainModel": "DgnObj_BombPipe_A_01",
+    "name": "DgnObj_BombPipe_A_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x8x12_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 12.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 12.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x8x12_01",
+    "name": "DgnObj_Hrl_Box4x8x12_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 6.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4Wainscot_02": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 0.8999999761581421,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1268999576568604,
+      "Y": 0.0,
+      "Z": -2.1263999938964844
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.8999999761581421,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 109800,
+    "mainModel": "DgnObj_Hrl_Box4x4Wainscot_02",
+    "name": "DgnObj_Hrl_Box4x4Wainscot_02",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_RoadCurve4x4_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.04500000178813934,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 0.04500000178813934,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_RoadCurve4x4_01",
+    "name": "DgnObj_Hrl_RoadCurve4x4_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_05": {
+    "aabbMax": {
+      "X": 1.3331300020217896,
+      "Y": 9.40758991241455,
+      "Z": 0.14191199839115143
+    },
+    "aabbMin": {
+      "X": -1.5145100355148315,
+      "Y": -0.6535840034484863,
+      "Z": -0.005874000024050474
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 10.061174392700195,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_05",
+    "name": "DgnObj_Hrl_WallMarkB_05",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box8x8x6_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 6.0,
+      "Z": 4.176219940185547
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -4.176400184631348
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 204184,
+    "mainModel": "DgnObj_Hrl_Box8x8x6_01",
+    "name": "DgnObj_hrl_Box8x8x6_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.0,
+    "sortKey": 4,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Box2x2x2_01": {
+    "aabbMax": {
+      "X": 1.1763900518417358,
+      "Y": 2.0,
+      "Z": 1.1763900518417358
+    },
+    "aabbMin": {
+      "X": -1.1763900518417358,
+      "Y": 0.0,
+      "Z": -1.1763900518417358
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 204184,
+    "mainModel": "DgnObj_Hrl_Box2x2x2_01",
+    "name": "DgnObj_hrl_Box2x2x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x6_02": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 6.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224744,
+    "mainModel": "DgnObj_Hrl_Box4x4x6_02",
+    "name": "DgnObj_Hrl_Box4x4x6_02",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.175729990005493,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Stair8x8x4_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 4.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -6.176400184631348
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 228840,
+    "mainModel": "DgnObj_Hrl_Stair8x8x4_01",
+    "name": "DgnObj_Hrl_Stair8x8x4_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0900599956512451,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Ladder_1x6": {
+    "aabbMax": {
+      "X": 0.6410959959030151,
+      "Y": 6.2652201652526855,
+      "Z": 0.20000000298023224
+    },
+    "aabbMin": {
+      "X": -0.6399999856948853,
+      "Y": 0.0,
+      "Z": -0.2575109899044037
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.2652201652526855,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Ladder_1x6",
+    "name": "DgnObj_Hrl_Ladder_1x6",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_CandlePoleB_01": {
+    "aabbMax": {
+      "X": 0.4894390106201172,
+      "Y": 3.885890007019043,
+      "Z": 0.4894390106201172
+    },
+    "aabbMin": {
+      "X": -0.4894390106201172,
+      "Y": -0.0011530000483617187,
+      "Z": -0.489437997341156
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Candle_A",
+    "boundingForTraverse": 3.887042999267578,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 163208,
+    "mainModel": "DgnObj_Hrl_CandlePoleB_01",
+    "name": "DgnObj_Hrl_CandlePoleB_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.7310600280761719,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_WallMarkB_01": {
+    "aabbMax": {
+      "X": 1.6962699890136719,
+      "Y": 5.404910087585449,
+      "Z": 0.0931129977107048
+    },
+    "aabbMin": {
+      "X": -1.6718300580978394,
+      "Y": -1.212689995765686,
+      "Z": -0.00027099999715574086
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 6.617599964141846,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 89296,
+    "mainModel": "DgnObj_Hrl_WallMarkB_01",
+    "name": "DgnObj_Hrl_WallMarkB_01",
+    "profile": "MapConstActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box4x4x2Under_01": {
+    "aabbMax": {
+      "X": 2.1762399673461914,
+      "Y": 2.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -2.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box4x4x2Under_01",
+    "name": "DgnObj_Hrl_Box4x4x2Under_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 1.0,
+    "sortKey": 2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Stair4x8x2_01": {
+    "aabbMax": {
+      "X": 4.176239967346191,
+      "Y": 2.0,
+      "Z": 2.176219940185547
+    },
+    "aabbMin": {
+      "X": -4.1768999099731445,
+      "Y": 0.0,
+      "Z": -2.1763999462127686
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 228840,
+    "mainModel": "DgnObj_Hrl_Stair4x8x2_01",
+    "name": "DgnObj_Hrl_Stair4x8x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.5385419726371765,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SliderBlockIron_A_02": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "Obj_BoxIron_B",
+    "boundingForTraverse": 2.0,
+    "bugMask": 2,
+    "generalLife": 100,
+    "instSize": 113160,
+    "mainModel": "Obj_BoxIron_B_M_03",
+    "name": "DgnObj_SliderBlockIron_A_02",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 1.0,
+    "slink": "DgnObj_SliderBlockIron",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag507efd18": 1350499608,
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915
+    },
+    "xlink": "DgnObj_ConstrainedSlider",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SpikeBall_B": {
+    "aabbMax": {
+      "X": 2.5615499019622803,
+      "Y": 2.5615499019622803,
+      "Z": 2.5615499019622803
+    },
+    "aabbMin": {
+      "X": -2.5615499019622803,
+      "Y": -2.5615499019622803,
+      "Z": -2.5615499019622803
+    },
+    "attackPower": 12,
+    "bfres": "DgnObj_SpikeBall_A",
+    "boundingForTraverse": 5.1230998039245605,
+    "bugMask": 3,
+    "generalLife": 100,
+    "instSize": 92504,
+    "mainModel": "DgnObj_SpikeBall_A_02",
+    "name": "DgnObj_SpikeBall_B",
+    "profile": "MapDynamicActive",
+    "slink": "Dummy_Roll",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915,
+      "tagdfaad2df": 3752514271
+    },
+    "xlink": "OnlyThruDamageToObj",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SpikeBall_A": {
+    "aabbMax": {
+      "X": 1.000980019569397,
+      "Y": 1.000980019569397,
+      "Z": 1.000980019569397
+    },
+    "aabbMin": {
+      "X": -1.000980019569397,
+      "Y": -1.000980019569397,
+      "Z": -1.000980019569397
+    },
+    "attackPower": 12,
+    "bfres": "DgnObj_SpikeBall_A",
+    "boundingForTraverse": 2.001960039138794,
+    "bugMask": 3,
+    "generalLife": 100,
+    "instSize": 92504,
+    "mainModel": "DgnObj_SpikeBall_A_01",
+    "name": "DgnObj_SpikeBall_A",
+    "profile": "MapDynamicActive",
+    "slink": "Dummy_Roll",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915,
+      "tagdfaad2df": 3752514271
+    },
+    "xlink": "OnlyThruDamageToObj",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "RopeWire": {
+    "aabbMax": {
+      "X": 0.24987800419330597,
+      "Y": 0.12493900209665298,
+      "Z": 0.24987800419330597
+    },
+    "aabbMin": {
+      "X": -0.24987900257110596,
+      "Y": -10.124799728393555,
+      "Z": -0.24987800419330597
+    },
+    "bfres": "DgnObj_RopeWire_A",
+    "boundingForTraverse": 10.249738693237305,
+    "bugMask": 3,
+    "generalLife": 1,
+    "instSize": 111856,
+    "mainModel": "DgnObj_RopeWire_A_01",
+    "name": "RopeWire",
+    "profile": "Rope",
+    "slink": "RopeWire",
+    "sortKey": -12,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_HangedLamp_A": {
+    "aabbMax": {
+      "X": 0.48732998967170715,
+      "Y": 0.0,
+      "Z": 0.48732998967170715
+    },
+    "aabbMin": {
+      "X": -0.48732998967170715,
+      "Y": -1.188420057296753,
+      "Z": -0.48732998967170715
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_HangedLamp_A",
+    "boundingForTraverse": 1.188420057296753,
+    "bugMask": 3,
+    "elink": "DgnObj_HangedLamp_A",
+    "generalLife": 20,
+    "instSize": 104616,
+    "mainModel": "DgnObj_HangedLamp_A",
+    "name": "DgnObj_HangedLamp_A",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": -0.75,
+    "slink": "DgnObj_HangedLamp_A",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "FldObj_ChainEyeBolt_A_01": {
+    "aabbMax": {
+      "X": 0.17567099630832672,
+      "Y": -0.04329700022935867,
+      "Z": 0.03187600150704384
+    },
+    "aabbMin": {
+      "X": -0.19432899355888367,
+      "Y": -0.5834900140762329,
+      "Z": -0.04019299894571304
+    },
+    "attackPower": 0,
+    "bfres": "FldObj_Chain_A",
+    "boundingForTraverse": 0.5401930212974548,
+    "bugMask": 1,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 81080,
+    "mainModel": "FldObj_ChainEyeBolt_A_01",
+    "name": "FldObj_ChainEyeBolt_A_01",
+    "profile": "MapDynamicActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_IronDoorR_A_01": {
+    "aabbMax": {
+      "X": 6.0,
+      "Y": 1.5,
+      "Z": 3.0002601146698
+    },
+    "aabbMin": {
+      "X": -6.0,
+      "Y": -0.7169640064239502,
+      "Z": -3.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_IronDoor_A",
+    "boundingForTraverse": 2.21696400642395,
+    "bugMask": 2,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 92696,
+    "locators": [
+      {
+        "pos_x": 0.0,
+        "pos_y": 0.0,
+        "pos_z": -2.200000047683716,
+        "rot_x": 0.0,
+        "rot_y": 0.0,
+        "rot_z": 0.0,
+        "type": "MagnePos"
+      }
+    ],
+    "mainModel": "DgnObj_IronDoorR_A_01",
+    "name": "DgnObj_IronDoorR_A_01",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 0.20000000298023224,
+    "slink": "DgnObj_DoorIron_A",
+    "sortKey": -9,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagc2ac3213": 3266064915
+    },
+    "traverseDist": 99999.0,
+    "xlink": "DgnObj_DoorIron",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_BoardWood_E_01": {
+    "aabbMax": {
+      "X": 6.199999809265137,
+      "Y": 0.6171290278434753,
+      "Z": 0.9055240154266357
+    },
+    "aabbMin": {
+      "X": -6.152810096740723,
+      "Y": 0.0,
+      "Z": -0.9055240154266357
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_BoardWood_E",
+    "boundingForTraverse": 0.6171290278434753,
+    "bugMask": 2,
+    "cursorOffsetY": 0.5,
+    "elink": "DgnObj_BoardWood_E_01",
+    "generalLife": 40,
+    "instSize": 92792,
+    "mainModel": "DgnObj_BoardWood_E_01",
+    "name": "DgnObj_BoardWood_E_01",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 0.25,
+    "slink": "DgnObj_BoardWood_Bar",
+    "sortKey": -11,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "Obj_EyeBolt_A_01": {
+    "aabbMax": {
+      "X": 0.17567099630832672,
+      "Y": 0.058097999542951584,
+      "Z": 0.1064160019159317
+    },
+    "aabbMin": {
+      "X": -0.19432899355888367,
+      "Y": -0.5835750102996826,
+      "Z": -0.10564900189638138
+    },
+    "attackPower": 0,
+    "bfres": "Obj_EyeBolt_A",
+    "boundingForTraverse": 0.6416730284690857,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 101584,
+    "mainModel": "Obj_EyeBolt_A_01",
+    "name": "Obj_EyeBolt_A_01",
+    "profile": "MapDynamicActive",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SliderBlockIron_A": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "Obj_BoxIron_B",
+    "boundingForTraverse": 2.0,
+    "bugMask": 2,
+    "generalLife": 100,
+    "instSize": 92648,
+    "mainModel": "Obj_BoxIron_B_M_02",
+    "name": "DgnObj_SliderBlockIron_A",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 1.0,
+    "slink": "DgnObj_SliderBlockIron",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag507efd18": 1350499608,
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915
+    },
+    "xlink": "DgnObj_ConstrainedSlider",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "Rope": {
+    "aabbMax": {
+      "X": 0.0403750017285347,
+      "Y": 0.0,
+      "Z": 0.035461001098155975
+    },
+    "aabbMin": {
+      "X": -0.04052799940109253,
+      "Y": -10.0,
+      "Z": -0.035613998770713806
+    },
+    "bfres": "Obj_Rope_A",
+    "boundingForTraverse": 10.0,
+    "bugMask": 3,
+    "generalLife": 1,
+    "instSize": 111952,
+    "mainModel": "Obj_Rope_A_01",
+    "name": "Rope",
+    "profile": "Rope",
+    "slink": "Rope",
+    "sortKey": -11,
+    "tags": {
+      "tag51e73965": 1374108005
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "SwitchHit": {
+    "aabbMax": {
+      "X": 0.5427370071411133,
+      "Y": 2.4672999382019043,
+      "Z": 0.5427370071411133
+    },
+    "aabbMin": {
+      "X": -0.5427370071411133,
+      "Y": -0.0026950000319629908,
+      "Z": -0.5427370071411133
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_SwitchHit_A",
+    "boundingForTraverse": 2.4699950218200684,
+    "bugMask": 3,
+    "elink": "SwitchHit",
+    "generalLife": 100,
+    "instSize": 103048,
+    "mainModel": "DgnObj_SwitchHit_A_01",
+    "name": "SwitchHit",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 1.1468900442123413,
+    "slink": "SwitchHit",
+    "sortKey": -2,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag03528579": 55739769,
+      "tag51e73965": 1374108005
+    },
+    "traverseDist": 99999.0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_HingeBoard_A": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 7.97560977935791,
+      "Z": 0.3336080014705658
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": -0.34160900115966797,
+      "Z": -0.333609014749527
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_HingeBoard_A",
+    "boundingForTraverse": 8.317218780517578,
+    "bugMask": 3,
+    "elink": "HingeBoard",
+    "generalLife": 100,
+    "instSize": 132760,
+    "mainModel": "DgnObj_HingeBoard_A_01",
+    "name": "DgnObj_HingeBoard_A",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 5.0,
+    "slink": "DgnObj_HingeBoard",
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag2c608f30": 744525616,
+      "tag507efd18": 1350499608,
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_IronDoorL_A_01": {
+    "aabbMax": {
+      "X": 6.0,
+      "Y": 1.5,
+      "Z": 3.0
+    },
+    "aabbMin": {
+      "X": -6.0,
+      "Y": -0.7169650197029114,
+      "Z": -3.0002601146698
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_IronDoor_A",
+    "boundingForTraverse": 2.2169649600982666,
+    "bugMask": 2,
+    "cursorOffsetY": 0.5,
+    "generalLife": 100,
+    "instSize": 92696,
+    "locators": [
+      {
+        "pos_x": 0.0,
+        "pos_y": 0.0,
+        "pos_z": 2.200000047683716,
+        "rot_x": 0.0,
+        "rot_y": 0.0,
+        "rot_z": 0.0,
+        "type": "MagnePos"
+      }
+    ],
+    "mainModel": "DgnObj_IronDoorL_A_01",
+    "name": "DgnObj_IronDoorL_A_01",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 0.20000000298023224,
+    "slink": "DgnObj_DoorIron_A",
+    "sortKey": -10,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagc2ac3213": 3266064915
+    },
+    "traverseDist": 99999.0,
+    "xlink": "DgnObj_DoorIron",
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_BoardIron_E": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.30000001192092896,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": 0.0,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_BoardIron_E",
+    "boundingForTraverse": 0.30000001192092896,
+    "bugMask": 0,
+    "generalLife": 100,
+    "instSize": 89448,
+    "mainModel": "DgnObj_BoardIron_E_01",
+    "name": "DgnObj_BoardIron_E",
+    "profile": "MapDynamicActive",
+    "rigidBodyCenterY": 0.15000000596046448,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tagb51794dc": 3038221532,
+      "tagc2ac3213": 3266064915
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Arch4x2_01": {
+    "aabbMax": {
+      "X": 2.0027101039886475,
+      "Y": 0.004011000040918589,
+      "Z": 0.5004069805145264
+    },
+    "aabbMin": {
+      "X": -2.0027101039886475,
+      "Y": -0.9980000257492065,
+      "Z": -0.5000270009040833
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.0020109415054321,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 134512,
+    "mainModel": "DgnObj_Hrl_Arch4x2_01",
+    "name": "DgnObj_Hrl_Arch4x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": -0.42539599537849426,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x2Center_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 2.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box2x2x2Center_01",
+    "name": "DgnObj_Hrl_Box2x2x2Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x1Top_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 1.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box2x2x1Top_01",
+    "name": "DgnObj_Hrl_Box2x2x1Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.5,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Arch8x2_01": {
+    "aabbMax": {
+      "X": 4.002709865570068,
+      "Y": 0.004011000040918589,
+      "Z": 1.0004099607467651
+    },
+    "aabbMin": {
+      "X": -4.002709865570068,
+      "Y": -1.9959900379180908,
+      "Z": -1.0000300407409668
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.0000009536743164,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159112,
+    "mainModel": "DgnObj_Hrl_Arch8x2_01",
+    "name": "DgnObj_Hrl_Arch8x2_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": -0.8507919907569885,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box1x1x4Center_01": {
+    "aabbMax": {
+      "X": 0.5,
+      "Y": 4.0,
+      "Z": 0.5
+    },
+    "aabbMin": {
+      "X": -0.5,
+      "Y": 0.0,
+      "Z": -0.5
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box1x1x4Center_01",
+    "name": "DgnObj_Hrl_Box1x1x4Center_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_hrl_Bridge4x8_01": {
+    "aabbMax": {
+      "X": 2.0,
+      "Y": 0.0,
+      "Z": 4.0
+    },
+    "aabbMin": {
+      "X": -2.0,
+      "Y": -1.350000023841858,
+      "Z": -4.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 1.350000023841858,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Bridge4x8_01",
+    "name": "DgnObj_hrl_Bridge4x8_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box1x1x4Top_01": {
+    "aabbMax": {
+      "X": 0.5,
+      "Y": 4.0,
+      "Z": 0.5
+    },
+    "aabbMin": {
+      "X": -0.5,
+      "Y": 0.0,
+      "Z": -0.5
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 159072,
+    "mainModel": "DgnObj_Hrl_Box1x1x4Top_01",
+    "name": "DgnObj_Hrl_Box1x1x4Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 2.0,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SliderRail_A_05": {
+    "aabbMax": {
+      "X": 4.0,
+      "Y": 0.6827070116996765,
+      "Z": 0.6283950209617615
+    },
+    "aabbMin": {
+      "X": -0.522616982460022,
+      "Y": -0.12626199424266815,
+      "Z": -0.6404169797897339
+    },
+    "bfres": "DgnObj_SliderRail_A",
+    "boundingForTraverse": 0.8089690208435059,
+    "bugMask": 0,
+    "cursorOffsetY": 0.5,
+    "instSize": 96160,
+    "mainModel": "DgnObj_SliderRail_A_03",
+    "name": "DgnObj_SliderRail_A_05",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Slope4x4x2Top_01": {
+    "aabbMax": {
+      "X": 2.009999990463257,
+      "Y": 2.0,
+      "Z": 2.0
+    },
+    "aabbMin": {
+      "X": -2.009999990463257,
+      "Y": -0.2514210045337677,
+      "Z": -2.0
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 2.2514209747314453,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 134432,
+    "mainModel": "DgnObj_Hrl_Slope4x4x2Top_01",
+    "name": "DgnObj_Hrl_Slope4x4x2Top_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 0.6258310079574585,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_Box2x2x4Hole_01": {
+    "aabbMax": {
+      "X": 1.0,
+      "Y": 4.0,
+      "Z": 1.0
+    },
+    "aabbMin": {
+      "X": -1.0,
+      "Y": 0.0,
+      "Z": -1.0
+    },
+    "bfres": "DgnObj_Hrl_BoxParts_A",
+    "boundingForTraverse": 4.0,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_Hrl_Box2x2x4Hole_01",
+    "name": "DgnObj_Hrl_Box2x2x4Hole_01",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag572de768": 1462626152,
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_SliderRail_A_06": {
+    "aabbMax": {
+      "X": 4.0,
+      "Y": 0.6000000238418579,
+      "Z": 0.550000011920929
+    },
+    "aabbMin": {
+      "X": 0.0,
+      "Y": -0.05000000074505806,
+      "Z": -0.550000011920929
+    },
+    "bfres": "DgnObj_SliderRail_A",
+    "boundingForTraverse": 0.6499999761581421,
+    "bugMask": 0,
+    "cursorOffsetY": 0.5,
+    "instSize": 75656,
+    "mainModel": "DgnObj_SliderRail_A_04",
+    "name": "DgnObj_SliderRail_A_06",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_HingeBoard_A_02": {
+    "aabbMax": {
+      "X": 2.231600046157837,
+      "Y": 0.661080002784729,
+      "Z": 0.9820989966392517
+    },
+    "aabbMin": {
+      "X": -2.231600046157837,
+      "Y": -0.7273319959640503,
+      "Z": -0.5492449998855591
+    },
+    "bfres": "DgnObj_HingeBoard_A",
+    "boundingForTraverse": 1.3884119987487793,
+    "bugMask": 0,
+    "cursorOffsetY": 0.5,
+    "instSize": 75656,
+    "mainModel": "DgnObj_HingeBoard_A_02",
+    "name": "DgnObj_HingeBoard_A_02",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_DoorIronRail_A": {
+    "aabbMax": {
+      "X": 6.0,
+      "Y": 0.03750000149011612,
+      "Z": 2.91087007522583
+    },
+    "aabbMin": {
+      "X": -6.0,
+      "Y": -0.0004970000009052455,
+      "Z": -3.1133100986480713
+    },
+    "bfres": "DgnObj_DoorIron_A",
+    "boundingForTraverse": 0.03799699991941452,
+    "bugMask": 0,
+    "instSize": 75656,
+    "mainModel": "DgnObj_DoorRail_A_01",
+    "name": "DgnObj_DoorIronRail_A",
+    "profile": "MapConstPassive",
+    "sortKey": 0,
+    "tags": {
+      "tag03528579": 55739769,
+      "tag638d69dd": 1670212061
+    },
+    "yLimitAlgorithm": "NoLimit"
+  },
+  "DgnObj_Hrl_TowerRoof4x4_A_01": {
+    "aabbMax": {
+      "X": 2.1538500785827637,
+      "Y": 7.431869983673096,
+      "Z": 2.1538500785827637
+    },
+    "aabbMin": {
+      "X": -2.1538500785827637,
+      "Y": 0.0,
+      "Z": -2.1538500785827637
+    },
+    "attackPower": 0,
+    "bfres": "DgnObj_TowerRoof_A",
+    "boundingForTraverse": 7.431869983673096,
+    "bugMask": 1,
+    "generalLife": 100,
+    "instSize": 224824,
+    "mainModel": "DgnObj_Hrl_TowerRoof4x4_A_01",
+    "name": "DgnObj_Hrl_TowerRoof4x4_A_01",
+    "profile": "MapConstActive",
+    "rigidBodyCenterY": 3.01488995552063,
+    "sortKey": 0,
+    "systemIsGetItemSelf": false,
+    "systemSameGroupActorName": "",
+    "yLimitAlgorithm": "NoLimit"
+  }
+}

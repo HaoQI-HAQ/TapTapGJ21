@@ -1,0 +1,1579 @@
+{
+  "dungeon": "Dungeon054",
+  "name": "Ka'o Makagh Shrine",
+  "subtitle": "Metal Doors Open the Way",
+  "nameEvidence": "https://objmap.zeldamods.org/game_files/text/StaticMsg/Dungeon.json",
+  "date": "2026-10-18",
+  "files": [
+    {
+      "file": "Dungeon054_Static.json",
+      "count": 96,
+      "sha256": "d7c2e791a479d94c408ed77e3f7a72d28380d0e41ca7dbdcafaf164c5cad2fa9",
+      "url": "https://raw.githubusercontent.com/zeldamods/radar/master/content/map/CDungeon/Dungeon054/Dungeon054_Static.json"
+    },
+    {
+      "file": "Dungeon054_Dynamic.json",
+      "count": 432,
+      "sha256": "5688b25d8400af0a99be5b03e03acd78b45ab4ed3af831084e7d2d890900add3",
+      "url": "https://raw.githubusercontent.com/zeldamods/radar/master/content/map/CDungeon/Dungeon054/Dungeon054_Dynamic.json"
+    }
+  ],
+  "objectCount": 528,
+  "coordinateConvention": "Original XYZ, Rz*Ry*Rx; scalar Rotate means Y radians; scalar Scale is uniform.",
+  "proxyFloorNote": "Derived thin support floors from surrounding original walls. These are not original floor meshes or exact collision boundaries. Top Y=0; recommended thickness 0.25 to 0.5.",
+  "proxyFloorRectangles": [
+    {
+      "name": "EntryHall",
+      "minXZ": [
+        -18,
+        56.5
+      ],
+      "maxXZ": [
+        18,
+        94.5
+      ]
+    },
+    {
+      "name": "MainHall",
+      "minXZ": [
+        -34,
+        -8.5
+      ],
+      "maxXZ": [
+        34,
+        58.5
+      ]
+    },
+    {
+      "name": "WestSideRoom",
+      "minXZ": [
+        -58,
+        6
+      ],
+      "maxXZ": [
+        -34,
+        46
+      ]
+    },
+    {
+      "name": "AltarHall",
+      "minXZ": [
+        -10,
+        -46
+      ],
+      "maxXZ": [
+        34,
+        -8.5
+      ]
+    }
+  ],
+  "keyObjects": [
+    {
+      "hash": "298541694",
+      "name": "BlockCrackFixed4x4x4",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 298541694,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3104650573
+          }
+        ],
+        "OnlyOne": true,
+        "Rotate": 3.1415927410125732,
+        "SRTHash": 909067263,
+        "Translate": [
+          -34.0,
+          0.0,
+          34.0
+        ],
+        "UnitConfigName": "BlockCrackFixed4x4x4"
+      },
+      "boundsMin": {
+        "X": -2.0,
+        "Y": 0.0,
+        "Z": -2.0
+      },
+      "boundsMax": {
+        "X": 2.0,
+        "Y": 4.0,
+        "Z": 2.0
+      },
+      "worldBoundsMin": [
+        -36.00000017484555,
+        0.0,
+        31.999999825154447
+      ],
+      "worldBoundsMax": [
+        -31.999999825154447,
+        4.0,
+        36.00000017484555
+      ]
+    },
+    {
+      "hash": "393155234",
+      "name": "TBox_Dungeon_Iron",
+      "data": {
+        "!Parameters": {
+          "DropActor": "Item_Ore_E",
+          "DropTable": "Normal",
+          "EnableRevival": false,
+          "IsInGround": false,
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 393155234,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "OnlyOne": true,
+        "SRTHash": 934297190,
+        "Translate": [
+          -12.0,
+          16.0,
+          10.0
+        ],
+        "UnitConfigName": "TBox_Dungeon_Iron"
+      },
+      "boundsMin": {
+        "X": -0.6601560115814209,
+        "Y": -0.00380500010214746,
+        "Z": -0.5424799919128418
+      },
+      "boundsMax": {
+        "X": 0.6601560115814209,
+        "Y": 1.0683599710464478,
+        "Z": 0.5283200144767761
+      },
+      "worldBoundsMin": [
+        -12.660156011581421,
+        15.996194999897853,
+        9.457520008087158
+      ],
+      "worldBoundsMax": [
+        -11.339843988418579,
+        17.068359971046448,
+        10.528320014476776
+      ]
+    },
+    {
+      "hash": "979708496",
+      "name": "BlockCrack4x4x4",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 979708496,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3104650573
+          }
+        ],
+        "Rotate": 1.5707963705062866,
+        "SRTHash": 2120046374,
+        "Translate": [
+          -34.0,
+          4.0,
+          34.0
+        ],
+        "UnitConfigName": "BlockCrack4x4x4"
+      },
+      "boundsMin": {
+        "X": -2.0,
+        "Y": 0.0,
+        "Z": -2.0
+      },
+      "boundsMax": {
+        "X": 2.0,
+        "Y": 4.0,
+        "Z": 2.0
+      },
+      "worldBoundsMin": [
+        -36.00000008742278,
+        4.0,
+        31.999999912577223
+      ],
+      "worldBoundsMax": [
+        -31.999999912577223,
+        8.0,
+        36.00000008742278
+      ]
+    },
+    {
+      "hash": "1108641265",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 1108641265,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "SRTHash": -785699304,
+        "Translate": [
+          -11.0,
+          8.0,
+          11.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -12.0,
+        8.0,
+        10.0
+      ],
+      "worldBoundsMax": [
+        -10.0,
+        10.0,
+        12.0
+      ]
+    },
+    {
+      "hash": "1592569618",
+      "name": "DgnObj_DoorIron_A_R",
+      "data": {
+        "HashId": 1592569618,
+        "LinksToObj": [
+          {
+            "!Parameters": {
+              "Axis": {
+                "X": 1.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "Friction": 200000.0,
+              "LimitAngMax": 0.0,
+              "LimitAngMin": -80.0,
+              "Pivot": {
+                "X": 0.0,
+                "Y": -0.3499999940395355,
+                "Z": 2.700000047683716
+              },
+              "TauFactor": 1.0
+            },
+            "DefinitionName": "LimitHingeCs",
+            "DestUnitHashId": 482977903
+          },
+          {
+            "!Parameters": {
+              "AxisA": {
+                "X": 1.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "AxisB": {
+                "X": 1.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "PivotA": {
+                "X": -3.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "PivotB": {
+                "X": 3.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "RadiusA": 1.0,
+              "RadiusB": 1.0
+            },
+            "DefinitionName": "CogWheelCs",
+            "DestUnitHashId": 2278342078
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 661233902
+          }
+        ],
+        "Rotate": [
+          -1.5707963705062866,
+          4.371138828673793e-08,
+          -1.5707963705062866
+        ],
+        "SRTHash": 1508174778,
+        "Translate": [
+          3.0,
+          6.099999904632568,
+          57.0
+        ],
+        "UnitConfigName": "DgnObj_DoorIron_A_R"
+      },
+      "boundsMin": {
+        "X": -6.0,
+        "Y": -0.7169640064239502,
+        "Z": -3.0
+      },
+      "boundsMax": {
+        "X": 6.240109920501709,
+        "Y": 0.44999998807907104,
+        "Z": 3.0002601146698
+      },
+      "worldBoundsMin": [
+        -2.924339965737488e-07,
+        -0.1401101783541563,
+        56.549999608011525
+      ],
+      "worldBoundsMax": [
+        6.000260408277626,
+        12.100000055436846,
+        57.71696439982645
+      ],
+      "worldHingePivot": [
+        5.700000062982696,
+        6.099999771312832,
+        57.34999987601878
+      ]
+    },
+    {
+      "hash": "1617437236",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 1617437236,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "SRTHash": -301033210,
+        "Translate": [
+          -12.0,
+          14.0,
+          10.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -13.0,
+        14.0,
+        9.0
+      ],
+      "worldBoundsMax": [
+        -11.0,
+        16.0,
+        11.0
+      ]
+    },
+    {
+      "hash": "1854363572",
+      "name": "DgnObj_GoalExit",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "RemainsTerminalIndex": -1,
+          "RemainsTerminalType": -1,
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 1854363572,
+        "LinksToObj": [
+          {
+            "!Parameters": {
+              "NoAutoDemoMember": false
+            },
+            "DefinitionName": "BasicSig",
+            "DestUnitHashId": 2665312847
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1243135621
+          }
+        ],
+        "OnlyOne": true,
+        "SRTHash": 1456738101,
+        "Scale": 0.699999988079071,
+        "Translate": [
+          12.0,
+          11.5,
+          -23.5
+        ],
+        "UnitConfigName": "DgnObj_GoalExit"
+      }
+    },
+    {
+      "hash": "1933483153",
+      "name": "DgnObj_Hrl_GoalSystem_A_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 1933483153,
+        "LinksToObj": [
+          {
+            "DefinitionName": "PhysSystemGroup",
+            "DestUnitHashId": 1682278610
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1243135621
+          }
+        ],
+        "OnlyOne": true,
+        "SRTHash": -376039716,
+        "Translate": [
+          12.0,
+          10.0,
+          -27.0
+        ],
+        "UnitConfigName": "DgnObj_Hrl_GoalSystem_A_01"
+      },
+      "boundsMin": {
+        "X": -4.994969844818115,
+        "Y": 0.0,
+        "Z": -4.994969844818115
+      },
+      "boundsMax": {
+        "X": 4.994969844818115,
+        "Y": 14.5,
+        "Z": 7.079360008239746
+      },
+      "worldBoundsMin": [
+        7.005030155181885,
+        10.0,
+        -31.994969844818115
+      ],
+      "worldBoundsMax": [
+        16.994969844818115,
+        24.5,
+        -19.920639991760254
+      ]
+    },
+    {
+      "hash": "2042129072",
+      "name": "TBox_Dungeon_Stone",
+      "data": {
+        "!Parameters": {
+          "DropActor": "Weapon_Bow_001",
+          "DropTable": "Normal",
+          "EnableRevival": false,
+          "IsInGround": false,
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 2042129072,
+        "Rotate": 1.5707963705062866,
+        "SRTHash": -1526881924,
+        "Translate": [
+          -48.5,
+          0.0,
+          26.5
+        ],
+        "UnitConfigName": "TBox_Dungeon_Stone"
+      },
+      "boundsMin": {
+        "X": -0.6625980138778687,
+        "Y": -0.012160999700427055,
+        "Z": -0.5483400225639343
+      },
+      "boundsMax": {
+        "X": 0.6625980138778687,
+        "Y": 1.0839799642562866,
+        "Z": 0.5297849774360657
+      },
+      "worldBoundsMin": [
+        -49.04834005152701,
+        -0.012160999700427055,
+        25.837401962964496
+      ],
+      "worldBoundsMax": [
+        -47.970214993600855,
+        1.0839799642562866,
+        27.16259803784657
+      ]
+    },
+    {
+      "hash": "2278342078",
+      "name": "DgnObj_DoorIron_A",
+      "data": {
+        "HashId": 2278342078,
+        "LinksToObj": [
+          {
+            "!Parameters": {
+              "Axis": {
+                "X": 1.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "Friction": 200000.0,
+              "LimitAngMax": 80.0,
+              "LimitAngMin": 0.0,
+              "Pivot": {
+                "X": 0.0,
+                "Y": -0.3499999940395355,
+                "Z": -2.700000047683716
+              },
+              "TauFactor": 1.0
+            },
+            "DefinitionName": "LimitHingeCs",
+            "DestUnitHashId": 482977903
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 661233902
+          }
+        ],
+        "OnlyOne": true,
+        "Rotate": [
+          -1.5707963705062866,
+          4.371138828673793e-08,
+          -1.5707963705062866
+        ],
+        "SRTHash": -2096458012,
+        "Translate": [
+          -3.0,
+          6.099999904632568,
+          57.0
+        ],
+        "UnitConfigName": "DgnObj_DoorIron_A"
+      },
+      "boundsMin": {
+        "X": -6.0,
+        "Y": -0.7169650197029114,
+        "Z": -3.0002601146698
+      },
+      "boundsMax": {
+        "X": 6.240109920501709,
+        "Y": 0.44999998807907104,
+        "Z": 3.0
+      },
+      "worldBoundsMin": [
+        -6.000260407103797,
+        -0.14011017834283024,
+        56.549999608022894
+      ],
+      "worldBoundsMax": [
+        2.9360787001664335e-07,
+        12.100000055448216,
+        57.71696541311678
+      ],
+      "worldHingePivot": [
+        -5.700000032384725,
+        6.100000007354332,
+        57.35000011206029
+      ]
+    },
+    {
+      "hash": "2278559539",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 2278559539,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": 3.1415927410125732,
+        "SRTHash": -849362580,
+        "Translate": [
+          -13.0,
+          10.0,
+          11.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -14.000000087422777,
+        10.0,
+        9.999999912577223
+      ],
+      "worldBoundsMax": [
+        -11.999999912577223,
+        12.0,
+        12.000000087422777
+      ]
+    },
+    {
+      "hash": "2442166497",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 2442166497,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": -1.5707963705062866,
+        "SRTHash": 1045473142,
+        "Translate": [
+          -12.0,
+          12.0,
+          10.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -13.000000043711388,
+        12.0,
+        8.999999956288612
+      ],
+      "worldBoundsMax": [
+        -10.999999956288612,
+        14.0,
+        11.000000043711388
+      ]
+    },
+    {
+      "hash": "2655901813",
+      "name": "DgnObj_Hrl_Warpin_2x2_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 2655901813,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3293245199
+          }
+        ],
+        "OnlyOne": true,
+        "SRTHash": -1930244898,
+        "Translate": [
+          0.0,
+          0.0,
+          84.5
+        ],
+        "UnitConfigName": "DgnObj_Hrl_Warpin_2x2_01"
+      },
+      "boundsMin": {
+        "X": -2.732100009918213,
+        "Y": 0.0,
+        "Z": -3.0
+      },
+      "boundsMax": {
+        "X": 2.732100009918213,
+        "Y": 1.2625199556350708,
+        "Z": 2.732100009918213
+      },
+      "worldBoundsMin": [
+        -2.732100009918213,
+        0.0,
+        81.5
+      ],
+      "worldBoundsMax": [
+        2.732100009918213,
+        1.2625199556350708,
+        87.23210000991821
+      ]
+    },
+    {
+      "hash": "2730585327",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 2730585327,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "SRTHash": -195546301,
+        "Translate": [
+          -13.0,
+          8.0,
+          9.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -14.0,
+        8.0,
+        8.0
+      ],
+      "worldBoundsMax": [
+        -12.0,
+        10.0,
+        10.0
+      ]
+    },
+    {
+      "hash": "2978564083",
+      "name": "DgnObj_DoorIron_A_R",
+      "data": {
+        "HashId": 2978564083,
+        "LinksToObj": [
+          {
+            "!Parameters": {
+              "Axis": {
+                "X": 1.0,
+                "Y": 0.0,
+                "Z": 0.0
+              },
+              "Friction": 5000.0,
+              "LimitAngMax": 0.0,
+              "LimitAngMin": -80.0,
+              "Pivot": {
+                "X": 0.0,
+                "Y": -0.3499999940395355,
+                "Z": 2.700000047683716
+              },
+              "TauFactor": 1.0
+            },
+            "DefinitionName": "LimitHingeCs",
+            "DestUnitHashId": 557210210
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3104650573
+          }
+        ],
+        "Rotate": [
+          3.1415927410125732,
+          4.371139183945161e-08,
+          -1.5707963705062866
+        ],
+        "SRTHash": 1836212351,
+        "Translate": [
+          -34.0,
+          6.099999904632568,
+          23.0
+        ],
+        "UnitConfigName": "DgnObj_DoorIron_A_R"
+      },
+      "boundsMin": {
+        "X": -6.0,
+        "Y": -0.7169640064239502,
+        "Z": -3.0
+      },
+      "boundsMax": {
+        "X": 6.240109920501709,
+        "Y": 0.44999998807907104,
+        "Z": 3.0002601146698
+      },
+      "worldBoundsMin": [
+        -34.45000052311129,
+        -0.1401101783427885,
+        19.999739573226076
+      ],
+      "worldBoundsMax": [
+        -33.283035469016625,
+        12.100000055448216,
+        26.000000324947322
+      ],
+      "worldHingePivot": [
+        -33.64999976991895,
+        6.10000000735433,
+        20.29999998291427
+      ]
+    },
+    {
+      "hash": "3053430074",
+      "name": "BlockCrack4x4x4",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 3053430074,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3104650573
+          }
+        ],
+        "SRTHash": 537458935,
+        "Translate": [
+          -34.0,
+          8.0,
+          34.0
+        ],
+        "UnitConfigName": "BlockCrack4x4x4"
+      },
+      "boundsMin": {
+        "X": -2.0,
+        "Y": 0.0,
+        "Z": -2.0
+      },
+      "boundsMax": {
+        "X": 2.0,
+        "Y": 4.0,
+        "Z": 2.0
+      },
+      "worldBoundsMin": [
+        -36.0,
+        8.0,
+        32.0
+      ],
+      "worldBoundsMax": [
+        -32.0,
+        12.0,
+        36.0
+      ]
+    },
+    {
+      "hash": "3255231754",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 3255231754,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": 3.1415927410125732,
+        "SRTHash": -1203782084,
+        "Translate": [
+          -13.0,
+          10.0,
+          9.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -14.000000087422777,
+        10.0,
+        7.999999912577223
+      ],
+      "worldBoundsMax": [
+        -11.999999912577223,
+        12.0,
+        10.000000087422777
+      ]
+    },
+    {
+      "hash": "3312132371",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 3312132371,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": -1.5707963705062866,
+        "SRTHash": -1970158600,
+        "Translate": [
+          -13.0,
+          8.0,
+          11.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -14.000000043711388,
+        8.0,
+        9.999999956288612
+      ],
+      "worldBoundsMax": [
+        -11.999999956288612,
+        10.0,
+        12.000000043711388
+      ]
+    },
+    {
+      "hash": "3331225445",
+      "name": "DgnObj_DoorIron_A_02",
+      "data": {
+        "HashId": 3331225445,
+        "LinksToObj": [
+          {
+            "!Parameters": {
+              "Axis": {
+                "X": 0.0,
+                "Y": 0.0,
+                "Z": 1.0
+              },
+              "Friction": 5000.0,
+              "LimitAngMax": 0.0,
+              "LimitAngMin": -80.0,
+              "Pivot": {
+                "X": -2.700000047683716,
+                "Y": -0.3499999940395355,
+                "Z": 0.0
+              },
+              "TauFactor": 1.0
+            },
+            "DefinitionName": "LimitHingeCs",
+            "DestUnitHashId": 298541694
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3104650573
+          }
+        ],
+        "OnlyOne": true,
+        "Rotate": [
+          0.0,
+          1.5707963705062866,
+          1.5707963705062866
+        ],
+        "SRTHash": -644515271,
+        "Translate": [
+          -34.0,
+          6.099999904632568,
+          29.0
+        ],
+        "UnitConfigName": "DgnObj_DoorIron_A_02"
+      },
+      "boundsMin": {
+        "X": -3.0002601146698,
+        "Y": -0.7169650197029114,
+        "Z": -6.240109920501709
+      },
+      "boundsMax": {
+        "X": 3.0,
+        "Y": 0.44999998807907104,
+        "Z": 6.0
+      },
+      "worldBoundsMin": [
+        -34.450000250347415,
+        -0.14011016667342346,
+        25.999999737731663
+      ],
+      "worldBoundsMax": [
+        -33.283034707533204,
+        12.100000067117634,
+        32.00026038743368
+      ],
+      "worldHingePivot": [
+        -33.65000000596047,
+        6.100000037952309,
+        31.700000047683712
+      ]
+    },
+    {
+      "hash": "3378730527",
+      "name": "DgnObj_EntranceElevator_A_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "EventFlowEntryName": "Demo008_3",
+          "EventFlowName": "Demo008_3",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 3378730527,
+        "LinksToObj": [
+          {
+            "DefinitionName": "Reference",
+            "DestUnitHashId": 4042156762
+          },
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 3293245199
+          }
+        ],
+        "OnlyOne": true,
+        "Rotate": -3.1415927410125732,
+        "SRTHash": -1323267158,
+        "Translate": [
+          0.0,
+          10.0,
+          84.5
+        ],
+        "UnitConfigName": "DgnObj_EntranceElevator_A_01"
+      },
+      "boundsMin": {
+        "X": -1.451799988746643,
+        "Y": -0.6807569861412048,
+        "Z": -1.4297599792480469
+      },
+      "boundsMax": {
+        "X": 1.451799988746643,
+        "Y": 0.8976079821586609,
+        "Z": 1.4297399520874023
+      },
+      "worldBoundsMin": [
+        -1.4518001137402297,
+        9.319243013858795,
+        83.07025992099221
+      ],
+      "worldBoundsMax": [
+        1.4518001137384788,
+        10.897607982158661,
+        85.92976010616843
+      ]
+    },
+    {
+      "hash": "3586546809",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 3586546809,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": 3.1415927410125732,
+        "SRTHash": 1845787004,
+        "Translate": [
+          -11.0,
+          8.0,
+          9.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -12.000000087422777,
+        8.0,
+        7.999999912577223
+      ],
+      "worldBoundsMax": [
+        -9.999999912577223,
+        10.0,
+        10.000000087422777
+      ]
+    },
+    {
+      "hash": "3698331730",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 3698331730,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": -1.5707963705062866,
+        "SRTHash": 820180763,
+        "Translate": [
+          -11.0,
+          10.0,
+          9.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -12.000000043711388,
+        10.0,
+        7.999999956288611
+      ],
+      "worldBoundsMax": [
+        -9.999999956288612,
+        12.0,
+        10.000000043711388
+      ]
+    },
+    {
+      "hash": "3705447709",
+      "name": "TBox_Dungeon_Stone",
+      "data": {
+        "!Parameters": {
+          "DropActor": "PutRupee_Gold",
+          "DropTable": "Normal",
+          "EnableRevival": false,
+          "IsInGround": false,
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 3705447709,
+        "Rotate": 3.1415927410125732,
+        "SRTHash": -1748976876,
+        "Translate": [
+          -14.0,
+          2.0,
+          15.0
+        ],
+        "UnitConfigName": "TBox_Dungeon_Stone"
+      },
+      "boundsMin": {
+        "X": -0.6625980138778687,
+        "Y": -0.012160999700427055,
+        "Z": -0.5483400225639343
+      },
+      "boundsMax": {
+        "X": 0.6625980138778687,
+        "Y": 1.0839799642562866,
+        "Z": 0.5297849774360657
+      },
+      "worldBoundsMin": [
+        -14.662598060193142,
+        1.987839000299573,
+        14.470214964637776
+      ],
+      "worldBoundsMax": [
+        -13.337401938184724,
+        3.0839799642562866,
+        15.548340080490092
+      ]
+    },
+    {
+      "hash": "4040638373",
+      "name": "DgnObj_BoxStone_A",
+      "data": {
+        "HashId": 4040638373,
+        "LinksToObj": [
+          {
+            "DefinitionName": "SyncLink",
+            "DestUnitHashId": 1349423224
+          }
+        ],
+        "Rotate": 1.5707963705062866,
+        "SRTHash": 2099684841,
+        "Translate": [
+          -11.0,
+          10.0,
+          11.0
+        ],
+        "UnitConfigName": "DgnObj_BoxStone_A"
+      },
+      "boundsMin": {
+        "X": -1.0,
+        "Y": 0.0,
+        "Z": -1.0
+      },
+      "boundsMax": {
+        "X": 1.0,
+        "Y": 2.0,
+        "Z": 1.0
+      },
+      "worldBoundsMin": [
+        -12.000000043711388,
+        10.0,
+        9.999999956288612
+      ],
+      "worldBoundsMax": [
+        -9.999999956288612,
+        12.0,
+        12.000000043711388
+      ]
+    },
+    {
+      "hash": "4257890159",
+      "name": "DgnObj_Hrl_BaseRoom160x160x80_A_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 4257890159,
+        "OnlyOne": true,
+        "SRTHash": -263807808,
+        "Translate": [
+          -48.0,
+          0.0,
+          10.5
+        ],
+        "UnitConfigName": "DgnObj_Hrl_BaseRoom160x160x80_A_01"
+      },
+      "boundsMin": {
+        "X": -116.4000015258789,
+        "Y": -0.004997000098228455,
+        "Z": -116.4000015258789
+      },
+      "boundsMax": {
+        "X": 116.4000015258789,
+        "Y": 84.52230072021484,
+        "Z": 116.4000015258789
+      },
+      "worldBoundsMin": [
+        -164.4000015258789,
+        -0.004997000098228455,
+        -105.9000015258789
+      ],
+      "worldBoundsMax": [
+        68.4000015258789,
+        84.52230072021484,
+        126.9000015258789
+      ]
+    },
+    {
+      "hash": "365380898",
+      "name": "DgnObj_Hrl_Slope8x4x2_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 365380898,
+        "OnlyOne": true,
+        "SRTHash": -1745678690,
+        "Translate": [
+          12.0,
+          8.0,
+          -12.5
+        ],
+        "UnitConfigName": "DgnObj_Hrl_Slope8x4x2_01"
+      },
+      "boundsMin": {
+        "X": -4.1768999099731445,
+        "Y": 0.0,
+        "Z": -2.1763999462127686
+      },
+      "boundsMax": {
+        "X": 4.176239967346191,
+        "Y": 2.0,
+        "Z": 2.0
+      },
+      "worldBoundsMin": [
+        7.8231000900268555,
+        8.0,
+        -14.676399946212769
+      ],
+      "worldBoundsMax": [
+        16.17623996734619,
+        10.0,
+        -10.5
+      ]
+    },
+    {
+      "hash": "1259240597",
+      "name": "DgnObj_BoxIron_Secret",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 1259240597,
+        "OnlyOne": true,
+        "SRTHash": 695366773,
+        "Translate": [
+          -14.000000953674316,
+          2.0,
+          7.5
+        ],
+        "UnitConfigName": "DgnObj_BoxIron_Secret"
+      },
+      "boundsMin": {
+        "X": -2.0,
+        "Y": 0.0,
+        "Z": -2.0
+      },
+      "boundsMax": {
+        "X": 2.0,
+        "Y": 4.0,
+        "Z": 2.0
+      },
+      "worldBoundsMin": [
+        -16.000000953674316,
+        2.0,
+        5.5
+      ],
+      "worldBoundsMax": [
+        -12.000000953674316,
+        6.0,
+        9.5
+      ]
+    },
+    {
+      "hash": "1265024288",
+      "name": "DgnObj_DoorIronRail_A",
+      "data": {
+        "HashId": 1265024288,
+        "SRTHash": 285620043,
+        "Translate": [
+          0.0,
+          0.0,
+          59.79999923706055
+        ],
+        "UnitConfigName": "DgnObj_DoorIronRail_A"
+      },
+      "boundsMin": {
+        "X": -6.0,
+        "Y": -0.0004970000009052455,
+        "Z": -3.1133100986480713
+      },
+      "boundsMax": {
+        "X": 6.0,
+        "Y": 0.03750000149011612,
+        "Z": 2.91087007522583
+      },
+      "worldBoundsMin": [
+        -6.0,
+        -0.0004970000009052455,
+        56.686689138412476
+      ],
+      "worldBoundsMax": [
+        6.0,
+        0.03750000149011612,
+        62.71086931228638
+      ]
+    },
+    {
+      "hash": "1644263221",
+      "name": "DungeonResetPosTag",
+      "data": {
+        "HashId": 1644263221,
+        "OnlyOne": true,
+        "Rotate": -3.1415927410125732,
+        "SRTHash": 955776311,
+        "Translate": [
+          0.0,
+          0.0,
+          79.5
+        ],
+        "UnitConfigName": "DungeonResetPosTag"
+      }
+    },
+    {
+      "hash": "1857268230",
+      "name": "Enemy_Guardian_Mini_Baby",
+      "data": {
+        "!Parameters": {
+          "ArrowName": "NormalArrow",
+          "BeamRange": 0.0,
+          "DropTable": "Normal",
+          "EquipItem1": "Default",
+          "EquipItem2": "Default",
+          "EquipItem3": "Default",
+          "EquipItem4": "Default",
+          "IsAnnihilateDungeonEnemy": false,
+          "IsNearCreate": false,
+          "LevelSensorMode": 0,
+          "NearCreateAppearID": 0,
+          "SharpWeaponJudgeType": 1,
+          "TerritoryArea": 0.0
+        },
+        "HashId": 1857268230,
+        "OnlyOne": true,
+        "SRTHash": 1511201209,
+        "Translate": [
+          -25.0,
+          0.0,
+          16.5
+        ],
+        "UnitConfigName": "Enemy_Guardian_Mini_Baby"
+      },
+      "boundsMin": {
+        "X": -1.5914900302886963,
+        "Y": 0.0004879999905824661,
+        "Z": -1.814079999923706
+      },
+      "boundsMax": {
+        "X": 1.5916999578475952,
+        "Y": 3.028589963912964,
+        "Z": 1.1235400438308716
+      },
+      "worldBoundsMin": [
+        -26.591490030288696,
+        0.0004879999905824661,
+        14.685920000076294
+      ],
+      "worldBoundsMax": [
+        -23.408300042152405,
+        3.028589963912964,
+        17.62354004383087
+      ]
+    },
+    {
+      "hash": "1869710516",
+      "name": "DgnObj_Hrl_Stair8x8x4_01",
+      "data": {
+        "!Parameters": {
+          "DropTable": "Normal",
+          "SharpWeaponJudgeType": 0
+        },
+        "HashId": 1869710516,
+        "OnlyOne": true,
+        "Rotate": -3.1415927410125732,
+        "SRTHash": -1375039519,
+        "Translate": [
+          16.0,
+          0.0,
+          32.0
+        ],
+        "UnitConfigName": "DgnObj_Hrl_Stair8x8x4_01"
+      },
+      "boundsMin": {
+        "X": -4.1768999099731445,
+        "Y": 0.0,
+        "Z": -6.176400184631348
+      },
+      "boundsMax": {
+        "X": 4.176239967346191,
+        "Y": 4.0,
+        "Z": 2.176219940185547
+      },
+      "worldBoundsMin": [
+        11.82375949269575,
+        0.0,
+        29.823779694715952
+      ],
+      "worldBoundsMax": [
+        20.176900100224326,
+        4.0,
+        38.17640054978753
+      ]
+    },
+    {
+      "hash": "3515525301",
+      "name": "Enemy_Guardian_Mini_Junior",
+      "data": {
+        "!Parameters": {
+          "ArrowName": "NormalArrow",
+          "BeamRange": 0.0,
+          "DropTable": "Normal",
+          "EquipItem1": "Weapon_Spear_013",
+          "EquipItem2": "Default",
+          "EquipItem3": "Default",
+          "EquipItem4": "Default",
+          "IsAnnihilateDungeonEnemy": false,
+          "IsNearCreate": false,
+          "LevelSensorMode": 0,
+          "NearCreateAppearID": 0,
+          "SharpWeaponJudgeType": 1,
+          "TerritoryArea": 0.0
+        },
+        "HashId": 3515525301,
+        "OnlyOne": true,
+        "SRTHash": -875646236,
+        "Translate": [
+          25.0,
+          0.0,
+          38.5
+        ],
+        "UnitConfigName": "Enemy_Guardian_Mini_Junior"
+      },
+      "boundsMin": {
+        "X": -1.5914900302886963,
+        "Y": 0.0004879999905824661,
+        "Z": -1.814079999923706
+      },
+      "boundsMax": {
+        "X": 1.5916999578475952,
+        "Y": 3.028589963912964,
+        "Z": 1.1235400438308716
+      },
+      "worldBoundsMin": [
+        23.408509969711304,
+        0.0004879999905824661,
+        36.685920000076294
+      ],
+      "worldBoundsMax": [
+        26.591699957847595,
+        3.028589963912964,
+        39.62354004383087
+      ]
+    },
+    {
+      "hash": "4027799814",
+      "name": "DgnObj_DoorIronRail_A",
+      "data": {
+        "HashId": 4027799814,
+        "Rotate": 1.5707963705062866,
+        "SRTHash": 285620043,
+        "Translate": [
+          -31.200000762939453,
+          0.0,
+          26.0
+        ],
+        "UnitConfigName": "DgnObj_DoorIronRail_A"
+      },
+      "boundsMin": {
+        "X": -6.0,
+        "Y": -0.0004970000009052455,
+        "Z": -3.1133100986480713
+      },
+      "boundsMax": {
+        "X": 6.0,
+        "Y": 0.03750000149011612,
+        "Z": 2.91087007522583
+      },
+      "worldBoundsMin": [
+        -34.31331112385586,
+        -0.0004970000009052455,
+        19.99999987276183
+      ],
+      "worldBoundsMax": [
+        -28.289130425445286,
+        0.03750000149011612,
+        32.00000013608711
+      ]
+    }
+  ]
+}

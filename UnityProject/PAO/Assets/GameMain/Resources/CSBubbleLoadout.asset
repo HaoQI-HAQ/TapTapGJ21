@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 99e61f232889420f9c258bb36b95dc12, type: 3}
   m_Name: CSBubbleLoadout
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   maxChargeTime: 2
   holdThreshold: 1
   spawnOffset: {x: 0, y: 0.15, z: 0.3}
@@ -31,6 +31,7 @@ MonoBehaviour:
     lifeTime: 5
     minCost: 2
     maxCost: 12
+    rideMinLifeTime: 1
     stickBreakForce: 500
     stickSticky: 1
     stickBouncy: 1
@@ -39,10 +40,11 @@ MonoBehaviour:
     rideExtraRiseSpeed: 1
     rideFloatDuration: 5
     controlMoveForce: 7
-    heldLiftSpeed: 1
+    heldLiftSpeed: 2
     heldLifeTime: 5
   bouncy:
-    prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f, type: 3}
+    prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f,
+      type: 3}
     color: {r: 1, g: 0, b: 0.910151, a: 1}
     minSize: 0.3
     maxSize: 1.1
@@ -55,6 +57,7 @@ MonoBehaviour:
     lifeTime: 10
     minCost: 2
     maxCost: 12
+    rideMinLifeTime: 1
     bounciness: 0.9
     maxBounceCount: 0
     fillAmountMin: 1
@@ -70,7 +73,8 @@ MonoBehaviour:
     riderLaunchRatio: 1
     riderLaunchDuration: 0.7
   bomb:
-    prefab: {fileID: 4259276435024632764, guid: 6442c7ee7072375448a2e290e59a82da, type: 3}
+    prefab: {fileID: 4259276435024632764, guid: 6442c7ee7072375448a2e290e59a82da,
+      type: 3}
     color: {r: 0.55, g: 0.85, b: 1, a: 1}
     minSize: 0.2
     maxSize: 0.6
@@ -83,6 +87,7 @@ MonoBehaviour:
     lifeTime: 13
     minCost: 10
     maxCost: 20
+    rideMinLifeTime: 1
     blastRadius: 0.3
     blastForce: 12
     fuseTime: 2

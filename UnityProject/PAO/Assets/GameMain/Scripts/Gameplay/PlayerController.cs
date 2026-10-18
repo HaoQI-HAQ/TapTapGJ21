@@ -131,6 +131,47 @@ namespace PAO
         /// <summary>被提着时的垂直速度（米/秒），由泡泡写入。</summary>
         public float LiftSpeed { get; set; }
 
+        /// <summary>
+        /// 当前竖直速度（米/秒），向上为正。
+        ///
+        /// 弹力跳板靠它判断玩家"是不是在往下落"——
+        /// 否则站在板上的每一帧都会被重复弹起，人就黏在空中抖。
+        /// </summary>
+        public float VerticalSpeed { get { return m_VerticalSpeed; } }
+
+        /// <summary>
+        /// 由外部机关（弹力跳板等）调用：把角色往上弹到指定高度。
+        ///
+        /// 【为什么按"高度"而不是"初速度"】
+        /// 关卡设计时想的是"这块板能把我弹多高"，而不是"给多少米每秒"。
+        /// 这里用 v = sqrt(2·|g|·h) 反推初速度 ——
+        /// 以后就算改了重力，同一块板弹起来的高度也不变。
+        ///
+        /// 【为什么在泡泡里/被提着时要忽略】
+        /// 那两种状态下角色不走重力、不走 CharacterController
+        /// （位置由泡泡每帧接管），写 m_VerticalSpeed 没有任何意义，
+        /// 还会在脱离泡泡的那一刻突然把人弹飞。
+        /// </summary>
+        /// <param name="height">期望弹起高度（米）</param>
+        public void BounceUp(float height)
+        {
+            if (IsInCarrier || IsLifted)
+            {
+                return;
+            }
+
+            height = Mathf.Max(height, 0.01f);
+
+            // m_Gravity 是负数，所以 -2f * m_Gravity 为正
+            m_VerticalSpeed = Mathf.Sqrt(height * -2f * m_Gravity);
+
+            // 防止落地音效把"被弹起"当成"落地"（下一条 UpdateMove 里会判断
+            // grounded && !m_WasGrounded && m_VerticalSpeed < -3f）
+            m_WasGrounded = false;
+
+            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerJump, transform.position);
+        }
+
         public float LookSensitivityMultiplier { get; set; } = 1f;
         public bool InvertVerticalLook { get; set; }
 
@@ -236,6 +277,10 @@ namespace PAO
         private void Awake()
         {
             m_Controller = GetComponent<CharacterController>();
+
+            // 中文输入法（IME）激活时，Windows 会把 WASD 吞进输入法的组合文本里，
+            // 角色就完全动不了。这里关掉 IME 组合模式：按键直接进游戏。
+            Input.imeCompositionMode = IMECompositionMode.Off;
 
             if (m_CameraPivot == null && Camera.main != null)
             {

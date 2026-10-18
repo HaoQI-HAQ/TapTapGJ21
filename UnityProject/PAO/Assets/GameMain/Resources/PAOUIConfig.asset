@@ -19,17 +19,20 @@ MonoBehaviour:
   - Control UI
   - UI Preview
   - shiliuye map
+  - wengjie
   font: {fileID: 12800000, guid: de3370e671e14324f862fc20e980764f, type: 3}
   round: {fileID: 21300000, guid: 374bcb791de34d3fbbf71f82bb7e93cc, type: 3}
   ring: {fileID: 21300000, guid: cd0af2a71ce44c01ad927f2350313b17, type: 3}
   menuArt: {fileID: 21300000, guid: 169436f812e74325af4aac2b38f9465c, type: 3}
   menuPaperArt: {fileID: 21300000, guid: a18807a3a5c847148178ac0a5edc85b4, type: 3}
+  menuBackdrop: {fileID: 21300000, guid: 7c4a1f0b93d24e5cb8a61d2f4c7e90ab, type: 3}
   paperStyle: 0
   abilityIcons:
   - {fileID: 21300000, guid: d2e3f4a5b6c708192a3b4c5d6e7f8091, type: 3}
   - {fileID: 21300000, guid: e3f4a5b6c7d8091a2b3c4d5e6f708192, type: 3}
   - {fileID: 21300000, guid: f4a5b6c7d8e9012a3b4c5d6e7f8091a2, type: 3}
-  defaultPlayer: {fileID: 4001224688086030769, guid: 533472653752a5e42b3a814b5ef9cbac, type: 3}
+  defaultPlayer: {fileID: 4001224688086030769, guid: 533472653752a5e42b3a814b5ef9cbac,
+    type: 3}
   paper: {r: 1, g: 0.9764706, b: 0.9215686, a: 1}
   ink: {r: 0.1568627, g: 0.254902, b: 0.254902, a: 1}
   text: {r: 0.1568627, g: 0.254902, b: 0.254902, a: 1}
@@ -43,39 +46,64 @@ MonoBehaviour:
     orbitPeriod: 7
   chapters:
   - scene: Map0
-    spawnAnchor: Ground_FrontOpenSpace
-    goalAnchor: FarLandmark_Base
-    title: 水域 01
-    description: 从第一段水流开始，认识泡泡与环境之间的关系。
-    objective: 探索水域，寻找通向下一章的路径。
+    title: "\u7B2C\u4E00\u7AE0 \xB7 \u8BDE\u751F"
+    description: "\u4E00\u4E2A\u6CE1\u6CE1\u5728\u4EC0\u4E48\u90FD\u6CA1\u6709\u7684\u5730\u65B9\u9192\u6765\u3002\u5B83\u5B66\u4F1A\u7834\u574F\u3001\u6062\u590D\uFF0C\u4E5F\u7B2C\u4E00\u6B21\u4ED8\u51FA\u4EE3\u4EF7\u3002"
+    objective: "\u6253\u7834\u524D\u65B9\u7684\u6CE1\u6CE1\u5899\uFF0C\u8D70\u5230\u51FA\u53E3\u3002\u79BB\u5F00\u4E4B\u524D\uFF0C\u8BB0\u4F4F\u90A3\u4E2A\u95EE\u9898\u3002"
+    spawnAnchor: Map0_Spawn
+    goalAnchor: Map0_Goal
   - scene: Map1
+    title: "\u6C34\u57DF 02"
+    description: "\u5C06\u6CE1\u6CE1\u7EC4\u5408\u6210\u65B0\u7684\u8DEF\u5F84\uFF0C\u62B5\u8FBE\u6C34\u6D41\u66F4\u6DF1\u5904\u3002"
+    objective: "\u8FD0\u7528\u6CE1\u6CE1\u80FD\u529B\uFF0C\u62B5\u8FBE\u4E0B\u4E00\u5904\u51FA\u53E3\u3002"
     spawnAnchor: Island_Start
-    goalAnchor:
-    title: 水域 02
-    description: 将泡泡组合成新的路径，抵达水流更深处。
-    objective: 运用泡泡能力，抵达下一处出口。
+    goalAnchor: 
   - scene: Map2
+    title: "\u6C34\u57DF 03"
+    description: "\u7559\u610F\u73AF\u5883\u7684\u53D8\u5316\uFF0C\u8BA9\u6BCF\u4E00\u6B21\u9009\u62E9\u4EA7\u751F\u56DE\u54CD\u3002"
+    objective: "\u89C2\u5BDF\u5730\u5F62\uFF0C\u5BFB\u627E\u53EF\u4EE5\u524D\u8FDB\u7684\u8DEF\u7EBF\u3002"
     spawnAnchor: Start_Salvage_Court
     goalAnchor: Memory_Beacon_Lower_Platform
-    title: 水域 03
-    description: 留意环境的变化，让每一次选择产生回响。
-    objective: 观察地形，寻找可以前进的路线。
+  - scene: Map2_5
+    title: "\u6C34\u57DF 04"
+    description: "\u574D\u584C\u7684\u5BC6\u5BA4\u901A\u5411\u796D\u575B\uFF0C\u77F3\u5806\u4E0E\u6697\u95E8\u540E\u85CF\u7740\u65E7\u65E5\u7684\u56DE\u58F0\u3002"
+    objective: "\u7A7F\u8FC7\u4E3B\u5385\u4E0E\u4FA7\u5BA4\uFF0C\u62B5\u8FBE\u6DF1\u5904\u7684\u796D\u575B\u3002"
+    spawnAnchor: K25_00_Entrance_Run_In
+    goalAnchor: K25_06_Altar_Island
   - scene: Map3
+    title: "\u6C34\u57DF 05"
+    description: "\u5728\u5C42\u5C42\u6D8C\u52A8\u4E2D\u7EE7\u7EED\u63A2\u7D22\uFF0C\u5BFB\u627E\u6563\u843D\u7684\u610F\u8BC6\u788E\u7247\u3002"
+    objective: "\u7EE7\u7EED\u63A2\u7D22\uFF0C\u62B5\u8FBE\u672C\u7AE0\u7EC8\u70B9\u3002"
     spawnAnchor: West_Start_Camp
     goalAnchor: Map3_Corkscrew_Upper_Exit_Shelf
-    title: 水域 04
-    description: 在层层涌动中继续探索，寻找散落的意识碎片。
-    objective: 继续探索，抵达本章终点。
+  - scene: Map3_5
+    title: "\u6C34\u57DF 06"
+    description: "\u5CE1\u8C37\u7684\u9636\u68AF\u4E00\u8DEF\u5411\u4E0A\uFF0C\u5C3D\u5934\u662F\u88AB\u9057\u5FD8\u7684\u796D\u575B\u3002"
+    objective: "\u6CBF\u5CE1\u8C37\u5411\u4E0A\u6500\u722C\uFF0C\u62B5\u8FBE\u9AD8\u5904\u796D\u575B\u3002"
+    spawnAnchor: TFD_Rock_Slab_02A_LOD0_3 (1)
+    goalAnchor: T35_06_Altar_Blockout
   - scene: Map4
+    title: "\u6C34\u57DF 07"
+    description: "\u56DE\u770B\u5DF2\u7ECF\u62B5\u8FBE\u7684\u6C34\u57DF\uFF0C\u5C1D\u8BD5\u65B0\u7684\u6CE1\u6CE1\u7EC4\u5408\u3002"
+    objective: "\u8FD0\u7528\u5DF2\u638C\u63E1\u7684\u80FD\u529B\u62B5\u8FBE\u7EC8\u70B9\u3002"
     spawnAnchor: Start_Memory_Beach
     goalAnchor: Resonance_Core_Plinth
-    title: 水域 05
-    description: 回看已经抵达的水域，尝试新的泡泡组合。
-    objective: 运用已掌握的能力抵达终点。
   - scene: Map5
+    title: "\u6C34\u57DF 08"
+    description: "\u62B5\u8FBE\u6700\u540E\u4E00\u6BB5\u6C34\u6D41\uFF0C\u56DE\u770B\u65C5\u7A0B\u7559\u4E0B\u7684\u56DE\u58F0\u3002"
+    objective: "\u62B5\u8FBE\u7EC8\u70B9\uFF0C\u56DE\u770B\u4F60\u7684\u65C5\u7A0B\u3002"
     spawnAnchor: Start_Outer_Courtyard
     goalAnchor: Memory_Garden_Plinth
-    title: 水域 06
-    description: 抵达最后一段水流，回看旅程留下的回声。
-    objective: 抵达终点，回看你的旅程。
-  credits: "泡涌 · 意识之海\nTapTap Game Jam 21\n\n感谢每一位参与创作与体验的朋友。"
+  - scene: shiliuye map
+    title: "\u6C34\u57DF 09"
+    description: "\u5341\u516D\u591C\u4E4B\u5854\u7ACB\u5728\u6DF1\u6E0A\u4E4B\u4E0A\uFF0C\u5899\u9762\u3001\u5C16\u523A\u4E0E\u6446\u81C2\u4E4B\u95F4\u53EA\u5269\u4E00\u6761\u5411\u4E0A\u7684\u8DEF\u3002"
+    objective: "\u7A7F\u8FC7\u6574\u5EA7\u5854\uFF0C\u62B5\u8FBE\u5854\u9876\u7684\u5165\u53E3\u3002"
+    spawnAnchor: Tower_Ground
+    goalAnchor: Landing_F7
+  - scene: wengjie
+    title: "\u6C34\u57DF 10"
+    description: "\u4E00\u53E3\u6B63\u5728\u88AB\u704C\u6EE1\u7684\u4E95\u3002\u4E09\u6761\u8DEF\u90FD\u901A\u5411\u5B83\uFF0C\u4F46\u6CA1\u6709\u4E00\u6761\u662F\u514D\u8D39\u7684\u3002"
+    objective: "\u5728\u6F6E\u6C34\u6DF9\u6CA1\u796D\u575B\u4E4B\u524D\uFF0C\u722C\u4E0A\u5CE1\u8C37\u7684\u6700\u9AD8\u5904\u3002"
+    spawnAnchor: Spawn
+    goalAnchor: B_Goal
+  endings: []
+  credits: "\u6CE1\u6D8C \xB7 \u610F\u8BC6\u4E4B\u6D77\nTapTap Game Jam 21\n\n\u611F\u8C22\u6BCF\u4E00\u4F4D\u53C2\u4E0E\u521B\u4F5C\u4E0E\u4F53\u9A8C\u7684\u670B\u53CB\u3002"

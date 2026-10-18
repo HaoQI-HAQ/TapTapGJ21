@@ -694,6 +694,23 @@ namespace PAO
         // ==================== 爆炸 ====================
 
         /// <summary>
+        /// 任意泡泡**真正爆炸**时触发（参数：爆炸中心、爆炸半径）。
+        ///
+        /// 【为什么需要这个广播】
+        /// 炸弹泡泡不是"碰到就炸"，而是**引信到点才炸**（见 BombBubbleManager）。
+        /// 所以场景里的机关（比如弹力跳板）没法靠 OnCollisionEnter 感知到爆炸 ——
+        /// 泡泡可能只是静静落在机关上，几秒后才炸。
+        ///
+        /// 【为什么用静态事件而不是让机关逐个挂监听】
+        /// 爆炸来源很多：引信到点、被针戳破、连锁引爆、宿主带弹爆炸……
+        /// 让每个机关去监听所有这些路径既做不到也很脆。
+        /// 静态事件只需要在**唯一的爆炸实现**里广播一次。
+        ///
+        /// 注意：订阅者**必须在 OnDisable 里退订**，否则物体销毁后会被悬空引用调空。
+        /// </summary>
+        public static event System.Action<Vector3, float> Exploded;
+
+        /// <summary>
         /// 引爆：把半径内的刚体按爆炸力推开，然后销毁自己。
         /// 由 BombBubbleManager 在按下引爆键时调用；
         /// 地形泡泡被填满时也会调它来清掉里面的泡泡。
@@ -755,6 +772,15 @@ namespace PAO
             float radius = bombSettings.blastRadius * radiusMultiplier;
             float force = bombSettings.blastForce;
 
+            // 广播爆炸 —— 场景机关（弹力跳板等）靠它知道"被炸到了"。
+            // 放在真正开始处理爆炸之前，这样机关能在乘客弹出、物体销毁之前收到通知。
+            // 只在 bombSettings 非空（真的会炸）时才会走到这里 ——
+            // 普通泡泡单纯消失的那条分支在上面已经 return 了。
+            if (Exploded != null)
+            {
+                Exploded(center, radius);
+            }
+
             // 先让乘客出来，否则人会被留在正在销毁的泡泡里
             if (Rider != null)
             {
@@ -796,16 +822,15 @@ namespace PAO
                     sizeReference = launcher.CurrentMaxSize;
                 }
 
-                // 颜色：宿主带弹爆炸用更饱和的品红（呼应 Bubble.AbsorbBomb 把宿主染橙的暗示），
-                // 纯炸弹泡泡用默认草莓色 —— 玩家一眼能看出是哪种爆炸。
-                bool hostPayload = m_BombSettings == null;
-                Color? burstTint = hostPayload ? new Color(1f, 0.34f, 0.72f) : (Color?)null;
-
-                BubbleBurstVFX.Spawn(
-                    center,
-                    GetDiameter(),
-                    burstTint,
-                    sizeReference);
+                // 能量爆炸：蓝白球状爆发 + 冲击环 + 放射光条 + 余烬。
+                //
+                // 【为什么换掉了原来的 BubbleBurstVFX】
+                // 那一版是"水彩洇开"式的一团彩块（安静、柔和），
+                // 和炸弹泡泡"能量爆发"的定位对不上。策划要的是那种
+                // 瞬间撑开、过曝发亮的能量炸开感，所以换成了 EnergyExplosionVFX。
+                //
+                // 两版都留着：BubbleBurstVFX 没删，想回退改这一行就行。
+                EnergyExplosionVFX.Spawn(center, GetDiameter(), sizeReference);
             }
 
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
