@@ -37,9 +37,9 @@ Material:
     - _Iridescence: 3.52
     - _IridescenceScale: 6.17
     - _NormalWobble: 0.18
-    - _Opacity: 1
+    - _Opacity: 0.492
     - _OutlineWidth: 0.02
-    - _RimIntensity: 0
+    - _RimIntensity: 2.78
     - _RimPower: 7.5
     - _RimThreshold: 0.634
     - _Spec2Intensity: 1.58
@@ -57,9 +57,9 @@ Material:
     - _WobbleSpeed: 1.2
     m_Colors:
     - _BaseColor: {r: 0, g: 0.09654546, b: 1, a: 1}
-    - _EnvColor: {r: 0.54999995, g: 0.72, b: 0.95, a: 1}
+    - _EnvColor: {r: 0.04349356, g: 0.38168955, b: 0.8274932, a: 1}
     - _IridColorA: {r: 0.45, g: 0.95, b: 0.85, a: 1}
     - _IridColorB: {r: 1, g: 0.62, b: 0.92, a: 1}
     - _OutlineColor: {r: 0.24722862, g: 0, b: 1, a: 0.47058824}
-    - _SpecColor: {r: 1, g: 0.9779874, b: 0.9779874, a: 1}
+    - _SpecColor: {r: 0.88140154, g: 0.21738066, b: 0.21738066, a: 1}
   m_BuildTextureStacks: []

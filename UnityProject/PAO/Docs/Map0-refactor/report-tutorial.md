@@ -26,6 +26,12 @@
 - `Map0 教程重构 · 旁白自检`：数据 36 段/466 句；配音 26 条；触发区 21 个（异常 0）；停留区 2 个；字幕条 OK。
 - 截图 12 张（出生/出生泡/粉墙/揭示/大厅/大厅中段/爬升/高廊/出口/彩泡/回望/全景）。
 
+## 后续：光感调整（2026-10-19）
+
+- 修复 `Map0_WhiteProfile` 后处理丢失（ACES / Bloom / Vignette / ColorAdjustments / WhiteBalance 真正生效），重调环境光 / 雾 / 主补光 / 8 盏彩色点光；
+- 工具：`Assets/GameMain/Scripts/Editor/Map0LightingPass.cs`，菜单 `Tools/PAO/关卡白盒/Map0 教程重构 · 光感调整`；
+- 报告与 before/after：`Docs/Map0-refactor/light-pass-2026-10-19/`（含 `compare-sheet.png`）。
+
 ## 仍是限制（下一轮）
 
 1. 还没真人掐表走完 8–10 分钟；若走快了，调大锥体长度/再加一段粉墙即可。

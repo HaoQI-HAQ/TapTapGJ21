@@ -1073,7 +1073,7 @@ namespace PAO.EditorTools
             Volume volume = volumeGo.AddComponent<Volume>();
             volume.isGlobal = true;
             volume.priority = 10f;
-            volume.profile = EnsureWhiteProfile();
+            volume.sharedProfile = Map0LightingPass.EnsureProfile();
 
             // Map4 同款的体积雾（Thalassophobia Fog 预制体）
             GameObject fogPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ThirdParty/Thalassophobia/Contents/Prefabs/Fog.prefab");
@@ -1134,37 +1134,18 @@ namespace PAO.EditorTools
                 cam.clearFlags = CameraClearFlags.SolidColor;
                 cam.backgroundColor = new Color(0.96f, 0.965f, 0.975f);
             }
+
+            // 光感：环境光 / 雾 / 主补光 / 彩色点光统一由 Map0LightingPass 应用，
+            // 保证「整体重建」和「光感调整」得到同一套参数。
+            Map0LightingPass.ApplySceneLighting();
         }
 
         private static VolumeProfile EnsureWhiteProfile()
         {
-            Directory.CreateDirectory(kProfileDir);
-            const string path = "Assets/GameMain/Art/Profiles/Map0_WhiteProfile.asset";
-            VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
-            if (profile == null)
-            {
-                profile = ScriptableObject.CreateInstance<VolumeProfile>();
-                AssetDatabase.CreateAsset(profile, path);
-            }
-            if (profile.components.Count == 0)
-            {
-                Bloom bloom = profile.Add<Bloom>(true);
-                bloom.threshold.Override(0.9f);
-                bloom.intensity.Override(0.85f);
-                bloom.scatter.Override(0.8f);
-                Vignette vignette = profile.Add<Vignette>(true);
-                vignette.intensity.Override(0.28f);
-                vignette.smoothness.Override(0.45f);
-                ColorAdjustments color = profile.Add<ColorAdjustments>(true);
-                color.postExposure.Override(0.35f);
-                color.saturation.Override(4f);
-                color.contrast.Override(8f);
-                Tonemapping tonemapping = profile.Add<Tonemapping>(true);
-                tonemapping.mode.Override(TonemappingMode.ACES);
-                EditorUtility.SetDirty(profile);
-                AssetDatabase.SaveAssets();
-            }
-            return profile;
+            // 统一委托给 Map0LightingPass：它会把 Bloom / Vignette / ColorAdjustments /
+            // Tonemapping / WhiteBalance 真正写成 profile 的子资产（旧实现只 Add<T>()，
+            // 保存后组件会全部丢失，导致后处理整条链路失效）。
+            return Map0LightingPass.EnsureProfile();
         }
 
         // ==================== 旁白 ====================
