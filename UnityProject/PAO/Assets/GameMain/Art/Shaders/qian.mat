@@ -66,6 +66,10 @@ Material:
     - _Cutoff: 0.5
     - _DirectBoost: 0.55
     - _DissolveAmount: 0
+    - _DissolveEdge: 0.045
+    - _DissolveEdgeBoost: 1.8
+    - _DissolveEnabled: 0
+    - _DissolveNoise: 5
     - _DstBlend: 0
     - _EdgeIntensity: 3.2
     - _EdgeSoftness: 0.62
@@ -115,7 +119,8 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _AmbientTint: {r: 0.52, g: 0.6399999, b: 0.8, a: 1}
-    - _BaseColor: {r: 0.047481313, g: 0.7646755, b: 0.9150943, a: 1}
+    - _BaseColor: {r: 0.7018292, g: 1, b: 0, a: 1}
+    - _DissolveEdgeColor: {r: 1, g: 0.97999996, b: 0.96, a: 1}
     - _EdgeColor: {r: 1, g: 0.97999996, b: 0.96, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EnvColor: {r: 1, g: 0, b: 0.7058821, a: 1}
@@ -125,7 +130,7 @@ Material:
     - _IridColorA: {r: 0.45, g: 0.95, b: 0.85, a: 1}
     - _IridColorB: {r: 1, g: 0.62, b: 0.92, a: 1}
     - _LightDir: {r: 0, g: 0.6, b: 0.7, a: 1}
-    - _OutlineColor: {r: 0.04705883, g: 0.76470596, b: 0.91372555, a: 0.7294118}
+    - _OutlineColor: {r: 1, g: 0, b: 0.26733255, a: 0.7294118}
     - _RimColor: {r: 1, g: 0.92, b: 0.94, a: 1}
     - _SpecColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecOffset: {r: 0, g: 0.19999996, b: 0, a: 0}

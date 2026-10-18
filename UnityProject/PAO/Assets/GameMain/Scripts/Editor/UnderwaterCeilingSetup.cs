@@ -105,6 +105,53 @@ namespace PAO.Underwater.EditorTools
             Debug.Log("[PAO 水面] " + scene.name + " 清理掉 " + removed + " 个旧水面对象。");
         }
 
+        [MenuItem("Tools/PAO/水下/重置水面材质为 shader 默认值", priority = 93)]
+        public static void ResetMaterialDefaults()
+        {
+            Material existing = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+            if (existing == null)
+            {
+                Debug.Log("[PAO 水面] 还没有材质：" + MaterialPath + "（先跑一次生成命令）");
+                return;
+            }
+
+            Shader shader = Shader.Find(ShaderName);
+            if (shader == null)
+            {
+                Debug.LogError("[PAO 水面] 找不到 shader：" + ShaderName);
+                return;
+            }
+
+            // 换过 shader 版本之后，材质里还留着旧版的同名参数（比如 _FadeStart），
+            // 会盖掉 shader 里的新默认值。这里从零重建一份，保证面板上看到的就是调过的数值。
+            AssetDatabase.DeleteAsset(MaterialPath);
+            Material material = new Material(shader) { name = "M_UnderwaterCeiling" };
+            AssetDatabase.CreateAsset(material, MaterialPath);
+            AssetDatabase.SaveAssets();
+
+            // 场景里的 Renderer 引用会断，重新指一遍
+            Scene scene = SceneManager.GetActiveScene();
+            if (scene.IsValid() && scene.isLoaded)
+            {
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    UnderwaterCeiling ceiling = root.GetComponentInChildren<UnderwaterCeiling>(true);
+                    if (ceiling == null)
+                        continue;
+
+                    MeshRenderer renderer = ceiling.GetComponent<MeshRenderer>();
+                    if (renderer != null)
+                        renderer.sharedMaterial = material;
+
+                    EditorUtility.SetDirty(ceiling);
+                }
+
+                EditorSceneManager.MarkSceneDirty(scene);
+            }
+
+            Debug.Log("[PAO 水面] 材质已按 shader 默认值重建：" + MaterialPath);
+        }
+
         private static bool BuildForScene(Scene scene, bool removeLegacy)
         {
             if (removeLegacy)
