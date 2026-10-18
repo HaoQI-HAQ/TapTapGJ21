@@ -39,6 +39,9 @@ schemas/
 skills/
 templates/
 tools/
+# The embedded MCP Unity package needs its Editor tool implementations.
+!/UnityProject/PAO/Packages/com.gamelovers.mcp-unity/Editor/Tools/
+!/UnityProject/PAO/Packages/com.gamelovers.mcp-unity/Editor/Tools/**
 urhox-libs/
 AGENTS.md
 CLAUDE.md

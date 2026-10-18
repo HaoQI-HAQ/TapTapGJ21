@@ -53,8 +53,8 @@ namespace PAO.EditorTools
         public static void BuildMap2To5()
         {
             EnsureMaterials();
-            BuildMap(Map2Path, BuildMap2Geometry);
-            BuildMap(Map3Path, BuildMap3Geometry);
+            BuildMap(Map2Path, BuildMap2ShrineGeometry);
+            BuildMap(Map3Path, BuildMap3ShrineGeometry);
             BuildMap(Map4Path, BuildMap4Geometry);
             BuildMap(Map5Path, BuildMap5Geometry);
 
@@ -288,127 +288,12 @@ namespace PAO.EditorTools
 
         private static void BuildMap2ShrineGeometry(Transform root)
         {
-            // Ja Baij Shrine. Rebuilt as the actual long, stepped bomb tutorial:
-            // start slope and rubble wall, right-hand chest alcove, ladder, moving
-            // bomb ferry, launcher chamber, bomb tube and raised altar at the end.
-            // South is the entrance; the shrine's long axis runs north (+Z).
-            Box(root, "T2_00_Entrance_Floor", new Vector3(0, -0.4f, -34), new Vector3(20, 0.8f, 15), m_Ground);
-            Box(root, "T2_00_Entrance_Left_Wall", new Vector3(-10, 3.5f, -27), new Vector3(0.8f, 7, 14), m_Edge);
-            Box(root, "T2_00_Entrance_Right_Wall", new Vector3(10, 3.5f, -27), new Vector3(0.8f, 7, 14), m_Edge);
-            Box(root, "T2_00_Rune_Terminal_Blockout", new Vector3(0, 0.75f, -39), new Vector3(2.2f, 1.5f, 1.6f), m_Landmark);
-            BoxRotated(root, "T2_01_Rolling_Bomb_Slope", new Vector3(0, 0.1f, -21), new Vector3(7, 0.7f, 10), new Vector3(-10, 0, 0), m_Bounce);
-            Box(root, "T2_01_Tutorial_Room_Floor", new Vector3(0, -0.4f, -15), new Vector3(22, 0.8f, 20), m_Ground);
-            Box(root, "T2_01_Left_Room_Wall", new Vector3(-11, 3.5f, -15), new Vector3(0.8f, 7, 20), m_Edge);
-            Box(root, "T2_01_Right_Room_Wall_Front", new Vector3(11, 3.5f, -20), new Vector3(0.8f, 7, 10), m_Edge);
-            Box(root, "T2_01_Right_Room_Wall_Back", new Vector3(11, 3.5f, -7), new Vector3(0.8f, 7, 4), m_Edge);
-            Box(root, "T2_01_First_Rubble_Lintel", new Vector3(0, 2.6f, -5), new Vector3(8, 2.2f, 1.2f), m_PinkWall);
-            Box(root, "T2_01_First_Rubble_Breakable_Panel", new Vector3(0, 1.25f, -5), new Vector3(7, 2.5f, 1.2f), m_PinkWall);
-            Box(root, "T2_01_First_Rubble_Left", new Vector3(-4.3f, 0.9f, -5), new Vector3(1.4f, 1.8f, 1.2f), m_PinkWall);
-            Box(root, "T2_01_First_Rubble_Right", new Vector3(4.3f, 0.9f, -5), new Vector3(1.4f, 1.8f, 1.2f), m_PinkWall);
-            Box(root, "T2_01_Optional_Chest_Alcove_Floor", new Vector3(7.2f, 0.1f, -11), new Vector3(5.6f, 0.8f, 7), m_Landmark);
-            Box(root, "T2_01_Optional_Chest_Rubble_Left", new Vector3(5.3f, 1.1f, -11), new Vector3(0.8f, 2.2f, 4), m_PinkWall);
-            Box(root, "T2_01_Optional_Chest_Rubble_Right", new Vector3(9.4f, 1.1f, -11), new Vector3(0.8f, 2.2f, 4), m_PinkWall);
-            Box(root, "T2_01_Optional_Chest_Breakable_Entrance", new Vector3(7.2f, 1.1f, -7.6f), new Vector3(3.8f, 2.2f, 0.8f), m_PinkWall);
-            Box(root, "T2_01_Optional_Chest_Blockout", new Vector3(7.2f, 1.0f, -12), new Vector3(1.4f, 1.2f, 1.2f), m_Bomb);
-            Box(root, "T2_01_Second_Rubble_Wall_Before_Ladder", new Vector3(-7.5f, 1.1f, -3.1f), new Vector3(3.2f, 2.2f, 0.8f), m_PinkWall);
-
-            // A ladder rises into the narrow ferry room. The moving slab is the
-            // only bridge over this gap; the bomb wall is at its far landing.
-            for (int i = 0; i < 8; i++)
-                Box(root, "T2_02_Ladder_Rung_" + i.ToString("00"), new Vector3(-7.5f, 0.4f + i * 0.35f, -3.1f), new Vector3(1.5f, 0.16f, 0.2f), m_Edge);
-            Box(root, "T2_02_Ferry_Room_Floor_West", new Vector3(-7.5f, 2.8f, 8), new Vector3(8, 0.8f, 17), m_Ground);
-            Box(root, "T2_02_Ferry_Room_Floor_East", new Vector3(8.5f, 2.8f, 8), new Vector3(7, 0.8f, 17), m_Ground);
-            Box(root, "T2_02_Ferry_Gap_Void_NoCollider", new Vector3(0, -5, 8), new Vector3(10, 0.1f, 15), m_Void, false);
-            Box(root, "T2_02_Ferry_Departure_Lip", new Vector3(-3.8f, 2.8f, 8), new Vector3(1.8f, 0.8f, 5), m_Edge);
-            Box(root, "T2_02_Ferry_Arrival_Lip", new Vector3(4.8f, 2.8f, 8), new Vector3(1.8f, 0.8f, 5), m_Edge);
-            PathPlatform(root, "T2_02_Horizontal_Bomb_Ferry", new Vector3(-1.8f, 3.2f, 8), new Vector3(4.4f, 0.6f, 4.4f), m_Bomb, Vector3.right, 7.4f, 1.5f);
-            Box(root, "T2_02_Far_Rubble_Wall_Left", new Vector3(7, 4.3f, 15.4f), new Vector3(2.4f, 2.2f, 1), m_PinkWall);
-            Box(root, "T2_02_Far_Rubble_Wall_Right", new Vector3(10, 4.3f, 15.4f), new Vector3(2.4f, 2.2f, 1), m_PinkWall);
-            Box(root, "T2_02_Far_Rubble_Wall_Top", new Vector3(8.5f, 5.8f, 15.4f), new Vector3(6, 0.8f, 1), m_PinkWall);
-            Box(root, "T2_02_Exit_Walkway", new Vector3(8.5f, 2.8f, 20.5f), new Vector3(7, 0.8f, 8), m_Landmark);
-
-            // Launcher room: left launcher throws the player to the Amber chest;
-            // right launcher receives a rolling bomb from the tube and fires it
-            // into the last rubble wall. A ladder climbs to the altar platform.
-            Box(root, "T2_03_Launcher_Chamber_Floor", new Vector3(0, 1.8f, 31), new Vector3(24, 0.8f, 19), m_Ground);
-            Box(root, "T2_03_Chamber_Wall_W", new Vector3(-12, 5, 31), new Vector3(0.8f, 6.4f, 19), m_Edge);
-            Box(root, "T2_03_Chamber_Wall_E", new Vector3(12, 5, 31), new Vector3(0.8f, 6.4f, 19), m_Edge);
-            Box(root, "T2_03_Player_Launcher_Base", new Vector3(-7.5f, 2.3f, 25), new Vector3(3.6f, 0.8f, 4), m_Bounce);
-            BoxRotated(root, "T2_03_Player_Launcher_Barrel", new Vector3(-7.5f, 3, 27), new Vector3(1.8f, 1.3f, 5), new Vector3(-24, 0, 0), m_Bounce);
-            Box(root, "T2_03_Amber_Chest_Island", new Vector3(-7.5f, 6.2f, 37), new Vector3(5, 0.8f, 5), m_Landmark);
-            Box(root, "T2_03_Amber_Chest_Blockout", new Vector3(-7.5f, 7, 37), new Vector3(1.5f, 1.1f, 1.2f), m_Bomb);
-            Box(root, "T2_03_Bomb_Launcher_Base", new Vector3(7.5f, 2.3f, 25), new Vector3(3.6f, 0.8f, 4), m_Bomb);
-            BoxRotated(root, "T2_03_Bomb_Launcher_Barrel", new Vector3(7.5f, 3, 27), new Vector3(1.8f, 1.3f, 5), new Vector3(-20, 0, 0), m_Bomb);
-            Box(root, "T2_03_Round_Bomb_Tube", new Vector3(4.4f, 2.6f, 26), new Vector3(1.1f, 1.2f, 7), m_Edge);
-            Box(root, "T2_03_Final_Rubble_Wall_Left", new Vector3(-3, 3.8f, 40.4f), new Vector3(18, 3.2f, 1), m_PinkWall);
-            Box(root, "T2_03_Final_Rubble_Breakable_Panel", new Vector3(7.5f, 3.8f, 40.4f), new Vector3(3.2f, 3.2f, 1), m_PinkWall);
-            Box(root, "T2_03_Final_Rubble_Wall_Right", new Vector3(10.6f, 3.8f, 40.4f), new Vector3(2.8f, 3.2f, 1), m_PinkWall);
-            Box(root, "T2_03_Final_Rubble_Wall_Top", new Vector3(3.5f, 5.8f, 40.4f), new Vector3(19, 0.8f, 1), m_PinkWall);
-            for (int i = 0; i < 9; i++)
-                Box(root, "T2_04_Altar_Ladder_Rung_" + i.ToString("00"), new Vector3(0, 2.5f + i * 0.42f, 42.8f), new Vector3(1.8f, 0.16f, 0.2f), m_Edge);
-            Box(root, "T2_04_Altar_Platform", new Vector3(0, 6.5f, 50), new Vector3(14, 0.8f, 12), m_Landmark);
-            Box(root, "T2_04_Altar_Blockout", new Vector3(0, 7.4f, 53), new Vector3(2.8f, 1.8f, 2.2f), m_Bounce);
-            Box(root, "T2_Environment_Cutaway_Backdrop_NoCollider", new Vector3(0, -9, 7), new Vector3(36, 0.1f, 100), m_Void, false);
+            ShrineReferenceRebuild.BuildGeometry(root, "Map2");
         }
 
         private static void BuildMap3ShrineGeometry(Transform root)
         {
-            // Mogg Latan Shrine. This is one long traversal, not a ring room:
-            // three pendulum decks, raised rope bridge and side chest, swinging
-            // spiked-ball corridor, movable metal slab, switch/lantern leaf gate,
-            // then the altar. South is the entrance and +Z is forward.
-            Box(root, "T3_00_Entrance_Platform", new Vector3(0, -0.4f, -43), new Vector3(18, 0.8f, 14), m_Ground);
-            Box(root, "T3_00_Entrance_Wall_Left", new Vector3(-9, 3.3f, -36), new Vector3(0.8f, 6.6f, 14), m_Edge);
-            Box(root, "T3_00_Entrance_Wall_Right", new Vector3(9, 3.3f, -36), new Vector3(0.8f, 6.6f, 14), m_Edge);
-            Box(root, "T3_01_Swing_Gap_Backdrop_NoCollider", new Vector3(0, -7, -23), new Vector3(21, 0.1f, 24), m_Void, false);
-            Box(root, "T3_01_Swing_Launch_Lip", new Vector3(0, -0.2f, -34), new Vector3(10, 0.6f, 5), m_Landmark);
-            SwingDeck(root, "T3_01_Swing_Deck_A", new Vector3(0, 6, -29), new Vector3(5.8f, 0.65f, 4.2f), 4.2f, 32f, 3.3f, m_Sticky);
-            SwingDeck(root, "T3_01_Swing_Deck_B", new Vector3(0, 6, -21), new Vector3(5.8f, 0.65f, 4.2f), 4.2f, -34f, 3.0f, m_Sticky);
-            SwingDeck(root, "T3_01_Swing_Deck_C", new Vector3(0, 6, -13), new Vector3(5.8f, 0.65f, 4.2f), 4.2f, 30f, 3.5f, m_Sticky);
-            Box(root, "T3_01_Swing_Landing", new Vector3(0, -0.2f, -5), new Vector3(12, 0.8f, 8), m_Ground);
-
-            // The first bridge is held high by two ropes. The near-right shelf is
-            // the optional spear chest route, clearly visible from the landing.
-            BoxRotated(root, "T3_02_Raised_Rope_Bridge", new Vector3(0, 2.6f, 2), new Vector3(7, 0.7f, 10), new Vector3(52, 0, 0), m_Bounce);
-            Box(root, "T3_02_Bridge_Rope_Left", new Vector3(-2.8f, 3.6f, -1), new Vector3(0.16f, 5.2f, 0.16f), m_Edge);
-            Box(root, "T3_02_Bridge_Rope_Right", new Vector3(2.8f, 3.6f, -1), new Vector3(0.16f, 5.2f, 0.16f), m_Edge);
-            Box(root, "T3_02_Bridge_Exit_Landing", new Vector3(0, -0.2f, 9), new Vector3(12, 0.8f, 8), m_Ground);
-            Box(root, "T3_02_Spear_Chest_Side_Island", new Vector3(10, -0.2f, 7), new Vector3(7, 0.8f, 7), m_Landmark);
-            Box(root, "T3_02_Spear_Chest_Blockout", new Vector3(10, 0.8f, 7), new Vector3(1.5f, 1.1f, 1.2f), m_Bomb);
-
-            // Three spiked balls sweep the narrow central lane. Their swing arcs
-            // overlap; the optional bow chest sits in a left alcove beyond them.
-            Box(root, "T3_03_Spike_Lane_Floor", new Vector3(0, -0.4f, 21), new Vector3(10, 0.8f, 17), m_Ground);
-            SwingHazard(root, "T3_03_Spiked_Ball_A", new Vector3(0, 7, 15), 5.2f, 40f, 2.6f, m_Bomb, Vector3.forward);
-            SwingHazard(root, "T3_03_Spiked_Ball_B", new Vector3(0, 7, 21), 5.2f, -43f, 2.9f, m_Bomb, Vector3.forward);
-            SwingHazard(root, "T3_03_Spiked_Ball_C", new Vector3(0, 7, 27), 5.2f, 38f, 2.5f, m_Bomb, Vector3.forward);
-            Box(root, "T3_03_Bow_Chest_Alcove", new Vector3(-8, -0.2f, 28), new Vector3(6, 0.8f, 6), m_Landmark);
-            Box(root, "T3_03_Bow_Chest_Blockout", new Vector3(-8, 0.8f, 28), new Vector3(1.5f, 1.1f, 1.2f), m_Bomb);
-            Box(root, "T3_03_Exit_Landing", new Vector3(0, -0.2f, 33), new Vector3(12, 0.8f, 7), m_Ground);
-
-            // The metal slab is dragged from the near side and ridden over to the
-            // staggered metal islands. The 300-rupee cache is a short side branch.
-            Box(root, "T3_04_Metal_Slab_Gap_Backdrop_NoCollider", new Vector3(0, -7, 40), new Vector3(24, 0.1f, 12), m_Void, false);
-            Box(root, "T3_04_Slab_Departure_Lip", new Vector3(-5.8f, -0.2f, 40), new Vector3(5.2f, 0.8f, 8), m_Ground);
-            Box(root, "T3_04_Slab_Arrival_Lip", new Vector3(7.2f, -0.2f, 40), new Vector3(5.2f, 0.8f, 8), m_Ground);
-            PathPlatform(root, "T3_04_Magnetic_Metal_Slab", new Vector3(-2, 0.2f, 40), new Vector3(5, 0.6f, 5), m_Sticky, Vector3.right, 11f, 1.4f);
-            Box(root, "T3_04_Metal_Island_01", new Vector3(11, 0.3f, 40), new Vector3(4, 0.6f, 4), m_Edge);
-            Box(root, "T3_04_Metal_Island_02", new Vector3(14, 1.1f, 45), new Vector3(4, 0.6f, 4), m_Edge);
-            Box(root, "T3_04_Metal_Island_03", new Vector3(10, 2, 50), new Vector3(4, 0.6f, 4), m_Edge);
-            Box(root, "T3_04_Rupee_Chest_Shelf", new Vector3(4, 2.8f, 47), new Vector3(6, 0.8f, 5), m_Landmark);
-            Box(root, "T3_04_Rupee_Chest_Blockout", new Vector3(4, 3.6f, 47), new Vector3(1.5f, 1.1f, 1.2f), m_Bomb);
-
-            // Crystal switch drops two hanging lanterns. The swinging lantern
-            // breaks the leaf screen; the metal door and altar sit behind it.
-            Box(root, "T3_05_Switch_Approach_Shelf", new Vector3(9, 2.6f, 56), new Vector3(12, 0.8f, 8), m_Ground);
-            Box(root, "T3_05_Crystal_Switch_Blockout", new Vector3(9, 3.8f, 58), new Vector3(1.2f, 1.8f, 1.2f), m_Bounce);
-            SwingHazard(root, "T3_05_Dropped_Lantern_A", new Vector3(4, 9, 61), 5.2f, 35f, 3.2f, m_Bomb);
-            SwingHazard(root, "T3_05_Dropped_Lantern_B", new Vector3(13, 9, 61), 5.2f, -30f, 3.5f, m_Bomb);
-            Box(root, "T3_05_Leaf_Screen", new Vector3(9, 3.5f, 64), new Vector3(7, 4, 0.6f), m_Sticky);
-            Box(root, "T3_05_Metal_Altar_Door", new Vector3(9, 3.7f, 67), new Vector3(7, 4.4f, 0.8f), m_Edge);
-            Box(root, "T3_06_Altar_Room_Floor", new Vector3(9, 3, 74), new Vector3(18, 0.8f, 13), m_Ground);
-            Box(root, "T3_06_Altar_Blockout", new Vector3(9, 4.1f, 78), new Vector3(2.8f, 1.8f, 2.2f), m_Bounce);
-            Box(root, "T3_Environment_Cutaway_Backdrop_NoCollider", new Vector3(0, -9, 17), new Vector3(34, 0.1f, 104), m_Void, false);
+            ShrineReferenceRebuild.BuildGeometry(root, "Map3");
         }
 
         private static void BuildMap2_5Geometry(Transform root)

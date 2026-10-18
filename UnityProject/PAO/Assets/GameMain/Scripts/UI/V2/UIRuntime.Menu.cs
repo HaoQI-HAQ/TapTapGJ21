@@ -32,6 +32,9 @@ namespace PAO.UI.V2
             return state;
         }
 
+        // The wordmark is deliberately oversized: it reads as part of the painting instead of a titled card.
+        private const int WordmarkSize = 220;
+
         private void ShowMenu()
         {
             MenuRecordState state = ReadMenuRecords(); menuSignature = state.Signature;
@@ -40,22 +43,20 @@ namespace PAO.UI.V2
             UIPage page = Push(T("泡涌", "BUBBLE TIDE"), "", false, UIPageDesign.Menu); page.Rebuild = ShowMenu;
             RectTransform body = (RectTransform)page.transform.Find("Page");
             body.GetComponent<VerticalLayoutGroup>().enabled = false;
-            Text heading = body.GetChild(0).GetComponent<Text>();
-            heading.name = "Menu title"; heading.alignment = TextAnchor.MiddleCenter;
-            heading.GetComponent<UIStyledText>().Configure(112, true, Config);
-            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 42; heading.resizeTextMaxSize = 112;
-            Anchor(heading.rectTransform, new Vector2(.5f, .64f), Vector2.zero, new Vector2(760, 190), new Vector2(.5f, .5f));
-            heading.gameObject.AddComponent<UIMenuHeroFit>().maximumWidth = 760;
-            heading.gameObject.AddComponent<UIMenuWordmarkMotion>().Configure(true);
+            UIWidgets.Stretch(body);
+            Text heading = MenuWordmark(body, true);
+            UIMenuHeroFit fit = heading.GetComponent<UIMenuHeroFit>();
             page.Content.GetComponentInParent<ScrollRect>().gameObject.SetActive(false);
             page.Footer.gameObject.SetActive(false);
             Image hit = ui.Surface("开始游戏", body, new Color(1, 1, 1, 0));
-            Anchor(hit.rectTransform, new Vector2(.5f, .38f), Vector2.zero, new Vector2(300, 76), new Vector2(.5f, .5f));
             Button start = hit.gameObject.AddComponent<Button>(); start.targetGraphic = hit;
             Text startLabel = ui.Label(hit.transform, T("开始游戏", "Start game"), 34, Config.ink, TextAnchor.MiddleCenter);
             UIWidgets.Stretch(startLabel.rectTransform);
             UIStartPromptMotion prompt = startLabel.gameObject.AddComponent<UIStartPromptMotion>();
             prompt.Configure();
+            UIMenuPosterLayout poster = body.gameObject.AddComponent<UIMenuPosterLayout>();
+            poster.Configure(heading, null, fit);
+            poster.prompt = hit.rectTransform; poster.Refresh();
             bool opening = false;
             start.onClick.AddListener(() =>
             {
@@ -69,25 +70,56 @@ namespace PAO.UI.V2
             Finish(page);
         }
 
+        private Text MenuWordmark(Transform body, bool opening)
+        {
+            Text heading = body.GetChild(0).GetComponent<Text>();
+            heading.name = "Menu title"; heading.alignment = TextAnchor.MiddleCenter;
+            heading.GetComponent<UIStyledText>().Configure(WordmarkSize, true, Config);
+            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 96; heading.resizeTextMaxSize = WordmarkSize;
+            UIMenuHeroFit fit = heading.gameObject.AddComponent<UIMenuHeroFit>();
+            fit.maximumWidth = 920; fit.baseFontSize = WordmarkSize;
+            heading.gameObject.AddComponent<UIMenuWordmarkMotion>().Configure(opening, WordmarkSize * 1.6f);
+            return heading;
+        }
+
+        // Version stays small in the lower-left corner; credits became a plain small-text link in the lower-right.
+        private void MenuFooter(UIPage page)
+        {
+            RectTransform lowerEdge = ui.Row("Menu lower edge", page.transform, 12);
+            lowerEdge.anchorMin = new Vector2(0, 0); lowerEdge.anchorMax = new Vector2(1, 0);
+            lowerEdge.pivot = new Vector2(.5f, 0); lowerEdge.anchoredPosition = new Vector2(0, 18);
+            lowerEdge.sizeDelta = new Vector2(-80, 46);
+            HorizontalLayoutGroup footer = lowerEdge.GetComponent<HorizontalLayoutGroup>();
+            footer.childForceExpandWidth = false; footer.childAlignment = TextAnchor.MiddleCenter;
+            Text version = ui.Label(lowerEdge, T("版本 ", "Version ") + Application.version, 18, Config.ink);
+            UIWidgets.Size(version.transform, 36, 240);
+            RectTransform spacer = ui.Rect("Footer spacer", lowerEdge); UIWidgets.Size(spacer, 36, 0, 1);
+            RectTransform link = ui.Rect("Credits link", lowerEdge);
+            UIWidgets.Size(link, 36, 260);
+            Image hit = link.gameObject.AddComponent<Image>();
+            hit.color = new Color(1, 1, 1, 0); hit.raycastTarget = true;
+            Button credits = link.gameObject.AddComponent<Button>();
+            credits.transition = Selectable.Transition.None; credits.targetGraphic = hit;
+            Text creditsLabel = ui.Label(link, T("开发人员致谢", "Credits"), 18, Config.ink, TextAnchor.MiddleRight);
+            UIWidgets.Stretch(creditsLabel.rectTransform);
+            Image rule = ui.Surface("Credits rule", link, Config.ink);
+            rule.raycastTarget = false;
+            link.gameObject.AddComponent<UILinkUnderline>().Configure(creditsLabel, rule);
+            credits.onClick.AddListener(ShowCredits);
+        }
+
         private void ShowMenuActions()
         {
             MenuRecordState state = ReadMenuRecords(); menuSignature = state.Signature;
             UIPage page = Push(T("泡涌", "BUBBLE TIDE"), "", false, UIPageDesign.Menu); page.Rebuild = ShowMenuActions;
             RectTransform body = (RectTransform)page.transform.Find("Page");
-            body.anchorMin = new Vector2(.25f, .06f); body.anchorMax = new Vector2(.75f, .95f);
-            body.offsetMin = body.offsetMax = Vector2.zero;
-            body.GetComponent<VerticalLayoutGroup>().childAlignment = TextAnchor.UpperCenter;
-            Text heading = body.GetChild(0).GetComponent<Text>();
-            heading.alignment = TextAnchor.MiddleCenter;
-            heading.GetComponent<UIStyledText>().Configure(92, true, Config);
-            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 42; heading.resizeTextMaxSize = 92;
-            UIMenuHeroFit fit = heading.gameObject.AddComponent<UIMenuHeroFit>();
-            fit.maximumWidth = 760; fit.baseFontSize = 92;
-            UIWidgets.Size(heading.transform, 140);
-            heading.gameObject.AddComponent<UIMenuWordmarkMotion>().Configure(false);
+            body.GetComponent<VerticalLayoutGroup>().enabled = false;
+            UIWidgets.Stretch(body);
+            Text heading = MenuWordmark(body, false);
+            UIMenuHeroFit fit = heading.GetComponent<UIMenuHeroFit>();
             VerticalLayoutGroup contentLayout = page.Content.GetComponent<VerticalLayoutGroup>();
             contentLayout.childForceExpandWidth = false; contentLayout.childAlignment = TextAnchor.UpperCenter;
-            RectTransform actions = ui.Column("Menu actions", page.Content, 0, 10);
+            RectTransform actions = ui.Column("Menu actions", page.Content, 0, 8);
             LayoutElement actionSize = UIWidgets.Size(actions, -1, 480);
             actions.gameObject.AddComponent<UIMenuLayout>().Configure(actionSize);
             Button resume = MenuButton(actions, T("继续游戏", "Continue"), () => { if (state.latest != null) ContinueJourney(state.latest.slot); }, true);
@@ -96,18 +128,11 @@ namespace PAO.UI.V2
             MenuButton(actions, T("读档", "Load game"), ShowSaves);
             MenuButton(actions, T("设置", "Settings"), ShowSettings);
             page.Footer.gameObject.SetActive(false);
-            RectTransform lowerEdge = ui.Row("Menu lower edge", page.transform, 12);
-            lowerEdge.anchorMin = new Vector2(0, 0); lowerEdge.anchorMax = new Vector2(1, 0);
-            lowerEdge.pivot = new Vector2(.5f, 0); lowerEdge.anchoredPosition = new Vector2(0, 20);
-            lowerEdge.sizeDelta = new Vector2(-80, 50);
-            HorizontalLayoutGroup footer = lowerEdge.GetComponent<HorizontalLayoutGroup>();
-            footer.childForceExpandWidth = false; footer.childAlignment = TextAnchor.MiddleCenter;
-            Text version = ui.Label(lowerEdge, T("版本 ", "Version ") + Application.version, 18, Config.ink);
-            UIWidgets.Size(version.transform, 42, 240);
-            RectTransform spacer = ui.Rect("Footer spacer", lowerEdge); UIWidgets.Size(spacer, 42, 0, 1);
-            Button credits = ui.Button(lowerEdge, T("开发人员致谢", "Credits"), ShowCredits);
-            UIWidgets.Size(credits.transform, 48, 240);
-            AddMenuScrollbar(page.Content.GetComponentInParent<ScrollRect>());
+            ScrollRect scroll = page.Content.GetComponentInParent<ScrollRect>();
+            AddMenuScrollbar(scroll);
+            UIMenuPosterLayout poster = body.gameObject.AddComponent<UIMenuPosterLayout>();
+            poster.Configure(heading, (RectTransform)scroll.transform, fit);
+            MenuFooter(page);
             Finish(page);
             if (!UISettings.Current.reducedMotion)
             {
@@ -131,15 +156,35 @@ namespace PAO.UI.V2
             }
         }
 
+        // Entries are frameless: icon and label sit straight on the painting, and a hairline grows under the
+        // label on hover or keyboard focus instead of a box appearing around the row.
         private Button MenuButton(Transform parent, string title, Action click, bool primary = false)
         {
             UIGuideSymbol symbol = click == (Action)ShowChapters ? UIGuideSymbol.Goal : click == (Action)ShowSaves ? UIGuideSymbol.Journal :
                 click == (Action)ShowSettings ? UIGuideSymbol.Steer : UIGuideSymbol.Arrow;
-            Button button = ui.IconButton(parent, title, symbol, click, primary);
-            Text label = button.GetComponentInChildren<Text>(); label.alignment = TextAnchor.MiddleLeft;
-            if (primary) label.GetComponent<UIStyledText>().Configure(26, false, Config);
-            button.gameObject.AddComponent<UIMenuButtonLayout>().Configure(label, null, primary ? 76 : 60);
-            button.gameObject.AddComponent<UIMenuEntryMotion>().Configure(button.transform.Find("Action symbol").GetComponent<UIGuideGraphic>(), Config);
+            RectTransform row = ui.Rect(title, parent);
+            Image hit = row.gameObject.AddComponent<Image>();
+            hit.color = new Color(1, 1, 1, 0); hit.raycastTarget = true;
+            Button button = row.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None; button.targetGraphic = hit;
+            button.onClick.AddListener(() => { if (click != null) click(); });
+            RectTransform content = ui.Rect("Row content", row); UIWidgets.Stretch(content);
+            UIGuideGraphic icon = ui.Rect("Action symbol", content).gameObject.AddComponent<UIGuideGraphic>();
+            icon.Symbol = symbol; icon.color = Config.ink; icon.raycastTarget = false;
+            RectTransform iconRect = icon.rectTransform;
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0, .5f); iconRect.pivot = new Vector2(.5f, .5f);
+            iconRect.anchoredPosition = new Vector2(16, 0); iconRect.sizeDelta = Vector2.one * 30;
+            Text label = ui.Label(content, title, 32, Config.ink, TextAnchor.MiddleLeft);
+            RectTransform labelRect = label.rectTransform;
+            labelRect.anchorMin = Vector2.zero; labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(52, 0); labelRect.offsetMax = new Vector2(-8, 0);
+            // Every entry occupies the width of four characters; shorter titles spread their glyphs instead
+            // of shrinking, so the block stays the same size no matter how many characters it has.
+            label.gameObject.AddComponent<UITextTracking>().emWidths = 4f;
+            Image rule = ui.Surface("Entry rule", label.transform, new Color(Config.ink.r, Config.ink.g, Config.ink.b, 0));
+            rule.raycastTarget = false;
+            row.gameObject.AddComponent<UIMenuRowMotion>().Configure(content, icon, label, rule);
+            UIWidgets.Size(row, label.fontSize * 2.1f);
             return button;
         }
 

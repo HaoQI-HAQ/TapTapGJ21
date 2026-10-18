@@ -65,7 +65,7 @@ namespace PAO.UI.V2
         private void Update()
         {
             EnsureField();
-            if (width <= 0 || UISettings.Current.reducedMotion) return;
+            if (width <= 0 || (UISettings.Current != null && UISettings.Current.reducedMotion)) return;
             // Fixed substeps keep soft contacts stable; discard long loading stalls rather than teleport.
             accumulator += Mathf.Min(Time.unscaledDeltaTime, .066f);
             while (accumulator >= StepTime) { Step(StepTime); accumulator -= StepTime; }

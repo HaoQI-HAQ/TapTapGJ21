@@ -265,6 +265,10 @@ namespace PAO
         {
             m_Controller = GetComponent<CharacterController>();
 
+            // 中文输入法（IME）激活时，Windows 会把 WASD 吞进输入法的组合文本里，
+            // 角色就完全动不了。这里关掉 IME 组合模式：按键直接进游戏。
+            Input.imeCompositionMode = IMECompositionMode.Off;
+
             if (m_CameraPivot == null && Camera.main != null)
             {
                 m_CameraPivot = Camera.main.transform;

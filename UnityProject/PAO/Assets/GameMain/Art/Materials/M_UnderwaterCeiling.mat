@@ -16,7 +16,7 @@ Material:
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 2999
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -26,22 +26,22 @@ Material:
     m_Ints: []
     m_Floats:
     - _Dither: 0.004
-    - _FadeEnd: 240
-    - _FadeStart: 90
-    - _RippleFadeEnd: 150
-    - _RippleFadeStart: 40
-    - _RippleScale: 0.12
-    - _RippleSpeed: 2.01
-    - _RippleStrength: 0.74
-    - _RippleWidth: 0.38
+    - _FadeEnd: 900
+    - _FadeStart: 260
+    - _RippleFadeEnd: 620
+    - _RippleFadeStart: 120
+    - _RippleScale: 0.3
+    - _RippleSpeed: 1.2
+    - _RippleStrength: 0.55
+    - _RippleWidth: 0.13
     - _SwellScale: 0.055
-    - _SwellStrength: 0.68
+    - _SwellStrength: 0.7
     - _WindowPower: 2.2
-    - _WindowStrength: 0.85
+    - _WindowStrength: 0.75
     m_Colors:
-    - _HorizonColor: {r: 0.089999996, g: 0.28999996, b: 0.41999996, a: 1}
+    - _HorizonColor: {r: 0.16, g: 0.4, b: 0.55, a: 1}
     - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
     - _SkirtBottomColor: {r: 0.02, g: 0.079999976, b: 0.13999996, a: 1}
-    - _SurfaceColor: {r: 0.37999994, g: 0.78, b: 0.93, a: 1}
+    - _SurfaceColor: {r: 0.5, g: 0.85, b: 0.97, a: 1}
     - _WindowColor: {r: 0.8, g: 0.96, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -25,7 +25,9 @@ namespace PAO.UI.V2
         {
             body = bodyText;
             speaker = speakerText;
-            if (rootInk == null) rootInk = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+            // CanvasGroup 只用来做"整行淡入淡出"的可选效果；UI 重建后它可能被销毁，
+            // 这里只取一次，之后所有 alpha 操作都带 null 判断 —— 缺了也不影响字幕显示。
+            rootInk = GetComponent<CanvasGroup>();
             if (body != null)
             {
                 // Add before the caller's Outline/Shadow so their vertices inherit each glyph's fade.
@@ -41,6 +43,8 @@ namespace PAO.UI.V2
             isDismissing = false;
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (body == null) return 0;
+            if (glyphs == null)
+                glyphs = body.GetComponent<UISubtitleGlyphFade>() ?? body.gameObject.AddComponent<UISubtitleGlyphFade>();
 
             // Assign the whole sentence before animation, preserving line breaks and preferred height.
             body.text = text ?? string.Empty;
@@ -51,10 +55,11 @@ namespace PAO.UI.V2
                 return 0;
             }
 
-            rootInk.alpha = 0;
+            if (rootInk != null) rootInk.alpha = 0;
             if (speaker != null) speaker.canvasRenderer.SetAlpha(1);
             entrance = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
-            entrance.Insert(0, rootInk.DOFade(1, .23f).SetEase(Ease.OutQuad));
+            if (rootInk != null)
+                entrance.Insert(0, rootInk.DOFade(1, .23f).SetEase(Ease.OutQuad));
             entrance.Insert(0, DOTween.To(() => -6f, value => glyphs.SetVerticalOffset(value), 0f, .32f)
                 .SetEase(Ease.OutCubic));
             entrance.Insert(0, DOTween.To(() => 0f, value => glyphs.SetElapsed(value), revealDuration, revealDuration)
@@ -148,8 +153,8 @@ namespace PAO.UI.V2
     // the source string, preferred size, and wrapping remain constant throughout.
     internal sealed class UISubtitleGlyphFade : BaseMeshEffect
     {
-        private const float GlyphInterval = .075f;
-        private const float GlyphFade = .12f;
+        private const float GlyphInterval = .135f;
+        private const float GlyphFade = .24f;
         private readonly List<float> arrivals = new List<float>();
         private float elapsed = float.PositiveInfinity;
         private float verticalOffset;
@@ -171,14 +176,14 @@ namespace PAO.UI.V2
 
                 arrivals.Add(next);
                 if (char.IsHighSurrogate(c) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1])) i++;
-                next += char.IsWhiteSpace(c) ? .03f : GlyphInterval;
-                if (c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?') next += .18f;
-                else if (c == '，' || c == '、' || c == '；' || c == ',' || c == ';' || c == ':' || c == '：') next += .10f;
+                next += char.IsWhiteSpace(c) ? .14f : GlyphInterval;
+                if (c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?') next += .60f;
+                else if (c == '，' || c == '、' || c == '；' || c == ',' || c == ';' || c == ':' || c == '：') next += .32f;
             }
             elapsed = 0;
             verticalOffset = -6;
             Dirty();
-            return arrivals.Count == 0 ? 0 : Mathf.Max(.23f, arrivals[arrivals.Count - 1] + GlyphFade);
+            return arrivals.Count == 0 ? 0 : Mathf.Max(.30f, arrivals[arrivals.Count - 1] + GlyphFade);
         }
 
         public void SetElapsed(float value) { elapsed = value; Dirty(); }

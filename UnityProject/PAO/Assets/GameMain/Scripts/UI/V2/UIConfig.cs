@@ -36,6 +36,8 @@ namespace PAO.UI.V2
         public Sprite ring;
         public Sprite menuArt;
         public Sprite menuPaperArt;
+        [Tooltip("主菜单整幅背景；留空时退回 menuPaperArt。")]
+        public Sprite menuBackdrop;
         [HideInInspector] public bool paperStyle;
         public Sprite[] abilityIcons;
         public GameObject defaultPlayer;
