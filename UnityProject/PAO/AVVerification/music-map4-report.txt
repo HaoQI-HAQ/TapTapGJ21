@@ -1,0 +1,35 @@
+Passed: 33
+Failures: 0
+PASS music catalog json exists
+PASS music catalog parses with at least two entries
+PASS main menu resolves to the guzheng + pipa electronic track
+PASS main menu track is pause-aware
+PASS Map1 resolves to the pipa track
+PASS Map5 resolves to the pipa track
+PASS unlisted scene falls back to the pipa track
+PASS pipa entry has a usable gain
+PASS authored track mutes the synthesized pulse layers
+PASS audio importer present: Pipa_Solo.mp3
+PASS featured music streams from disk: Pipa_Solo.mp3
+PASS featured music stays compressed: Pipa_Solo.mp3
+PASS featured music does not preload: Pipa_Solo.mp3
+PASS featured music loads in background: Pipa_Solo.mp3
+PASS audio loads from Resources: PAOAudio/Music/Custom/Pipa_Solo
+PASS audio keeps stereo 44.1 kHz: PAOAudio/Music/Custom/Pipa_Solo
+PASS audio is six minutes long: PAOAudio/Music/Custom/Pipa_Solo
+PASS encoder padding is trimmed for a clean loop: PAOAudio/Music/Custom/Pipa_Solo
+PASS audio importer present: Guzheng_Pipa_Electronic.mp3
+PASS featured music streams from disk: Guzheng_Pipa_Electronic.mp3
+PASS featured music stays compressed: Guzheng_Pipa_Electronic.mp3
+PASS featured music does not preload: Guzheng_Pipa_Electronic.mp3
+PASS featured music loads in background: Guzheng_Pipa_Electronic.mp3
+PASS audio loads from Resources: PAOAudio/Music/Custom/Guzheng_Pipa_Electronic
+PASS audio keeps stereo 44.1 kHz: PAOAudio/Music/Custom/Guzheng_Pipa_Electronic
+PASS audio is six minutes long: PAOAudio/Music/Custom/Guzheng_Pipa_Electronic
+PASS encoder padding is trimmed for a clean loop: PAOAudio/Music/Custom/Guzheng_Pipa_Electronic
+PASS audio director bootstraps in Map4
+PASS Map4 plays the pipa track chosen by the catalog
+PASS Map4 still schedules six music and ambience stems (6)
+PASS the Map4 stems all play (6)
+PASS synthesized layer stays muted under the authored track: Music Pulse
+PASS synthesized layer stays muted under the authored track: Music Tension

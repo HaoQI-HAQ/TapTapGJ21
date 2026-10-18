@@ -11,6 +11,10 @@ FILE = 'Map2_5_卡奥玛卡_原始坐标流程图.png'
 
 
 def draw_objects(p, layout):
+    for floor in layout.get('supportGeometry', []):
+        x, z = floor['position']['x'], floor['position']['z']
+        hx, hz = floor['size']['x']/2, floor['size']['z']/2
+        p.poly([(x-hx,z-hz),(x+hx,z-hz),(x+hx,z+hz),(x-hx,z+hz)], '#f4f6f4', '#d3ded9')
     visible = []
     for o in layout['objects']:
         n, g = o['name'], o['group']
@@ -39,7 +43,7 @@ def draw_objects(p, layout):
         elif g == 'Landmarks': fill, edge = '#e6cc85', '#9b8136'
         elif g == 'Detail': fill, edge = '#edf0dd', '#b7c2af'
         # Tall partition meshes are outlines in this cutaway, never opaque floor.
-        if k == 'frame' or (g == 'Structure' and height > 20):
+        if k == 'frame' or (g in ('Structure', 'PartitionWalls') and height > 20):
             fill = None
         p.poly(poly, fill, edge)
         if k in ('stairs', 'slope'):
@@ -81,9 +85,9 @@ def render():
     # door placement, not a claim that permanent bridges exist in the scene.
     p.line([(0,84.5),(0,60),(0,51),(-26,51),(-26,34),(-32,34)])
     p.line([(-30,29),(-25,26),(16,26),(16,38)])
-    p.line([(16,34),(12,30),(12,21),(12,14),(12,6),(12,-3),(12,-9),(12,-16),(12,-23.5)])
+    p.line([(16,38),(10,38),(10,34),(10,30),(10,21),(12,14),(12,6),(12,-3),(12,-9),(12,-16),(12,-23.5)])
     # Explicit operation spans; there are no permanent bridges at these points.
-    p.line([(12,30),(12,21)],MOTION,6,True)
+    p.line([(10,30),(10,21)],MOTION,6,True)
     p.line([(12,6),(12,-3)],MOTION,6,True)
     p.line([(-34,26),(-48.5,26.5)],OPTION,5,True)
     p.line([(8,14),(-4,14),(-12,14),(-12,10)],OPTION,5,True)
@@ -108,11 +112,11 @@ def render():
         p.tag(point,label,dx,dy,size=23)
 
     rows=[
-        ('01','入口双扇金属门','门枢轴 (−3,6.1,57) / (3,6.1,57)','入口在 +Z 端；推开双门后进入同一个开阔主厅。'),
+        ('01','入口双扇金属门','模型原点 (−3,6.1,57) / (3,6.1,57)','入口在 +Z 端；推开双门后进入同一个开阔主厅。'),
         ('02','左侧裂墙 / 释放门片','裂块 X=−34，Z=34；底层 Y=0 / 4 / 8','3 块裂墙堆叠，破坏后解除侧门固定关系。'),
-        ('03','可取下的门片','枢轴 (−34,6.1,29)；邻门 (−34,6.1,23)','同一门片反复搬运、倾斜搭接；A 为侧室支路。'),
+        ('03','可取下的门片','模型原点 (−34,6.1,29)；铰链约 (−33.65,6.1,31.7)','同一门片反复搬运、倾斜搭接；A 为侧室支路。'),
         ('04','右南起步岛与阶梯','阶梯 (16,0,32)；台面 Y=4','由地面登上右南岛；南部左右两岛中间留有缺口。'),
-        ('05','第一次门片搭接','缺口约 X=12，Z=21.5…30；两岸台面 Y=4','将起步岛与右侧岛连接；紫虚线仅标操作区。'),
+        ('05','第一次门片搭接','缺口约 X=10，Z=21.5…30；两岸台面 Y=4','将起步岛与右侧岛连接；紫虚线仅标操作区。'),
         ('06','藏在岛壁内的金属块','(−14,2,7.5)；4×4×4；洞底 Y=2','位于左岛低处；拉开后进入 B 秘密空腔。'),
         ('07','石块堆叠支路','石堆约 X=−12，Z=10；台面最高 Y=16','从左岛 Y=8 向上探索；上方是原作奖励点。'),
         ('08','第二次门片搭接 / 高差','右岛 Y=4 → 前阶台 Y=8；约 Z=5.5…−2.5','重新拿取门片并倾斜搭路，再进入终点坡道。'),
@@ -130,8 +134,8 @@ def render():
         tx(d,(1762,y),label,26,MUTED)
     tx(d,(1665,2048),'蓝线不是已验证的通关轨迹；图中没有虚构永久桥。',27,'#9d6049')
     tx(d,(1665,2098),'门的搬运、固定解除及能力适配需按实际组件实现。',26,MUTED)
-    tx(d,(1665,2148),'Y 为原作高度；机关坐标为枢轴，平台标注为台面。',25,MUTED)
-    tx(d,(1665,2198),'剖去天花、装饰与高处外壳；敌人物件未纳入白盒。',25,MUTED)
+    tx(d,(1665,2148),'Y 为原作高度；模型原点与铰链不同，平台标台面。',25,MUTED)
+    tx(d,(1665,2198),'浅底为房壳地面代理；剖去天花；敌人物件未纳入。',25,MUTED)
 
     x,y=p.p(-57,92)
     line(d,[(x,y),(x+20*p.s,y)],INK,3,False,False)
