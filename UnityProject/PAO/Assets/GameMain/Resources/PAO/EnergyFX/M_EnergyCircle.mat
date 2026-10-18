@@ -30,12 +30,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Brightness: 2.4
+    - _Brightness: 3.6
     - _EdgeFade: 0.32
     - _SheetCols: 1
     - _SheetFrame: 0
     - _SheetRows: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Tint: {r: 0.45, g: 0.186, b: 0.0924, a: 1}
+    - _Tint: {r: 1, g: 0.886, b: 0.826, a: 1}
   m_BuildTextureStacks: []
