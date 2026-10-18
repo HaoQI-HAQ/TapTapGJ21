@@ -180,8 +180,8 @@ namespace PAO.UI.V2
             if (subtitleRoot == null)
             {
                 subtitleRoot = ui.Column("Narration popup", hudMessages, 18, 6);
-                AddHudBacking(subtitleRoot);
-                subtitleRoot.gameObject.AddComponent<UISubtitleBackground>().Configure(Color.black);
+                // 电影字幕：不铺底板，只留文字 —— 可读性交给 Outline + Shadow。
+                // 底板会把字幕从画面里「浮起来」变成对话框，破坏沉浸感。
                 narrationSpeaker = ui.Label(subtitleRoot, "", 20, Color.white, TextAnchor.MiddleCenter);
                 narrationSpeaker.fontStyle = FontStyle.Bold;
                 subtitleText = ui.Label(subtitleRoot, "", 30, Color.white, TextAnchor.MiddleCenter);

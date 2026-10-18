@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -148,8 +148,8 @@ namespace PAO.UI.V2
     // the source string, preferred size, and wrapping remain constant throughout.
     internal sealed class UISubtitleGlyphFade : BaseMeshEffect
     {
-        private const float GlyphInterval = .075f;
-        private const float GlyphFade = .12f;
+        private const float GlyphInterval = .135f;
+        private const float GlyphFade = .24f;
         private readonly List<float> arrivals = new List<float>();
         private float elapsed = float.PositiveInfinity;
         private float verticalOffset;
@@ -171,14 +171,14 @@ namespace PAO.UI.V2
 
                 arrivals.Add(next);
                 if (char.IsHighSurrogate(c) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1])) i++;
-                next += char.IsWhiteSpace(c) ? .03f : GlyphInterval;
-                if (c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?') next += .18f;
-                else if (c == '，' || c == '、' || c == '；' || c == ',' || c == ';' || c == ':' || c == '：') next += .10f;
+                next += char.IsWhiteSpace(c) ? .14f : GlyphInterval;
+                if (c == '。' || c == '！' || c == '？' || c == '.' || c == '!' || c == '?') next += .60f;
+                else if (c == '，' || c == '、' || c == '；' || c == ',' || c == ';' || c == ':' || c == '：') next += .32f;
             }
             elapsed = 0;
             verticalOffset = -6;
             Dirty();
-            return arrivals.Count == 0 ? 0 : Mathf.Max(.23f, arrivals[arrivals.Count - 1] + GlyphFade);
+            return arrivals.Count == 0 ? 0 : Mathf.Max(.30f, arrivals[arrivals.Count - 1] + GlyphFade);
         }
 
         public void SetElapsed(float value) { elapsed = value; Dirty(); }

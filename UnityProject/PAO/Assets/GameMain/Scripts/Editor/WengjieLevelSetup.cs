@@ -4986,7 +4986,7 @@ namespace PAO.EditorTools
             // 位置 / 说话人 / 台词
             object[][] nodes =
             {
-                new object[] { new Vector3(0f, 1f, -26f), "泡泡", "这里以前不是水。" },
+                new object[] { new Vector3(0f, 1f, -26f), "泡泡", "甜甜圈！" },
                 new object[] { new Vector3(0f, 2f, 2f), "泡泡", "往上走，水在涨。" },
                 new object[] { new Vector3(0f, 13f, 66f), "回音", "粘住墙，下面是空的。" },
                 new object[] { new Vector3(0f, 13f, 79f), "回音", "有人试过，没走完。" },
@@ -6015,6 +6015,387 @@ namespace PAO.EditorTools
             EditorSceneManager.SaveScene(scene);
 
             Debug.Log("[Wengjie] 收尾完成：清地砖 " + tiles + " 块；Profile 调色 " + tuned + " 项（饱和 -12 / 曝光 +0.15 / 对比 8 / 暗角 0.22）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 第二批旁白点位（Story_6..11）+ 配音 vo_6..vo_11。
+    /// 位置覆盖桥头 / 街市 / 屋顶 / 井底 / 井中 / 塔前。
+    /// </summary>
+    public static class WengjieStory2
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kRoot = "Wengjie_Story2";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 剧情点位 第二批", priority = 127)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            object[][] nodes =
+            {
+                new object[] { new Vector3(0f, 13f, 82f),  "回音", "别停下，它们会记住你。" },
+                new object[] { new Vector3(0f, 13f, 125f), "回音", "这里以前有人住。" },
+                new object[] { new Vector3(0f, 27f, 135f), "回音", "抬头，路在上面。" },
+                new object[] { new Vector3(0f, 35f, 195f), "钟声", "往下没有底。" },
+                new object[] { new Vector3(0f, 50f, 200f), "钟声", "水在等你。" },
+                new object[] { new Vector3(0f, 64f, 198f), "泡泡", "只剩最后一段。" },
+            };
+
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                Vector3 pos = (Vector3)nodes[i][0];
+                var go = new GameObject("Story2_" + i);
+                go.transform.SetParent(root.transform, false);
+                go.transform.position = pos;
+
+                BoxCollider trig = go.AddComponent<BoxCollider>();
+                trig.isTrigger = true;
+                trig.size = new Vector3(6f, 4f, 4f);
+
+                PAO.WengjieStoryNode node = go.AddComponent<PAO.WengjieStoryNode>();
+                SerializedObject so = new SerializedObject(node);
+                so.FindProperty("m_Speaker").stringValue = (string)nodes[i][1];
+                so.FindProperty("m_Line").stringValue = (string)nodes[i][2];
+                so.FindProperty("m_Delay").floatValue = 0.2f;
+                so.FindProperty("m_Once").boolValue = true;
+
+                AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>(
+                    "Assets/GameMain/Audio/WengjieVO/vo_" + (i + 6) + ".wav");
+                if (clip != null) so.FindProperty("m_Voice").objectReferenceValue = clip;
+
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 第二批旁白已布：" + nodes.Length + " 句（含配音 vo_6..vo_11）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 给「当前选中的平台」加一个向上的弹射气流：站上去就被吹起来。
+    /// 先选中目标平台，再跑这个菜单。
+    /// </summary>
+    public static class WengjieLaunchPad
+    {
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 给选中平台加弹射", priority = 128)]
+        public static void Add()
+        {
+            GameObject selected = Selection.activeGameObject;
+            if (selected == null)
+            {
+                Debug.LogError("[Wengjie] 先在 Hierarchy 里选中目标平台。");
+                return;
+            }
+
+            // 用平台包围盒算出气流范围
+            Bounds bounds = new Bounds(selected.transform.position, Vector3.one * 4f);
+            Renderer[] rs = selected.GetComponentsInChildren<Renderer>();
+            if (rs.Length > 0)
+            {
+                bounds = rs[0].bounds;
+                for (int i = 1; i < rs.Length; i++) bounds.Encapsulate(rs[i].bounds);
+            }
+
+            var pad = new GameObject("LaunchPad_" + selected.name);
+            pad.transform.position = bounds.center + Vector3.up * (bounds.extents.y + 3f);
+            pad.transform.SetParent(selected.transform.parent, true);
+
+            BoxCollider trig = pad.AddComponent<BoxCollider>();
+            trig.isTrigger = true;
+            trig.size = new Vector3(
+                Mathf.Max(3f, bounds.size.x * 0.8f),
+                12f,
+                Mathf.Max(3f, bounds.size.z * 0.8f));
+
+            var lift = pad.AddComponent<PAO.WhiteboxUpdraft>();
+            lift.Configure(14f);
+
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            Debug.Log("[Wengjie] 弹射已加在「" + selected.name + "」上方：气流 14 m/s，范围 " +
+                trig.size.x.ToString("F1") + " × 12 × " + trig.size.z.ToString("F1"));
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 转盘类平台的首次语音：踩上 Disc_A/B/C 第一次时喊「飞起来！」。
+    /// 触发器直接放在转盘正上方，跟着转盘的水平位置（转盘只绕轴自转，位置不变）。
+    /// </summary>
+    public static class WengjieStoryDisc
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kRoot = "Wengjie_StoryDisc";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 转盘首次语音", priority = 129)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/GameMain/Audio/WengjieVO/vo_12.wav");
+            string[] discs = { "Disc_A", "Disc_B", "Disc_C" };
+            int built = 0;
+
+            for (int i = 0; i < discs.Length; i++)
+            {
+                GameObject disc = GameObject.Find(discs[i]);
+                if (disc == null) continue;
+
+                var go = new GameObject("StoryDisc_" + discs[i]);
+                go.transform.SetParent(root.transform, false);
+                go.transform.position = disc.transform.position + Vector3.up * 2f;
+
+                BoxCollider trig = go.AddComponent<BoxCollider>();
+                trig.isTrigger = true;
+                trig.size = new Vector3(10f, 5f, 10f);
+
+                PAO.WengjieStoryNode node = go.AddComponent<PAO.WengjieStoryNode>();
+                SerializedObject so = new SerializedObject(node);
+                so.FindProperty("m_Speaker").stringValue = "泡泡";
+                so.FindProperty("m_Line").stringValue = "飞起来！";
+                so.FindProperty("m_Delay").floatValue = 0.2f;
+                so.FindProperty("m_Once").boolValue = true;
+                if (clip != null) so.FindProperty("m_Voice").objectReferenceValue = clip;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                built++;
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 转盘语音已加：" + built + " 处（Disc_A/B/C 首次踩上喊「飞起来！」）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 批量跳板：主路每段放一个向上的强气流，站上去直接弹飞。
+    /// 速度 18 m/s（约弹起 16 米），比默认的 3.4 快五倍。
+    /// </summary>
+    public static class WengjieJumpPads
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kRoot = "Wengjie_JumpPads";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 批量强跳板", priority = 130)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            // 主路每段一个：河岸 / 坡道 / 环 / 桥 / 街市 / 屋顶 / 井 / 塔顶
+            Vector3[] spots =
+            {
+                new Vector3(0f, 1f, -10f),
+                new Vector3(38f, 7f, 67f),
+                new Vector3(0f, 13f, 60f),
+                new Vector3(0f, 13f, 79f),
+                new Vector3(0f, 13f, 120f),
+                new Vector3(0f, 27f, 130f),
+                new Vector3(0f, 35f, 200f),
+                new Vector3(0f, 65f, 200f),
+            };
+
+            for (int i = 0; i < spots.Length; i++)
+            {
+                var pad = new GameObject("JumpPad_" + i);
+                pad.transform.SetParent(root.transform, false);
+                pad.transform.position = spots[i];
+
+                BoxCollider trig = pad.AddComponent<BoxCollider>();
+                trig.isTrigger = true;
+                trig.size = new Vector3(8f, 14f, 8f);
+
+                var lift = pad.AddComponent<PAO.WhiteboxUpdraft>();
+                lift.Configure(18f);
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 批量跳板已布：" + spots.Length + " 处，气流 18 m/s（约弹起 16 米）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 把「超级跳」装到所有黑色跳板（Spring_* / Plate_*）上：
+    /// 空手踩没反应，只有在弹力泡泡里踩才会被弹飞。
+    /// 同时删掉之前那批无条件生效的强气流跳板。
+    /// </summary>
+    public static class WengjieSuperJumps
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 超级跳（仅弹力泡）", priority = 131)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            // 摘掉无条件跳板，以及上一轮装错位置的超级跳（转盘上那些）
+            GameObject pads = GameObject.Find("Wengjie_JumpPads");
+            if (pads != null) Object.DestroyImmediate(pads);
+
+            PAO.WengjieSuperJump[] wrong = Object.FindObjectsByType<PAO.WengjieSuperJump>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < wrong.Length; i++) Object.DestroyImmediate(wrong[i].gameObject);
+
+            int built = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = 0; i < all.Length; i++)
+                {
+                    string n = all[i].name;
+                    bool isPad = n.StartsWith("Spring_", System.StringComparison.Ordinal)
+                              || n.StartsWith("Plate_", System.StringComparison.Ordinal)
+                              || n.StartsWith("Seesaw_", System.StringComparison.Ordinal);
+                    if (!isPad) continue;
+                    if (all[i].GetComponent<PAO.WengjieSuperJump>() != null) continue;
+
+                    // 在跳板上方叠一个触发体积
+                    var trig = new GameObject("SuperJumpZone");
+                    trig.transform.SetParent(all[i], false);
+                    trig.transform.localPosition = new Vector3(0f, 1.6f, 0f);
+
+                    BoxCollider box = trig.AddComponent<BoxCollider>();
+                    box.isTrigger = true;
+                    box.size = new Vector3(5f, 3.2f, 5f);
+
+                    trig.AddComponent<PAO.WengjieSuperJump>();
+                    built++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 超级跳已装：" + built + " 块跳板（仅当玩家在弹力泡泡里才弹飞 26 m/s）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>把已有超级跳的力度调大：26 → 48 m/s，时长 1.15 → 1.6。</summary>
+    public static class WengjieSuperJumpTune
+    {
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 超级跳加大力度", priority = 132)]
+        public static void Tune()
+        {
+            Scene scene = EditorSceneManager.OpenScene("Assets/GameMain/Scenes/wengjie.unity", OpenSceneMode.Single);
+
+            PAO.WengjieSuperJump[] all = Object.FindObjectsByType<PAO.WengjieSuperJump>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < all.Length; i++)
+            {
+                SerializedObject so = new SerializedObject(all[i]);
+                so.FindProperty("m_Speed").floatValue = 28f;
+                so.FindProperty("m_Cooldown").floatValue = 1.5f;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[Wengjie] 超级跳改为抛物线：初速 40 m/s（弹起约 80 米），共 " + all.Length + " 块");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>把机关平台调成「超级弹」：弹簧极硬、阻尼极低、碰撞弹性 1.0。</summary>
+    public static class WengjieSuperBounce
+    {
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 机关调成超级弹", priority = 133)]
+        public static void Make()
+        {
+            Scene scene = EditorSceneManager.OpenScene("Assets/GameMain/Scenes/wengjie.unity", OpenSceneMode.Single);
+
+            PhysicMaterial bouncy = AssetDatabase.LoadAssetAtPath<PhysicMaterial>("Assets/GameMain/Art/PhysicMaterials/M_SuperBouncy.physicMaterial");
+            if (bouncy == null)
+            {
+                bouncy = new PhysicMaterial("M_SuperBouncy");
+                bouncy.bounciness = 1f;
+                bouncy.bounceCombine = PhysicMaterialCombine.Maximum;
+                bouncy.dynamicFriction = 0f;
+                bouncy.staticFriction = 0f;
+                AssetDatabase.CreateFolder("Assets/GameMain/Art", "PhysicMaterials");
+                AssetDatabase.CreateAsset(bouncy, "Assets/GameMain/Art/PhysicMaterials/M_SuperBouncy.physicMaterial");
+            }
+
+            int tuned = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (!all[i].name.StartsWith("Plate_", System.StringComparison.Ordinal)
+                        && !all[i].name.StartsWith("Spring_", System.StringComparison.Ordinal)
+                        && !all[i].name.StartsWith("Seesaw_", System.StringComparison.Ordinal)) continue;
+
+                    ConfigurableJoint[] joints = all[i].GetComponentsInChildren<ConfigurableJoint>(true);
+                    for (int j = 0; j < joints.Length; j++)
+                    {
+                        JointDrive drive = joints[j].yDrive;
+                        drive.positionSpring = 5000f;
+                        drive.positionDamper = 4f;
+                        drive.maximumForce = 30000f;
+                        joints[j].yDrive = drive;
+                    }
+
+                    Rigidbody[] bodies = all[i].GetComponentsInChildren<Rigidbody>(true);
+                    for (int j = 0; j < bodies.Length; j++)
+                    {
+                        bodies[j].interpolation = RigidbodyInterpolation.Interpolate;
+                        bodies[j].collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                    }
+
+                    Collider[] cols = all[i].GetComponentsInChildren<Collider>(true);
+                    for (int j = 0; j < cols.Length; j++) cols[j].material = bouncy;
+
+                    tuned++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log("[Wengjie] 机关已调成超级弹：" + tuned + " 组（弹簧 5000 / 阻尼 4 / 弹性 1.0 / 连续碰撞）");
         }
     }
 }
