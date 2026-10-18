@@ -34,6 +34,8 @@ Material:
     - _EdgeFade: 0.32
     - _SheetCols: 1
     - _SheetFrame: 0
+    - _RayHeadPos: 0.85
+    - _RayMode: 1
     - _SheetRows: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

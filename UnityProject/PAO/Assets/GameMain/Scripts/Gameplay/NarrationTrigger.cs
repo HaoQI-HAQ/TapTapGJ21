@@ -49,6 +49,14 @@ namespace PAO
         [Tooltip("进入范围后延迟多久才播（秒）。0 = 立刻")]
         [SerializeField] private float m_Delay = 0f;
 
+        [Header("检测区（物体自身没有 Trigger 碰撞体时自动创建）")]
+        [Tooltip("自动创建的检测区半径（米）。\n" +
+                 "只有物体本身没有 Trigger 碰撞体时才会用到；已经有 Trigger 的话用那个")]
+        [SerializeField] private float m_AutoZoneRadius = 4f;
+
+        [Tooltip("检测区中心相对物体原点的向上偏移（米）")]
+        [SerializeField] private float m_AutoZoneYOffset = 1f;
+
         [Header("调试")]
         [SerializeField] private bool m_Log = true;
 
@@ -61,32 +69,45 @@ namespace PAO
         }
 
         /// <summary>
-        /// 兜底：没有 Collider、或者忘了勾 Is Trigger 时自动补上。
+        /// 保证物体上有一个 **Trigger** 碰撞体，否则 OnTriggerEnter 永远不触发，
+        /// 而且一点报错都没有 —— 最难查的那种问题。
         ///
-        /// 这两种情况都会让 OnTriggerEnter **静默不触发** —— 没有报错、
-        /// 没有任何提示，只能靠"怎么走了没反应"来发现，最难查。
+        /// 【绝对不能把实心碰撞体改成 Trigger】
+        /// 早先的实现是直接 <c>col.isTrigger = true</c>。
+        /// 把本组件挂到一块石头 / 一堵墙上时，那会让它**不再是实心** ——
+        /// 玩家直接穿过去，而且不会报任何错。
+        ///
+        /// 正确做法是**额外加一个** Trigger 碰撞体：Unity 允许一个物体挂多个碰撞体，
+        /// 原有的实心碰撞体保持原样，新加的 Trigger 只负责检测玩家。
         /// </summary>
         private void EnsureTriggerCollider()
         {
-            Collider col = GetComponent<Collider>();
+            Collider[] cols = GetComponents<Collider>();
 
-            if (col == null)
+            // 已经有 Trigger 就直接用
+            for (int i = 0; i < cols.Length; i++)
             {
-                var box = gameObject.AddComponent<BoxCollider>();
-                box.isTrigger = true;
-                box.size = new Vector3(10f, 6f, 4f);   // 给一个够大的默认范围
-                box.center = new Vector3(0f, 3f, 0f);
-
-                Debug.LogWarning("[NarrationTrigger] \"" + name +
-                                 "\" 上没有 Collider，已自动补一个 Trigger BoxCollider。", this);
-                return;
+                if (cols[i].isTrigger)
+                {
+                    return;
+                }
             }
 
-            if (!col.isTrigger)
+            bool hadSolid = cols.Length > 0;
+
+            // 没有 Trigger：额外加一个球形检测区，**不动**已有的实心碰撞体
+            SphereCollider zone = gameObject.AddComponent<SphereCollider>();
+            zone.isTrigger = true;
+            zone.radius = Mathf.Max(0.5f, m_AutoZoneRadius);
+            zone.center = new Vector3(0f, m_AutoZoneYOffset, 0f);
+
+            if (m_Log)
             {
-                col.isTrigger = true;
-                Debug.LogWarning("[NarrationTrigger] \"" + name +
-                                 "\" 的 Collider 没勾 Is Trigger，已自动勾上。", this);
+                Debug.Log(hadSolid
+                        ? "[NarrationTrigger] \"" + name + "\" 没有 Trigger 碰撞体，" +
+                          "已额外加一个半径 " + zone.radius + "m 的检测区（原有实心碰撞体保持不变）。"
+                        : "[NarrationTrigger] \"" + name + "\" 上没有任何碰撞体，" +
+                          "已自动补一个半径 " + zone.radius + "m 的 Trigger 检测区。", this);
             }
         }
 
@@ -177,27 +198,46 @@ namespace PAO
         /// <summary>选中时把触发范围画出来，方便摆位置。</summary>
         private void OnDrawGizmosSelected()
         {
-            Collider col = GetComponent<Collider>();
-            if (col == null)
-            {
-                return;
-            }
+            Collider[] cols = GetComponents<Collider>();
+            bool drewAny = false;
 
             Gizmos.color = new Color(1f, 0.85f, 0.4f, 0.45f);
             Gizmos.matrix = transform.localToWorldMatrix;
 
-            var box = col as BoxCollider;
-            if (box != null)
+            for (int i = 0; i < cols.Length; i++)
             {
-                Gizmos.DrawWireCube(box.center, box.size);
-                return;
+                // 只画 Trigger —— 实心碰撞体不属于这个组件的范围
+                if (!cols[i].isTrigger)
+                {
+                    continue;
+                }
+
+                var box = cols[i] as BoxCollider;
+                if (box != null)
+                {
+                    Gizmos.DrawWireCube(box.center, box.size);
+                    drewAny = true;
+                    continue;
+                }
+
+                var sphere = cols[i] as SphereCollider;
+                if (sphere != null)
+                {
+                    Gizmos.DrawWireSphere(sphere.center, sphere.radius);
+                    drewAny = true;
+                }
             }
 
-            var sphere = col as SphereCollider;
-            if (sphere != null)
+            // 编辑器里还没 Awake 时，把"将会自动创建"的检测区先画出来，
+            // 方便摆位置时就知道范围多大。
+            if (!drewAny)
             {
-                Gizmos.DrawWireSphere(sphere.center, sphere.radius);
+                Gizmos.color = new Color(1f, 0.85f, 0.4f, 0.22f);
+                Gizmos.DrawWireSphere(new Vector3(0f, m_AutoZoneYOffset, 0f),
+                                      Mathf.Max(0.5f, m_AutoZoneRadius));
             }
+
+            Gizmos.matrix = Matrix4x4.identity;
         }
 #endif
     }

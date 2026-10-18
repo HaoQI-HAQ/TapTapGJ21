@@ -38,6 +38,20 @@ Shader "PAO/EnergyParticle"
 
         // 边缘柔化：把贴图边缘的硬切线压掉，加色混合下硬边很扎眼
         _EdgeFade     ("边缘淡出（0=不处理）", Range(0, 1)) = 0.35
+
+        // ---- 射线模式 ----
+        //
+        // 【为什么需要它】
+        // 粒子用 Stretch 渲染时，贴图会沿运动方向拉伸成一个长条。
+        // 如果贴图是**对称**的（sparkle.png 是四角星），拉长后亮头就在正中，
+        // 两头都是尖的 —— 玩家把它读成"朝中心收拢的线"，而不是"往外喷的射线"。
+        //
+        // 打开这个开关后：
+        //   · 沿拉伸轴做一个"亮头 → 暗尾"的渐变
+        //   · 并且把渐变方向反过来，让**亮头朝运动方向（外侧）**、暗尾朝中心
+        // 这样一排射线读起来就是明确地"从中心射出去"。
+        _RayMode      ("射线模式（1=亮头朝外，0=普通贴图）", Range(0, 1)) = 0
+        _RayHeadPos   ("亮头位置（0=尾 1=头）", Range(0, 1)) = 0.85
     }
 
     SubShader
@@ -98,6 +112,8 @@ Shader "PAO/EnergyParticle"
                 float  _SheetRows;
                 float  _SheetFrame;
                 float  _EdgeFade;
+                float  _RayMode;
+                float  _RayHeadPos;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
@@ -170,6 +186,35 @@ Shader "PAO/EnergyParticle"
                     // 在格线上出现一条发亮的方框边。
                     float d = max(abs(c.x), abs(c.y)) * 2.0;
                     a *= 1.0 - smoothstep(1.0 - _EdgeFade, 1.0, d);
+                }
+
+                // ---- 射线模式：亮头朝外、暗尾朝中心 ----
+                //
+                // 【这是"扩散感 vs 收缩感"的关键】
+                // Stretch 渲染会把贴图沿运动方向拉成长条。如果贴图是对称的
+                // （sparkle.png 是四角星），拉长后亮头在正中、两头都尖 ——
+                // 玩家读成"朝中心收拢的线"，而不是"从中心射出去的线"。
+                //
+                // 这里沿拉伸轴（粒子的 v 方向，也就是速度方向）做一个渐变：
+                // 越靠运动前端越亮，越靠尾部越暗。
+                // 一排这样的射线读起来就是明确地"往外喷"。
+                if (_RayMode > 0.5)
+                {
+                    // quadUV.y = 0 是尾巴，= 1 是头（ParticleSystem 的 Stretch 约定）
+                    float along = saturate(quadUV.y);
+
+                    // 亮头位置可调：1.0 = 最前端最亮；0.85 让头部稍有一点余量
+                    float head = saturate(_RayHeadPos);
+
+                    // 从尾部到头部的强度曲线：
+                    // 尾部几乎透明 → 接近头部迅速拉亮 → 头部保持
+                    float ramp = smoothstep(0.0, head, along);
+
+                    // 再乘一个"头部收尖"，让端点不至于是一刀切
+                    ramp *= 1.0 - smoothstep(head * 0.92, 1.0, along) * 0.35;
+
+                    a *= ramp;
+                    col *= (0.4 + 0.6 * ramp);
                 }
 
                 // 加色混合下 alpha 只当"强度"用，所以亮度直接乘在颜色上

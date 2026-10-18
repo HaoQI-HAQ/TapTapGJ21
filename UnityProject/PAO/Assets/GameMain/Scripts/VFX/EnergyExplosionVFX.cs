@@ -3,91 +3,188 @@ using UnityEngine;
 namespace PAO
 {
     /// <summary>
-    /// 炸弹泡泡的**能量爆炸**：球状爆发 + 冲击环 + 放射光条 + 余烬。
+    /// 炸弹泡泡的**能量爆炸** —— 塞尔达那种"一大团发光能量炸开"的观感。
     ///
-    /// 【参考效果】
-    /// 塞尔达那种"能量爆发"：中心一团过曝的火球迅速撑开，
-    /// 外面一圈亮边冲击波向外推，同时有大量细长光条沿射线方向飞出。
-    /// 整体是加色发光的，不是实心烟团。
+    /// ============================================================
+    /// 【为什么换掉了粒子方案】
+    /// ============================================================
+    /// 前面几版都用 ParticleSystem 堆粒子，无论怎么调都不对，原因是粒子这个
+    /// 载体做不出"能量"：
     ///
-    /// 【配色跟炸弹泡泡走】
-    /// 早先这套是写死的冰蓝过曝色（照着参考图抄的），结果炸开时
-    /// 颜色和那颗泡泡对不上 —— 玩家看不出"是我吹的那颗炸了"。
+    ///   · 粒子是很多**小图元**，凑不出一整片连续的发光体
+    ///   · 粒子没有"从中心射出、越远越淡"的**连续光束**形状
+    ///     （用 Stretch 去伪造会得到硬边直线 —— 之前"线条感太重"就是这个）
+    ///   · 没有后处理 Bloom 时，粒子再亮也不会"溢出来"，所以"没有光感"
     ///
-    /// 现在主色从 **BubbleTypeSwitcher.ColorOf(BubbleType.Bomb)** 取，
-    /// 也就是游戏里真正显示的那个橙红 (1.00, 0.62, 0.42)，
-    /// 再按同一个色相推出"过曝核心"和"暗部余烬"两个派生色。
+    /// 现在改成 **PAO/EnergyBurst 着色器 + 正对相机的四边形**：
+    /// 能量结构（白热核心 / 放射光束 / 扩张环 / 外晕）全部在片元里画出来，
+    /// 形状连续、光束渐变、核心亮度远超 1.0 从而过曝成白。
     ///
-    /// 【为什么运行时构建，而不是做成预制体资产】
-    /// 预制体要序列化一堆粒子模块参数，手写 YAML 不可靠（这个工程踩过）。
-    /// 运行时用 API 搭出来，参数全在代码里、能直接读能改。
+    /// ============================================================
+    /// 【为什么要分 4 层叠】
+    /// ============================================================
+    /// 工程里没有任何 Volume / Bloom 后处理（10 个场景 0 处引用），
+    /// 所以"泛光"只能自己叠：
     ///
-    /// 【贴图】
-    /// Assets/GameMain/Art/Textures/EnergyFX/ 下的 nova / ring / sparkle / glow。
-    /// 这些是从 Epic Toon FX 素材里挑的，但**材质换成了本工程的**：
-    /// 原素材的材质用 Built-in 的 Standard 着色器，在 URP 里会变成品红。
-    /// 材质资产在 Resources/PAO/EnergyFX/，由 EnergyExplosionMaterialBuilder 生成。
-    /// </summary>
+    ///   Flash  极亮、极短、很大      —— 炸开瞬间那一下白屏
+    ///   Core   白热核，中等时长      —— 能量的"芯"
+    ///   Body   光束 + 扩张环，主体   —— 观感主体
+    ///   Halo   很大很柔、很暗        —— 外圈柔光（假 Bloom）
+    ///
+    /// 四层用同一个材质，靠 MaterialPropertyBlock 各自设参数和尺寸，
+    /// 叠起来就近似 Bloom 的柔光溢出。
+    ///
+    /// ============================================================
+    /// 【向外消散，不是向内收缩】
+    /// ============================================================
+    ///   · 每层尺寸只涨不缩（sizeFrom → sizeTo 单调递增）
+    ///   · 亮度包络是"快进 → 保持 → 后段淡出"，淡出发生在**已经涨到最大之后**
+    ///   · 扩张环半径 = 进度，一路往外推
+    ///
+    /// ============================================================
+    /// 【配色】
+    /// 能量色取炸弹泡泡的类型色 BubbleTypeSwitcher.ColorOf(BubbleType.Bomb)，
+    /// 即 (1.00, 0.62, 0.42)。核心用近白的热色，保证过曝时是白的。
+    /// ============================================================
     [DisallowMultipleComponent]
     [AddComponentMenu("PAO/VFX/Energy Explosion VFX")]
     public sealed class EnergyExplosionVFX : MonoBehaviour
     {
-        // ---- 素材路径 ----
-        // 材质是资产，放在 Resources 下 —— 运行时只能用 Resources.Load 取到。
-        private const string kMatResourcePath = "PAO/EnergyFX/";
+        // 粒子碎屑用的材质（可选，取不到就只显示能量层）
+        private const string kMatDebris = "M_EnergySpark";
 
-        private const string kMatCoreFlash = "M_EnergyCoreFlash";
-        private const string kMatRing      = "M_EnergyRing";
-        private const string kMatRay       = "M_EnergyRay";
-        private const string kMatEmber     = "M_EnergyEmber";
-
-        // ---- 配色 ----
-        //
-        // 主色在 Spawn 时按炸弹泡泡的类型色决定；下面三个是运行时的当前值。
-        // 用静态字段是因为颜色要在 4 个 Build 方法里共享。
-
-        /// <summary>兜底主色：炸弹类型色 (1.00, 0.62, 0.42) 橙红。</summary>
         private static readonly Color kFallbackTint = new Color(1.00f, 0.62f, 0.42f, 1f);
 
-        /// <summary>当前主色（泡泡本身的颜色）。</summary>
         private static Color kMainColor = kFallbackTint;
+        private static Color kHotColor  = Color.Lerp(kFallbackTint, Color.white, 0.85f);
 
-        /// <summary>过曝核心色：主色往白里提。</summary>
-        private static Color kHotColor = new Color(1f, 0.92f, 0.82f, 1f);
+        // ---- 着色器属性 ID（每帧用字符串找属性很贵）----
+        private static readonly int ID_Tint        = Shader.PropertyToID("_Tint");
+        private static readonly int ID_HotTint     = Shader.PropertyToID("_HotTint");
+        private static readonly int ID_Intensity   = Shader.PropertyToID("_Intensity");
+        private static readonly int ID_Progress    = Shader.PropertyToID("_Progress");
+        private static readonly int ID_RayCount    = Shader.PropertyToID("_RayCount");
+        private static readonly int ID_RaySharp    = Shader.PropertyToID("_RaySharp");
+        private static readonly int ID_RayBoost    = Shader.PropertyToID("_RayBoost");
+        private static readonly int ID_RingBoost   = Shader.PropertyToID("_RingBoost");
+        private static readonly int ID_GlowBoost   = Shader.PropertyToID("_GlowBoost");
+        private static readonly int ID_GlowWidth   = Shader.PropertyToID("_GlowWidth");
+        private static readonly int ID_CoreBoost   = Shader.PropertyToID("_CoreBoost");
+        private static readonly int ID_CoreRadius  = Shader.PropertyToID("_CoreRadius");
+        private static readonly int ID_NoiseAmount = Shader.PropertyToID("_NoiseAmount");
 
-        /// <summary>暗部余烬色：主色压暗。</summary>
-        private static Color kDeepColor = new Color(0.55f, 0.18f, 0.08f, 1f);
-
-        /// <summary>
-        /// 按主色推出"过曝核心"和"暗部余烬"两种派生色。
-        ///
-        /// 核心往白里提 —— 能量爆发的中心必须过曝才亮得起来；
-        /// 暗部只压亮度、保留色相，避免变成灰色。
-        /// </summary>
-        private static void DerivePalette(Color main)
+        /// <summary>一层能量图。</summary>
+        private sealed class Layer
         {
-            kMainColor = main;
+            public Transform trans;
+            public MeshRenderer renderer;
+            public MaterialPropertyBlock block;
 
-            // 核心：往白提 70%。再多就全白、丢掉色相
-            kHotColor = Color.Lerp(main, Color.white, 0.70f);
+            public float sizeFrom;    // 起始直径
+            public float sizeTo;      // 结束直径（必须 >= sizeFrom）
+            public float delay;       // 相对爆炸起点的延迟
+            public float life;        // 这一层自己的持续时间
+            public float peak;        // 峰值 _Intensity
 
-            // 暗部：亮度压到 45%，色相保留
-            kDeepColor = new Color(main.r * 0.45f, main.g * 0.30f, main.b * 0.22f, 1f);
+            public float rayCount;
+            public float raySharp;
+            public float rayBoost;
+            public float ringBoost;
+            public float glowBoost;
+            public float glowWidth;
+            public float coreBoost;
+            public float coreRadius;
+            public float noiseAmount;
         }
+
+        private readonly System.Collections.Generic.List<Layer> m_Layers =
+            new System.Collections.Generic.List<Layer>(4);
 
         private float m_Elapsed;
         private float m_Lifetime;
         private bool m_Running;
+        private float m_Seed;
+
+        private Camera m_Camera;
+
+        // ==================== 共享资源 ====================
+
+        private static Mesh s_Quad;
+        private static Material s_Material;
+        private static bool s_ReportedMissingShader;
+
+        /// <summary>中心在原点、边长 1 的正方形。所有层共用。</summary>
+        private static Mesh GetQuad()
+        {
+            if (s_Quad != null)
+            {
+                return s_Quad;
+            }
+
+            var mesh = new Mesh();
+            mesh.name = "EnergyBurstQuad";
+            mesh.hideFlags = HideFlags.DontSave;
+
+            mesh.vertices = new[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3( 0.5f, -0.5f, 0f),
+                new Vector3(-0.5f,  0.5f, 0f),
+                new Vector3( 0.5f,  0.5f, 0f),
+            };
+
+            mesh.uv = new[]
+            {
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(1f, 1f),
+            };
+
+            mesh.normals = new[]
+            {
+                new Vector3(0f, 0f, -1f), new Vector3(0f, 0f, -1f),
+                new Vector3(0f, 0f, -1f), new Vector3(0f, 0f, -1f),
+            };
+
+            mesh.triangles = new[] { 0, 2, 1, 2, 3, 1 };
+            mesh.RecalculateBounds();
+
+            s_Quad = mesh;
+            return s_Quad;
+        }
+
+        private static Material GetMaterial()
+        {
+            if (s_Material != null)
+            {
+                return s_Material;
+            }
+
+            Shader shader = Shader.Find("PAO/EnergyBurst");
+
+            if (shader == null)
+            {
+                if (!s_ReportedMissingShader)
+                {
+                    s_ReportedMissingShader = true;
+                    Debug.LogWarning("[EnergyExplosionVFX] 找不到着色器 PAO/EnergyBurst，" +
+                                     "炸弹爆炸不会有视觉效果。请确认 " +
+                                     "Assets/GameMain/Art/Shaders/EnergyBurst.shader 编译通过。");
+                }
+
+                return null;
+            }
+
+            s_Material = new Material(shader);
+            s_Material.name = "EnergyBurst (Runtime Shared)";
+            s_Material.hideFlags = HideFlags.DontSave;
+
+            return s_Material;
+        }
 
         // ==================== 对外接口 ====================
 
-        /// <summary>
-        /// 在世界坐标生成一次能量爆炸。
-        /// </summary>
-        /// <param name="position">爆炸中心</param>
-        /// <param name="bubbleDiameter">泡泡直径 —— 决定整体规模</param>
-        /// <param name="sizeReference">"满蓄力"直径，用来归一化。0 则用泡泡直径</param>
-        /// <param name="tint">爆炸主色。null 则用炸弹泡泡的类型色</param>
         public static EnergyExplosionVFX Spawn(Vector3 position, float bubbleDiameter,
                                                float sizeReference = 0f,
                                                Color? tint = null)
@@ -97,11 +194,9 @@ namespace PAO
                 sizeReference = Mathf.Max(bubbleDiameter, 0.5f);
             }
 
-            // 颜色：没指定就用炸弹泡泡的类型色（HUD 上那个橙红）
             Color main = tint.HasValue ? tint.Value : ColorOfBomb();
             DerivePalette(main);
 
-            // 归一化：吹得小 = 炸得紧凑，吹得大 = 炸得铺开
             float scale = Mathf.Clamp(bubbleDiameter / sizeReference, 0.35f, 2.0f);
 
             var root = new GameObject("Energy Explosion");
@@ -112,12 +207,6 @@ namespace PAO
             return fx;
         }
 
-        /// <summary>
-        /// 取炸弹泡泡的类型色。
-        ///
-        /// BubbleTypeSwitcher.ColorOf 是静态方法，不需要场景里有切换器实例，
-        /// 所以在任何关卡都能拿到正确的颜色。
-        /// </summary>
         private static Color ColorOfBomb()
         {
             try
@@ -126,215 +215,168 @@ namespace PAO
             }
             catch (System.Exception)
             {
-                // 极少数情况下取不到，退回兜底色
                 return kFallbackTint;
             }
+        }
+
+        private static void DerivePalette(Color main)
+        {
+            kMainColor = main;
+            // 核心几乎白 —— 过曝才像能量，而不是一块橙色的纸片
+            kHotColor = Color.Lerp(main, Color.white, 0.85f);
         }
 
         // ==================== 构建 ====================
 
         private void Build(float size)
         {
-            // 基础尺度：按泡泡大小走，但给一个下限免得小泡泡几乎看不见
             float d = Mathf.Max(size, 0.6f);
+            m_Seed = Random.Range(0f, 100f);
 
-            // 四层结构，从内到外。顺序不影响渲染（都是加色），
-            // 但按"爆发 → 冲击波 → 射线 → 余烬"排读起来更清楚。
-            BuildCoreFlash(d);
-            BuildShockRing(d);
-            BuildRadialRays(d);
-            BuildEmbers(d);
+            Material mat = GetMaterial();
 
-            m_Lifetime = 0.95f;
+            if (mat == null)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            // ---- 四层，从"极亮极短"到"很大很柔" ----
+            //
+            // 尺寸从小到大、时长为从短到长，叠起来就有一点"能量层层扩散"的感觉。
+            // 全部单调整大（sizeTo >= sizeFrom），不会有任何收缩。
+
+            AddLayer(mat, d, 0.55f, 2.4f, 0f,    0.16f, 5.0f,
+                     rayCount: 7f,  raySharp: 2.0f, rayBoost: 0.35f,
+                     ringBoost: 0.15f, glowBoost: 1.1f, glowWidth: 0.55f,
+                     coreBoost: 5.0f, coreRadius: 0.30f, noiseAmount: 0.35f);
+
+            AddLayer(mat, d, 0.90f, 3.2f, 0.02f, 0.42f, 3.2f,
+                     rayCount: 9f,  raySharp: 2.6f, rayBoost: 1.0f,
+                     ringBoost: 0.8f,  glowBoost: 0.9f, glowWidth: 0.65f,
+                     coreBoost: 3.5f, coreRadius: 0.20f, noiseAmount: 0.5f);
+
+            AddLayer(mat, d, 1.30f, 4.6f, 0.04f, 0.95f, 2.2f,
+                     rayCount: 13f, raySharp: 3.2f, rayBoost: 1.9f,
+                     ringBoost: 1.6f,  glowBoost: 0.7f, glowWidth: 0.80f,
+                     coreBoost: 1.6f, coreRadius: 0.14f, noiseAmount: 0.6f);
+
+            AddLayer(mat, d, 2.10f, 7.0f, 0.06f, 1.25f, 0.85f,
+                     rayCount: 17f, raySharp: 4.0f, rayBoost: 0.35f,
+                     ringBoost: 0.5f,  glowBoost: 1.5f, glowWidth: 1.0f,
+                     coreBoost: 0.25f, coreRadius: 0.10f, noiseAmount: 0.85f);
+
+            BuildDebris(d);
+
+            m_Lifetime = 1.35f;
             m_Running = true;
         }
 
-        /// <summary>
-        /// 核心光团：球状爆发的主体。用 nova 精灵表的一帧当贴图。
-        ///
-        /// 【为什么只取一帧】
-        /// 精灵表是 6×3 的序列帧，逐帧播放需要每帧改材质属性，
-        /// 而粒子材质是共享的 —— 改一次会让场上所有爆炸同步跳帧。
-        /// 所以只取**最有爆发感的那一帧**，靠粒子的尺寸曲线做出
-        /// "迅速撑开然后消散"，观感上足够。
-        /// </summary>
-        private void BuildCoreFlash(float d)
+        private void AddLayer(Material mat, float d,
+                              float sizeFromMul, float sizeToMul,
+                              float delay, float life, float peak,
+                              float rayCount, float raySharp, float rayBoost,
+                              float ringBoost, float glowBoost, float glowWidth,
+                              float coreBoost, float coreRadius, float noiseAmount)
         {
-            var go = NewLayer("Core Flash", transform);
-            ParticleSystem ps = go.AddComponent<ParticleSystem>();
+            var go = new GameObject("Burst Layer");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = Vector3.zero;
 
-            // 粒子系统默认会在 Play 时自动播，先停掉，参数设完再手动 Play
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            filter.sharedMesh = GetQuad();
 
-            ParticleSystem.MainModule main = ps.main;
-            main.duration = 0.12f;
-            main.loop = false;
-            main.playOnAwake = false;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.16f, 0.26f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 0.4f);   // 几乎不飞，原地撑开
-            main.startSize = new ParticleSystem.MinMaxCurve(d * 1.6f, d * 2.4f);
-            main.startColor = new ParticleSystem.MinMaxGradient(kHotColor, kMainColor);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = 0f;
-            main.maxParticles = 8;
+            MeshRenderer renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = mat;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
 
-            // 从中心一个点喷，靠尺寸曲线撑开成球
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = d * 0.15f;
+            var layer = new Layer
+            {
+                trans = go.transform,
+                renderer = renderer,
+                block = new MaterialPropertyBlock(),
+                sizeFrom = d * sizeFromMul,
+                sizeTo = d * sizeToMul,
+                delay = delay,
+                life = life,
+                peak = peak,
+                rayCount = rayCount,
+                raySharp = raySharp,
+                rayBoost = rayBoost,
+                ringBoost = ringBoost,
+                glowBoost = glowBoost,
+                glowWidth = glowWidth,
+                coreBoost = coreBoost,
+                coreRadius = coreRadius,
+                noiseAmount = noiseAmount,
+            };
 
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 3) });
-
-            // 尺寸：先猛地撑大，再继续扩散（配合透明度降到 0）
-            ParticleSystem.SizeOverLifetimeModule sizeOverLife = ps.sizeOverLifetime;
-            sizeOverLife.enabled = true;
-            sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, 0.35f),
-                new Keyframe(0.22f, 1.0f),
-                new Keyframe(1f, 1.35f)));
-
-            // 透明度：一闪就没了。能量爆发不该拖很久
-            ParticleSystem.ColorOverLifetimeModule colorOverLife = ps.colorOverLifetime;
-            colorOverLife.enabled = true;
-            var grad = new Gradient();
-            grad.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(kHotColor, 0f),
-                    new GradientColorKey(kMainColor, 0.45f),
-                    new GradientColorKey(kDeepColor, 1f),
-                },
-                new[]
-                {
-                    new GradientAlphaKey(1f, 0f),
-                    new GradientAlphaKey(0.95f, 0.25f),
-                    new GradientAlphaKey(0f, 1f),
-                });
-            colorOverLife.color = new ParticleSystem.MinMaxGradient(grad);
-
-            ApplyRenderer(ps, kMatCoreFlash);
-            ps.Play();
+            renderer.enabled = false;
+            m_Layers.Add(layer);
         }
 
         /// <summary>
-        /// 冲击环：一圈亮光向外推。参考图里那层明显的球壳边缘就是它。
-        /// </summary>
-        private void BuildShockRing(float d)
-        {
-            var go = NewLayer("Shock Ring", transform);
-            ParticleSystem ps = go.AddComponent<ParticleSystem>();
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.duration = 0.1f;
-            main.loop = false;
-            main.playOnAwake = false;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.32f, 0.42f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(d * 1.1f, d * 1.6f);
-            main.startSize = new ParticleSystem.MinMaxCurve(d * 2.0f, d * 2.6f);
-            main.startColor = new ParticleSystem.MinMaxGradient(kMainColor, kDeepColor);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = 0f;
-            main.maxParticles = 6;
-
-            // 用 Circle 形状往四周平推 —— 形成一个横向扩散的环
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = d * 0.2f;
-            shape.radiusThickness = 0f;
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 4) });
-
-            ParticleSystem.LimitVelocityOverLifetimeModule limit = ps.limitVelocityOverLifetime;
-            limit.enabled = true;
-            limit.dampen = 0.65f;      // 飞一小段就减速，像冲击波推出去然后停住
-
-            ParticleSystem.SizeOverLifetimeModule sizeOverLife = ps.sizeOverLifetime;
-            sizeOverLife.enabled = true;
-            sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, 0.30f),
-                new Keyframe(0.35f, 1.0f),
-                new Keyframe(1f, 1.15f)));
-
-            ParticleSystem.ColorOverLifetimeModule colorOverLife = ps.colorOverLifetime;
-            colorOverLife.enabled = true;
-            var grad = new Gradient();
-            grad.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(kHotColor, 0f),
-                    new GradientColorKey(kDeepColor, 1f),
-                },
-                new[]
-                {
-                    new GradientAlphaKey(0f, 0f),
-                    new GradientAlphaKey(1f, 0.12f),
-                    new GradientAlphaKey(0f, 1f),
-                });
-            colorOverLife.color = new ParticleSystem.MinMaxGradient(grad);
-
-            ApplyRenderer(ps, kMatRing);
-            ps.Play();
-        }
-
-        /// <summary>
-        /// 放射光条：参考图里最显眼的那些白色细长线，沿射线方向飞出。
+        /// 碎屑：被能量顶出去的小块。
         ///
-        /// 【为什么要拉长】
-        /// 用 Stretch 渲染 + 较长 lengthScale，看起来就是"光条"。
-        /// 圆点粒子完全做不出那种速度感。
+        /// 【为什么这里可以用粒子】
+        /// 因为碎屑本来就该是"离散的小块"，正好是粒子擅长的。
+        /// 而爆炸主体那种"连续的一团能量"必须是着色器画的。
+        /// 用 glow 类贴图（柔和衰减），不用 Stretch —— 避免又出现硬直线。
         /// </summary>
-        private void BuildRadialRays(float d)
+        private void BuildDebris(float d)
         {
-            var go = NewLayer("Radial Rays", transform);
+            Material mat = Resources.Load<Material>("PAO/EnergyFX/" + kMatDebris);
+
+            if (mat == null)
+            {
+                return;   // 没材质就不放碎屑，不影响主体
+            }
+
+            var go = new GameObject("Debris");
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = Vector3.zero;
+
             ParticleSystem ps = go.AddComponent<ParticleSystem>();
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             ParticleSystem.MainModule main = ps.main;
-            main.duration = 0.18f;
+            main.duration = 0.2f;
             main.loop = false;
             main.playOnAwake = false;
-            // 寿命拉开差距：有的瞬间消失、有的拖得长一点，看起来才不整齐划一
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.28f, 0.72f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(d * 2.4f, d * 7.5f);
-            main.startSize = new ParticleSystem.MinMaxCurve(d * 0.10f, d * 0.30f);
-            main.startColor = new ParticleSystem.MinMaxGradient(kHotColor, kMainColor);
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = 0f;
-            main.maxParticles = 140;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.75f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(d * 2.2f, d * 5.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(d * 0.05f, d * 0.12f);
+            main.startColor = new ParticleSystem.MinMaxGradient(kHotColor, kMainColor);
+            main.gravityModifier = 0.25f;
+            main.maxParticles = 90;
 
-            // 从中心球面往四周喷
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = d * 0.3f;
-            shape.radiusThickness = 0f;
+            shape.radius = d * 0.12f;
+            shape.radiusThickness = 0.7f;
 
             ParticleSystem.EmissionModule emission = ps.emission;
             emission.rateOverTime = 0f;
             emission.SetBursts(new[]
             {
-                new ParticleSystem.Burst(0f, 46),
-                new ParticleSystem.Burst(0.05f, 30),
+                new ParticleSystem.Burst(0f,    40),
+                new ParticleSystem.Burst(0.06f, 26),
             });
 
-            // 阻力：飞得快、很快就慢下来，像被水拦住
+            // 不要速度限制（limit 默认 0 会把粒子刹停）
             ParticleSystem.LimitVelocityOverLifetimeModule limit = ps.limitVelocityOverLifetime;
-            limit.enabled = true;
-            limit.dampen = 0.45f;
+            limit.enabled = false;
 
-            // 尺寸：越飞越细
             ParticleSystem.SizeOverLifetimeModule sizeOverLife = ps.sizeOverLifetime;
             sizeOverLife.enabled = true;
             sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, 1.0f),
-                new Keyframe(1f, 0.15f)));
+                new Keyframe(0f, 0.6f),
+                new Keyframe(0.3f, 1.0f),
+                new Keyframe(1f, 1.3f)));
 
             ParticleSystem.ColorOverLifetimeModule colorOverLife = ps.colorOverLifetime;
             colorOverLife.enabled = true;
@@ -343,152 +385,30 @@ namespace PAO
                 new[]
                 {
                     new GradientColorKey(kHotColor, 0f),
-                    new GradientColorKey(kMainColor, 1f),
+                    new GradientColorKey(kMainColor, 0.6f),
                 },
                 new[]
                 {
                     new GradientAlphaKey(0f, 0f),
                     new GradientAlphaKey(1f, 0.08f),
+                    new GradientAlphaKey(1f, 0.55f),
                     new GradientAlphaKey(0f, 1f),
                 });
             colorOverLife.color = new ParticleSystem.MinMaxGradient(grad);
 
-            ApplyRenderer(ps, kMatRay);
-            EnableStretch(ps, 6.5f);
-            ps.Play();
-        }
-
-        /// <summary>余烬：爆完之后零星飘着的亮点，把收尾补顺。</summary>
-        private void BuildEmbers(float d)
-        {
-            var go = NewLayer("Embers", transform);
-            ParticleSystem ps = go.AddComponent<ParticleSystem>();
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-
-            ParticleSystem.MainModule main = ps.main;
-            main.duration = 0.3f;
-            main.loop = false;
-            main.playOnAwake = false;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 0.95f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(d * 0.4f, d * 1.8f);
-            main.startSize = new ParticleSystem.MinMaxCurve(d * 0.05f, d * 0.14f);
-            main.startColor = new ParticleSystem.MinMaxGradient(kMainColor, kDeepColor);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.gravityModifier = -0.06f;   // 轻微上浮（水里的余烬）
-            main.maxParticles = 60;
-
-            ParticleSystem.ShapeModule shape = ps.shape;
-            shape.enabled = true;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = d * 0.6f;
-            shape.radiusThickness = 1f;      // 只在球壳上生成
-
-            ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;
-            emission.SetBursts(new[] { new ParticleSystem.Burst(0.06f, 22) });
-
-            ParticleSystem.LimitVelocityOverLifetimeModule limit = ps.limitVelocityOverLifetime;
-            limit.enabled = true;
-            limit.dampen = 0.7f;
-
-            ParticleSystem.SizeOverLifetimeModule sizeOverLife = ps.sizeOverLifetime;
-            sizeOverLife.enabled = true;
-            sizeOverLife.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
-                new Keyframe(0f, 1f),
-                new Keyframe(1f, 0.1f)));
-
-            ParticleSystem.ColorOverLifetimeModule colorOverLife = ps.colorOverLifetime;
-            colorOverLife.enabled = true;
-            var grad = new Gradient();
-            grad.SetKeys(
-                new[]
-                {
-                    new GradientColorKey(kMainColor, 0f),
-                    new GradientColorKey(kDeepColor, 1f),
-                },
-                new[]
-                {
-                    new GradientAlphaKey(0f, 0f),
-                    new GradientAlphaKey(1f, 0.15f),
-                    new GradientAlphaKey(0f, 1f),
-                });
-            colorOverLife.color = new ParticleSystem.MinMaxGradient(grad);
-
-            ApplyRenderer(ps, kMatEmber);
-            ps.Play();
-        }
-
-        // ==================== 辅助 ====================
-
-        private static GameObject NewLayer(string name, Transform parent)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            return go;
-        }
-
-        /// <summary>把渲染器设成 Billboard + 加载好的加色材质。</summary>
-        private static void ApplyRenderer(ParticleSystem ps, string materialName)
-        {
             ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
             renderer.alignment = ParticleSystemRenderSpace.View;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
+            renderer.sharedMaterial = mat;
 
-            Material mat = LoadMaterial(materialName);
-
-            if (mat != null)
-            {
-                renderer.sharedMaterial = mat;
-            }
+            ps.Play();
         }
 
-        /// <summary>
-        /// 把粒子拉成光条。参考图里那种放射状细线的关键就是它 ——
-        /// 圆点粒子完全做不出速度感。
-        /// </summary>
-        private static void EnableStretch(ParticleSystem ps, float lengthScale)
-        {
-            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Stretch;
-            renderer.velocityScale = lengthScale;
-            renderer.lengthScale = 2.2f;
-            renderer.cameraVelocityScale = 0f;
-        }
+        // ==================== 每帧驱动 ====================
 
-        /// <summary>
-        /// 从 Resources 加载材质资产。
-        ///
-        /// 【为什么不在运行时 new Material】
-        /// 运行时拿不到贴图（贴图不在 Resources 下，Resources.Load 找不到）。
-        /// 所以贴图必须提前烤进材质并放进 Resources。
-        ///
-        /// 【为什么用共享材质】
-        /// 爆炸是高频对象，每次 new Material 会造成大量 GC。
-        /// 共享资产不会泄漏，代价是不能在运行时改参数 —— 但这里参数是固定的。
-        /// </summary>
-        private static Material LoadMaterial(string name)
-        {
-            Material mat = Resources.Load<Material>(kMatResourcePath + name);
-
-            if (mat == null && !s_ReportedMissingMaterial)
-            {
-                s_ReportedMissingMaterial = true;
-                Debug.LogWarning("[EnergyExplosionVFX] 找不到材质 " + kMatResourcePath + name +
-                                 "，爆炸会变成没有贴图的默认粒子。\n" +
-                                 "请执行菜单：Tools → PAO → 特效 → 生成能量爆炸材质");
-            }
-
-            return mat;
-        }
-
-        /// <summary>材质缺失的警告只报一次，别刷屏。</summary>
-        private static bool s_ReportedMissingMaterial;
-
-        // ==================== 生命周期 ====================
-
-        private void Update()
+        private void LateUpdate()
         {
             if (!m_Running)
             {
@@ -497,13 +417,108 @@ namespace PAO
 
             m_Elapsed += Time.deltaTime;
 
-            if (m_Elapsed >= m_Lifetime + 0.6f)
+            // 所有层一起正对相机（爆炸是一团光，不该有固定朝向）
+            Camera cam = GetCamera();
+
+            if (cam != null)
             {
-                // 【不要在这里 Destroy 材质】
-                // 材质是 Resources 里的共享资产，由 Unity 管理生命周期。
-                // 销毁它会让下一次爆炸没有材质 —— 直接变成不可见。
+                transform.rotation = cam.transform.rotation;
+            }
+
+            for (int i = 0; i < m_Layers.Count; i++)
+            {
+                UpdateLayer(m_Layers[i]);
+            }
+
+            if (m_Elapsed >= m_Lifetime + 0.5f)
+            {
                 Destroy(gameObject);
             }
+        }
+
+        private Camera GetCamera()
+        {
+            if (m_Camera != null)
+            {
+                return m_Camera;
+            }
+
+            m_Camera = Camera.main;
+
+            if (m_Camera == null)
+            {
+                m_Camera = UnityEngine.Object.FindFirstObjectByType<Camera>();
+            }
+
+            return m_Camera;
+        }
+
+        private void UpdateLayer(Layer layer)
+        {
+            float local = m_Elapsed - layer.delay;
+
+            if (local < 0f || local >= layer.life)
+            {
+                if (layer.renderer.enabled)
+                {
+                    layer.renderer.enabled = false;
+                }
+                return;
+            }
+
+            float t = local / layer.life;
+            float envelope = Envelope(t);
+
+            if (envelope <= 0.001f)
+            {
+                layer.renderer.enabled = false;
+                return;
+            }
+
+            layer.renderer.enabled = true;
+
+            // 尺寸：用 sqrt 让开头涨得快（炸开是瞬间的），但全程只涨不缩
+            float grow = Mathf.Sqrt(Mathf.Clamp01(t));
+            float size = Mathf.Lerp(layer.sizeFrom, layer.sizeTo, grow);
+            layer.trans.localScale = new Vector3(size, size, 1f);
+
+            MaterialPropertyBlock block = layer.block;
+            block.SetColor(ID_Tint, kMainColor);
+            block.SetColor(ID_HotTint, kHotColor);
+            block.SetFloat(ID_Intensity, layer.peak * envelope);
+
+            // 扩张环半径跟着进度走 —— 一路往外推
+            block.SetFloat(ID_Progress, Mathf.Clamp01(t));
+
+            block.SetFloat(ID_RayCount, layer.rayCount);
+            block.SetFloat(ID_RaySharp, layer.raySharp);
+            block.SetFloat(ID_RayBoost, layer.rayBoost);
+            block.SetFloat(ID_RingBoost, layer.ringBoost);
+            block.SetFloat(ID_GlowBoost, layer.glowBoost);
+            block.SetFloat(ID_GlowWidth, layer.glowWidth);
+            block.SetFloat(ID_CoreBoost, layer.coreBoost);
+            block.SetFloat(ID_CoreRadius, layer.coreRadius);
+            block.SetFloat(ID_NoiseAmount, layer.noiseAmount);
+
+            layer.renderer.SetPropertyBlock(block);
+        }
+
+        /// <summary>
+        /// 亮度包络：快进（10%）→ 保持 → 后段淡出。
+        ///
+        /// 关键是**淡出发生在后 45%**，此时尺寸已经涨到接近最大 ——
+        /// 所以看到的是"炸开到最大、然后在边缘淡掉"，
+        /// 而不是"在原地涨一下就暗下去"。
+        /// </summary>
+        private static float Envelope(float t)
+        {
+            float fadeIn = Mathf.Clamp01(t / 0.10f);
+            float fadeOut = 1f - Mathf.Clamp01((t - 0.55f) / 0.45f);
+
+            // 末尾再乘一个好走的曲线，避免最后几帧突然消失
+            fadeOut = fadeOut * fadeOut * (3f - 2f * fadeOut);
+
+            return fadeIn * fadeOut;
         }
     }
 }

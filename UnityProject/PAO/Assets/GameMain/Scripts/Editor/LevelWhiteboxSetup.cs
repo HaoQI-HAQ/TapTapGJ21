@@ -298,73 +298,8 @@ namespace PAO.EditorTools
 
         private static void BuildMap2_5Geometry(Transform root)
         {
-            // Kao Makagh Shrine / "Metal Doors Open the Way". South is the
-            // entrance. One broad central chamber contains four staggered
-            // elevations; the released iron door is the reusable bridge/ramp.
-            // Dimensions use a consistent 1 Unity unit ~= 1 metre blockout scale.
-            Box(root, "K25_00_Entrance_Run_In", new Vector3(0, -0.4f, -22), new Vector3(15, 0.8f, 14), m_Ground);
-            Box(root, "K25_00_Entry_Wall_W", new Vector3(-7.8f, 5, -22), new Vector3(0.8f, 10, 14), m_Edge);
-            Box(root, "K25_00_Entry_Wall_E", new Vector3(7.8f, 5, -22), new Vector3(0.8f, 10, 14), m_Edge);
-            Box(root, "K25_00_Entry_Door_Leaf_L", new Vector3(-2.35f, 2.8f, -15), new Vector3(4.5f, 5.2f, 0.55f), m_Sticky);
-            Box(root, "K25_00_Entry_Door_Leaf_R", new Vector3(2.35f, 2.8f, -15), new Vector3(4.5f, 5.2f, 0.55f), m_Sticky);
-
-            // Large enclosed chamber. The continuous lower floor is the safe
-            // recovery level; raised islands and the door bridge define the
-            // intended traversal and scale without adding enemies.
-            Box(root, "K25_01_Main_Chamber_Floor", new Vector3(0, -0.4f, 12), new Vector3(46, 0.8f, 54), m_Ground);
-            Box(root, "K25_01_Main_Wall_W_South", new Vector3(-23.4f, 8, -9.9f), new Vector3(0.8f, 16, 10.2f), m_Edge);
-            Box(root, "K25_01_Main_Wall_W_North", new Vector3(-23.4f, 8, 23.2f), new Vector3(0.8f, 16, 31.6f), m_Edge);
-            Box(root, "K25_01_Main_Wall_E", new Vector3(23.4f, 8, 12), new Vector3(0.8f, 16, 54), m_Edge);
-            Box(root, "K25_01_Main_Wall_N", new Vector3(0, 8, 39.4f), new Vector3(47.6f, 16, 0.8f), m_Edge);
-            Box(root, "K25_01_Main_Wall_S_L", new Vector3(-16.5f, 8, -15.4f), new Vector3(14.6f, 16, 0.8f), m_Edge);
-            Box(root, "K25_01_Main_Wall_S_R", new Vector3(16.5f, 8, -15.4f), new Vector3(14.6f, 16, 0.8f), m_Edge);
-
-            // The side room contains the second door, the bombable stone brace,
-            // and the optional bow alcove. The detached door is shown once at
-            // its pickup pose; the bridge poses below are non-colliding guides.
-            Box(root, "K25_02_Side_Room_Floor", new Vector3(-30, -0.4f, 1), new Vector3(13, 0.8f, 20), m_Ground);
-            Box(root, "K25_02_Side_Room_Wall_W", new Vector3(-36.8f, 4.8f, 1), new Vector3(0.8f, 9.6f, 20), m_Edge);
-            Box(root, "K25_02_Side_Room_Wall_N", new Vector3(-30, 4.8f, 11), new Vector3(13, 9.6f, 0.8f), m_Edge);
-            Box(root, "K25_02_Side_Room_Wall_S", new Vector3(-30, 4.8f, -9), new Vector3(13, 9.6f, 0.8f), m_Edge);
-            Box(root, "K25_02_Side_Room_Door_Leaf_A", new Vector3(-23, 2.6f, -1.8f), new Vector3(0.55f, 4.8f, 5.8f), m_Sticky);
-            Box(root, "K25_02_Side_Room_Door_Leaf_B", new Vector3(-23, 2.6f, 4.4f), new Vector3(0.55f, 4.8f, 5.8f), m_Sticky);
-            Box(root, "K25_02_Bombable_Door_Brace_A", new Vector3(-22.1f, 0.75f, 7.7f), new Vector3(1.2f, 1.5f, 1.5f), m_PinkWall);
-            Box(root, "K25_02_Bombable_Door_Brace_B", new Vector3(-22.1f, 0.75f, 5.9f), new Vector3(1.2f, 1.5f, 1.5f), m_PinkWall);
-            Box(root, "K25_02_Bombable_Door_Brace_C", new Vector3(-22.1f, 0.75f, 4.1f), new Vector3(1.2f, 1.5f, 1.5f), m_PinkWall);
-            Box(root, "K25_02_Released_Metal_Door_Pickup_Pose", new Vector3(-20.9f, 2.8f, 0.8f), new Vector3(0.45f, 5.6f, 8.2f), m_Sticky);
-            Box(root, "K25_02_Bow_Alcove_Floor", new Vector3(-30, -0.1f, -5.8f), new Vector3(7, 0.4f, 5), m_Landmark);
-
-            // Four staggered islands and their stair approaches reproduce the
-            // broad central platform group. Height rises gradually toward the
-            // altar at the far end of the room.
-            Box(root, "K25_03_Lower_Approach_Island", new Vector3(10, 0.25f, 7), new Vector3(11, 0.5f, 10), m_Landmark);
-            for (int i = 0; i < 6; i++)
-                Box(root, "K25_03_Approach_Stair_" + i.ToString("00"), new Vector3(13.5f, 0.12f + i * 0.22f, 1.3f + i * 1.05f), new Vector3(5.2f, 0.25f, 1.2f), m_Edge);
-
-            Box(root, "K25_04_Mid_Island", new Vector3(1, 2.1f, 17), new Vector3(11, 0.8f, 10), m_Ground);
-            Box(root, "K25_04_Mid_Island_Raised_Step", new Vector3(1, 3.1f, 21.2f), new Vector3(7, 1.2f, 3.2f), m_Edge);
-            Box(root, "K25_05_Pillar_Island", new Vector3(12, 4.2f, 25), new Vector3(12, 0.8f, 12), m_Ground);
-            Box(root, "K25_05_Stone_Pile_Base", new Vector3(13, 6, 25), new Vector3(5, 3, 5), m_Edge);
-            Box(root, "K25_05_Stone_Pile_Top", new Vector3(13, 8, 25), new Vector3(3.2f, 1, 3.2f), m_Edge);
-            Box(root, "K25_05_Secret_Block_Wall", new Vector3(18.2f, 5.3f, 26), new Vector3(0.8f, 3.2f, 4), m_Edge);
-            Box(root, "K25_05_Secret_Magnetic_Block", new Vector3(17.5f, 4.8f, 23.1f), new Vector3(1.3f, 2.4f, 2.4f), m_Sticky);
-            Box(root, "K25_05_Secret_Cavity_Floor", new Vector3(19.4f, 2.1f, 23.1f), new Vector3(4, 0.5f, 4.5f), m_Landmark);
-
-            Box(root, "K25_06_Altar_Island", new Vector3(3, 7.2f, 37), new Vector3(14, 0.8f, 11), m_Landmark);
-            Box(root, "K25_06_Altar_Blockout", new Vector3(3, 8.2f, 40), new Vector3(2.8f, 1.8f, 2.2f), m_Bounce);
-
-            // These thin, non-colliding door poses are construction references:
-            // the shrine has one movable panel, reused to bridge each gap.
-            GameObject bridge01 = Box(root, "K25_REF_Door_Bridge_Pose_01_Lower_to_Mid", new Vector3(5.7f, 1.0f, 12), new Vector3(12, 0.18f, 3.4f), m_Sticky, false);
-            bridge01.transform.rotation = Quaternion.Euler(0, -40, 0);
-            GameObject bridge02 = Box(root, "K25_REF_Door_Bridge_Pose_02_Mid_to_Pillar", new Vector3(6.5f, 3.2f, 21), new Vector3(12, 0.18f, 3.4f), m_Sticky, false);
-            bridge02.transform.rotation = Quaternion.Euler(0, -35, 0);
-            GameObject bridge03 = Box(root, "K25_REF_Door_Bridge_Pose_03_Pillar_to_Altar", new Vector3(7.5f, 6.0f, 31), new Vector3(14, 0.18f, 3.4f), m_Sticky, false);
-            bridge03.transform.rotation = Quaternion.Euler(0, 38, 0);
-
-            Box(root, "K25_Environment_Void_Backdrop_NoCollider", new Vector3(0, -7, 10), new Vector3(82, 0.1f, 90), m_Void, false);
+            ShrineReferenceRebuild.BuildGeometry(root, "Map2_5");
         }
-
         private static void BuildMap3_5Geometry(Transform root)
         {
             // Sha Warvo Shrine, rebuilt for a player who can fly: show only the
