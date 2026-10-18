@@ -23,7 +23,8 @@ namespace PAO.EditorTools
     ///   场景 08 收束：出口 → 第一章终幕。
     ///
     /// 美术：白空间（白色石构 + 白雾 + 白后处理 + 浮尘）、粉色泡泡墙、发光出口门。
-    /// 旁白：Map0NarrationDirector 播放 14 段主线 + 精选反应/隐藏段（由 Map0NarrationData 提供）。
+    /// 旁白：Map0NarrationDirector 只播 5 段「关键机制教学」（破坏/恢复/消耗/蓄力/材料），
+    ///       开场叙事、出口提示与结尾提问都不播（数据见 Map0NarrationData）。
     ///
     /// 菜单：Tools/PAO/关卡白盒/Map0 教程重构（第一章 诞生）
     /// </summary>
@@ -1168,6 +1169,16 @@ namespace PAO.EditorTools
 
         // ==================== 旁白 ====================
 
+        /// <summary>关键机制教学 5 段（数组顺序 = 关卡里的先后顺序）。</summary>
+        private static readonly string[] kMechanicBeatIds = { "M-005", "M-007", "M-008", "M-011", "M-013" };
+
+        /// <summary>
+        /// 旁白（精简版）：只挂「关键机制教学」5 段的配音 + 触发区。
+        ///
+        /// 保留：M-005 破坏 / M-007 恢复 / M-008 消耗 / M-011 蓄力 / M-013 工具也是材料。
+        /// 不挂：开场叙事（M-001～M-004）、出口提示（M-014）、结尾提问（M-016）以及 B/H/R/X 支线。
+        /// 数据在 <see cref="Map0NarrationData"/>；配音在 Assets/GameMain/Audio/Map0VO。
+        /// </summary>
         private static void BuildNarration()
         {
             Transform root = GameObject.Find(kRoot)?.transform;
@@ -1180,77 +1191,88 @@ namespace PAO.EditorTools
             source.loop = false;
             source.spatialBlend = 0f;
             PAO.Map0NarrationDirector director = go.AddComponent<PAO.Map0NarrationDirector>();
-            BuildSlimNarrationTriggers(go.transform);
 
-            // 所有能加载到的配音都挂上（26 条）
-            string[] ids =
-            {
-                "M-001","M-002","M-003","M-004","M-005","M-007","M-008","M-011","M-013","M-014","M-016",
-            };
             SetSerialized(director, so =>
             {
                 SerializedProperty clips = so.FindProperty("m_Clips");
-                clips.arraySize = ids.Length;
-                for (int i = 0; i < ids.Length; i++)
+                clips.arraySize = kMechanicBeatIds.Length;
+                for (int i = 0; i < kMechanicBeatIds.Length; i++)
                 {
                     SerializedProperty entry = clips.GetArrayElementAtIndex(i);
-                    entry.FindPropertyRelative("id").stringValue = ids[i];
-                    string file = ids[i].Replace("PY-01-", "").ToLowerInvariant().Replace("-", "_") + ".wav";
-                    AudioClip clip = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/GameMain/Audio/Map0VO/" + file);
-                    entry.FindPropertyRelative("clip").objectReferenceValue = clip;
+                    entry.FindPropertyRelative("id").stringValue = kMechanicBeatIds[i];
+                    entry.FindPropertyRelative("clip").objectReferenceValue =
+                        AssetDatabase.LoadAssetAtPath<AudioClip>(VoicePath(kMechanicBeatIds[i]));
                 }
                 SerializedProperty idle = so.FindProperty("m_IdleBeats");
                 idle.arraySize = 0;
             });
 
-            // ---- 主线 M：按空间顺序铺（对应 8–10 分钟流程）----
-            Trigger(go.transform, "N_M001", "PY-01-M-001", null, new Vector3(0f, 2.5f, -26f), new Vector3(24f, 8f, 14f));
-            Trigger(go.transform, "N_M002", "PY-01-M-002", null, new Vector3(0f, 2.5f, -23f), new Vector3(22f, 8f, 6f));
-            Trigger(go.transform, "N_M003", "PY-01-M-003", null, new Vector3(0f, 3f, -21f), new Vector3(22f, 8f, 5f));
-            Trigger(go.transform, "N_M004", "PY-01-M-004", null, new Vector3(0f, 3f, -19.5f), new Vector3(22f, 8f, 4f));
-            Trigger(go.transform, "N_M005", "PY-01-M-005", null, new Vector3(0f, 3f, -15f), new Vector3(22f, 8f, 5f));
-            Trigger(go.transform, "N_M006", "PY-01-M-006", "PY-01-M-005", new Vector3(0f, 3f, -11f), new Vector3(22f, 8f, 5f));
-            Trigger(go.transform, "N_M007", "PY-01-M-007", null, new Vector3(0f, 3f, -2f), new Vector3(30f, 8f, 10f));
-            Trigger(go.transform, "N_M008", "PY-01-M-008", null, new Vector3(0f, 3f, 10f), new Vector3(34f, 8f, 12f));
-            Trigger(go.transform, "N_M009", "PY-01-M-009", null, new Vector3(0f, 3f, 18f), new Vector3(30f, 8f, 8f));
-            Trigger(go.transform, "N_M010", "PY-01-M-010", null, new Vector3(0f, 3f, 32f), new Vector3(30f, 8f, 10f));
-            Trigger(go.transform, "N_M011", "PY-01-M-011", null, new Vector3(0f, 3f, 46f), new Vector3(34f, 8f, 12f));
-            Trigger(go.transform, "N_M012", "PY-01-M-012", null, new Vector3(0f, 11f, 88f), new Vector3(18f, 8f, 10f));
-            Trigger(go.transform, "N_M013", "PY-01-M-013", null, new Vector3(0f, 12f, 102f), new Vector3(20f, 8f, 8f));
-            Trigger(go.transform, "N_M014", "PY-01-M-014", "PY-01-M-013", new Vector3(0f, 12f, 110f), new Vector3(14f, 8f, 6f));
-
-            Trigger(go.transform, "N_H003", "PY-01-H-003", null, new Vector3(-12f, 1.5f, -2f), new Vector3(4f, 3f, 4f));
-            Trigger(go.transform, "N_B003", "PY-01-B-003", "PY-01-M-007", new Vector3(0f, 3f, -17f), new Vector3(24f, 8f, 4f));
-            Trigger(go.transform, "N_B005", "PY-01-B-005", "PY-01-M-011", new Vector3(-52f, 3f, 50f), new Vector3(8f, 8f, 12f));
-            Trigger(go.transform, "N_B006", "PY-01-B-006", "PY-01-B-005", new Vector3(-66f, 3f, 50f), new Vector3(12f, 8f, 12f));
-            Trigger(go.transform, "N_B007", "PY-01-B-007", "PY-01-M-012", new Vector3(0f, 11f, 70f), new Vector3(16f, 8f, 6f));
-            Trigger(go.transform, "N_R002", "PY-01-R-002", "PY-01-M-006", new Vector3(0f, 2.5f, -30f), new Vector3(18f, 6f, 10f));
-            Trigger(go.transform, "N_X001", "PY-01-X-001", "PY-01-M-013", new Vector3(0f, 2.5f, -26f), new Vector3(22f, 6f, 18f));
-
-            Dwell(go.transform, "N_H001", "PY-01-H-001", null, new Vector3(0f, 1.5f, -26f), new Vector3(10f, 4f, 9f), 5f);
-            Dwell(go.transform, "N_H002", "PY-01-H-002", "PY-01-H-001", new Vector3(0f, 1.5f, -27f), new Vector3(10f, 4f, 8f), 9f);
+            BuildNarrationTriggers(go.transform);
         }
 
-        /// <summary>精简版旁白：只保留第 1 关 M 主线 11 段，按位置顺序铺触发。</summary>
-        private static void BuildSlimNarrationTriggers(Transform parent)
+        private static string VoicePath(string beatId)
         {
-            Trigger(parent, "Slim_M001", "M-001", null, new Vector3(0f, 2.5f, -26f), new Vector3(24f, 8f, 14f));
-            Trigger(parent, "Slim_M002", "M-002", null, new Vector3(0f, 2.5f, -22f), new Vector3(22f, 8f, 8f));
-            Trigger(parent, "Slim_M003", "M-003", null, new Vector3(0f, 3f, -18f), new Vector3(20f, 8f, 6f));
-            Trigger(parent, "Slim_M004", "M-004", null, new Vector3(0f, 3f, -15f), new Vector3(20f, 8f, 5f));
-            Trigger(parent, "Slim_M005", "M-005", null, new Vector3(0f, 3f, -12f), new Vector3(20f, 8f, 5f));
-            Trigger(parent, "Slim_M007", "M-007", null, new Vector3(0f, 3f, -4f), new Vector3(30f, 8f, 10f));
-            Trigger(parent, "Slim_M008", "M-008", null, new Vector3(0f, 3f, 10f), new Vector3(34f, 8f, 12f));
-            Trigger(parent, "Slim_M011", "M-011", null, new Vector3(0f, 3f, 34f), new Vector3(34f, 8f, 12f));
-            Trigger(parent, "Slim_M013", "M-013", null, new Vector3(0f, 3f, 58f), new Vector3(30f, 8f, 10f));
-            Trigger(parent, "Slim_M014", "M-014", null, new Vector3(0f, 11f, 80f), new Vector3(20f, 8f, 10f));
-            Trigger(parent, "Slim_M016", "M-016", null, new Vector3(0f, 12f, 104f), new Vector3(18f, 8f, 8f));
+            return "Assets/GameMain/Audio/Map0VO/" + beatId.ToLowerInvariant().Replace("-", "_") + ".wav";
         }
 
-        private static void SetIdle(SerializedProperty entry, float seconds, string id)
+        /// <summary>
+        /// 精简版触发区：只在机制出现的位置铺 5 个。
+        /// 位置对齐关卡：粉墙前（破坏）→ 粉墙后（恢复）→ 资源区（消耗）→ 中段（蓄力）→ 爬升前（工具也是材料）。
+        /// 原先的 21 个 PY-01 旧触发 + 2 个停留区已删。
+        /// </summary>
+        private static void BuildNarrationTriggers(Transform parent)
         {
-            entry.FindPropertyRelative("seconds").floatValue = seconds;
-            entry.FindPropertyRelative("id").stringValue = id;
+            Trigger(parent, "Mech_M005", "M-005", null, new Vector3(0f, 3f, -21.5f), new Vector3(24f, 8f, 5f));
+            Trigger(parent, "Mech_M007", "M-007", null, new Vector3(0f, 3f, -6f), new Vector3(30f, 8f, 10f));
+            Trigger(parent, "Mech_M008", "M-008", null, new Vector3(0f, 3f, 10f), new Vector3(34f, 8f, 12f));
+            Trigger(parent, "Mech_M011", "M-011", null, new Vector3(0f, 3f, 34f), new Vector3(34f, 8f, 12f));
+            Trigger(parent, "Mech_M013", "M-013", null, new Vector3(0f, 3f, 58f), new Vector3(30f, 8f, 10f));
+        }
+
+        /// <summary>
+        /// 只重建旁白（不动关卡摆放）：删掉场景里现有的 Map0_Narration（连同所有旧触发/停留区），
+        /// 按 <see cref="Map0NarrationData"/> 重新生成 5 条配音 + 5 个机制触发区，然后保存场景。
+        /// 菜单：Tools/PAO/关卡白盒/Map0 教程重构 · 只重建旁白（精简）
+        /// </summary>
+        [MenuItem("Tools/PAO/关卡白盒/Map0 教程重构 · 只重建旁白（精简）", priority = 59)]
+        public static void RebuildNarrationOnly()
+        {
+            if (EditorApplication.isPlaying) { Debug.LogError("[Map0] 请先退出 Play 模式再重建旁白。"); return; }
+
+            Scene scene = SceneManager.GetActiveScene();
+            if (scene.path != kScenePath)
+            {
+                EditorSceneManager.SaveOpenScenes();
+                scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+            }
+
+            Directory.CreateDirectory(kBackupDir);
+            File.Copy(kScenePath, Path.Combine(kBackupDir,
+                "Map0_before_narration_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".unity"), true);
+
+            GameObject root = GameObject.Find(kRoot);
+            if (root == null) { Debug.LogError("[Map0] 找不到 " + kRoot + "，旁白未重建。"); return; }
+
+            Transform existing = root.transform.Find("Map0_Narration");
+            if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+            // 兜底：清掉不在 Map0_Narration 下面的游离旁白触发 / 停留区
+            PAO.Map0NarrationTrigger[] strayTriggers =
+                Object.FindObjectsByType<PAO.Map0NarrationTrigger>(FindObjectsSortMode.None);
+            for (int i = 0; i < strayTriggers.Length; i++)
+                if (strayTriggers[i] != null) Object.DestroyImmediate(strayTriggers[i].gameObject);
+            PAO.Map0NarrationDwell[] strayDwells =
+                Object.FindObjectsByType<PAO.Map0NarrationDwell>(FindObjectsSortMode.None);
+            for (int i = 0; i < strayDwells.Length; i++)
+                if (strayDwells[i] != null) Object.DestroyImmediate(strayDwells[i].gameObject);
+
+            BuildNarration();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Map0] 旁白已精简重建：5 段关键机制教学 / 5 个触发区 / 开场不再强播旁白。场景已保存。");
+            NarrationCheck();
         }
 
         private static void Trigger(Transform parent, string name, string beatId, string requires, Vector3 pos, Vector3 size)
@@ -1262,17 +1284,6 @@ namespace PAO.EditorTools
             box.isTrigger = true;
             box.size = size;
             go.AddComponent<PAO.Map0NarrationTrigger>().Configure(beatId, requires, true, 0f);
-        }
-
-        private static void Dwell(Transform parent, string name, string beatId, string requires, Vector3 pos, Vector3 size, float seconds)
-        {
-            var go = new GameObject(name);
-            go.transform.SetParent(parent, false);
-            go.transform.position = pos;
-            BoxCollider box = go.AddComponent<BoxCollider>();
-            box.isTrigger = true;
-            box.size = size;
-            go.AddComponent<PAO.Map0NarrationDwell>().Configure(beatId, requires, seconds);
         }
 
         // ==================== 章节配置 ====================
@@ -1304,13 +1315,19 @@ namespace PAO.EditorTools
         public static void NarrationCheck()
         {
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("[Map0 旁白自检]");
+            sb.AppendLine("[Map0 旁白自检 · 关键机制教学精简版]");
 
             // 1) 数据
             int beatCount = PAO.Map0NarrationData.All.Length;
             int lineCount = 0;
-            for (int i = 0; i < PAO.Map0NarrationData.All.Length; i++) lineCount += PAO.Map0NarrationData.All[i].lines.Length;
-            sb.AppendLine("  数据段： " + beatCount + " 段 / " + lineCount + " 句");
+            string dataIds = "";
+            for (int i = 0; i < beatCount; i++)
+            {
+                lineCount += PAO.Map0NarrationData.All[i].lines.Length;
+                dataIds += (i == 0 ? "" : " / ") + PAO.Map0NarrationData.All[i].id;
+            }
+            sb.AppendLine("  数据段： " + beatCount + " 段 / " + lineCount + " 句（" + dataIds + "）");
+            sb.AppendLine("  精简规格：只留 破坏 / 恢复 / 消耗 / 蓄力 / 材料 5 段机制教学；开场叙事、出口提示、结尾提问不播");
 
             // 2) 播放器与配音
             PAO.Map0NarrationDirector director = Object.FindFirstObjectByType<PAO.Map0NarrationDirector>();
@@ -1330,6 +1347,8 @@ namespace PAO.EditorTools
                     if (PAO.Map0NarrationData.Find(id) == null) sb.AppendLine("  ✘ 配音 id 在数据里找不到：" + id);
                 }
                 sb.AppendLine("  播放器：OK（配音 " + loaded + " 条，缺 " + missing + " 条）");
+                if (clips.arraySize != PAO.Map0NarrationData.All.Length)
+                    sb.AppendLine("  ✘ 配音条数（" + clips.arraySize + "）与数据段数（" + PAO.Map0NarrationData.All.Length + "）不一致");
             }
 
             // 3) 触发区
@@ -1344,7 +1363,7 @@ namespace PAO.EditorTools
             sb.AppendLine("  触发区： " + triggers.Length + " 个（异常 " + badTrigger + " 个）");
 
             PAO.Map0NarrationDwell[] dwells = Object.FindObjectsByType<PAO.Map0NarrationDwell>(FindObjectsSortMode.None);
-            sb.AppendLine("  停留区： " + dwells.Length + " 个");
+            sb.AppendLine("  停留区： " + dwells.Length + " 个" + (dwells.Length > 0 ? "（精简版应为 0）" : ""));
 
             // 4) 字幕条
             bool hasSubtitle = Object.FindFirstObjectByType<PAO.WengjieSubtitleOverlay>(FindObjectsInactive.Include) != null;
