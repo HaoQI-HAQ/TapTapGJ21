@@ -32,12 +32,12 @@ Material:
     m_Floats:
     - _FarFadeEnd: 360
     - _FarFadeStart: 220
-    - _Intensity: 0.45
+    - _Intensity: 12
     - _NearFadeEnd: 6
     - _NearFadeStart: 1.5
     - _SoftEdge: 0.42
     m_Colors:
-    - _BaseColor: {r: 0.75, g: 0.88, b: 1, a: 0.22}
+    - _BaseColor: {r: 0.82, g: 0.93, b: 1, a: 0.38}
   m_BuildTextureStacks: []
 --- !u!114 &7152013475353374065
 MonoBehaviour:

@@ -109,6 +109,21 @@ _CameraDepthTexture → 反投影出每个像素的世界坐标 → 用世界 XZ
 - 补光太抢：`CharacterFillLight` 强度 6 → **1.8**（范围 30 不变）。
 - 截图：`Docs/_caustics/00_main_camera.png`、`04_sunshaft.png`。
 
+### 三次回调（按“丁达尔光又没有了”）
+
+- 真正原因：`Sunshafts (Area)` 粒子的 **startColor alpha 只有 0.525**，
+  再乘材质 alpha，0.45/0.22 那档等效亮度约 0.1 —— 基本看不见。
+- 还想再调：只改 `_Intensity` 即可，不用重开场景。
+
+### 四次回调（按“我需要的丁达尔光只是场景的”）
+
+- 关掉“全屏叠加”感：`PAOSunshaft.shader` 从 `ZTest Always` → **`ZTest LEqual`**。
+  光柱现在会被地形/建筑/角色正常遮挡，只作为**场景里的光**存在，不再糊在整个画面上。
+- 因为做了深度遮挡，可用的光柱变少，强度抬到 `_Intensity = 12`
+  （`_BaseColor` = `(0.82,0.93,1,0.38)`）。
+- 还想更淡：`_Intensity` 12 → 8；更明显：→ 16。
+- 截图：`Docs/_caustics/00_main_camera.png`（光柱被平台正常遮挡）、`04_sunshaft.png`（水下的光柱）。
+
 ### 中文输入法（IME）导致不能移动
 
 - 现象：Windows 输入法在中文状态时，WASD 会被输入法当成组合文本吞掉，角色不动。
@@ -116,3 +131,23 @@ _CameraDepthTexture → 反投影出每个像素的世界坐标 → 用世界 XZ
   —— 游戏内关闭 IME 组合，按键直接进游戏。
 - 如果编辑器 Game 视图里仍被吞键：这是 Unity 编辑器自身的 IME 行为，
   切一下输入法（Shift / Ctrl+Space 到英文）或直接看打包后的 exe 即可。
+
+### 字幕（“我字幕呢？”）
+
+- 根因有两个：
+  1. 直接从编辑器 Play 关卡时 `UISettings.Current` 可能是 null，`RefreshNarration`
+     第一行就空引用 → 字幕永远不显示（同时 `UpdateVisualGuidance` 也每帧报错）；
+  2. V2 字幕的 `CanvasGroup` 在 UI 重建/切换后被销毁，缓存引用变“假 null”，
+     `Present/HideImmediately` 里取 alpha 直接抛异常 → 整条字幕不显示。
+- 修复（V2）：
+  - `UIRuntime.Initialize` 里兜底 `UISettings.Initialize()`；
+  - `RefreshNarration / UpdateTransientUI / ShowTutorial / Guidance / CollectMemory`
+    都对 `UISettings.Current` 做空判断；
+  - `UICinematicSubtitleMotion` 不再依赖 CanvasGroup（没有就只做逐字动画），
+    所有 alpha 操作都带 null 判断；
+  - `ShowNarration` 每次显示前检查字幕控件，缺了整组重建（`EnsureNarrationRoot`）。
+- 兜底（wengjie）：新增场景字幕条 **`Wengjie Subtitle`**
+  （独立 Canvas + 中文文字 + 描边，排序 1500，不依赖 UIRuntime），
+  由 `WengjieSubtitleOverlay` 驱动；`WengjieStoryNode` 现在优先用它显示。
+- 一键工具：`Tools/PAO/Probe/Add Wengjie Subtitle`（在 wengjie 场景里重建字幕条）、
+  `Test Subtitle` / `Check Subtitle`（Play 中点一下验证显示状态）。

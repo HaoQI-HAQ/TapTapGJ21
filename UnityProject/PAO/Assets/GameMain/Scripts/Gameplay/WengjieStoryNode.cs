@@ -5,31 +5,31 @@ namespace PAO
     /// <summary>
     /// 剧情 / 配音触发点：玩家走进范围 → 播一句配音（可选）+ 打一行字幕。
     ///
-    /// 设计意图：每段路只放 1~2 个，放在「玩家刚好站稳、抬头看」的位置 ——
-    /// 坡道中段、村台入口、井口、塔顶。不在跑动中打断，只在停顿处说话。
-    ///
-    /// 不依赖任何 UI/音频管理器，只用最基础的 AudioSource，
-    /// 避免动到共享系统。以后接了正式字幕系统，把 ShowLine 换掉即可。
+    /// 行为：
+    ///   · 玩家进入触发区 → 等 m_Delay 秒 → 播配音 + 出字幕；
+    ///   · m_Once 勾上时只触发一次；
+    ///   · 不依赖任何 UI/视频系统：字幕优先走场景里的 WengjieSubtitleOverlay，
+    ///     场景里没有时才回退到 V2 UI 的字幕接口。
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("PAO/关卡/剧情触发点（wengjie）")]
     public sealed class WengjieStoryNode : MonoBehaviour
     {
-        [Header("内容")]
-        [Tooltip("字幕文本。留空则只播音不写字。")]
+        [Header("台词")]
+        [Tooltip("字幕文本，留空则只播配音。")]
         [SerializeField] private string m_Line = "";
 
-        [Tooltip("配音片段。留空则只显示字幕。")]
+        [Tooltip("配音片段，留空则只显示字幕。")]
         [SerializeField] private AudioClip m_Voice;
 
-        [Tooltip("说话人（显示在字幕前）")]
-        [SerializeField] private string m_Speaker = "泡泡";
+        [Tooltip("说话人，显示在字幕前。")]
+        [SerializeField] private string m_Speaker = "旁白";
 
         [Header("触发")]
         [Tooltip("只触发一次")]
         [SerializeField] private bool m_Once = true;
 
-        [Tooltip("进入后延迟多久开口（秒）")]
+        [Tooltip("触发到播放的延迟（秒）")]
         [SerializeField] private float m_Delay = 0.6f;
 
         [Tooltip("音量")]
@@ -67,7 +67,12 @@ namespace PAO
 
             if (string.IsNullOrEmpty(m_Line)) return;
 
-            // 走游戏已有的字幕系统（V2 UI），保证字体、排版、淡入淡出和其它旁白一致
+            // 优先用场景里自带的字幕条（WengjieSubtitleOverlay）。
+            // 直接从编辑器 Play 关卡时 V2 UI 有时初始化不全，走 UIRuntime 字幕会整条不显示；
+            // 这个兜底层不依赖 UI 系统，只负责把这句话显示出来。
+            if (WengjieSubtitleOverlay.Show(m_Speaker, m_Line)) return;
+
+            // 场景里没有字幕条时，退回游戏已有的字幕系统（V2 UI）
             PAO.UI.V2.UIRuntime runtime = PAO.UI.V2.UIRuntime.Instance;
             if (runtime != null)
             {

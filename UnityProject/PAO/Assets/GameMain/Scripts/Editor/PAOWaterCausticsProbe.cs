@@ -5,6 +5,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace PAO.EditorTools
 {
@@ -508,6 +509,17 @@ namespace PAO.EditorTools
 
             var runtime = PAO.UI.V2.UIRuntime.Instance;
             sb.AppendLine("  UIRuntime = " + (runtime != null ? "存在" : "null"));
+            sb.AppendLine("  UISettings.Current = " + (PAO.UI.V2.UISettings.Current != null ? "存在" : "null"));
+            // 字幕控件在不在
+            var narration = GameObject.Find("Narration popup");
+            sb.AppendLine("  Narration popup = " + (narration != null ? "存在，active=" + narration.activeSelf : "不存在"));
+            if (narration != null)
+            {
+                var ink = narration.GetComponent<CanvasGroup>();
+                sb.AppendLine("    CanvasGroup = " + (ink != null ? "有" : "缺失（字幕会不显示）"));
+                var motion = narration.GetComponent<PAO.UI.V2.UICinematicSubtitleMotion>();
+                sb.AppendLine("    UICinematicSubtitleMotion = " + (motion != null ? "有" : "缺失"));
+            }
             if (runtime != null)
             {
                 sb.AppendLine("  IsBlockingGameplay = " + runtime.IsBlockingGameplay +
@@ -540,5 +552,137 @@ namespace PAO.EditorTools
         // ------------------------------------------------------------------
         // Play 状态体检结束
         // ------------------------------------------------------------------
+
+        // 测试字幕：在 Play 中点一下，走一遍和剧情节点完全相同的调用链
+        [MenuItem("Tools/PAO/Probe/Test Subtitle", priority = 904)]
+        public static void TestSubtitle()
+        {
+            bool shown = PAO.WengjieSubtitleOverlay.Show("回声", "字幕测试：这里以前不是水。");
+            Debug.Log("[Probe] 测试字幕已发送：shown=" + shown + "（" +
+                      System.DateTime.Now.ToString("HH:mm:ss") + "）");
+        }
+
+        // 查字幕当前状态（Test 之后 1 秒点这个，确认真的显示了）
+        [MenuItem("Tools/PAO/Probe/Check Subtitle", priority = 905)]
+        public static void CheckSubtitle()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("[Probe] 字幕状态 " + System.DateTime.Now.ToString("HH:mm:ss") +
+                          "，timeScale=" + Time.timeScale +
+                          "，dt=" + Time.unscaledDeltaTime.ToString("F2"));
+            var root = GameObject.Find("Wengjie Subtitle");
+            sb.AppendLine("  Wengjie Subtitle = " + (root != null ? "存在, active=" + root.activeInHierarchy : "不存在"));
+            if (root != null)
+            {
+                var group = root.GetComponent<CanvasGroup>();
+                sb.AppendLine("  CanvasGroup.alpha = " + (group != null ? group.alpha.ToString("F2") : "无"));
+                var overlays = root.GetComponentsInChildren<PAO.WengjieSubtitleOverlay>(true);
+                foreach (var o in overlays)
+                {
+                    var type = o.GetType();
+                    System.Func<string, string> read = field =>
+                    {
+                        var fi = type.GetField(field, System.Reflection.BindingFlags.Instance |
+                                                      System.Reflection.BindingFlags.NonPublic);
+                        return fi != null ? (fi.GetValue(o)?.ToString() ?? "null") : "?";
+                    };
+                    sb.AppendLine("  overlay: enabled=" + o.enabled +
+                                  " m_Showing=" + read("m_Showing") +
+                                  " m_Fade=" + read("m_Fade") +
+                                  " m_Remaining=" + read("m_Remaining"));
+                }
+                var body = root.transform.Find("Body");
+                if (body != null)
+                {
+                    var text = body.GetComponent<Text>();
+                    sb.AppendLine("  Body.Text = \"" + (text != null ? text.text : "?") +
+                                  "\"，enabled=" + (text != null && text.enabled) +
+                                  "，fontSize=" + (text != null ? text.fontSize : 0));
+                }
+            }
+            Debug.Log(sb.ToString());
+        }
+
+        // ------------------------------------------------------------------
+        // wengjie 字幕条：场景里摆一个独立 Canvas + 两行 Text（不依赖 UIRuntime）
+        // ------------------------------------------------------------------
+        [MenuItem("Tools/PAO/Probe/Add Wengjie Subtitle", priority = 152)]
+        public static void AddWengjieSubtitle()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                Debug.LogError("[Probe] Play 模式里不能改场景，先退出 Play。");
+                return;
+            }
+
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find("Wengjie Subtitle");
+            if (old != null) Object.DestroyImmediate(old);
+
+            Font font = AssetDatabase.LoadAssetAtPath<Font>("Assets/GameMain/Art/Fonts/26汉仪趣报简.ttf");
+            if (font == null)
+            {
+                Debug.LogError("[Probe] 找不到中文字体 Assets/GameMain/Art/Fonts/26汉仪趣报简.ttf");
+                return;
+            }
+
+            var root = new GameObject("Wengjie Subtitle", typeof(RectTransform));
+            SceneManager.MoveGameObjectToScene(root, scene);
+
+            Canvas canvas = root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 1500;
+            CanvasScaler scaler = root.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+            CanvasGroup group = root.AddComponent<CanvasGroup>();
+            var overlay = root.AddComponent<PAO.WengjieSubtitleOverlay>();
+
+            Text speaker = CreateSubtitleText(root.transform, "Speaker", font, 26, new Vector2(0f, 168f));
+            Text body = CreateSubtitleText(root.transform, "Body", font, 36, new Vector2(0f, 108f));
+
+            var so = new SerializedObject(overlay);
+            so.FindProperty("m_Group").objectReferenceValue = group;
+            so.FindProperty("m_Speaker").objectReferenceValue = speaker;
+            so.FindProperty("m_Body").objectReferenceValue = body;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Probe] wengjie 字幕条已建：Wengjie Subtitle（字体 " + font.name +
+                      "，独立 Canvas，排序 1500）");
+        }
+
+        private static Text CreateSubtitleText(Transform parent, string name, Font font, int size, Vector2 position)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rt = (RectTransform)go.transform;
+            rt.SetParent(parent, false);
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.sizeDelta = new Vector2(1400f, 96f);
+            rt.anchoredPosition = position;
+
+            var text = go.AddComponent<Text>();
+            text.font = font;
+            text.fontSize = size;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.raycastTarget = false;
+            text.supportRichText = true;
+
+            Outline outline = go.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, .92f);
+            outline.effectDistance = new Vector2(1f, -1f);
+            Shadow shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, .72f);
+            shadow.effectDistance = new Vector2(0f, -2f);
+            return text;
+        }
     }
 }
