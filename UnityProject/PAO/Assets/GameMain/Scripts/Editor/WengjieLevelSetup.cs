@@ -5027,3 +5027,994 @@ namespace PAO.EditorTools
         }
     }
 }
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 物理机关：全部靠泡泡的「重量 / 冲量 / 附着」驱动，不用任何 UI 提示。
+    ///   P1 压力板  —— 压上足够重量，平台升起（炸弹重、粘泡浮、弹力泡轻，物理表现天然不同）
+    ///   P2 平衡梁  —— 一头放重物，另一头翘起，把玩家弹上去
+    ///   P3 风车     —— 被泡泡的冲量推动旋转，叶片扫过带动下一组平台
+    ///   P4 弹簧板  —— 弹力泡落下时的反作用力把板压下去，玩家借力
+    /// 旧的「栅栏 / 尖刺 / 尺寸门」这类纯阻挡物全部删掉。
+    /// </summary>
+    public static class WengjieMechanisms
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kRoot = "Wengjie_Mechanisms";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 换成物理机关", priority = 116)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            // ---------- 删掉旧的纯阻挡类障碍 ----------
+            string[] obsolete = { "Wengjie_Obstacles2", "Wengjie_Orbs", "Wengjie_Ability", "Wengjie_Combos", "Wengjie_Combos2" };
+            int removed = 0;
+            for (int i = 0; i < obsolete.Length; i++)
+            {
+                GameObject o = GameObject.Find(obsolete[i]);
+                if (o != null) { Object.DestroyImmediate(o); removed++; }
+            }
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+            Transform t = root.transform;
+
+            Material edge = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Platform.mat");
+            Material ground = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Ground.mat");
+            Material pop = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Bomb.mat");
+
+            int built = 0;
+
+            // ---------- P1 压力板 ×2：压够重量，平台升起 ----------
+            Vector3[] plateSpots = { new Vector3(-6f, 12.6f, 66f), new Vector3(6f, 12.6f, 100f) };
+            for (int i = 0; i < plateSpots.Length; i++)
+                built += PressurePlate(t, "Plate_" + i, plateSpots[i], edge, pop, ground);
+
+            // ---------- P2 平衡梁 ×2：一头重，另一头翘 ----------
+            Vector3[] seeSpots = { new Vector3(0f, 12.6f, 120f), new Vector3(0f, 26.6f, 132f) };
+            for (int i = 0; i < seeSpots.Length; i++)
+                built += Seesaw(t, "Seesaw_" + i, seeSpots[i], edge, pop);
+
+            // ---------- P3 风车 ×2：被冲量推着转 ----------
+            Vector3[] wheelSpots = { new Vector3(0f, 14f, 74f), new Vector3(0f, 28f, 118f) };
+            for (int i = 0; i < wheelSpots.Length; i++)
+                built += Wheel(t, "Wheel_" + i, wheelSpots[i], edge);
+
+            // ---------- P4 弹簧板 ×2 ----------
+            Vector3[] springSpots = { new Vector3(0f, 12.6f, 88f), new Vector3(0f, 26.6f, 108f) };
+            for (int i = 0; i < springSpots.Length; i++)
+                built += Spring(t, "Spring_" + i, springSpots[i], edge, ground);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 已换成物理机关：删掉旧障碍根 " + removed + " 组，新建机关 " + built + " 件（压力板2 / 平衡梁2 / 风车2 / 弹簧板2）");
+        }
+
+        private static GameObject Cube(Transform parent, string name, Vector3 pos, Vector3 size, Material mat, bool collider = true)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            go.transform.localScale = size;
+            Renderer r = go.GetComponent<Renderer>();
+            if (r != null && mat != null) r.sharedMaterial = mat;
+            if (!collider) Object.DestroyImmediate(go.GetComponent<Collider>());
+            return go;
+        }
+
+        /// <summary>压力板：上方重量 ≥ 阈值时，底板下沉、配重平台升起。</summary>
+        private static int PressurePlate(Transform parent, string name, Vector3 pos, Material edge, Material pop, Material ground)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            // 活动的踏板
+            GameObject plate = Cube(root.transform, "Plate", Vector3.zero, new Vector3(5f, 0.4f, 5f), pop);
+            Rigidbody body = plate.AddComponent<Rigidbody>();
+            body.mass = 20f;
+            body.drag = 1.5f;
+            body.angularDrag = 3f;
+
+            // 导轨：只允许上下移动
+            ConfigurableJoint joint = plate.AddComponent<ConfigurableJoint>();
+            joint.xMotion = ConfigurableJointMotion.Locked;
+            joint.zMotion = ConfigurableJointMotion.Locked;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularYMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
+            joint.yMotion = ConfigurableJointMotion.Limited;
+            SoftJointLimit limit = joint.linearLimit;
+            limit.limit = 1.2f;
+            joint.linearLimit = limit;
+            joint.yDrive = new JointDrive { positionSpring = 900f, positionDamper = 60f, maximumForce = 4000f };
+
+            // 底座
+            Cube(root.transform, "Base", new Vector3(0f, -1.6f, 0f), new Vector3(6f, 0.6f, 6f), edge);
+
+            // 连动的闸门（踏板压下去，闸门升起）
+            GameObject gate = Cube(root.transform, "LinkedGate", new Vector3(6f, -0.4f, 0f), new Vector3(0.8f, 5f, 6f), ground);
+            Rigidbody gateBody = gate.AddComponent<Rigidbody>();
+            gateBody.mass = 18f;
+            ConfigurableJoint gj = gate.AddComponent<ConfigurableJoint>();
+            gj.xMotion = ConfigurableJointMotion.Locked;
+            gj.zMotion = ConfigurableJointMotion.Locked;
+            gj.angularXMotion = ConfigurableJointMotion.Locked;
+            gj.angularYMotion = ConfigurableJointMotion.Locked;
+            gj.angularZMotion = ConfigurableJointMotion.Locked;
+            gj.yMotion = ConfigurableJointMotion.Limited;
+            SoftJointLimit gl = gj.linearLimit;
+            gl.limit = 3f;
+            gj.linearLimit = gl;
+            gj.yDrive = new JointDrive { positionSpring = 400f, positionDamper = 40f, maximumForce = 2000f };
+
+            // 用弹簧把闸门和踏板连起来（重量 vs 升起的物理耦合）
+            SpringJoint link = gate.AddComponent<SpringJoint>();
+            link.connectedBody = body;
+            link.spring = 1200f;
+            link.damper = 50f;
+            link.minDistance = 0f;
+            link.maxDistance = 3f;
+
+            return 1;
+        }
+
+        /// <summary>平衡梁：一端放重物会翘起来，把玩家甩上去。</summary>
+        private static int Seesaw(Transform parent, string name, Vector3 pos, Material edge, Material pop)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            GameObject beam = Cube(root.transform, "Beam", Vector3.zero, new Vector3(10f, 0.5f, 3f), pop);
+            Rigidbody body = beam.AddComponent<Rigidbody>();
+            body.mass = 25f;
+            body.centerOfMass = Vector3.zero;
+
+            HingeJoint hinge = beam.AddComponent<HingeJoint>();
+            hinge.axis = Vector3.forward;
+            hinge.useLimits = true;
+            JointLimits limits = hinge.limits;
+            limits.min = -22f;
+            limits.max = 22f;
+            hinge.limits = limits;
+
+            Cube(root.transform, "Pivot", new Vector3(0f, -0.9f, 0f), new Vector3(0.6f, 1.8f, 3f), edge);
+            return 1;
+        }
+
+        /// <summary>风车：被泡泡的冲量推着转，叶片扫过带动连动杆。</summary>
+        private static int Wheel(Transform parent, string name, Vector3 pos, Material edge)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            GameObject hub = Cube(root.transform, "Hub", Vector3.zero, new Vector3(0.6f, 4f, 0.6f), edge);
+            Rigidbody body = hub.AddComponent<Rigidbody>();
+            body.mass = 8f;
+            body.drag = 0.2f;
+            body.angularDrag = 0.35f;
+
+            HingeJoint hinge = hub.AddComponent<HingeJoint>();
+            hinge.axis = Vector3.up;
+            hinge.useLimits = false;
+
+            for (int i = 0; i < 4; i++)
+            {
+                float ang = i * 90f;
+                GameObject blade = Cube(hub.transform, "Blade_" + i, Vector3.zero, new Vector3(4f, 0.3f, 1.2f), edge);
+                blade.transform.localPosition = Quaternion.Euler(0f, ang, 0f) * new Vector3(2f, 0f, 0f);
+                blade.transform.localRotation = Quaternion.Euler(0f, ang, 0f);
+                Object.DestroyImmediate(blade.GetComponent<Collider>());
+                BoxCollider bc = blade.AddComponent<BoxCollider>();
+                bc.isTrigger = false;
+            }
+
+            return 1;
+        }
+
+        /// <summary>弹簧板：被压下后弹回，把人送上去。</summary>
+        private static int Spring(Transform parent, string name, Vector3 pos, Material edge, Material ground)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            GameObject pad = Cube(root.transform, "Pad", Vector3.zero, new Vector3(4f, 0.4f, 4f), ground);
+            Rigidbody body = pad.AddComponent<Rigidbody>();
+            body.mass = 10f;
+            body.drag = 0.5f;
+
+            ConfigurableJoint joint = pad.AddComponent<ConfigurableJoint>();
+            joint.xMotion = ConfigurableJointMotion.Locked;
+            joint.zMotion = ConfigurableJointMotion.Locked;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularYMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
+            joint.yMotion = ConfigurableJointMotion.Limited;
+            SoftJointLimit limit = joint.linearLimit;
+            limit.limit = 1.5f;
+            joint.linearLimit = limit;
+            joint.yDrive = new JointDrive { positionSpring = 2600f, positionDamper = 22f, maximumForce = 9000f };
+
+            Cube(root.transform, "Frame", new Vector3(0f, -1.2f, 0f), new Vector3(4.6f, 1.2f, 4.6f), edge);
+            return 1;
+        }
+    }
+}
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 物理机关 第二批：接触类。
+    ///   旋转门 —— 被推一下转半圈，粘泡贴上去会被带着转
+    ///   摆锤   —— 被冲量打到会荡起来，荡回来能砸开东西
+    ///   滚筒   —— 可以被推着滚，滚到位置可以当桥
+    ///   柱塞   —— 压下去弹回来，把人/泡弹飞
+    /// </summary>
+    public static class WengjieMechanisms2
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kRoot = "Wengjie_Mechanisms2";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 物理机关 第二批", priority = 117)]
+        public static void Build()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find(kRoot);
+            if (old != null) Object.DestroyImmediate(old);
+
+            var root = new GameObject(kRoot);
+            SceneManager.MoveGameObjectToScene(root, scene);
+            Transform t = root.transform;
+
+            Material edge = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Platform.mat");
+            Material ground = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Ground.mat");
+            Material pop = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Bomb.mat");
+            Material sticky = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_FloatSticky.mat");
+
+            int n = 0;
+
+            // 旋转门 ×3
+            n += Door(t, "Door_0", new Vector3(0f, 12.6f, 70f), edge);
+            n += Door(t, "Door_1", new Vector3(0f, 12.6f, 112f), edge);
+            n += Door(t, "Door_2", new Vector3(0f, 26.6f, 126f), edge);
+
+            // 摆锤 ×3
+            n += Pendulum(t, "Pendulum_0", new Vector3(4f, 20f, 76f), edge, pop);
+            n += Pendulum(t, "Pendulum_1", new Vector3(-4f, 20f, 118f), edge, pop);
+            n += Pendulum(t, "Pendulum_2", new Vector3(4f, 34f, 140f), edge, pop);
+
+            // 滚筒 ×3
+            n += Roller(t, "Roller_0", new Vector3(0f, 13.2f, 84f), ground);
+            n += Roller(t, "Roller_1", new Vector3(0f, 13.2f, 96f), ground);
+            n += Roller(t, "Roller_2", new Vector3(0f, 27.2f, 114f), ground);
+
+            // 柱塞 ×3
+            n += Plunger(t, "Plunger_0", new Vector3(0f, 12.6f, 104f), edge, pop);
+            n += Plunger(t, "Plunger_1", new Vector3(0f, 26.6f, 130f), edge, pop);
+            n += Plunger(t, "Plunger_2", new Vector3(0f, 34.6f, 178f), edge, pop);
+
+            // 可粘转盘 ×1：粘泡粘上去会被带着转，弹力泡只能推
+            n += StickyDisc(t, "StickyDisc", new Vector3(0f, 13.4f, 92f), sticky, edge);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = root;
+
+            Debug.Log("[Wengjie] 第二批物理机关已建：" + n + " 件（旋转门3 / 摆锤3 / 滚筒3 / 柱塞3 / 粘转盘1）");
+        }
+
+        private static GameObject Cube(Transform parent, string name, Vector3 pos, Vector3 size, Material mat)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            go.transform.localScale = size;
+            Renderer r = go.GetComponent<Renderer>();
+            if (r != null && mat != null) r.sharedMaterial = mat;
+            return go;
+        }
+
+        private static int Door(Transform parent, string name, Vector3 pos, Material mat)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            Cube(root.transform, "Frame", new Vector3(0f, 0f, 0f), new Vector3(0.4f, 5f, 0.4f), mat);
+
+            GameObject leaf = Cube(root.transform, "Leaf", new Vector3(0f, 2.4f, 1.6f), new Vector3(0.3f, 4.6f, 3.2f), mat);
+            Rigidbody body = leaf.AddComponent<Rigidbody>();
+            body.mass = 14f;
+            body.drag = 0.3f;
+            body.angularDrag = 0.45f;
+
+            HingeJoint hinge = leaf.AddComponent<HingeJoint>();
+            hinge.axis = Vector3.up;
+            hinge.useLimits = false;
+            return 1;
+        }
+
+        private static int Pendulum(Transform parent, string name, Vector3 pos, Material frameMat, Material weightMat)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            Cube(root.transform, "Arm", new Vector3(0f, 3.5f, 0f), new Vector3(0.3f, 7f, 0.3f), frameMat);
+
+            GameObject weight = Cube(root.transform, "Weight", new Vector3(0f, 0.4f, 0f), new Vector3(1.8f, 1.8f, 1.8f), weightMat);
+            Rigidbody body = weight.AddComponent<Rigidbody>();
+            body.mass = 45f;
+            body.drag = 0.1f;
+            body.angularDrag = 0.1f;
+
+            HingeJoint hinge = weight.AddComponent<HingeJoint>();
+            hinge.axis = Vector3.right;
+            hinge.useLimits = true;
+            JointLimits limits = hinge.limits;
+            limits.min = -70f;
+            limits.max = 70f;
+            hinge.limits = limits;
+            return 1;
+        }
+
+        private static int Roller(Transform parent, string name, Vector3 pos, Material mat)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            GameObject drum = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            drum.name = "Drum";
+            drum.transform.SetParent(root.transform, false);
+            drum.transform.localPosition = Vector3.zero;
+            drum.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            drum.transform.localScale = new Vector3(2.2f, 1.6f, 2.2f);
+            Renderer r = drum.GetComponent<Renderer>();
+            if (r != null && mat != null) r.sharedMaterial = mat;
+
+            Rigidbody body = drum.AddComponent<Rigidbody>();
+            body.mass = 55f;
+            body.drag = 0.15f;
+            body.angularDrag = 0.12f;
+            return 1;
+        }
+
+        private static int Plunger(Transform parent, string name, Vector3 pos, Material frameMat, Material capMat)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            Cube(root.transform, "Cylinder", new Vector3(0f, -1.2f, 0f), new Vector3(2.4f, 2.4f, 2.4f), frameMat);
+
+            GameObject cap = Cube(root.transform, "Cap", new Vector3(0f, 0.2f, 0f), new Vector3(2.6f, 0.4f, 2.6f), capMat);
+            Rigidbody body = cap.AddComponent<Rigidbody>();
+            body.mass = 12f;
+            body.drag = 0.4f;
+
+            ConfigurableJoint joint = cap.AddComponent<ConfigurableJoint>();
+            joint.xMotion = ConfigurableJointMotion.Locked;
+            joint.zMotion = ConfigurableJointMotion.Locked;
+            joint.angularXMotion = ConfigurableJointMotion.Locked;
+            joint.angularYMotion = ConfigurableJointMotion.Locked;
+            joint.angularZMotion = ConfigurableJointMotion.Locked;
+            joint.yMotion = ConfigurableJointMotion.Limited;
+            SoftJointLimit limit = joint.linearLimit;
+            limit.limit = 2f;
+            joint.linearLimit = limit;
+            joint.yDrive = new JointDrive { positionSpring = 3500f, positionDamper = 18f, maximumForce = 12000f };
+            return 1;
+        }
+
+        private static int StickyDisc(Transform parent, string name, Vector3 pos, Material discMat, Material frameMat)
+        {
+            var root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+            root.transform.position = pos;
+
+            Cube(root.transform, "Pivot", new Vector3(0f, -0.8f, 0f), new Vector3(0.5f, 1.6f, 0.5f), frameMat);
+
+            GameObject disc = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            disc.name = "Disc";
+            disc.transform.SetParent(root.transform, false);
+            disc.transform.localPosition = Vector3.zero;
+            disc.transform.localScale = new Vector3(6f, 0.25f, 6f);
+            Renderer r = disc.GetComponent<Renderer>();
+            if (r != null && discMat != null) r.sharedMaterial = discMat;
+
+            disc.AddComponent<PAO.StickySurface>();
+
+            Rigidbody body = disc.AddComponent<Rigidbody>();
+            body.mass = 30f;
+            body.drag = 0.3f;
+            body.angularDrag = 0.25f;
+
+            HingeJoint hinge = disc.AddComponent<HingeJoint>();
+            hinge.axis = Vector3.up;
+            hinge.useLimits = false;
+            return 1;
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 机关收尾第一步：删掉没有因果链的纯装饰（风车/旋转门/摆锤），
+    /// 第二步：把压力板和它驱动的闸门拉近到 3 米内，并用一根可见连杆连起来。
+    /// </summary>
+    public static class WengjieMechanismFix
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 机关：删装饰 + 连因果", priority = 118)]
+        public static void Fix()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            int removed = 0;
+            string[] deadPrefixes = { "Wheel_", "Door_", "Pendulum_" };
+            GameObject[] roots = scene.GetRootGameObjects();
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    for (int p = 0; p < deadPrefixes.Length; p++)
+                    {
+                        if (!all[i].name.StartsWith(deadPrefixes[p], System.StringComparison.Ordinal)) continue;
+                        Object.DestroyImmediate(all[i].gameObject);
+                        removed++;
+                        break;
+                    }
+                }
+            }
+
+            // 压力板：闸门拉近到 3 米 + 可见连杆
+            Material rodMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Bomb.mat");
+            int connected = 0;
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = 0; i < all.Length; i++)
+                {
+                    if (!all[i].name.StartsWith("Plate_", System.StringComparison.Ordinal)) continue;
+
+                    Transform gate = all[i].Find("LinkedGate");
+                    if (gate == null) continue;
+
+                    gate.localPosition = new Vector3(3f, -0.4f, 0f);
+
+                    if (all[i].Find("LinkRod") == null)
+                    {
+                        GameObject rod = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        rod.name = "LinkRod";
+                        rod.transform.SetParent(all[i], false);
+                        rod.transform.localPosition = new Vector3(1.5f, 0.6f, 0f);
+                        rod.transform.localScale = new Vector3(3f, 0.25f, 0.25f);
+                        DestroyCollider(rod);
+                        Renderer rr = rod.GetComponent<Renderer>();
+                        if (rr != null && rodMat != null) rr.sharedMaterial = rodMat;
+                    }
+                    connected++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 机关收尾：删掉纯装饰 " + removed + " 件（风车/旋转门/摆锤），压力板 " + connected + " 处闸门拉到 3 米内并加了可见连杆");
+        }
+
+        private static void DestroyCollider(GameObject go)
+        {
+            Collider c = go.GetComponent<Collider>();
+            if (c != null) Object.DestroyImmediate(c);
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 第三步：视觉语言。三类机关三种颜色，玩家一眼能分出「这个是干什么的」。
+    ///   可压 / 可站  → 深石板 + 橘色边框
+    ///   会动 / 可转  → 橘色轴心
+    ///   可粘        → 浮粘泡同色
+    /// </summary>
+    public static class WengjieMechanismVisuals
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kDir = "Assets/GameMain/Art/Materials/";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 机关：视觉语言", priority = 119)]
+        public static void Paint()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            Material stone = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Ground.mat");
+            Material accent = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_Bomb.mat");
+            Material sticky = AssetDatabase.LoadAssetAtPath<Material>("Assets/GameMain/Art/WhiteboxMaterials/WB_FloatSticky.mat");
+            if (stone == null) { Debug.LogError("[Wengjie] 找不到白盒材质。"); return; }
+
+            Material plateMat = MakeVariant(stone, "M_Mech_Plate", new Color(0.24f, 0.28f, 0.33f, 1f));
+            Material moveMat = MakeVariant(stone, "M_Mech_Move", new Color(0.95f, 0.45f, 0.18f, 1f));
+
+            int painted = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = 0; i < all.Length; i++)
+                {
+                    string n = all[i].name;
+
+                    // 可压 / 可站：踏板、板面、底座用深石板
+                    if (n == "Plate" || n == "Pad" || n == "Beam")
+                    {
+                        SetMat(all[i], plateMat);
+                        painted++;
+                    }
+                    // 会动 / 可转：轴心、连杆用橘色
+                    else if (n == "Pivot" || n == "LinkRod" || n == "Hub" || n == "Drum")
+                    {
+                        SetMat(all[i], moveMat);
+                        painted++;
+                    }
+                    // 可粘：粘座用粘泡色
+                    else if (n == "Disc" && sticky != null && all[i].GetComponent<PAO.StickySurface>() != null)
+                    {
+                        SetMat(all[i], sticky);
+                        painted++;
+                    }
+                    // 其余机关件回到石材，不要再用白盒蓝
+                    else if (n == "Frame" || n == "Base" || n == "Cylinder" || n == "Cylinder" || n == "Arm")
+                    {
+                        SetMat(all[i], stone);
+                        painted++;
+                    }
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 机关视觉语言已上：" + painted + " 个部件（深石板=可压 / 橘色=会动 / 粘泡色=可粘）");
+        }
+
+        private static void SetMat(Transform tr, Material mat)
+        {
+            if (mat == null) return;
+            Renderer r = tr.GetComponent<Renderer>();
+            if (r != null) r.sharedMaterial = mat;
+        }
+
+        private static Material MakeVariant(Material src, string name, Color color)
+        {
+            string path = kDir + name + ".mat";
+            Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m != null) return m;
+
+            m = new Material(src);
+            m.name = name;
+            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", color);
+            if (m.HasProperty("_Color")) m.SetColor("_Color", color);
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 删掉所有挡视野的建筑体块：
+    ///   Wengjie_Arch（Map5 抓的拱门/柱/体块）
+    ///   Mood_Arch_* / Mood_Column_*（海草那批里混进来的建筑）
+    /// 只保留贴墙的石壁与装饰，不动地形和机关。
+    /// </summary>
+    public static class WengjieRemoveBlockers
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 删掉挡视野的建筑", priority = 120)]
+        public static void Remove()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            int removed = 0;
+
+            GameObject archRoot = GameObject.Find("Wengjie_Arch");
+            if (archRoot != null)
+            {
+                removed += archRoot.transform.childCount;
+                Object.DestroyImmediate(archRoot);
+            }
+
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    string n = all[i].name;
+                    if (!n.StartsWith("Mood_Arch", System.StringComparison.Ordinal)
+                        && !n.StartsWith("Mood_Column", System.StringComparison.Ordinal)) continue;
+
+                    Object.DestroyImmediate(all[i].gameObject);
+                    removed++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 挡视野建筑已清空：" + removed + " 件（Wengjie_Arch + Mood_Arch/Mood_Column）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 视线检查：沿主路取点，逐段向前打射线，
+    /// 报告「挡在玩家和下一段之间」的物体。
+    /// 标准：站在主路任一点，必须能看见前方 25 米内的路。
+    /// </summary>
+    public static class WengjieSightCheck
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 视线检查", priority = 121)]
+        public static void Check()
+        {
+            EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            var path = new List<Vector3>();
+            Vector3 cA = new Vector3(0f, 0f, 45f);
+            Vector3 cB = new Vector3(0f, 0f, 110f);
+
+            // 河岸
+            for (float z = -30f; z <= 0f; z += 5f) path.Add(new Vector3(0f, 0f, z));
+
+            // 弧形坡（半径 45，240°）
+            for (int k = 0; k <= 12; k++)
+            {
+                float ang = (-90f + k * 20f) * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(ang) * 45f, k * 1f, 45f + Mathf.Sin(ang) * 45f));
+            }
+
+            // 桥 → 环 → 街市
+            path.Add(new Vector3(0f, 12f, 79f));
+            path.Add(new Vector3(0f, 12f, 85f));
+            for (int k = 0; k <= 12; k++)
+            {
+                float ang = (22.5f + k * 22.5f) * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(ang) * 34f, 12f, 110f + Mathf.Sin(ang) * 34f));
+            }
+
+            // 楼梯 → 井台 → 塔顶
+            path.Add(new Vector3(0f, 26f, 148f));
+            for (int i = 0; i < 6; i++)
+            {
+                float ang = i * 60f * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(ang) * 24f, 38f + i * 4f, 200f + Mathf.Sin(ang) * 24f));
+            }
+            path.Add(new Vector3(0f, 64.6f, 200f));
+
+            var hits = new Dictionary<string, int>();
+            int blocked = 0, total = 0;
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                Vector3 a = path[i] + Vector3.up * 1.6f;
+                Vector3 b = path[i + 1] + Vector3.up * 1.6f;
+                float dist = Vector3.Distance(a, b);
+                if (dist < 0.5f) continue;
+
+                total++;
+                RaycastHit[] found = Physics.RaycastAll(a, (b - a).normalized, dist, ~0, QueryTriggerInteraction.Ignore);
+                if (found.Length == 0) continue;
+
+                blocked++;
+                for (int h = 0; h < found.Length; h++)
+                {
+                    string n = found[h].collider.gameObject.name;
+                    if (n == "takoyaki" || found[h].collider.GetComponent<PAO.PlayerController>() != null) continue;
+
+                    if (!hits.ContainsKey(n)) hits[n] = 0;
+                    hits[n]++;
+                }
+            }
+
+            var sorted = new List<KeyValuePair<string, int>>(hits);
+            sorted.Sort((x, y) => y.Value.CompareTo(x.Value));
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append("[视线检查] 路径段 ").Append(total).Append("，被挡 ").Append(blocked).Append(" 段\n");
+            for (int i = 0; i < sorted.Count && i < 15; i++)
+            {
+                sb.Append("  ").Append(sorted[i].Key).Append(" ×").Append(sorted[i].Value).Append("\n");
+            }
+
+            Debug.Log(sb.ToString());
+            EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 让环境「通透」：
+    ///   1 清掉离主路 8 米以内的海草（它们贴在镜头前，把纵深糊死了）
+    ///   2 雾再压薄一档，远处建筑才透得出来
+    /// </summary>
+    public static class WengjieClarity
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 环境通透", priority = 122)]
+        public static void Clear()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            // 主路采样点（和视线检查同一套）
+            var path = new List<Vector3>();
+            for (float z = -30f; z <= 0f; z += 5f) path.Add(new Vector3(0f, 0f, z));
+            for (int k = 0; k <= 12; k++)
+            {
+                float a = (-90f + k * 20f) * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(a) * 45f, k, 45f + Mathf.Sin(a) * 45f));
+            }
+            path.Add(new Vector3(0f, 12f, 79f));
+            for (int k = 0; k <= 12; k++)
+            {
+                float a = (22.5f + k * 22.5f) * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(a) * 34f, 12f, 110f + Mathf.Sin(a) * 34f));
+            }
+            path.Add(new Vector3(0f, 26f, 148f));
+            for (int i = 0; i < 6; i++)
+            {
+                float a = i * 60f * Mathf.Deg2Rad;
+                path.Add(new Vector3(Mathf.Cos(a) * 24f, 38f + i * 4f, 200f + Mathf.Sin(a) * 24f));
+            }
+
+            int removed = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    if (!all[i].name.StartsWith("Mood_Plant", System.StringComparison.Ordinal)) continue;
+
+                    Vector3 pos = all[i].position;
+                    float best = float.MaxValue;
+                    for (int k = 0; k < path.Count; k++)
+                    {
+                        float d = Vector3.Distance(new Vector3(pos.x, path[k].y, pos.z), path[k]);
+                        if (d < best) best = d;
+                    }
+
+                    if (best < 8f)
+                    {
+                        Object.DestroyImmediate(all[i].gameObject);
+                        removed++;
+                    }
+                }
+            }
+
+            RenderSettings.fogDensity = 0.0035f;
+            RenderSettings.fogColor = new Color(0.22f, 0.42f, 0.52f, 1f);
+            RenderSettings.ambientIntensity = 0.85f;
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 通透处理：清掉主路 8 米内海草 " + removed + " 丛，雾 0.006→0.0035，环境光 0.65→0.85");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 补上全局后处理 Volume。
+    /// 场景里原本一个 Volume 都没有 —— 没有 Color Grading / Bloom / Tonemapping，
+    /// 所以画面永远像蒙了一层灰，怎么调雾和光都不通透。
+    /// 用 Thalassophobia 的 Shallow Water（比 Deep Sea 亮一档）。
+    /// </summary>
+    public static class WengjiePostFX
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kProfile = "Assets/ThirdParty/Thalassophobia/PostFX/Shallow Water Profile URP.asset";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 补后处理", priority = 123)]
+        public static void Add()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            GameObject old = GameObject.Find("Wengjie_PostFX");
+            if (old != null) Object.DestroyImmediate(old);
+
+            UnityEngine.Rendering.VolumeProfile profile =
+                AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(kProfile);
+            if (profile == null) { Debug.LogError("[Wengjie] 找不到 Profile: " + kProfile); return; }
+
+            var go = new GameObject("Wengjie_PostFX");
+            SceneManager.MoveGameObjectToScene(go, scene);
+
+            UnityEngine.Rendering.Volume volume = go.AddComponent<UnityEngine.Rendering.Volume>();
+            volume.isGlobal = true;
+            volume.priority = 10f;
+            volume.weight = 1f;
+            volume.sharedProfile = profile;
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Selection.activeGameObject = go;
+
+            Debug.Log("[Wengjie] 全局后处理已加：Shallow Water Profile（Color Grading / Bloom / Tonemapping 全部生效）");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 清理散乱的摆件：删掉 Art_Wall* 与 Art_Arch* （贴在墙上的零碎石片），
+    /// 保留地形、铺地、海草和机关。白色石壁本身还在，读路不受影响。
+    /// </summary>
+    public static class WengjieTidyProps
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 清理散乱摆件", priority = 124)]
+        public static void Tidy()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            int removed = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    string n = all[i].name;
+                    if (!n.StartsWith("Art_Wall", System.StringComparison.Ordinal)
+                        && !n.StartsWith("Art_Arch", System.StringComparison.Ordinal)) continue;
+
+                    Object.DestroyImmediate(all[i].gameObject);
+                    removed++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 散乱摆件已清：" + removed + " 件（Art_Wall / Art_Arch），保留地形、铺地、海草、机关");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 只留地形：删掉所有 Art_Tile 铺地碎片（7 米见方、随机旋转，是「乱」的主要来源）。
+    /// 地形本身有完整的碰撞面，不需要这些贴片。
+    /// </summary>
+    public static class WengjieTidyTiles
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 清掉所有地砖", priority = 125)]
+        public static void Tidy()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            int removed = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    if (!all[i].name.StartsWith("Art_Tile", System.StringComparison.Ordinal)) continue;
+                    Object.DestroyImmediate(all[i].gameObject);
+                    removed++;
+                }
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 地砖已清空：" + removed + " 块。现在只剩地形 + 海草 + 机关。");
+        }
+    }
+}
+
+namespace PAO.EditorTools
+{
+    /// <summary>
+    /// 收尾两件事：
+    ///   1 删掉全部 Art_Tile 地砖（贴片乱的主因）
+    ///   2 把 Shallow Water Profile 的调色降一档（饱和度过头导致纯蓝爆掉）
+    /// </summary>
+    public static class WengjieFinalPolish
+    {
+        private const string kScenePath = "Assets/GameMain/Scenes/wengjie.unity";
+        private const string kProfilePath = "Assets/ThirdParty/Thalassophobia/PostFX/Shallow Water Profile URP.asset";
+
+        [MenuItem("Tools/PAO/关卡白盒/wengjie 收尾：清地砖 + 降饱和", priority = 126)]
+        public static void Run()
+        {
+            Scene scene = EditorSceneManager.OpenScene(kScenePath, OpenSceneMode.Single);
+
+            // ---------- 1 清地砖 ----------
+            int tiles = 0;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
+            {
+                Transform[] all = roots[r].GetComponentsInChildren<Transform>(true);
+                for (int i = all.Length - 1; i >= 0; i--)
+                {
+                    if (!all[i].name.StartsWith("Art_Tile", System.StringComparison.Ordinal)) continue;
+                    Object.DestroyImmediate(all[i].gameObject);
+                    tiles++;
+                }
+            }
+
+            // ---------- 2 降饱和 ----------
+            int tuned = 0;
+            UnityEngine.Rendering.VolumeProfile profile =
+                AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(kProfilePath);
+
+            if (profile != null)
+            {
+                UnityEngine.Rendering.Universal.ColorAdjustments ca;
+                if (profile.TryGet<UnityEngine.Rendering.Universal.ColorAdjustments>(out ca))
+                {
+                    ca.saturation.Override(-12f);      // 降饱和
+                    ca.postExposure.Override(0.15f);   // 略提亮
+                    ca.contrast.Override(8f);          // 保一点对比
+                    tuned++;
+                }
+
+                UnityEngine.Rendering.Universal.Vignette vg;
+                if (profile.TryGet<UnityEngine.Rendering.Universal.Vignette>(out vg))
+                {
+                    vg.intensity.Override(0.22f);
+                    tuned++;
+                }
+
+                EditorUtility.SetDirty(profile);
+                AssetDatabase.SaveAssets();
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            Debug.Log("[Wengjie] 收尾完成：清地砖 " + tiles + " 块；Profile 调色 " + tuned + " 项（饱和 -12 / 曝光 +0.15 / 对比 8 / 暗角 0.22）");
+        }
+    }
+}
