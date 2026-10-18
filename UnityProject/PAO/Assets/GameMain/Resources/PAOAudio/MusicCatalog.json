@@ -1,0 +1,18 @@
+{
+  "entries": [
+    {
+      "scene": "Menu",
+      "clip": "PAOAudio/Music/Custom/Guzheng_Pipa_Electronic",
+      "gain": 0.40,
+      "pauseWithGameplay": true,
+      "muteSynthLayers": true
+    },
+    {
+      "scene": "*",
+      "clip": "PAOAudio/Music/Custom/Pipa_Solo",
+      "gain": 0.40,
+      "pauseWithGameplay": true,
+      "muteSynthLayers": true
+    }
+  ]
+}

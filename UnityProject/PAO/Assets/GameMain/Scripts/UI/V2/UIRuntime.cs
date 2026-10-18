@@ -415,6 +415,8 @@ namespace PAO.UI.V2
         {
             if (!value || paused || !IsGameplay) return;
             paused = true; previousTime = Time.timeScale;
+            // 暂停菜单（以及它上面叠的设置/地图页）打开时，背景音乐跟着停，位置保留。
+            if (PAO.AV.PAOAudioDirector.Instance != null) PAO.AV.PAOAudioDirector.Instance.SetMusicPaused(true);
             // 不再记 Cursor.lockState 快照：界面打开时一律解锁，关掉时由 ReleasePause / LateUpdate 重算。
             Time.timeScale = 0;
             if (launcher != null) { previousLauncherBlocked = launcher.InputBlocked; launcher.InputBlocked = true; }
@@ -442,6 +444,7 @@ namespace PAO.UI.V2
             frozenInputs.Clear(); Time.timeScale = previousTime;
             if (launcher != null) launcher.InputBlocked = previousLauncherBlocked;
             paused = false;
+            if (PAO.AV.PAOAudioDirector.Instance != null) PAO.AV.PAOAudioDirector.Instance.SetMusicPaused(false);
             // 界面全部关掉之后立刻把光标收回游戏，不再回写打开界面时记下的旧状态。
             bool locked = IsGameplay && pages.Count == 0 && !loading;
             ApplyCursorLock(locked);

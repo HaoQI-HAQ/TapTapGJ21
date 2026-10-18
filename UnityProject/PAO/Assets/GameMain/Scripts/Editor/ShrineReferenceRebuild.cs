@@ -10,7 +10,8 @@ using Object = UnityEngine.Object;
 namespace PAO.EditorTools
 {
     /// <summary>
-    /// Rebuilds measured placement proxies (2026-10-18). Source SRT and model bounds are retained;
+    /// Rebuilds measured placement proxies for Dungeon041, Dungeon054 and Dungeon058.
+    /// Source SRT and model bounds are retained;
     /// internal profiles, materials and source gameplay scripts are not original assets.
     /// </summary>
     public static class ShrineReferenceRebuild
