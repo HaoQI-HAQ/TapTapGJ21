@@ -47,6 +47,23 @@ namespace PAO
     /// 不能用 OnCollisionEnter：玩家是 CharacterController，
     /// 它只在自己身上发 OnControllerColliderHit，静态碰撞体这侧收不到回调。
     /// 所以每帧在板面上方做一次 OverlapBox 找 PlayerController。
+    ///
+    /// ============================================================
+    /// 【充能后可以自转】
+    /// ============================================================
+    /// 勾上 Rotate When Charged，板子在变成弹力板之后会绕 Rotation Axis
+    /// 以 Rotation Speed 自转；不勾就完全静止。
+    ///
+    /// 【为什么普通板必须静止】
+    /// 玩家得把泡泡稳定地送到板面上才能充能。板子一开始就转的话，
+    /// 泡泡根本落不准，这个机关就没法用了。
+    /// 所以旋转只在"已经充上能"之后才开始。
+    ///
+    /// 【旋转带来的一个坑（已处理）】
+    /// Collider.bounds 是**世界轴对齐**包围盒，板子自转时它会周期性胀缩
+    /// （正方形转 45° 时宽 1.41 倍）。如果玩家检测区直接用 bounds，
+    /// 范围就会跟着忽大忽小，玩家站在边缘会被莫名其妙地弹飞。
+    /// 所以横向尺寸在 Awake 时缓存一次（m_DetectExtentsXZ），之后固定不变。
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("PAO/关卡/弹力跳板（Bouncy Pad）")]
@@ -117,6 +134,19 @@ namespace PAO
         [Tooltip("成功弹起时闪一下的时长（秒）")]
         [SerializeField] private float m_FlashDuration = 0.16f;
 
+        // ---- 旋转 ----
+
+        [Header("旋转")]
+        [Tooltip("被弹力泡泡充能之后，板子开始自转。\n" +
+                 "关掉就完全静止 —— 有些关卡位置不需要它转")]
+        [SerializeField] private bool m_RotateWhenCharged = true;
+
+        [Tooltip("绕哪个轴转（本地空间）。默认 Y 轴 = 像转盘一样原地打转")]
+        [SerializeField] private Vector3 m_RotationAxis = Vector3.up;
+
+        [Tooltip("转速（度/秒）。正负决定方向")]
+        [SerializeField] private float m_RotationSpeed = 60f;
+
         // ---- 调试 ----
 
         [Header("调试")]
@@ -130,6 +160,17 @@ namespace PAO
         private bool m_ChargePending;
         private Bubble m_PendingBubble;
         private float m_PendingTimer;
+
+        // 板面在**未旋转时**的横向半尺寸。
+        //
+        // 【为什么要在 Awake 缓存】
+        // Collider.bounds 是**世界坐标下的轴对齐包围盒**：
+        // 一旦板子开始绕 Y 自转，这个盒子的横向尺寸会随角度周期性变大变小
+        // （正方形转 45° 时外接盒要宽 1.41 倍）。
+        // 如果每帧都拿 bounds 当玩家检测区，检测范围就会跟着转来转去，
+        // 玩家站在边缘时会被"忽隐忽现"地弹飞。
+        // 所以横向范围取初始值并固定下来，只让检测区的高度跟随实际板面。
+        private Vector2 m_DetectExtentsXZ;
 
         private float m_CooldownLeft;
         private float m_FlashLeft;
@@ -172,6 +213,13 @@ namespace PAO
             {
                 Debug.LogWarning("[BouncyPad] \"" + name + "\" 上没有非 Trigger 的碰撞体，" +
                                  "玩家踩不到它，跳板无法工作。", this);
+            }
+            else
+            {
+                // 趁着还没开始转，把板面的横向半尺寸记下来。
+                // 之后每帧只用它算检测区，不受旋转导致的 AABB 变化影响。
+                Bounds b = m_SolidCollider.bounds;
+                m_DetectExtentsXZ = new Vector2(b.extents.x, b.extents.z);
             }
 
             m_Renderer = GetComponentInChildren<Renderer>();
@@ -440,6 +488,7 @@ namespace PAO
         private void Update()
         {
             UpdateCharge();
+            UpdateRotation();
 
             if (m_CooldownLeft > 0f)
             {
@@ -465,6 +514,41 @@ namespace PAO
             TryBouncePlayer();
         }
 
+        /// <summary>
+        /// 被充能之后自转。
+        ///
+        /// 只有"已经充上能"（弹力板 / 超级弹力板）才转 ——
+        /// 普通板必须完全静止，玩家才能把泡泡稳定地送到它上面；
+        /// 一开始就转的话，泡泡根本落不准。
+        /// </summary>
+        private void UpdateRotation()
+        {
+            if (!m_RotateWhenCharged)
+            {
+                return;      // 这个关卡位置不需要它转
+            }
+
+            if (m_State == PadState.Normal)
+            {
+                return;
+            }
+
+            if (Mathf.Approximately(m_RotationSpeed, 0f))
+            {
+                return;
+            }
+
+            Vector3 axis = m_RotationAxis;
+
+            if (axis.sqrMagnitude < 0.0001f)
+            {
+                return;      // 轴设成了零向量，转了也没意义
+            }
+
+            // 用 Time.deltaTime（受 timeScale 影响）：暂停时板子也该停
+            transform.Rotate(axis, m_RotationSpeed * Time.deltaTime, Space.Self);
+        }
+
         private void TryBouncePlayer()
         {
             if (m_SolidCollider == null)
@@ -480,9 +564,13 @@ namespace PAO
                                          b.max.y + m_DetectHeight * 0.5f,
                                          b.center.z);
 
-            Vector3 half = new Vector3(b.extents.x * 0.92f,
+            // 横向尺寸用 Awake 时缓存的**未旋转**值。
+            // 直接用 b.extents 的话，板子一旦开始自转，
+            // 世界轴对齐包围盒会随角度周期性胀缩（正方形转 45° 宽 1.41 倍），
+            // 检测区就会跟着忽大忽小，玩家在边缘会被莫名其妙地弹飞。
+            Vector3 half = new Vector3(m_DetectExtentsXZ.x * 0.92f,
                                        m_DetectHeight * 0.5f,
-                                       b.extents.z * 0.92f);
+                                       m_DetectExtentsXZ.y * 0.92f);
 
             int count = Physics.OverlapBoxNonAlloc(center, half, m_HitBuffer,
                                                    Quaternion.identity, ~0,
@@ -603,10 +691,14 @@ namespace PAO
 
             Bounds b = col.bounds;
 
-            // 检测区（玩家会被弹起的范围）
+            // 检测区（玩家会被弹起的范围）。
+            // 编辑器里多半还没 Awake，m_DetectExtentsXZ 是零 —— 退回 bounds 值。
+            float ex = m_DetectExtentsXZ.x > 0.001f ? m_DetectExtentsXZ.x : b.extents.x;
+            float ez = m_DetectExtentsXZ.y > 0.001f ? m_DetectExtentsXZ.y : b.extents.z;
+
             Gizmos.color = new Color(0.4f, 0.9f, 1f, 0.28f);
             Gizmos.DrawCube(new Vector3(b.center.x, b.max.y + m_DetectHeight * 0.5f, b.center.z),
-                            new Vector3(b.extents.x * 1.84f, m_DetectHeight, b.extents.z * 1.84f));
+                            new Vector3(ex * 1.84f, m_DetectHeight, ez * 1.84f));
 
             // 弹起高度
             float h = BounceHeight();
@@ -617,6 +709,14 @@ namespace PAO
                 Vector3 from = new Vector3(b.center.x, b.max.y, b.center.z);
                 Gizmos.DrawLine(from, from + Vector3.up * h);
                 Gizmos.DrawCube(from + Vector3.up * h, Vector3.one * 0.12f);
+            }
+
+            // 旋转
+            if (m_RotateWhenCharged && m_RotationAxis.sqrMagnitude > 0.0001f)
+            {
+                Gizmos.color = new Color(0.7f, 0.6f, 1f, 0.9f);
+                Vector3 origin = new Vector3(b.center.x, b.max.y, b.center.z);
+                Gizmos.DrawLine(origin, origin + m_RotationAxis.normalized * Mathf.Max(0.6f, b.extents.y + 0.6f));
             }
         }
     }
