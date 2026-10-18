@@ -68,3 +68,11 @@ crashlytics-build.properties
 # ===== 保留所有 .meta 文件（版本控制必需）=====
 !/[Aa]ssets/**/*.meta
 !/[Pp]ackages/**/*.meta
+
+# ===== 例外：被上面规则忽略的「资源」的 meta 一并忽略 =====
+# 否则 !/**/*.meta 会把它们重新放回未跟踪列表，Unity 每次导入后 git status 就变脏。
+# *.mdb 是 Unity/IDE 的调试符号（上面第 46 行已忽略）；
+# 下列 .md 是 com.gamelovers.mcp-unity 包自带的本地说明文件（根 .gitignore 已忽略）。
+/[Aa]ssets/**/*.mdb.meta
+/[Pp]ackages/com.gamelovers.mcp-unity/AGENTS.md.meta
+/[Pp]ackages/com.gamelovers.mcp-unity/CLAUDE.md.meta

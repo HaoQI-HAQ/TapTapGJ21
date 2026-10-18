@@ -25,7 +25,14 @@ namespace PAO.EditorTools
             public string sceneName, sourceMap, title, sourceUrl;
             public int sourceCount;
             public Vector3 entry, goal;
+            public string spawnAnchor, goalAnchor;
             public Part[] objects;
+            public SupportPart[] supportGeometry;
+        }
+        [Serializable] public class SupportPart
+        {
+            public string name, note;
+            public Vector3 position, size;
         }
         [Serializable] public class Part
         {
@@ -47,8 +54,14 @@ namespace PAO.EditorTools
             EditorApplication.delayCall += () =>
             {
                 if (!File.Exists(RequestPath) || EditorApplication.isPlayingOrWillChangePlaymode) return;
+                string requestedMaps = File.ReadAllText(RequestPath).Trim();
                 File.Delete(RequestPath);
-                try { RebuildMap2And3(); }
+                try
+                {
+                    if (requestedMaps == "Map2_5") RebuildMap2_5();
+                    else if (requestedMaps == "Map2+Map3") RebuildMap2And3();
+                    else throw new InvalidDataException("Unrecognized shrine rebuild request: " + requestedMaps);
+                }
                 catch (Exception ex)
                 {
                     Directory.CreateDirectory("Temp");
@@ -65,11 +78,28 @@ namespace PAO.EditorTools
                 throw new InvalidOperationException("Exit Play mode before rebuilding scenes.");
             RebuildScene("Map2");
             RebuildScene("Map3");
-            Scene map2 = SceneManager.GetSceneByPath("Assets/GameMain/Scenes/Map2.unity");
-            if (!map2.isLoaded) map2 = EditorSceneManager.OpenScene("Assets/GameMain/Scenes/Map2.unity", OpenSceneMode.Additive);
-            SceneManager.SetActiveScene(map2);
-            foreach (GameObject root in map2.GetRootGameObjects())
-                if (root.name == "Map2_Whitebox")
+            ShowRebuiltScene("Map2");
+            Debug.Log("[PAO Shrine Reference] Map2 and Map3 rebuilt and saved from original placement coordinates. Meshes are whitebox proxies; original game logic is not imported.");
+        }
+
+        [MenuItem("Tools/PAO/关卡白盒/按原始坐标重建 Map2.5 卡奥·玛卡", priority = 75)]
+        public static void RebuildMap2_5()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play mode before rebuilding scenes.");
+            RebuildScene("Map2_5");
+            ShowRebuiltScene("Map2_5");
+            Debug.Log("[PAO Shrine Reference] Map2.5 rebuilt and saved from Dungeon054. Geometry only; metal-door interactions are not implemented.");
+        }
+
+        static void ShowRebuiltScene(string mapName)
+        {
+            string path = "Assets/GameMain/Scenes/" + mapName + ".unity";
+            Scene scene = SceneManager.GetSceneByPath(path);
+            if (!scene.isLoaded) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            SceneManager.SetActiveScene(scene);
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.name == mapName + "_Whitebox")
                 {
                     Selection.activeGameObject = root;
                     SceneVisibilityManager.instance.Isolate(root, true);
@@ -80,7 +110,6 @@ namespace PAO.EditorTools
                         SceneView.lastActiveSceneView.FrameSelected();
                     }
                 }
-            Debug.Log("[PAO Shrine Reference] Map2 and Map3 rebuilt and saved from original placement coordinates. Meshes are whitebox proxies; original game logic is not imported.");
         }
 
         static void RebuildScene(string mapName)
@@ -89,9 +118,15 @@ namespace PAO.EditorTools
             string backupDir = Path.GetFullPath("../../docs/plan/神庙重构参考/backups");
             Directory.CreateDirectory(backupDir);
             string backup = Path.Combine(backupDir, mapName + "_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") + ".unity");
-            File.Copy(path, backup, false);
             Scene scene = SceneManager.GetSceneByPath(path);
             bool wasLoaded = scene.isLoaded;
+            // A copy of the in-memory scene protects unsaved edits as well as saved ones.
+            if (wasLoaded && scene.isDirty)
+            {
+                if (!EditorSceneManager.SaveScene(scene, backup, true))
+                    throw new IOException("Could not back up unsaved scene: " + path);
+            }
+            else File.Copy(path, backup, false);
             if (!wasLoaded) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
             GameObject next = new GameObject(mapName + "_Reference_Staging");
             SceneManager.MoveGameObjectToScene(next, scene);
@@ -140,8 +175,17 @@ namespace PAO.EditorTools
                 }
                 BuildPart(group, layout.sourceMap, part);
             }
-            AddAnchor(root, mapName == "Map2" ? "Start_Salvage_Court" : "West_Start_Camp", layout.entry + Vector3.up * 1.27f);
-            AddAnchor(root, mapName == "Map2" ? "Memory_Beacon_Lower_Platform" : "Map3_Corkscrew_Upper_Exit_Shelf", layout.goal);
+            if (layout.supportGeometry != null && layout.supportGeometry.Length > 0)
+            {
+                Transform floor = new GameObject("Shell_Floor_Proxy").transform;
+                floor.SetParent(root, false);
+                foreach (SupportPart support in layout.supportGeometry)
+                    Cube(floor, support.name, support.position, support.size, GetMaterial("Structure"), true);
+            }
+            string spawnAnchor = !string.IsNullOrEmpty(layout.spawnAnchor) ? layout.spawnAnchor : mapName == "Map2" ? "Start_Salvage_Court" : "West_Start_Camp";
+            string goalAnchor = !string.IsNullOrEmpty(layout.goalAnchor) ? layout.goalAnchor : mapName == "Map2" ? "Memory_Beacon_Lower_Platform" : "Map3_Corkscrew_Upper_Exit_Shelf";
+            AddAnchor(root, spawnAnchor, layout.entry + Vector3.up * 1.27f);
+            AddAnchor(root, goalAnchor, layout.goal);
             AddAnchor(root, "SOURCE_COORDINATES_1_TO_1__MESHES_ARE_PROXIES", layout.entry);
             return layout;
         }
