@@ -41,4 +41,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GameMain/Scenes/shiliuye map.unity
     guid: b30f3d5949c86ea49a87ea2546dabc82
+  - enabled: 1
+    path: Assets/GameMain/Scenes/wengjie.unity
+    guid: 70132632efbb5d645b6ffdb64dba5a9a
   m_configObjects: {}

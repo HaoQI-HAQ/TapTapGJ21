@@ -603,6 +603,41 @@ namespace PAO.EditorTools
             Debug.Log(sb.ToString());
         }
 
+        // 章节检查：确认 PAOUIConfig 里的 10 关、场景是否在 Build Settings、锚点是否存在
+        [MenuItem("Tools/PAO/Probe/Chapter Check", priority = 906)]
+        public static void ChapterCheck()
+        {
+            var config = Resources.Load<PAO.UI.V2.UIConfig>("PAOUIConfig");
+            var sb = new StringBuilder();
+            sb.AppendLine("[Probe] 章节检查 " + System.DateTime.Now.ToString("HH:mm:ss"));
+            if (config == null)
+            {
+                Debug.LogError("[Probe] 找不到 Resources/PAOUIConfig");
+                return;
+            }
+            sb.AppendLine("  章节总数 = " + config.chapters.Length);
+
+            var buildScenes = new System.Collections.Generic.List<string>();
+            foreach (var s in EditorBuildSettings.scenes)
+                if (s.enabled) buildScenes.Add(System.IO.Path.GetFileNameWithoutExtension(s.path));
+
+            for (int i = 0; i < config.chapters.Length; i++)
+            {
+                var c = config.chapters[i];
+                string path = "Assets/GameMain/Scenes/" + c.scene + ".unity";
+                bool fileExists = System.IO.File.Exists(path);
+                bool inBuild = buildScenes.Contains(c.scene);
+                string text = fileExists ? System.IO.File.ReadAllText(path) : "";
+                // 注意：预制体实例里的锚点名不在 .unity 文本里，会显示 MISS 但运行时能找到（Map0/Map1）。
+                bool spawn = string.IsNullOrEmpty(c.spawnAnchor) || text.Contains("m_Name: " + c.spawnAnchor);
+                bool goal = string.IsNullOrEmpty(c.goalAnchor) || text.Contains("m_Name: " + c.goalAnchor);
+                sb.AppendLine(string.Format("  {0:00} {1,-14} build={2} file={3} spawn={4} goal={5}  {6}",
+                    i + 1, c.scene, inBuild ? "OK" : "MISS", fileExists ? "OK" : "MISS",
+                    spawn ? "OK " : "MISS", goal ? "OK " : "MISS", c.title));
+            }
+            Debug.Log(sb.ToString());
+        }
+
         // ------------------------------------------------------------------
         // wengjie 字幕条：场景里摆一个独立 Canvas + 两行 Text（不依赖 UIRuntime）
         // ------------------------------------------------------------------

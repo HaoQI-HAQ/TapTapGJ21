@@ -62,28 +62,46 @@ MonoBehaviour:
     title: 水域 03
     description: 留意环境的变化，让每一次选择产生回响。
     objective: 观察地形，寻找可以前进的路线。
+  - scene: Map2_5
+    spawnAnchor: K25_00_Entrance_Run_In
+    goalAnchor: K25_06_Altar_Island
+    title: 水域 04
+    description: 坍塌的密室通向祭坛，石堆与暗门后藏着旧日的回声。
+    objective: 穿过主厅与侧室，抵达深处的祭坛。
   - scene: Map3
     spawnAnchor: West_Start_Camp
     goalAnchor: Map3_Corkscrew_Upper_Exit_Shelf
-    title: 水域 04
+    title: 水域 05
     description: 在层层涌动中继续探索，寻找散落的意识碎片。
     objective: 继续探索，抵达本章终点。
+  - scene: Map3_5
+    spawnAnchor: TFD_Rock_Slab_02A_LOD0_3 (1)
+    goalAnchor: T35_06_Altar_Blockout
+    title: 水域 06
+    description: 峡谷的阶梯一路向上，尽头是被遗忘的祭坛。
+    objective: 沿峡谷向上攀爬，抵达高处祭坛。
   - scene: Map4
     spawnAnchor: Start_Memory_Beach
     goalAnchor: Resonance_Core_Plinth
-    title: 水域 05
+    title: 水域 07
     description: 回看已经抵达的水域，尝试新的泡泡组合。
     objective: 运用已掌握的能力抵达终点。
   - scene: Map5
     spawnAnchor: Start_Outer_Courtyard
     goalAnchor: Memory_Garden_Plinth
-    title: 水域 06
+    title: 水域 08
     description: 抵达最后一段水流，回看旅程留下的回声。
     objective: 抵达终点，回看你的旅程。
+  - scene: shiliuye map
+    spawnAnchor: Tower_Ground
+    goalAnchor: Landing_F7
+    title: 水域 09
+    description: 十六夜之塔立在深渊之上，墙面、尖刺与摆臂之间只剩一条向上的路。
+    objective: 穿过整座塔，抵达塔顶的入口。
   - scene: wengjie
     spawnAnchor: Spawn
     goalAnchor: B_Goal
-    title: 水域 07
+    title: 水域 10
     description: 一口正在被灌满的井。三条路都通向它，但没有一条是免费的。
     objective: 在潮水淹没祭坛之前，爬上峡谷的最高处。
   credits: "泡涌 · 意识之海\nTapTap Game Jam 21\n\n感谢每一位参与创作与体验的朋友。"
