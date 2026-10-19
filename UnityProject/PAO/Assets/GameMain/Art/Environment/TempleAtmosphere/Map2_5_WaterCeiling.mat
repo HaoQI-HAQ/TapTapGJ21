@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Map2_5_WaterCeiling
+  m_Shader: {fileID: 4800000, guid: 255e7df4e7ddba34e9fb9c5fb7284734, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Dither: 0.004
+    - _FadeEnd: 231.15001
+    - _FadeStart: 75.375
+    - _FoamCutoff: 0.62
+    - _FoamScale: 0.25
+    - _FoamSpeed: 0.6
+    - _FoamStrength: 0.08
+    - _RippleAlpha: 0.46
+    - _RippleDensity: 4
+    - _RippleFadeEnd: 150
+    - _RippleFadeStart: 40
+    - _RippleScale: 0.12
+    - _RippleSlimness: 5.1
+    - _RippleSpeed: 0.55
+    - _RippleStrength: 0.32
+    - _RippleTiling: 0.039
+    - _RippleWidth: 0.38
+    - _ShearStrength: 0.003
+    - _SwellScale: 0.055
+    - _SwellStrength: 0.68
+    - _WindowPower: 2.2
+    - _WindowStrength: 0.85
+    m_Colors:
+    - _DeepColor: {r: 0.42299998, g: 0.594, b: 0.69299996, a: 0.9}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HorizonColor: {r: 0.47, g: 0.66, b: 0.77, a: 1}
+    - _LightColor: {r: 0.78, g: 0.94, b: 1, a: 1}
+    - _RippleColor: {r: 0.8, g: 0.97, b: 1, a: 1}
+    - _ShallowColor: {r: 0.53, g: 0.87, b: 0.85, a: 1}
+    - _SkirtBottomColor: {r: 0.3384, g: 0.47520003, b: 0.5544, a: 0.72}
+    - _SurfaceColor: {r: 0.53, g: 0.87, b: 0.85, a: 1}
+    - _WindowColor: {r: 0.8, g: 0.96, b: 1, a: 1}
+  m_BuildTextureStacks: []

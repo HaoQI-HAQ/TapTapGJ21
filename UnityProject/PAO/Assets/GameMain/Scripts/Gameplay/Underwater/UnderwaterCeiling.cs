@@ -42,6 +42,7 @@ namespace PAO.Underwater
         private Mesh m_Mesh;
         private float m_BuiltHalfSize = float.NaN;
         private float m_BuiltSkirtDepth = float.NaN;
+        private bool m_RebuildRequested;
 
         /// <summary>水面半边长（米）。Editor 工具摆放时会读它。</summary>
         public float HalfSize => m_HalfSize;
@@ -62,12 +63,20 @@ namespace PAO.Underwater
             RebuildIfNeeded();
         }
 
+        private void Update()
+        {
+            // MeshFilter notifications are unsafe during OnValidate/deserialization.
+            if (!m_RebuildRequested) return;
+            m_RebuildRequested = false;
+            RebuildIfNeeded();
+        }
+
         private void OnValidate()
         {
             // 在 Inspector 里改数字要立刻看到结果
             m_HalfSize = Mathf.Max(1f, m_HalfSize);
             m_SkirtDepth = Mathf.Max(0f, m_SkirtDepth);
-            RebuildIfNeeded();
+            m_RebuildRequested = true;
         }
 
         private void OnDestroy()

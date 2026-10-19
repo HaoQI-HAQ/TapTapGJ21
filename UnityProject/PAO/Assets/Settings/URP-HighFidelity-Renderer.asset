@@ -90,6 +90,19 @@ MonoBehaviour:
     useLightDirection: 1
     lightDirection: {x: -0.4, y: 0.8, z: -0.45}
   material: {fileID: 0}
+--- !u!114 &-219929494796422096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb10ae5de85a6834ba8510f6f2540306, type: 3}
+  m_Name: Temple Atmosphere
+  m_EditorClassIdentifier:
+  m_Active: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,7 +123,8 @@ MonoBehaviour:
   - {fileID: -1878332245247344467}
   - {fileID: -907158063205912355}
   - {fileID: -7162195479961991916}
-  m_RendererFeatureMap: adc0de57c6d2eee5ddf07a3f8c2069f31405f56c28c59a9c
+  - {fileID: -219929494796422096}
+  m_RendererFeatureMap: adc0de57c6d2eee5ddf07a3f8c2069f31405f56c28c59a9c3034072b4aa7f2fc
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
