@@ -1,0 +1,487 @@
+{
+  "status": "success",
+  "utc": "2026-10-19T17:44:31.9424395Z",
+  "scenePath": "Assets/GameMain/Scenes/Map3.unity",
+  "sceneBackup": "G:\\project\\TapTapGJ21\\.git\\codex-diagnostics\\map3-brightness\\repair-20261020-0144\\Map3.unity",
+  "profileBackup": "G:\\project\\TapTapGJ21\\.git\\codex-diagnostics\\map3-brightness\\repair-20261020-0144\\Map3_AtmosphereProfile.asset",
+  "profileMemoryBackup": "G:\\project\\TapTapGJ21\\.git\\codex-diagnostics\\map3-brightness\\repair-20261020-0144\\profile_in_memory.json",
+  "error": "",
+  "saved": true,
+  "camera": {
+    "path": "takoyaki/CameraPivot/Main Camera",
+    "nativeJson": "{\"Camera\":{\"m_Enabled\":true,\"serializedVersion\":\"2\",\"m_ClearFlags\":2,\"m_BackGroundColor\":{\"r\":0.6499999761581421,\"g\":0.800000011920929,\"b\":0.8899999856948853,\"a\":1.0},\"m_projectionMatrixMode\":1,\"m_GateFitMode\":2,\"m_FOVAxisMode\":0,\"m_Iso\":200,\"m_ShutterSpeed\":0.004999999888241291,\"m_Aperture\":16.0,\"m_FocusDistance\":10.0,\"m_FocalLength\":50.0,\"m_BladeCount\":5,\"m_Curvature\":{\"x\":2.0,\"y\":11.0},\"m_BarrelClipping\":0.25,\"m_Anamorphism\":0.0,\"m_SensorSize\":{\"x\":36.0,\"y\":24.0},\"m_LensShift\":{\"x\":0.0,\"y\":0.0},\"m_NormalizedViewPortRect\":{\"serializedVersion\":\"2\",\"x\":0.0,\"y\":0.0,\"width\":1.0,\"height\":1.0},\"near clip plane\":0.30000001192092898,\"far clip plane\":1000.0,\"field of view\":60.0,\"orthographic\":false,\"orthographic size\":5.0,\"m_Depth\":-1.0,\"m_CullingMask\":{\"serializedVersion\":\"2\",\"m_Bits\":4294967295},\"m_RenderingPath\":-1,\"m_TargetTexture\":{\"instanceID\":0},\"m_TargetDisplay\":0,\"m_TargetEye\":3,\"m_HDR\":true,\"m_AllowMSAA\":true,\"m_AllowDynamicResolution\":false,\"m_ForceIntoRT\":false,\"m_OcclusionCulling\":true,\"m_StereoConvergence\":10.0,\"m_StereoSeparation\":0.02199999988079071}}",
+    "additionalCameraJson": "{\"MonoBehaviour\":{\"m_Enabled\":true,\"m_EditorHideFlags\":0,\"m_Name\":\"\",\"m_EditorClassIdentifier\":\"\",\"m_RenderShadows\":true,\"m_RequiresDepthTextureOption\":2,\"m_RequiresOpaqueTextureOption\":2,\"m_CameraType\":0,\"m_Cameras\":[],\"m_RendererIndex\":-1,\"m_VolumeLayerMask\":{\"serializedVersion\":\"2\",\"m_Bits\":1},\"m_VolumeTrigger\":{\"instanceID\":0},\"m_VolumeFrameworkUpdateModeOption\":2,\"m_RenderPostProcessing\":true,\"m_Antialiasing\":0,\"m_AntialiasingQuality\":2,\"m_StopNaN\":false,\"m_Dithering\":false,\"m_ClearDepth\":true,\"m_AllowXRRendering\":true,\"m_AllowHDROutput\":true,\"m_UseScreenCoordOverride\":false,\"m_ScreenSizeOverride\":{\"x\":0.0,\"y\":0.0,\"z\":0.0,\"w\":0.0},\"m_ScreenCoordScaleBias\":{\"x\":0.0,\"y\":0.0,\"z\":0.0,\"w\":0.0},\"m_RequiresDepthTexture\":false,\"m_RequiresColorTexture\":false,\"m_Version\":2.0,\"m_TaaSettings\":{\"m_Quality\":3,\"m_FrameInfluence\":0.10000000149011612,\"m_JitterScale\":1.0,\"m_MipBias\":0.0,\"m_VarianceClampScale\":0.8999999761581421,\"m_ContrastAdaptiveSharpening\":0.0}}}",
+    "position": {
+      "x": 299.1506652832031,
+      "y": -5.664999961853027,
+      "z": 46.62747573852539
+    },
+    "eulerAngles": {
+      "x": 0,
+      "y": 182.11325073242188,
+      "z": 0
+    },
+    "fieldOfView": 60,
+    "nearClipPlane": 0.30000001192092896,
+    "farClipPlane": 1000,
+    "postProcessing": true,
+    "hdr": true,
+    "depthTexture": true,
+    "volumeLayerMask": 1
+  },
+  "beforeLighting": {
+    "ambientMode": "Flat",
+    "ambientLight": {
+      "r": 1.0800000429153442,
+      "g": 1.0800000429153442,
+      "b": 1.0399999618530273,
+      "a": 1
+    },
+    "ambientIntensity": 1,
+    "reflectionIntensity": 0.30000001192092896,
+    "ambientProbe": [
+      1.1844924688339233,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1.1844924688339233,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1.0901174545288086,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "lights": [
+      {
+        "path": "Directional Light",
+        "type": "Directional",
+        "shadows": "Soft",
+        "cookie": "Assets/ThirdParty/Thalassophobia/Contents/Materials/Textures/Caustics.asset",
+        "enabled": true,
+        "color": {
+          "r": 0.9800000190734863,
+          "g": 0.9900000095367432,
+          "b": 1,
+          "a": 1
+        },
+        "intensity": 2.0999999046325684,
+        "shadowStrength": 0.25,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 287.1199951171875,
+          "y": 50.5,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 66.68688201904297,
+          "y": 242.71072387695312,
+          "z": 263.09661865234375
+        }
+      },
+      {
+        "path": "takoyaki/CameraPivot/Main Camera/CharacterFillLight",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 1,
+          "g": 0.949999988079071,
+          "b": 0.8899999856948853,
+          "a": 1
+        },
+        "intensity": 1.7999999523162842,
+        "shadowStrength": 1,
+        "bounceIntensity": 0,
+        "range": 30,
+        "position": {
+          "x": 299.1875305175781,
+          "y": -5.164999961853027,
+          "z": 47.62679672241211
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 182.11325073242188,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Temple_BlueFill",
+        "type": "Directional",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.9700000286102295,
+          "g": 0.9900000095367432,
+          "b": 1,
+          "a": 1
+        },
+        "intensity": 1.100000023841858,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 30.000001907348633,
+          "y": 140,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Goal_AccentLight",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.7400000095367432,
+          "g": 0.9399999976158142,
+          "b": 1,
+          "a": 1
+        },
+        "intensity": 5.5,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 28,
+        "position": {
+          "x": 0,
+          "y": 5,
+          "z": -95.5
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Hall_IndirectLight_1",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.6430000066757202,
+          "g": 0.8389999866485596,
+          "b": 0.937000036239624,
+          "a": 1
+        },
+        "intensity": 2.5,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 26,
+        "position": {
+          "x": 5,
+          "y": -5,
+          "z": 20.625
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Temple_UnderFill",
+        "type": "Directional",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 1,
+          "g": 0.9700000286102295,
+          "b": 0.8999999761581421,
+          "a": 1
+        },
+        "intensity": 0.6499999761581421,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 325,
+          "y": 320,
+          "z": 0
+        }
+      }
+    ]
+  },
+  "afterLighting": {
+    "ambientMode": "Flat",
+    "ambientLight": {
+      "r": 0.7099999785423279,
+      "g": 0.8100000023841858,
+      "b": 0.9300000071525574,
+      "a": 1
+    },
+    "ambientIntensity": 1,
+    "reflectionIntensity": 0.30000001192092896,
+    "ambientProbe": [
+      0.4623613953590393,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.620915949344635,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.8480883836746216,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "lights": [
+      {
+        "path": "Directional Light",
+        "type": "Directional",
+        "shadows": "Soft",
+        "cookie": "Assets/ThirdParty/Thalassophobia/Contents/Materials/Textures/Caustics.asset",
+        "enabled": true,
+        "color": {
+          "r": 0.9100000262260437,
+          "g": 0.9599999785423279,
+          "b": 1,
+          "a": 1
+        },
+        "intensity": 2.0999999046325684,
+        "shadowStrength": 0.5,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 287.1199951171875,
+          "y": 50.5,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 66.68688201904297,
+          "y": 242.71072387695312,
+          "z": 263.09661865234375
+        }
+      },
+      {
+        "path": "takoyaki/CameraPivot/Main Camera/CharacterFillLight",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 1,
+          "g": 0.949999988079071,
+          "b": 0.8899999856948853,
+          "a": 1
+        },
+        "intensity": 1.7999999523162842,
+        "shadowStrength": 1,
+        "bounceIntensity": 0,
+        "range": 30,
+        "position": {
+          "x": 299.1875305175781,
+          "y": -5.164999961853027,
+          "z": 47.62679672241211
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 182.11325073242188,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Temple_BlueFill",
+        "type": "Directional",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.49000000953674316,
+          "g": 0.7699999809265137,
+          "b": 0.9100000262260437,
+          "a": 1
+        },
+        "intensity": 0.44999998807907104,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 30.000001907348633,
+          "y": 140,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Goal_AccentLight",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.7400000095367432,
+          "g": 0.9399999976158142,
+          "b": 1,
+          "a": 1
+        },
+        "intensity": 5.5,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 28,
+        "position": {
+          "x": 0,
+          "y": 5,
+          "z": -95.5
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Hall_IndirectLight_1",
+        "type": "Point",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": true,
+        "color": {
+          "r": 0.6430000066757202,
+          "g": 0.8389999866485596,
+          "b": 0.937000036239624,
+          "a": 1
+        },
+        "intensity": 2.5,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 26,
+        "position": {
+          "x": 5,
+          "y": -5,
+          "z": 20.625
+        },
+        "eulerAngles": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      {
+        "path": "Map3_Environment/Temple_UnderFill",
+        "type": "Directional",
+        "shadows": "None",
+        "cookie": "",
+        "enabled": false,
+        "color": {
+          "r": 1,
+          "g": 0.9700000286102295,
+          "b": 0.8999999761581421,
+          "a": 1
+        },
+        "intensity": 0,
+        "shadowStrength": 1,
+        "bounceIntensity": 1,
+        "range": 10,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "eulerAngles": {
+          "x": 325,
+          "y": 320,
+          "z": 0
+        }
+      }
+    ]
+  },
+  "beforeSignature": {
+    "gameObjects": 897,
+    "transforms": 897,
+    "colliders": 686,
+    "gameplayBehaviours": 333,
+    "cameras": 2,
+    "missingScripts": 0,
+    "all": "C35EEF5A2234193AEDB45D0B816F90D87DB6C2E7BEEE9C23BD8F1E9A0525F25D",
+    "objectHash": "0063DDBB83CC49452B55D95A5D04922318FC5CC596D0C3132A53C46738625761",
+    "transformHash": "5A18DD6D1F231CC1CEED1D09AE050F63D5D9B0E883057722491ED9B7F0891908",
+    "colliderHash": "0BBBCB2E2717A7E1AD0DCE3C2F7A846B40A06A4946035CC94A3F94ED8EEF0660",
+    "gameplayHash": "21ECFDFF159B592FC44266C86EDCA6B7AC25668CA21EA7D148D204C2431BF0EF",
+    "cameraHash": "EC4432FC105550B7AB81749A9E654C783C495CA42C1B858682D096F5938866B3"
+  },
+  "afterSignature": {
+    "gameObjects": 897,
+    "transforms": 897,
+    "colliders": 686,
+    "gameplayBehaviours": 333,
+    "cameras": 2,
+    "missingScripts": 0,
+    "all": "C35EEF5A2234193AEDB45D0B816F90D87DB6C2E7BEEE9C23BD8F1E9A0525F25D",
+    "objectHash": "0063DDBB83CC49452B55D95A5D04922318FC5CC596D0C3132A53C46738625761",
+    "transformHash": "5A18DD6D1F231CC1CEED1D09AE050F63D5D9B0E883057722491ED9B7F0891908",
+    "colliderHash": "0BBBCB2E2717A7E1AD0DCE3C2F7A846B40A06A4946035CC94A3F94ED8EEF0660",
+    "gameplayHash": "21ECFDFF159B592FC44266C86EDCA6B7AC25668CA21EA7D148D204C2431BF0EF",
+    "cameraHash": "EC4432FC105550B7AB81749A9E654C783C495CA42C1B858682D096F5938866B3"
+  },
+  "before": {
+    "path": "G:\\project\\TapTapGJ21\\UnityProject\\PAO\\Docs\\Map3-lighting-repair\\before.png",
+    "width": 1600,
+    "height": 900,
+    "meanLuminance": 0.477693110704422,
+    "meanDisplayLuminance": 0.7032402753829956,
+    "nearWhitePixelFraction": 0,
+    "luminanceDefinition": "Rec.709 luminance after sRGB-to-linear conversion; near-white means all 8-bit channels >= 230"
+  },
+  "after": {
+    "path": "G:\\project\\TapTapGJ21\\UnityProject\\PAO\\Docs\\Map3-lighting-repair\\after.png",
+    "width": 1600,
+    "height": 900,
+    "meanLuminance": 0.3513872027397156,
+    "meanDisplayLuminance": 0.5986137390136719,
+    "nearWhitePixelFraction": 0,
+    "luminanceDefinition": "Rec.709 luminance after sRGB-to-linear conversion; near-white means all 8-bit channels >= 230"
+  },
+  "differences": []
+}

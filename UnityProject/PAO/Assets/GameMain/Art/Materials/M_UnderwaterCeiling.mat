@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_UnderwaterCeiling
   m_Shader: {fileID: 4800000, guid: 255e7df4e7ddba34e9fb9c5fb7284734, type: 3}
-  m_Parent: {fileID: 0}
+  m_Parent: {fileID: 2100000, guid: ce59e29c67641be4e99f7ee62b97b1d8, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -24,37 +24,9 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats:
-    - _Dither: 0.004
-    - _FadeEnd: 342.7
-    - _FadeStart: 95.9
-    - _FoamCutoff: 0.62
-    - _FoamScale: 0.25
-    - _FoamSpeed: 0.6
-    - _FoamStrength: 0.28
-    - _RippleAlpha: 1.26
-    - _RippleDensity: 4
-    - _RippleFadeEnd: 150
-    - _RippleFadeStart: 40
-    - _RippleScale: 0.12
-    - _RippleSlimness: 5.1
-    - _RippleSpeed: 2.01
-    - _RippleStrength: 0.74
-    - _RippleTiling: 0.039
-    - _RippleWidth: 0.38
-    - _ShearStrength: 0.003
-    - _SwellScale: 0.055
-    - _SwellStrength: 0.68
-    - _WindowPower: 2.2
-    - _WindowStrength: 0.85
+    m_Floats: []
     m_Colors:
-    - _DeepColor: {r: 0.02, g: 0.11999995, b: 0.33999997, a: 1}
-    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
-    - _HorizonColor: {r: 0.089999996, g: 0.28999996, b: 0.41999996, a: 1}
-    - _LightColor: {r: 0.72, g: 0.93, b: 1, a: 1}
-    - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ShallowColor: {r: 0, g: 0.39299998, b: 0.9919999, a: 1}
-    - _SkirtBottomColor: {r: 0.02, g: 0.079999976, b: 0.13999996, a: 1}
-    - _SurfaceColor: {r: 0.37999994, g: 0.78, b: 0.93, a: 1}
-    - _WindowColor: {r: 0.8, g: 0.96, b: 1, a: 1}
+    - _DeepColor: {r: 0.019607844, g: 0.121568635, b: 0.34117648, a: 1}
+    - _LightColor: {r: 0.72156864, g: 0.9294118, b: 1, a: 1}
+    - _ShallowColor: {r: 0, g: 0.3921569, b: 0.9921569, a: 1}
   m_BuildTextureStacks: []

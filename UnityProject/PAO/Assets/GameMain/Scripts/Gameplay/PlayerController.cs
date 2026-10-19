@@ -34,6 +34,12 @@ namespace PAO
         [Tooltip("重力加速度，取负值")]
         [SerializeField] private float m_Gravity = -20f;
 
+        [Tooltip("【土狼时间】离开地面后多少秒内按跳跃仍然算数（秒）。\n" +
+                 "解决「站在会动的平台上（秋千、升降台、泡泡潮水面）按跳跃没反应」的问题：\n" +
+                 "平台一抬，CharacterController.isGrounded 会掉一帧，跳跃就被吃掉了。\n" +
+                 "0 = 关掉（严格只在 isGrounded 为 true 时能跳）。")]
+        [SerializeField] private float m_JumpGroundGrace = 0.12f;
+
         [Tooltip("角色转身的平滑速度，越大转得越快。8~20 比较自然")]
         [SerializeField] private float m_RotationSpeed = 12f;
 
@@ -99,6 +105,13 @@ namespace PAO
         private float m_Pitch;                  // 摄像机俯仰角
         private float m_VerticalSpeed;          // 垂直速度（由重力累积而来）
         private bool m_WasGrounded;
+
+        /// <summary>最后一次"真正踩到地"的时间，用来实现土狼时间（见 m_JumpGroundGrace）。</summary>
+        private float m_LastGroundedTime = -1000f;
+
+        /// <summary>外部机关给的"当作踩在地上"的截止时间（见 GrantGroundGrace）。</summary>
+        private float m_ForcedGroundUntil = -1000f;
+
         private float m_StepTimer;
         private float m_CurrentCameraDistance;  // 摄像机当前实际距离
 
@@ -138,6 +151,61 @@ namespace PAO
         /// 否则站在板上的每一帧都会被重复弹起，人就黏在空中抖。
         /// </summary>
         public float VerticalSpeed { get { return m_VerticalSpeed; } }
+
+        /// <summary>
+        /// 这一帧按下跳跃会不会生效。
+        ///
+        /// 三个来源满足一个就算"能跳"：
+        ///   1. CharacterController 说自己踩到地了；
+        ///   2. 土狼时间：刚离地不久（<see cref="m_JumpGroundGrace"/>）；
+        ///   3. 外部机关给的宽限：站在会动的平台（秋千）上时，平台每帧调
+        ///      <see cref="GrantGroundGrace"/> 续期 —— 因为那种平台上 isGrounded
+        ///      会一阵一阵地掉，光靠土狼时间盖不住。
+        /// </summary>
+        public bool CanJumpNow
+        {
+            get
+            {
+                if (m_Controller == null)
+                {
+                    return false;
+                }
+
+                if (m_Controller.isGrounded)
+                {
+                    return true;
+                }
+
+                if (m_JumpGroundGrace > 0f && Time.time - m_LastGroundedTime <= m_JumpGroundGrace)
+                {
+                    return true;
+                }
+
+                return Time.time <= m_ForcedGroundUntil;
+            }
+        }
+
+        /// <summary>
+        /// 由外部机关调用：接下来 seconds 秒内，就算 isGrounded 是 false 也允许跳跃。
+        ///
+        /// 谁会用：会动的平台（BombDrivenSwing 等）。它每帧带着人走，
+        /// CharacterController 的 grounded 会一阵一阵地掉，玩家就会"按跳跃没反应"。
+        /// 平台每帧续一次期，跳跃就稳定了；人一离开平台，不再续期，宽限自然过期。
+        /// </summary>
+        public void GrantGroundGrace(float seconds)
+        {
+            if (seconds <= 0f)
+            {
+                return;
+            }
+
+            float until = Time.time + seconds;
+
+            if (until > m_ForcedGroundUntil)
+            {
+                m_ForcedGroundUntil = until;
+            }
+        }
 
         /// <summary>
         /// 由外部机关（弹力跳板等）调用：把角色往上弹到指定高度。
@@ -585,6 +653,20 @@ namespace PAO
 
             // 重力与跳跃
             bool grounded = m_Controller.isGrounded;
+
+            if (grounded)
+            {
+                m_LastGroundedTime = Time.time;
+            }
+
+            // 【土狼时间】刚离地的一小段时间里仍然允许跳。
+            // CharacterController.isGrounded 是"上一次 Move 有没有踩到地"：
+            // 站在会动的平台上时，平台往上抬的那一帧 Move 是朝上的，grounded 立刻变 false，
+            // 玩家这一帧按跳跃就被吃掉了 —— 表现就是"要连按好几次才偶尔跳起来"。
+            // 宽限 0.12 秒就够盖住这种一帧的抖动，也不会让人在空中二段跳
+            // （起跳后 m_LastGroundedTime 会被清掉）。
+            bool jumpAllowed = CanJumpNow;
+
             if (grounded && !m_WasGrounded && m_VerticalSpeed < -3f)
                 PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerLand, transform.position,
                     Mathf.InverseLerp(3f, 14f, -m_VerticalSpeed));
@@ -606,14 +688,20 @@ namespace PAO
                 {
                     m_VerticalSpeed = -2f;
                 }
+            }
 
-                if (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Jump) : Input.GetButtonDown("Jump"))
-                {
-                    // 由目标高度反推初速度：v = sqrt(2 * g * h)
-                    m_VerticalSpeed = Mathf.Sqrt(m_JumpHeight * -2f * m_Gravity);
-                    m_WasGrounded = false;
-                    PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerJump, transform.position);
-                }
+            if (jumpAllowed &&
+                (PAO.UI.V2.UIInput.UsesV2 ? PAO.UI.V2.UIInput.Down(PAO.UI.V2.UIInput.Jump) : Input.GetButtonDown("Jump")))
+            {
+                // 由目标高度反推初速度：v = sqrt(2 * g * h)
+                m_VerticalSpeed = Mathf.Sqrt(m_JumpHeight * -2f * m_Gravity);
+                m_WasGrounded = false;
+
+                // 清掉宽限，防止借着土狼时间在空中连跳
+                m_LastGroundedTime = -1000f;
+                m_ForcedGroundUntil = -1000f;
+
+                PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.PlayerJump, transform.position);
             }
 
             m_VerticalSpeed += m_Gravity * Time.deltaTime;
