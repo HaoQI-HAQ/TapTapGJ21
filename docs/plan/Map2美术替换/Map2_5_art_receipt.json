@@ -1,0 +1,105 @@
+{
+    "scene": "Assets/GameMain/Scenes/Map2_5.unity",
+    "backup": "G:\\project\\TapTapGJ21\\docs\\plan\\Map2美术替换\\backups\\Map2_5_before_preset_20261019_031143_990.unity",
+    "utc": "2026-10-19T03:11:44.2034701Z",
+    "sourceActors": 439,
+    "supportFloors": 4,
+    "hiddenProxyRenderers": 458,
+    "placedModules": 2638,
+    "originalColliders": 308,
+    "finalColliders": 308,
+    "recessedSubstrates": 0,
+    "protectedGroups": [
+        "Mechanisms",
+        "Breakable",
+        "Landmarks",
+        "Detail/DoorIronRail"
+    ],
+    "assets": [
+        {
+            "asset": "block_02",
+            "pack": "Assets/GameMain/Art/Preset/04.glb",
+            "count": 280
+        },
+        {
+            "asset": "block_03",
+            "pack": "Assets/GameMain/Art/Preset/05.glb",
+            "count": 294
+        },
+        {
+            "asset": "block_04",
+            "pack": "Assets/GameMain/Art/Preset/06.glb",
+            "count": 1212
+        },
+        {
+            "asset": "rock_02",
+            "pack": "Assets/GameMain/Art/Preset/04.glb",
+            "count": 17
+        },
+        {
+            "asset": "stairs_02",
+            "pack": "Assets/GameMain/Art/Preset/05.glb",
+            "count": 8
+        },
+        {
+            "asset": "stairs_01",
+            "pack": "Assets/GameMain/Art/Preset/06.glb",
+            "count": 8
+        },
+        {
+            "asset": "column_03",
+            "pack": "Assets/GameMain/Art/Preset/06.glb",
+            "count": 4
+        },
+        {
+            "asset": "beam_14",
+            "pack": "Assets/GameMain/Art/Preset/04.glb",
+            "count": 47
+        },
+        {
+            "asset": "pavement_07",
+            "pack": "Assets/GameMain/Art/Preset/06.glb",
+            "count": 140
+        },
+        {
+            "asset": "pavement_01",
+            "pack": "Assets/GameMain/Art/Preset/01.glb",
+            "count": 141
+        },
+        {
+            "asset": "pavement_02",
+            "pack": "Assets/GameMain/Art/Preset/02.glb",
+            "count": 149
+        },
+        {
+            "asset": "pavement_03",
+            "pack": "Assets/GameMain/Art/Preset/03.glb",
+            "count": 145
+        },
+        {
+            "asset": "wall_02",
+            "pack": "Assets/GameMain/Art/Preset/04.glb",
+            "count": 17
+        },
+        {
+            "asset": "pavement_06",
+            "pack": "Assets/GameMain/Art/Preset/01.glb",
+            "count": 144
+        },
+        {
+            "asset": "wall_01",
+            "pack": "Assets/GameMain/Art/Preset/02.glb",
+            "count": 18
+        },
+        {
+            "asset": "column_02",
+            "pack": "Assets/GameMain/Art/Preset/01.glb",
+            "count": 12
+        },
+        {
+            "asset": "column_06",
+            "pack": "Assets/GameMain/Art/Preset/05.glb",
+            "count": 2
+        }
+    ]
+}
