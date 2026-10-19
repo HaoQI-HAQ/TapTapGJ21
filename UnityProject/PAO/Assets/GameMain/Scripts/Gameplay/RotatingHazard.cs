@@ -65,14 +65,41 @@ namespace PAO
         [Tooltip("停摆时的染色")]
         [SerializeField] private Color m_StunnedTint = new Color(0.55f, 0.78f, 1.0f);
 
+        // ---- 被弹力泡泡减速 ----
+
+        [Header("被弹力泡泡碰到")]
+        [Tooltip("被弹力泡泡碰到时降低转速")]
+        [SerializeField] private bool m_SlowByBouncyBubble = true;
+
+        [Tooltip("每被弹力泡泡碰一次，转速乘以这个系数。\n" +
+                 "0.5 = 每次减半；可以叠加（碰两次就是 0.25 倍），最低到「Min Speed」")]
+        [Range(0.05f, 1f)]
+        [SerializeField] private float m_SlowFactor = 0.5f;
+
+        [Tooltip("最低转速（度/秒）。减速不会低于这个值 —— 设成 0 才能被减到完全停住")]
+        [SerializeField] private float m_MinSpeed = 5f;
+
+        [Tooltip("多少秒内自动恢复到原来的转速。0 = 不恢复（一直保持减速后的速度）")]
+        [SerializeField] private float m_SlowRecoverSeconds = 0f;
+
         [Header("调试")]
-        [Tooltip("打印被炸停 / 恢复的日志")]
+        [Tooltip("打印被炸停 / 恢复 / 减速的日志")]
         [SerializeField] private bool m_Log = true;
 
         // ---- 运行时 ----
 
         private float m_Direction = 1f;
         private float m_Swung;
+
+        /// <summary>
+        /// 运行时实际使用的转速。
+        ///
+        /// m_Speed 是 Inspector 里配的**原始**转速，这个才是当前值 ——
+        /// 被弹力泡泡碰过之后它会变小（可以叠加），
+        /// 停摆结束后也靠它恢复，所以不能直接改 m_Speed，
+        /// 否则原始转速就丢了、没法恢复。
+        /// </summary>
+        private float m_CurrentSpeed;
 
         /// <summary>剩余停摆时间（秒）。0 = 正在转。</summary>
         private float m_StunLeft;
@@ -87,8 +114,11 @@ namespace PAO
         /// <summary>当前的转速（度/秒）。带符号；停摆时为 0。</summary>
         public float CurrentSpeed
         {
-            get { return IsStunned ? 0f : m_Speed * (m_PingPong ? m_Direction : 1f); }
+            get { return IsStunned ? 0f : m_CurrentSpeed * (m_PingPong ? m_Direction : 1f); }
         }
+
+        /// <summary>配置里的原始转速（不含减速）。</summary>
+        public float BaseSpeed { get { return m_Speed; } }
 
         /// <summary>是否正在停摆。</summary>
         public bool IsStunned { get { return m_StunLeft > 0f; } }
@@ -96,10 +126,16 @@ namespace PAO
         /// <summary>停摆还剩多少秒。</summary>
         public float StunRemaining { get { return m_StunLeft; } }
 
+        /// <summary>是否已经被弹力泡泡减速过。</summary>
+        public bool IsSlowed { get { return Mathf.Abs(m_CurrentSpeed) < Mathf.Abs(m_Speed) - 0.01f; } }
+
         // ==================== 生命周期 ====================
 
         private void Awake()
         {
+            // 运行时转速从 Inspector 的原始值开始
+            m_CurrentSpeed = m_Speed;
+
             CacheRenderers();
         }
 
@@ -165,12 +201,15 @@ namespace PAO
                 }
             }
 
-            if (m_Speed == 0f)
+            // 加速恢复：被弹力泡泡减速之后，如果配了恢复时长，就慢慢回到原速
+            UpdateSlowRecovery();
+
+            if (m_CurrentSpeed == 0f)
             {
                 return;
             }
 
-            float delta = m_Speed * Time.deltaTime;
+            float delta = m_CurrentSpeed * Time.deltaTime;
 
             if (m_PingPong)
             {
@@ -193,6 +232,116 @@ namespace PAO
                 // 用 Time.deltaTime 走正常时间 —— 暂停时障碍也该停
                 transform.Rotate(m_Axis, delta, Space.Self);
             }
+        }
+
+        // ==================== 被弹力泡泡减速 ====================
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            Bubble bubble = collision.collider.GetComponentInParent<Bubble>();
+
+            if (bubble != null)
+            {
+                TrySlow(bubble);
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            Bubble bubble = other.GetComponentInParent<Bubble>();
+
+            if (bubble != null)
+            {
+                TrySlow(bubble);
+            }
+        }
+
+        private void TrySlow(Bubble bubble)
+        {
+            if (!m_SlowByBouncyBubble)
+            {
+                return;
+            }
+
+            // 只认弹力泡泡。浮粘/炸弹撞上来不该减速 ——
+            // 炸弹有它自己的"炸停"那套行为（见 HandleBubbleExploded）。
+            if (bubble.Type != BubbleType.Bouncy)
+            {
+                return;
+            }
+
+            Slow(m_SlowFactor);
+        }
+
+        /// <summary>
+        /// 把转速乘以一个系数。外部脚本也可以调。
+        ///
+        /// 【为什么要跟 m_MinSpeed 夹一下】
+        /// 每次减半的话，碰几次速度就趋近 0 —— 那和"停摆"没区别了，
+        /// 反而让炸弹那套机制失去意义。所以给一个下限：
+        /// 减速可以叠加，但永远不会低于 Min Speed。
+        /// 想让它能被减到完全停住，把 Min Speed 设成 0。
+        /// </summary>
+        public void Slow(float factor)
+        {
+            if (factor >= 1f)
+            {
+                return;   // 不是减速
+            }
+
+            factor = Mathf.Max(factor, 0.01f);
+
+            float sign = Mathf.Sign(m_CurrentSpeed == 0f ? m_Speed : m_CurrentSpeed);
+            float magnitude = Mathf.Abs(m_CurrentSpeed) * factor;
+
+            // 下限按"原始转速的比例"算，这样负转速也不会出错
+            float floor = Mathf.Min(Mathf.Abs(m_MinSpeed), Mathf.Abs(m_Speed));
+
+            if (magnitude < floor)
+            {
+                magnitude = floor;
+            }
+
+            m_CurrentSpeed = sign * magnitude;
+
+            if (m_Log)
+            {
+                Debug.Log("[RotatingHazard] \"" + name + "\" 被弹力泡泡减速 → " +
+                          m_CurrentSpeed.ToString("F1") + " 度/秒" +
+                          "（原 " + m_Speed.ToString("F1") + "）", this);
+            }
+        }
+
+        /// <summary>把转速恢复到 Inspector 里配的原始值。</summary>
+        public void ResetSpeed()
+        {
+            m_CurrentSpeed = m_Speed;
+        }
+
+        /// <summary>如果配了恢复时长，就在这个时间里线性回到原速。</summary>
+        private void UpdateSlowRecovery()
+        {
+            if (m_SlowRecoverSeconds <= 0f)
+            {
+                return;
+            }
+
+            float current = Mathf.Abs(m_CurrentSpeed);
+            float target = Mathf.Abs(m_Speed);
+
+            if (current >= target - 0.001f)
+            {
+                return;
+            }
+
+            // 从最低速回到满速正好用 m_SlowRecoverSeconds 秒
+            float span = Mathf.Max(0.01f, target - Mathf.Abs(m_MinSpeed));
+            float rate = span / Mathf.Max(0.01f, m_SlowRecoverSeconds);
+
+            float sign = Mathf.Sign(m_CurrentSpeed == 0f ? m_Speed : m_CurrentSpeed);
+            float magnitude = Mathf.MoveTowards(current, target, rate * Time.deltaTime);
+
+            m_CurrentSpeed = sign * magnitude;
         }
 
         // ==================== 被炸弹炸到 ====================
@@ -333,6 +482,10 @@ namespace PAO
             m_Speed = speed;
             m_PingPong = pingPong;
             m_SwingAngle = swingAngle;
+
+            // 改了原始转速，运行时转速也要跟着重置，
+            // 否则搭建完之后跑起来用的还是旧值。
+            m_CurrentSpeed = speed;
         }
     }
 }
