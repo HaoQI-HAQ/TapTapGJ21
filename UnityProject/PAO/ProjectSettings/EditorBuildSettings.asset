@@ -44,4 +44,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/GameMain/Scenes/wengjie.unity
     guid: 70132632efbb5d645b6ffdb64dba5a9a
+  - enabled: 1
+    path: "Assets/GameMain/Scenes/\u6D1B\u742A\u5E0C.unity"
+    guid: 21df00cfc31ade845bab0ac85cc3d17b
   m_configObjects: {}

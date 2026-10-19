@@ -1,0 +1,368 @@
+{
+    "entries": [
+        {
+            "id": "block_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/04.glb",
+            "sourceNode": "TFD_Building_Block_02A_LOD0_7",
+            "prefab": {
+                "instanceID": 47010
+            },
+            "size": {
+                "x": 2.0000007152557375,
+                "y": 2.0000014305114748,
+                "z": 2.0497453212738039
+            }
+        },
+        {
+            "id": "block_03",
+            "sourcePath": "Assets/GameMain/Art/Preset/05.glb",
+            "sourceNode": "TFD_Building_Block_03A_LOD0_1",
+            "prefab": {
+                "instanceID": 58402
+            },
+            "size": {
+                "x": 4.0040283203125,
+                "y": 4.002001762390137,
+                "z": 4.004025936126709
+            }
+        },
+        {
+            "id": "block_04",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Building_Block_04A_LOD0_5",
+            "prefab": {
+                "instanceID": 68150
+            },
+            "size": {
+                "x": 4.000003814697266,
+                "y": 4.000001430511475,
+                "z": 4.049749851226807
+            }
+        },
+        {
+            "id": "block_06",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Building_Block_06A_LOD0",
+            "prefab": {
+                "instanceID": 71120
+            },
+            "size": {
+                "x": 1.008009910583496,
+                "y": 2.0000007152557375,
+                "z": 1.008015513420105
+            }
+        },
+        {
+            "id": "pavement_01",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Pavement_01A_LOD0",
+            "prefab": {
+                "instanceID": 71156
+            },
+            "size": {
+                "x": 4.000000476837158,
+                "y": 0.18376876413822175,
+                "z": 4.000000953674316
+            }
+        },
+        {
+            "id": "pavement_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/02.glb",
+            "sourceNode": "TFD_Pavement_02A_LOD0",
+            "prefab": {
+                "instanceID": 79576
+            },
+            "size": {
+                "x": 2.00000262260437,
+                "y": 0.1859630048274994,
+                "z": 2.0000064373016359
+            }
+        },
+        {
+            "id": "pavement_03",
+            "sourcePath": "Assets/GameMain/Art/Preset/03.glb",
+            "sourceNode": "TFD_Pavement_03A_LOD0",
+            "prefab": {
+                "instanceID": 93804
+            },
+            "size": {
+                "x": 2.0000016689300539,
+                "y": 0.14154581725597382,
+                "z": 2.0000102519989015
+            }
+        },
+        {
+            "id": "pavement_06",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Pavement_06A_LOD0",
+            "prefab": {
+                "instanceID": 93840
+            },
+            "size": {
+                "x": 4.010049819946289,
+                "y": 0.17089241743087769,
+                "z": 4.000001430511475
+            }
+        },
+        {
+            "id": "pavement_07",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Pavement_07A_LOD0",
+            "prefab": {
+                "instanceID": 93876
+            },
+            "size": {
+                "x": 4.000003337860107,
+                "y": 0.16064316034317017,
+                "z": 4.00001335144043
+            }
+        },
+        {
+            "id": "pavement_08",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Pavement_08A_LOD0",
+            "prefab": {
+                "instanceID": 93912
+            },
+            "size": {
+                "x": 4.0000104904174809,
+                "y": 0.10118313133716583,
+                "z": 4.000000953674316
+            }
+        },
+        {
+            "id": "beam_08",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Beam_08A_LOD0",
+            "prefab": {
+                "instanceID": 93948
+            },
+            "size": {
+                "x": 3.0439884662628176,
+                "y": 2.0009655952453615,
+                "z": 2.0010483264923097
+            }
+        },
+        {
+            "id": "beam_14",
+            "sourcePath": "Assets/GameMain/Art/Preset/04.glb",
+            "sourceNode": "TFD_Beam_14A_LOD0_6",
+            "prefab": {
+                "instanceID": 93984
+            },
+            "size": {
+                "x": 4.0,
+                "y": 0.5000004172325134,
+                "z": 0.5124364495277405
+            }
+        },
+        {
+            "id": "beam_15",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Beam_15A_LOD0_6",
+            "prefab": {
+                "instanceID": 94020
+            },
+            "size": {
+                "x": 7.117302417755127,
+                "y": 2.0039970874786379,
+                "z": 2.591601848602295
+            }
+        },
+        {
+            "id": "wall_01",
+            "sourcePath": "Assets/GameMain/Art/Preset/02.glb",
+            "sourceNode": "TFD_Wall_01A_LOD0",
+            "prefab": {
+                "instanceID": 94056
+            },
+            "size": {
+                "x": 4.048282623291016,
+                "y": 4.012641429901123,
+                "z": 0.5519987940788269
+            }
+        },
+        {
+            "id": "wall_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/04.glb",
+            "sourceNode": "TFD_Wall_02A_LOD0",
+            "prefab": {
+                "instanceID": 94092
+            },
+            "size": {
+                "x": 4.048285007476807,
+                "y": 4.000001430511475,
+                "z": 0.5510051250457764
+            }
+        },
+        {
+            "id": "wall_03",
+            "sourcePath": "Assets/GameMain/Art/Preset/05.glb",
+            "sourceNode": "TFD_Wall_03A_LOD0_6",
+            "prefab": {
+                "instanceID": 94128
+            },
+            "size": {
+                "x": 4.048281669616699,
+                "y": 3.0000014305114748,
+                "z": 0.5981297492980957
+            }
+        },
+        {
+            "id": "wall_04",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Wall_04A_LOD0",
+            "prefab": {
+                "instanceID": 94388
+            },
+            "size": {
+                "x": 4.000004291534424,
+                "y": 4.000002384185791,
+                "z": 0.5757768154144287
+            }
+        },
+        {
+            "id": "wall_block_01",
+            "sourcePath": "Assets/GameMain/Art/Preset/02.glb",
+            "sourceNode": "TFD_Wall_Block_01A_LOD0",
+            "prefab": {
+                "instanceID": 94424
+            },
+            "size": {
+                "x": 1.000011920928955,
+                "y": 1.433340311050415,
+                "z": 0.5523905754089356
+            }
+        },
+        {
+            "id": "wall_block_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/02.glb",
+            "sourceNode": "TFD_Wall_Block_02A_LOD0",
+            "prefab": {
+                "instanceID": 94460
+            },
+            "size": {
+                "x": 1.041165828704834,
+                "y": 0.9281165599822998,
+                "z": 0.757229208946228
+            }
+        },
+        {
+            "id": "stairs_01",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Stairs_01A_LOD0",
+            "prefab": {
+                "instanceID": 94496
+            },
+            "size": {
+                "x": 2.0019760131835939,
+                "y": 1.0022754669189454,
+                "z": 1.0692006349563599
+            }
+        },
+        {
+            "id": "stairs_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/05.glb",
+            "sourceNode": "TFD_Stairs_02A_LOD0",
+            "prefab": {
+                "instanceID": 94532
+            },
+            "size": {
+                "x": 2.0019757747650148,
+                "y": 1.0022753477096558,
+                "z": 2.069200038909912
+            }
+        },
+        {
+            "id": "column_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Column_01A_Module_02_LOD0",
+            "prefab": {
+                "instanceID": 94568
+            },
+            "size": {
+                "x": 1.6771750450134278,
+                "y": 4.0019097328186039,
+                "z": 1.6781762838363648
+            }
+        },
+        {
+            "id": "column_03",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Column_01A_Module_03_LOD0",
+            "prefab": {
+                "instanceID": 94604
+            },
+            "size": {
+                "x": 1.6761767864227296,
+                "y": 3.463632345199585,
+                "z": 1.6761764287948609
+            }
+        },
+        {
+            "id": "column_06",
+            "sourcePath": "Assets/GameMain/Art/Preset/05.glb",
+            "sourceNode": "TFD_Column_01A_Module_06_LOD0",
+            "prefab": {
+                "instanceID": 94640
+            },
+            "size": {
+                "x": 1.1818485260009766,
+                "y": 4.001907825469971,
+                "z": 1.181849718093872
+            }
+        },
+        {
+            "id": "rock_02",
+            "sourcePath": "Assets/GameMain/Art/Preset/04.glb",
+            "sourceNode": "TFD_Rock_Large_02A_LOD0",
+            "prefab": {
+                "instanceID": 94676
+            },
+            "size": {
+                "x": 11.435868263244629,
+                "y": 19.66219139099121,
+                "z": 11.95386791229248
+            }
+        },
+        {
+            "id": "rock_08",
+            "sourcePath": "Assets/GameMain/Art/Preset/01.glb",
+            "sourceNode": "TFD_Rock_Large_08A_LOD0",
+            "prefab": {
+                "instanceID": 94712
+            },
+            "size": {
+                "x": 11.268549919128418,
+                "y": 10.949243545532227,
+                "z": 7.860794544219971
+            }
+        },
+        {
+            "id": "stone_01",
+            "sourcePath": "Assets/GameMain/Art/Preset/06.glb",
+            "sourceNode": "TFD_Stone_01A",
+            "prefab": {
+                "instanceID": 94748
+            },
+            "size": {
+                "x": 0.5000234246253967,
+                "y": 0.4434855878353119,
+                "z": 0.4802566468715668
+            }
+        },
+        {
+            "id": "stone_03",
+            "sourcePath": "Assets/GameMain/Art/Preset/04.glb",
+            "sourceNode": "TFD_Stone_03A_1",
+            "prefab": {
+                "instanceID": 94784
+            },
+            "size": {
+                "x": 0.30645185708999636,
+                "y": 0.3921588957309723,
+                "z": 0.3515087366104126
+            }
+        }
+    ]
+}
