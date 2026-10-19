@@ -20,6 +20,7 @@ namespace PAO.UI.V2
         private bool hovered, focused, pressed, wasInteractable;
         private bool emphasized;
         public void SetEmphasized(bool value) { emphasized = value; Refresh(); }
+        public void SetLabelColor(Color value) { labelColor = value; Refresh(); }
         private void Awake() { button = GetComponent<Button>(); wasInteractable = button.IsInteractable(); }
         public void Configure(UIConfig theme, UIFluidGradient gradient)
         {

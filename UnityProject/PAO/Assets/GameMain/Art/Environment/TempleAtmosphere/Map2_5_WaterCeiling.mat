@@ -32,7 +32,7 @@ Material:
     - _FoamScale: 0.25
     - _FoamSpeed: 0.6
     - _FoamStrength: 0.08
-    - _RippleAlpha: 0.46
+    - _RippleAlpha: 0.28
     - _RippleDensity: 4
     - _RippleFadeEnd: 150
     - _RippleFadeStart: 40
@@ -48,13 +48,13 @@ Material:
     - _WindowPower: 2.2
     - _WindowStrength: 0.85
     m_Colors:
-    - _DeepColor: {r: 0.42299998, g: 0.594, b: 0.69299996, a: 0.9}
+    - _DeepColor: {r: 0.68, g: 0.82, b: 0.88, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
-    - _HorizonColor: {r: 0.47, g: 0.66, b: 0.77, a: 1}
-    - _LightColor: {r: 0.78, g: 0.94, b: 1, a: 1}
-    - _RippleColor: {r: 0.8, g: 0.97, b: 1, a: 1}
-    - _ShallowColor: {r: 0.53, g: 0.87, b: 0.85, a: 1}
-    - _SkirtBottomColor: {r: 0.3384, g: 0.47520003, b: 0.5544, a: 0.72}
-    - _SurfaceColor: {r: 0.53, g: 0.87, b: 0.85, a: 1}
+    - _HorizonColor: {r: 0.68, g: 0.82, b: 0.88, a: 1}
+    - _LightColor: {r: 0.91, g: 0.97, b: 1, a: 1}
+    - _RippleColor: {r: 0.93, g: 0.98, b: 1, a: 1}
+    - _ShallowColor: {r: 0.79, g: 0.92, b: 0.93, a: 1}
+    - _SkirtBottomColor: {r: 0.68, g: 0.82, b: 0.88, a: 1}
+    - _SurfaceColor: {r: 0.79, g: 0.92, b: 0.93, a: 1}
     - _WindowColor: {r: 0.8, g: 0.96, b: 1, a: 1}
   m_BuildTextureStacks: []

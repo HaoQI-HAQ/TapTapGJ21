@@ -37,20 +37,20 @@ namespace PAO.EditorTools
         }
 
         static readonly Palette[] Palettes = {
-            new Palette { map = "Map2", mood = "明亮水下遗迹 · 青蓝柔雾",
-                fog = new Color(.38f,.64f,.73f), ambient = new Color(.72f,.84f,.91f),
-                shallow = new Color(.53f,.84f,.89f), accent = new Color(1f,.87f,.68f),
-                density = .004f, exposure = -.10f, temperature = -5f,
+            new Palette { map = "Map2", mood = "水下遗迹 · 清晰水光",
+                fog = new Color(.65f,.81f,.86f), ambient = new Color(1.10f,1.08f,1.02f),
+                shallow = new Color(.77f,.91f,.92f), accent = new Color(1f,.93f,.80f),
+                density = 0f, exposure = -.10f, temperature = 0f,
                 entry = new Vector3(-18,2,25), goal = new Vector3(8,8,-111.5f) },
-            new Palette { map = "Map2_5", mood = "水光回廊 · 青绿与淡紫天光",
-                fog = new Color(.47f,.66f,.77f), ambient = new Color(.79f,.84f,.95f),
-                shallow = new Color(.53f,.87f,.85f), accent = new Color(1f,.89f,.73f),
-                density = .0035f, exposure = -.15f, temperature = -2f,
+            new Palette { map = "Map2_5", mood = "水光回廊 · 明亮柔光",
+                fog = new Color(.68f,.82f,.88f), ambient = new Color(1.10f,1.08f,1.04f),
+                shallow = new Color(.79f,.92f,.93f), accent = new Color(1f,.94f,.82f),
+                density = 0f, exposure = -.15f, temperature = 0f,
                 entry = new Vector3(0,0,84.5f), goal = new Vector3(12,11.5f,-23.5f) },
-            new Palette { map = "Map3", mood = "水下峡谷 · 冰蓝与柔紫远景",
-                fog = new Color(.38f,.60f,.75f), ambient = new Color(.71f,.81f,.93f),
-                shallow = new Color(.49f,.77f,.91f), accent = new Color(.74f,.94f,1f),
-                density = .0045f, exposure = -.10f, temperature = -6f,
+            new Palette { map = "Map3", mood = "水下峡谷 · 清透浅水",
+                fog = new Color(.65f,.80f,.89f), ambient = new Color(1.08f,1.08f,1.04f),
+                shallow = new Color(.77f,.89f,.95f), accent = new Color(.94f,.97f,1f),
+                density = 0f, exposure = -.10f, temperature = 0f,
                 entry = new Vector3(0,-16,60), goal = new Vector3(0,0,-97.5f) }
         };
 
@@ -68,7 +68,101 @@ namespace PAO.EditorTools
         public static void BuildAll() { ProcessAll(true); }
 
         [MenuItem("Tools/PAO/环境氛围/导出三个地图预览")]
-        public static void CaptureAll() { ProcessAll(false); }
+        public static void CaptureAll() { PrepareCausticsPreview(() => ProcessAll(false)); }
+
+        static void PrepareCausticsPreview(Action capture)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play mode before capturing the atmosphere.");
+            var cookie = AssetDatabase.LoadAssetAtPath<CustomRenderTexture>(CausticsCookie);
+            if (cookie == null) throw new FileNotFoundException("Missing Map4 caustics cookie",CausticsCookie);
+            if (!cookie.IsCreated()) cookie.Create();
+            cookie.Initialize();
+            cookie.Update();
+            // CustomRenderTexture updates run on the next editor frame, not inside Camera.Render.
+            // Keep the asset loaded and allow that frame before rendering additive scene previews.
+            double readyAt = EditorApplication.timeSinceStartup + .2;
+            EditorApplication.CallbackFunction ready = null;
+            ready = () =>
+            {
+                if (EditorApplication.timeSinceStartup < readyAt) return;
+                EditorApplication.update -= ready;
+                if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+                try { capture(); }
+                catch (Exception e) { Debug.LogException(e); }
+                finally { GC.KeepAlive(cookie); }
+            };
+            EditorApplication.update += ready;
+            EditorApplication.QueuePlayerLoopUpdate();
+            SceneView.RepaintAll();
+        }
+
+        [MenuItem("Tools/PAO/环境氛围/移除三个地图水雾")]
+        public static void RemoveHaze() { AdjustAtmosphere(false); }
+
+        [MenuItem("Tools/PAO/环境氛围/调整为明亮柔和浅水")]
+        public static void BrightenAtmosphere() { AdjustAtmosphere(true); }
+
+        static void AdjustAtmosphere(bool brighten)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play mode before editing the atmosphere.");
+            Scene previous = SceneManager.GetActiveScene();
+            string backupDir = Path.GetFullPath(Path.Combine(Application.dataPath,"../../../../PAO-EnvironmentBackups"));
+            Directory.CreateDirectory(backupDir);
+            try
+            {
+                foreach (Palette p in Palettes)
+                {
+                    string path = "Assets/GameMain/Scenes/" + p.map + ".unity";
+                    Scene scene = SceneManager.GetSceneByPath(path);
+                    bool opened = !scene.isLoaded;
+                    if (opened) scene = EditorSceneManager.OpenScene(path,OpenSceneMode.Additive);
+                    try
+                    {
+                        SceneManager.SetActiveScene(scene);
+                        string backup = Path.Combine(backupDir,p.map + (brighten ? "_before_brighten_" : "_before_remove_haze_") + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") + ".unity");
+                        if (scene.isDirty)
+                        {
+                            if (!EditorSceneManager.SaveScene(scene,backup,true)) throw new IOException("Could not back up " + p.map);
+                        }
+                        else File.Copy(path,backup);
+                        RenderSettings.fog = false;
+                        foreach (var haze in Components<TempleAtmosphereVolume>(scene)) haze.enabled = false;
+                        if (brighten)
+                        {
+                            var root = Environment(scene,p).transform;
+                            ApplyRenderSettings(p);
+                            Light sun = Components<Light>(scene).First(l => l.type == LightType.Directional && l.cookie != null);
+                            sun.color = new Color(.98f,.99f,1f); sun.shadowStrength = .25f;
+                            var fill = root.Find("Temple_BlueFill").GetComponent<Light>();
+                            fill.color = new Color(.97f,.99f,1f); fill.intensity = 1.1f;
+                            CreateUnderFill(root);
+                            foreach (var camera in Components<Camera>(scene)) camera.backgroundColor = p.fog;
+                            foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
+                                if (renderer.sharedMaterial != null && renderer.sharedMaterial.shader.name == "PAO/UnderwaterCeiling")
+                                    ApplyWaterPalette(renderer.sharedMaterial,p);
+                            var profile = root.GetComponentInChildren<Volume>().sharedProfile;
+                            ConfigurePostFX(profile,p);
+                        }
+                        EditorSceneManager.MarkSceneDirty(scene);
+                        if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save " + p.map);
+                    }
+                    finally
+                    {
+                        if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
+                        if (opened && !scene.isDirty) EditorSceneManager.CloseScene(scene,true);
+                    }
+                }
+                if (brighten) AssetDatabase.SaveAssets();
+                Debug.Log("[Temple Atmosphere] " + (brighten ? "Brightened ambient light, shadow fill and water background; haze remains off." : "Removed water haze and distance fog from Map2, Map2_5 and Map3."));
+            }
+            finally
+            {
+                if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
+                SceneView.RepaintAll();
+            }
+        }
 
         static void ConfigureCausticLight(Light sun)
         {
@@ -203,6 +297,11 @@ namespace PAO.EditorTools
         [MenuItem("Tools/PAO/环境氛围/检查焦散渲染")]
         public static void VerifyCausticRendering()
         {
+            PrepareCausticsPreview(VerifyCausticRenderingNow);
+        }
+
+        static void VerifyCausticRenderingNow()
+        {
             Scene previous = SceneManager.GetActiveScene();
             var lines = new List<string>();
             try
@@ -286,6 +385,8 @@ namespace PAO.EditorTools
                         var volumes = Components<TempleAtmosphereVolume>(scene);
                         if (volumes.Length != 1 || volumes[0].material == null || ShaderUtil.ShaderHasError(volumes[0].material.shader))
                             throw new InvalidDataException(p.map + " atmosphere or shader is invalid.");
+                        if (RenderSettings.fog || volumes[0].enabled)
+                            throw new InvalidDataException(p.map + " water haze must remain disabled.");
                         var post = Environment(scene,p).GetComponentInChildren<Volume>();
                         if (post == null || post.sharedProfile.components.Count != 5 || post.sharedProfile.components.Any(c => c == null))
                             throw new InvalidDataException(p.map + " profile is invalid.");
@@ -300,12 +401,12 @@ namespace PAO.EditorTools
                             ShaderUtil.ShaderHasError(cookie.material.shader))
                             throw new InvalidDataException(p.map + " Map4 caustics cookie is invalid.");
                         foreach (Camera camera in Components<Camera>(scene))
-                            if (!camera.GetUniversalAdditionalCameraData().renderPostProcessing ||
-                                !TempleAtmosphereVolume.TryGet(camera,out _)) throw new InvalidDataException(p.map + " camera is not configured.");
+                            if ((camera.isActiveAndEnabled && !camera.GetUniversalAdditionalCameraData().renderPostProcessing) ||
+                                TempleAtmosphereVolume.TryGet(camera,out _)) throw new InvalidDataException(p.map + " camera is not configured.");
                         foreach (Transform t in Components<Transform>(scene))
                             if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject) > 0)
                                 throw new InvalidDataException(p.map + " contains a missing script.");
-                        lines.Add(p.map + ": PASS; reloaded atmosphere, Map4 animated light cookie (15x15), profile, camera, shader and scripts. Colliders=" + Components<Collider>(scene).Length);
+                        lines.Add(p.map + ": PASS; water haze and distance fog disabled; Map4 animated light cookie (15x15), profile, camera, shader and scripts preserved. Colliders=" + Components<Collider>(scene).Length);
                     }
                     finally { if (opened) EditorSceneManager.CloseScene(scene,true); }
                 }
@@ -487,6 +588,7 @@ namespace PAO.EditorTools
             ApplyRenderSettings(p);
             var atmosphere = root.AddComponent<TempleAtmosphereVolume>();
             atmosphere.material = CreateHazeMaterial(p);
+            atmosphere.enabled = false;
             Camera[] cameras = Components<Camera>(scene).Where(c => c.cameraType == CameraType.Game).ToArray();
             foreach (Camera camera in cameras)
             {
@@ -565,17 +667,7 @@ namespace PAO.EditorTools
         static void CreateWater(Transform root, Palette p, Bounds bounds, float waterY, float halfSize)
         {
             Material mat = CopyMaterial(WaterSource, p.map, "WaterCeiling");
-            mat.SetColor("_DeepColor", p.fog * .9f);
-            mat.SetColor("_ShallowColor", p.shallow);
-            mat.SetColor("_HorizonColor", p.fog);
-            mat.SetColor("_SkirtBottomColor", p.fog * .72f);
-            mat.SetColor("_LightColor", new Color(.78f,.94f,1f));
-            mat.SetColor("_RippleColor", new Color(.80f,.97f,1f));
-            mat.SetColor("_SurfaceColor", p.shallow);
-            mat.SetFloat("_RippleAlpha", .46f);
-            mat.SetFloat("_RippleStrength", .32f);
-            mat.SetFloat("_RippleSpeed", .55f);
-            mat.SetFloat("_FoamStrength", .08f);
+            ApplyWaterPalette(mat,p);
             mat.SetFloat("_FadeStart", halfSize * .3f);
             mat.SetFloat("_FadeEnd", halfSize * .92f);
             var water = Child(root, "Water_Ceiling");
@@ -583,6 +675,22 @@ namespace PAO.EditorTools
             water.AddComponent<MeshFilter>();
             water.AddComponent<MeshRenderer>().sharedMaterial = mat;
             water.AddComponent<UnderwaterCeiling>().Configure(halfSize, bounds.size.y + 220f);
+        }
+
+        static void ApplyWaterPalette(Material mat, Palette p)
+        {
+            mat.SetColor("_DeepColor", p.fog);
+            mat.SetColor("_ShallowColor", p.shallow);
+            mat.SetColor("_HorizonColor", p.fog);
+            mat.SetColor("_SkirtBottomColor", p.fog);
+            mat.SetColor("_LightColor", new Color(.91f,.97f,1f));
+            mat.SetColor("_RippleColor", new Color(.93f,.98f,1f));
+            mat.SetColor("_SurfaceColor", p.shallow);
+            mat.SetFloat("_RippleAlpha", .28f);
+            mat.SetFloat("_RippleStrength", .32f);
+            mat.SetFloat("_RippleSpeed", .55f);
+            mat.SetFloat("_FoamStrength", .08f);
+            EditorUtility.SetDirty(mat);
         }
 
         static T Effect<T>(VolumeProfile profile) where T : VolumeComponent
@@ -600,25 +708,30 @@ namespace PAO.EditorTools
             string path = AssetFolder + "/" + p.map + "_AtmosphereProfile.asset";
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
             if (profile == null) { profile = ScriptableObject.CreateInstance<VolumeProfile>(); AssetDatabase.CreateAsset(profile, path); }
-            Effect<Tonemapping>(profile).mode.Override(TonemappingMode.ACES);
-            var bloom = Effect<Bloom>(profile);
-            bloom.threshold.Override(1.35f); bloom.intensity.Override(.12f); bloom.scatter.Override(.72f);
-            var color = Effect<ColorAdjustments>(profile);
-            color.postExposure.Override(p.exposure); color.contrast.Override(-6f); color.saturation.Override(-6f);
-            var balance = Effect<WhiteBalance>(profile);
-            balance.temperature.Override(p.temperature); balance.tint.Override(1f);
-            var vignette = Effect<Vignette>(profile);
-            vignette.intensity.Override(.10f); vignette.smoothness.Override(.48f);
-            vignette.color.Override(new Color(.025f,.05f,.10f));
-            foreach (VolumeComponent effect in profile.components) EditorUtility.SetDirty(effect);
-            EditorUtility.SetDirty(profile);
+            ConfigurePostFX(profile,p);
             var volume = Child(root, "Atmosphere_PostFX").AddComponent<Volume>();
             volume.isGlobal = true; volume.priority = 20; volume.sharedProfile = profile;
         }
 
+        static void ConfigurePostFX(VolumeProfile profile, Palette p)
+        {
+            Effect<Tonemapping>(profile).mode.Override(TonemappingMode.ACES);
+            var bloom = Effect<Bloom>(profile);
+            bloom.threshold.Override(1.35f); bloom.intensity.Override(.12f); bloom.scatter.Override(.72f);
+            var color = Effect<ColorAdjustments>(profile);
+            color.postExposure.Override(p.exposure); color.contrast.Override(-12f); color.saturation.Override(-2f);
+            var balance = Effect<WhiteBalance>(profile);
+            balance.temperature.Override(p.temperature); balance.tint.Override(1f);
+            var vignette = Effect<Vignette>(profile);
+            vignette.intensity.Override(0f); vignette.smoothness.Override(.48f);
+            vignette.color.Override(new Color(.025f,.05f,.10f));
+            foreach (VolumeComponent effect in profile.components) EditorUtility.SetDirty(effect);
+            EditorUtility.SetDirty(profile);
+        }
+
         static void ApplyRenderSettings(Palette p)
         {
-            RenderSettings.fog = true;
+            RenderSettings.fog = false;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = p.fog;
             RenderSettings.fogDensity = p.density;
@@ -654,15 +767,25 @@ namespace PAO.EditorTools
             Light sun = Components<Light>(scene).FirstOrDefault(l => l.type == LightType.Directional && !l.transform.IsChildOf(root));
             if (sun == null) { sun = Child(root, "Temple_KeyLight").AddComponent<Light>(); sun.type = LightType.Directional; }
             ConfigureCausticLight(sun);
+            sun.color = new Color(.98f,.99f,1f); sun.shadowStrength = .25f;
             var fill = Child(root, "Temple_BlueFill").AddComponent<Light>();
-            fill.type = LightType.Directional; fill.color = p.shallow;
-            fill.intensity = .45f; fill.shadows = LightShadows.None;
+            fill.type = LightType.Directional; fill.color = new Color(.97f,.99f,1f);
+            fill.intensity = 1.1f; fill.shadows = LightShadows.None;
             fill.transform.rotation = Quaternion.Euler(30,140,0);
+            CreateUnderFill(root);
             LightAt(root, "Entrance_SoftLight", p.entry + new Vector3(0,5,-3), p.shallow, 4f, 30f);
             LightAt(root, "Goal_AccentLight", p.goal + new Vector3(0,5,2), p.accent, 5.5f, 28f);
             for (int i = 1; i <= 3; i++)
                 LightAt(root, "Hall_IndirectLight_" + i, Vector3.Lerp(p.entry,p.goal,i/4f) + new Vector3(i%2==0?-5:5,7,0),
                     Color.Lerp(p.shallow,Color.white,.3f), 2.5f, 26f);
+        }
+
+        static void CreateUnderFill(Transform root)
+        {
+            var child = root.Find("Temple_UnderFill");
+            Light fill = child != null ? child.GetComponent<Light>() : Child(root,"Temple_UnderFill").AddComponent<Light>();
+            fill.type = LightType.Directional; fill.intensity = .65f; fill.color = new Color(1f,.97f,.90f);
+            fill.shadows = LightShadows.None; fill.transform.rotation = Quaternion.Euler(-35,-40,0);
         }
 
         static void CreateParticles(Transform root, Palette p)

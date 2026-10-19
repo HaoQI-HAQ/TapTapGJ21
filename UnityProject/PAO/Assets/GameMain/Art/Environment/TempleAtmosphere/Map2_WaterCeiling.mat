@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
@@ -32,29 +32,29 @@ Material:
     - _FoamScale: 0.25
     - _FoamSpeed: 0.6
     - _FoamStrength: 0.08
-    - _RippleAlpha: 0.46
-    - _RippleDensity: 4
+    - _RippleAlpha: 1.02
+    - _RippleDensity: 3.6
     - _RippleFadeEnd: 150
     - _RippleFadeStart: 40
     - _RippleScale: 0.12
-    - _RippleSlimness: 5.1
-    - _RippleSpeed: 0.55
+    - _RippleSlimness: 3.8
+    - _RippleSpeed: 1.75
     - _RippleStrength: 0.32
-    - _RippleTiling: 0.039
+    - _RippleTiling: 0.184
     - _RippleWidth: 0.38
-    - _ShearStrength: 0.003
+    - _ShearStrength: 0.0227
     - _SwellScale: 0.055
     - _SwellStrength: 0.68
     - _WindowPower: 2.2
     - _WindowStrength: 0.85
     m_Colors:
-    - _DeepColor: {r: 0.34199998, g: 0.576, b: 0.657, a: 0.9}
+    - _DeepColor: {r: 0.441189, g: 0.75291485, b: 0.9169811, a: 1}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
-    - _HorizonColor: {r: 0.38, g: 0.64, b: 0.73, a: 1}
-    - _LightColor: {r: 0.78, g: 0.94, b: 1, a: 1}
-    - _RippleColor: {r: 0.8, g: 0.97, b: 1, a: 1}
-    - _ShallowColor: {r: 0.53, g: 0.84, b: 0.89, a: 1}
-    - _SkirtBottomColor: {r: 0.2736, g: 0.46080002, b: 0.5256, a: 0.72}
-    - _SurfaceColor: {r: 0.53, g: 0.84, b: 0.89, a: 1}
+    - _HorizonColor: {r: 0.65, g: 0.81, b: 0.86, a: 1}
+    - _LightColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RippleColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShallowColor: {r: 0.7621581, g: 0.7660377, b: 0.7443574, a: 1}
+    - _SkirtBottomColor: {r: 0.65, g: 0.81, b: 0.86, a: 1}
+    - _SurfaceColor: {r: 0.77, g: 0.91, b: 0.92, a: 1}
     - _WindowColor: {r: 0.8, g: 0.96, b: 1, a: 1}
   m_BuildTextureStacks: []

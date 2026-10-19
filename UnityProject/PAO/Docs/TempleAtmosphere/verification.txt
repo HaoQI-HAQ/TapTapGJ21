@@ -1,6 +1,6 @@
-Map2: PASS; reloaded atmosphere, Map4 animated light cookie (15x15), profile, camera, shader and scripts. Colliders=1763
-Map2_5: PASS; reloaded atmosphere, Map4 animated light cookie (15x15), profile, camera, shader and scripts. Colliders=2308
-Map3: PASS; reloaded atmosphere, Map4 animated light cookie (15x15), profile, camera, shader and scripts. Colliders=283
+Map2: PASS; water haze and distance fog disabled; Map4 animated light cookie (15x15), profile, camera, shader and scripts preserved. Colliders=1763
+Map2_5: PASS; water haze and distance fog disabled; Map4 animated light cookie (15x15), profile, camera, shader and scripts preserved. Colliders=2308
+Map3: PASS; water haze and distance fog disabled; Map4 animated light cookie (15x15), profile, camera, shader and scripts preserved. Colliders=668
 wengjie: PASS; reloaded Map4 cookie, scene-specific soft bloom, diffuse stone; legacy overlays removed. Colliders=200.
 URP-Balanced-Renderer: PASS; exactly one active atmosphere feature.
 URP-HighFidelity-Renderer: PASS; exactly one active atmosphere feature.

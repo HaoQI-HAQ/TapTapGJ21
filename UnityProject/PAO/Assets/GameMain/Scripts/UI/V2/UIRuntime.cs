@@ -138,7 +138,7 @@ namespace PAO.UI.V2
             {
                 switcher.TypeChanged += OnAbilityChanged;
                 switcher.SetLabelVisible(false);
-                switcher.SetType((BubbleType)UIRunState.Progress.bubbleType);
+                switcher.SetType(PAO.Sandbox.BubbleSandbox.Instance != null ? BubbleType.Bouncy : (BubbleType)UIRunState.Progress.bubbleType);
             }
             tide = BubbleTideDirector.Instance;
             if (tide != null) { tide.Won += OnLevelWon; tide.Lost += OnLevelLost; }
@@ -173,7 +173,7 @@ namespace PAO.UI.V2
                 if (UISettings.Current.detailedHints) Toast(T("记录已恢复", "Record restored"));
                 else PulseVisualCue(UIGuideSymbol.Check);
             }
-            else ShowTutorial("movement", T("向水流深处", "Follow the current"),
+            else if (PAO.Sandbox.BubbleSandbox.Instance == null) ShowTutorial("movement", T("向水流深处", "Follow the current"),
                 UIInput.MovementHint() + T(" 移动 · 跳跃 ", " Move · Jump ") + UIInput.Prompt(UIInput.Jump) +
                 T("\n蓄力 ", "\nCharge ") + UIInput.Prompt(UIInput.Charge) + T(" · Esc / Menu 暂停 · ", " · Esc / Menu Pause · ") + UIInput.Prompt(UIInput.Help) + T(" 查看教学", " for help"));
             if (SaveOnNextEntry) { SaveOnNextEntry = false; SaveSnapshot(UIRunState.AutoSlot); }

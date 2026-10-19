@@ -1,0 +1,53 @@
+PASS Creat boots the integrated gameplay UI.
+PASS Sandbox brush replaces the resource-consuming launcher only in Creat.
+PASS The authored sandbox starts empty.
+PASS A build bubble creates a solid cell.
+PASS Repeated placement does not overwrite or duplicate a cell.
+PASS Paint changes existing cells without creating surrounding geometry.
+PASS Paint uses the selected palette color.
+PASS Undo restores the previous paint.
+PASS Redo restores the painted result.
+PASS Lift rejects an occupied destination without moving part of a structure.
+PASS Lift also rejects an obstacle along its travel path.
+PASS Float moves a connected structure together and reserves its destination cells.
+PASS Undo returns floated cells to their original coordinates.
+PASS Destroy removes the local stroke only.
+PASS Destruction can be undone.
+PASS Clear empties the sandbox.
+PASS Clear can be undone as one edit.
+PASS The ceiling constrains floated creations.
+PASS Building outside the finite volume is rejected.
+PASS Large edge strokes stay inside the volume.
+PASS Forty presets preserve the original palette indices.
+PASS The last new preset builds with its actual color.
+PASS Custom paint keeps geometry and stores the exact RGB color.
+PASS Painting with the same custom RGB does not create an undo entry.
+PASS Undo restores a preset after custom painting.
+PASS Redo restores the exact custom color.
+PASS Float preserves custom color data.
+PASS Custom creation renderers display the stored color without cloning materials.
+PASS HEX input selects the exact RGB value.
+PASS Invalid HEX input preserves the selected color.
+PASS HEX input supports black, white and an optional hash prefix.
+PASS Preset cycling wraps across all forty colors.
+PASS World serialization succeeds.
+PASS Loading restores geometry, colors and shapes.
+PASS Saving and loading round-trips the exact custom RGB.
+PASS Existing version-one saves retain their original colors.
+PASS Invalid custom colors cannot replace the current work.
+PASS An invalid save preserves the current work.
+PASS A travelling bubble does not edit before arrival.
+PASS Pause freezes travelling bubble edits.
+PASS The blown bubble creates its captured stroke on arrival.
+PASS A travelling bubble retains its captured custom color after the brush changes.
+PASS Eighty consecutive strokes require no bubble energy or ammunition.
+PASS Creations outlive ordinary bubble lifetimes.
+PASS The palette workshop blocks gameplay while open.
+PASS The workshop exposes forty swatches and free-color controls.
+PASS Clicking a swatch selects its preset.
+PASS The HEX field applies a custom brush color.
+PASS Invalid HEX entered in the workshop keeps the valid selection.
+PASS Dragging RGB synchronizes the brush and HEX field without rebuilding the page.
+PASS Closing free-color controls keeps the custom brush.
+PASS Closing the workshop restores gameplay time.
+PASS No Unity runtime errors occurred.

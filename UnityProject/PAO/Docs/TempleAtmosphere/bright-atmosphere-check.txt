@@ -1,0 +1,3 @@
+Map2: PASS; existing geometry, physics and gameplay preserved; one fill light added; fog and water haze disabled. Collider blocks=1763 -> 1763.
+Map2_5: PASS; existing geometry, physics and gameplay preserved; one fill light added; fog and water haze disabled. Collider blocks=2307 -> 2307.
+Map3: PASS; existing geometry, physics and gameplay preserved; one fill light added; fog and water haze disabled. Collider blocks=633 -> 633.
