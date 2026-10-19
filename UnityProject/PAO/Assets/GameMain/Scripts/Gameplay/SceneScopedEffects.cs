@@ -8,11 +8,12 @@ namespace PAO
     ///
     /// 【为什么需要这个】
     /// 泡泡的爆炸 / 溶解特效是加在 <see cref="Bubble"/> 上的，而 Bubble 是
-    /// **所有关卡共用**的脚本 —— 直接在里面调 VFX，等于给 cs 和 Map0~Map5
-    /// 也一起加上了特效。
+    /// **所有关卡共用**的脚本 —— 直接在里面调 VFX，等于给每个场景都加上特效。
     ///
-    /// 但那些关卡是别人在做的，风格和节奏他们自己定。所以这里做成
-    /// **按场景名白名单**：只有列在这里的场景才播，其余一行代码都不碰。
+    /// 项目里还有别的目录里的场景（例如 Assets/Scenes/cs.unity），
+    /// 那些场景的风格和节奏该由它们自己定。所以这里做成**按场景名白名单**：
+    /// 只有列在这里的场景才播，其余一行代码都不碰。
+    /// 当前名单已经是 Assets/GameMain/Scenes/ 下的全部关卡。
     ///
     /// 【和 AbilityGateLevel 是同一个套路】
     /// 那套能力锁也是"运行时按场景名判断"，因为它当时挂在共享的玩家预制体上。
@@ -32,10 +33,24 @@ namespace PAO
         /// <summary>
         /// 会播放泡泡特效的场景（不带 .unity）。
         /// **只有列在这里的场景才播**，别的地图完全不受影响。
+        ///
+        /// 当前范围：Assets/GameMain/Scenes/ 下的**全部关卡**。
+        /// 别的目录里的场景（例如 Assets/Scenes/cs.unity）仍然不在名单里，
+        /// 要加就把场景名照抄进来。
         /// </summary>
         private static readonly string[] kVfxScenes =
         {
+            "Map0",
+            "Map1",
+            "Map2",
+            "Map2_5",
+            "Map3",
+            "Map3_5",
+            "Map4",
+            "Map5",
             "shiliuye map",
+            "wengjie",
+            "洛琪希",
         };
 
         /// <summary>当前场景要不要播泡泡特效。</summary>

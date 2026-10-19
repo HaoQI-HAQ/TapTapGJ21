@@ -136,6 +136,17 @@ namespace PAO
         [Tooltip("判断「站在秋千上」的射线多探一点（米），给脚下的余量。")]
         [SerializeField] private float m_RiderProbe = 0.35f;
 
+        [Tooltip("抬升乘客之后补一个很小的向下贴地，把 CharacterController.isGrounded 找回来。\n" +
+                 "不补的话：秋千往上荡的那半程 grounded 会掉，玩家按跳跃没反应（要连按碰运气）。\n" +
+                 "关掉可以对比效果，正常应该勾着。")]
+        [SerializeField] private bool m_SettleRidersOnLift = true;
+
+        [Tooltip("骑乘期间临时放宽的坡度上限（度）。\n" +
+                 "台板摆到 ±50° 时已经超过 CharacterController 默认的 45° 上限，\n" +
+                 "超过的部分不算地面 → isGrounded 变 false → 跳不起来、人还往下滑。\n" +
+                 "站上来时顶到 60°，下去立刻还原。")]
+        [SerializeField] private float m_RideSlopeLimit = 60f;
+
         // ==================== 调试 ====================
 
         [Header("调试")]
@@ -155,9 +166,28 @@ namespace PAO
 
         private bool m_Started;
 
+        /// <summary>
+        /// 抬升乘客之后往下贴地的探测距离（米）。
+        /// 目的不是真的把人压低，而是让 CharacterController 重新"踩到地"，
+        /// 把 isGrounded 恢复成 true（否则骑秋千时跳跃会失灵）。
+        /// </summary>
+        private const float kGroundSettleProbe = 0.06f;
+
+        /// <summary>
+        /// 站在秋千上时，每帧给乘客续的"跳跃宽限"（秒）。
+        /// 只要人还站在台板上就会一直续，所以实际效果是"在秋千上随时能跳"；
+        /// 离开台板后最多再宽限这么久，不至于变成空中二段跳。
+        /// </summary>
+        private const float kRiderJumpGrace = 0.18f;
+
         // 骑乘者缓存：角色、以及旋转前各自相对本体的本地坐标
         private readonly List<PlayerController> m_Riders = new List<PlayerController>(2);
+        private readonly List<CharacterController> m_RiderControllers = new List<CharacterController>(2);
         private readonly List<Vector3> m_RiderLocals = new List<Vector3>(2);
+
+        /// <summary>骑乘期间被临时放宽了坡度上限的角色 → 原来的值。</summary>
+        private readonly Dictionary<CharacterController, float> m_SlopeLimitBackup =
+            new Dictionary<CharacterController, float>(2);
 
         // 场景里的玩家。玩家可能是运行时生成的，所以空了会隔一会儿重找。
         private readonly List<PlayerController> m_Players = new List<PlayerController>(1);
@@ -177,6 +207,13 @@ namespace PAO
 
         /// <summary>还在动吗。</summary>
         public bool IsSwinging { get { return Mathf.Abs(m_AngularSpeed) > 0.01f || Mathf.Abs(m_Angle) > 0.01f; } }
+
+        /// <summary>抬升乘客后是否补一次向下贴地（修 isGrounded 掉帧导致的跳跃失灵）。</summary>
+        public bool SettleRidersOnLift
+        {
+            get { return m_SettleRidersOnLift; }
+            set { m_SettleRidersOnLift = value; }
+        }
 
         /// <summary>摆动轴（世界空间，已归一化）。</summary>
         public Vector3 AxisWorld
@@ -220,7 +257,12 @@ namespace PAO
         {
             // 静态事件必须退订，否则物体销毁后会留下悬空委托
             Bubble.Exploded -= HandleBubbleExploded;
+
+            // 坡度上限是改在玩家身上的，本组件关掉时必须还回去
+            RestoreAllSlopeLimits();
+
             m_Riders.Clear();
+            m_RiderControllers.Clear();
             m_RiderLocals.Clear();
         }
 
@@ -420,6 +462,7 @@ namespace PAO
         private void CollectRiders()
         {
             m_Riders.Clear();
+            m_RiderControllers.Clear();
             m_RiderLocals.Clear();
 
             RefreshPlayersIfNeeded();
@@ -446,8 +489,90 @@ namespace PAO
                 }
 
                 m_Riders.Add(player);
+                m_RiderControllers.Add(controller);
                 m_RiderLocals.Add(transform.InverseTransformPoint(player.transform.position));
             }
+
+            ApplyRideSlopeLimits();
+        }
+
+        /// <summary>
+        /// 骑乘期间临时放宽角色的坡度上限。
+        ///
+        /// 【为什么必须这么做】
+        /// 秋千摆到 ±50° 时台板本身就倾斜 50°，而 CharacterController 默认 slopeLimit 是 45°：
+        /// 超过 45° 的面**不算地面**，于是 isGrounded 变 false、人开始往下滑 ——
+        /// 表现就是"有时候跳不起来，得连按"（跳跃判定读的就是 isGrounded），
+        /// 站在摆到高处的台板上还会往下溜。
+        /// 所以人站在秋千上时把 slopeLimit 顶到 m_RideSlopeLimit（默认 60°），
+        /// 一下来立刻恢复原值，不改变其它地方的爬坡手感。
+        /// </summary>
+        private void ApplyRideSlopeLimits()
+        {
+            for (int i = 0; i < m_RiderControllers.Count; i++)
+            {
+                CharacterController controller = m_RiderControllers[i];
+
+                if (controller == null || m_SlopeLimitBackup.ContainsKey(controller))
+                {
+                    continue;
+                }
+
+                m_SlopeLimitBackup[controller] = controller.slopeLimit;
+                controller.slopeLimit = Mathf.Max(controller.slopeLimit, m_RideSlopeLimit);
+            }
+
+            // 已经不在秋千上的人：还原坡度上限
+            if (m_SlopeLimitBackup.Count == 0)
+            {
+                return;
+            }
+
+            s_LeftRiders.Clear();
+
+            foreach (KeyValuePair<CharacterController, float> entry in m_SlopeLimitBackup)
+            {
+                if (entry.Key == null || !m_RiderControllers.Contains(entry.Key))
+                {
+                    s_LeftRiders.Add(entry.Key);
+
+                    if (entry.Key != null)
+                    {
+                        entry.Key.slopeLimit = entry.Value;
+
+                        if (m_Log)
+                        {
+                            Debug.Log("[BombDrivenSwing] \"" + name + "\" 乘客离场，坡度上限还原为 " +
+                                      entry.Value.ToString("F0") + "°", this);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < s_LeftRiders.Count; i++)
+            {
+                if (s_LeftRiders[i] != null)
+                {
+                    m_SlopeLimitBackup.Remove(s_LeftRiders[i]);
+                }
+            }
+        }
+
+        /// <summary>离场乘客的临时名单（避免遍历字典时改动字典）。</summary>
+        private static readonly List<CharacterController> s_LeftRiders = new List<CharacterController>(4);
+
+        /// <summary>把还挂着的坡度上限全部还原（组件被关掉 / 销毁时）。</summary>
+        private void RestoreAllSlopeLimits()
+        {
+            foreach (KeyValuePair<CharacterController, float> entry in m_SlopeLimitBackup)
+            {
+                if (entry.Key != null)
+                {
+                    entry.Key.slopeLimit = entry.Value;
+                }
+            }
+
+            m_SlopeLimitBackup.Clear();
         }
 
         private bool IsStandingOnMe(CharacterController controller)
@@ -499,7 +624,28 @@ namespace PAO
                 if (delta.sqrMagnitude > 0.0000001f)
                 {
                     controller.Move(delta);
+
+                    // 【抬升会把 isGrounded 打掉】
+                    // CharacterController.isGrounded 是"上一次 Move 有没有撞到地面"。
+                    // 秋千往上荡的时候，这次 Move 是朝上的 → grounded 立刻变 false，
+                    // 而 PlayerController 的跳跃判定恰好读这个值 ——
+                    // 表现就是"骑着秋千往上走的那半程，按跳跃没反应，得连按碰运气"。
+                    //
+                    // 所以抬升之后补一个很小的向下贴地：位移几乎看不出（几厘米），
+                    // 但 grounded 会被找回来，跳跃立刻恢复。
+                    if (m_SettleRidersOnLift && delta.y > 0.0005f)
+                    {
+                        controller.Move(Vector3.down * kGroundSettleProbe);
+                    }
                 }
+
+                // 【关键】站稳在会动的台板上时，isGrounded 会一阵一阵地掉：
+                //   平台往下走的那半程，人会短暂离地（要等重力把人拉回来），
+                //   台板摆到 ±50° 时超过角色默认 45° 的坡度上限，又会被判成"没踩到地"。
+                // 这期间按跳跃会被吃掉 —— 就是"要连按才偶尔跳起来"。
+                // 所以站在秋千上的每一帧都给人续一次跳跃宽限：人一离开台板就不再续，
+                // 宽限自然过期，不会变成空中二段跳。
+                player.GrantGroundGrace(kRiderJumpGrace);
             }
         }
 

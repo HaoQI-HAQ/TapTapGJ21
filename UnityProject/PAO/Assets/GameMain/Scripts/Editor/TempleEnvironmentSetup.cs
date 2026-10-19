@@ -33,6 +33,10 @@ namespace PAO.EditorTools
             public string map, mood;
             public Color fog, ambient, shallow, accent;
             public float density, exposure, temperature;
+            public Color keyColor = new Color(.98f,.99f,1f), blueFillColor = new Color(.97f,.99f,1f);
+            public float keyIntensity = KeyLightIntensity, keyShadowStrength = .25f, blueFillIntensity = 1.1f;
+            public float underFillIntensity = .65f, contrast = -12f, bloomIntensity = .12f;
+            public bool underFillEnabled = true;
             public Vector3 entry, goal;
         }
 
@@ -48,9 +52,12 @@ namespace PAO.EditorTools
                 density = 0f, exposure = -.15f, temperature = 0f,
                 entry = new Vector3(0,0,84.5f), goal = new Vector3(12,11.5f,-23.5f) },
             new Palette { map = "Map3", mood = "水下峡谷 · 清透浅水",
-                fog = new Color(.65f,.80f,.89f), ambient = new Color(1.08f,1.08f,1.04f),
+                fog = new Color(.65f,.80f,.89f), ambient = new Color(.71f,.81f,.93f),
                 shallow = new Color(.77f,.89f,.95f), accent = new Color(.94f,.97f,1f),
-                density = 0f, exposure = -.10f, temperature = 0f,
+                density = 0f, exposure = -.10f, temperature = -6f, contrast = -6f,
+                keyColor = new Color(.91f,.96f,1f), keyShadowStrength = .5f,
+                blueFillColor = new Color(.49f,.77f,.91f), blueFillIntensity = .45f,
+                underFillIntensity = 0f, underFillEnabled = false,
                 entry = new Vector3(0,-16,60), goal = new Vector3(0,0,-97.5f) }
         };
 
@@ -103,6 +110,60 @@ namespace PAO.EditorTools
         [MenuItem("Tools/PAO/环境氛围/调整为明亮柔和浅水")]
         public static void BrightenAtmosphere() { AdjustAtmosphere(true); }
 
+        [MenuItem("Tools/PAO/环境氛围/修复当前 Map3 光照")]
+        public static void ApplyMap3LightingRepair()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play mode before repairing Map3 lighting.");
+            const string path = "Assets/GameMain/Scenes/Map3.unity";
+            Scene scene = SceneManager.GetSceneByPath(path);
+            if (!scene.IsValid() || !scene.isLoaded)
+                throw new InvalidOperationException("Map3 must already be loaded before repairing its lighting.");
+            // RenderSettings belongs to the active scene. Never switch scenes or rebuild the environment here.
+            if (SceneManager.GetActiveScene() != scene)
+                throw new InvalidOperationException("Map3 must be the active scene before repairing its lighting.");
+
+            Palette p = Palettes.Single(palette => palette.map == "Map3");
+            GameObject environment = Environment(scene,p);
+            if (environment == null) throw new InvalidOperationException("Map3_Environment was not found.");
+            var lights = Components<Light>(scene);
+            Light sun = lights.SingleOrDefault(light => light.type == LightType.Directional && light.cookie != null);
+            Light fill = environment.GetComponentsInChildren<Light>(true).SingleOrDefault(light => light.name == "Temple_BlueFill");
+            Light underFill = environment.GetComponentsInChildren<Light>(true).SingleOrDefault(light => light.name == "Temple_UnderFill");
+            Volume volume = environment.GetComponentsInChildren<Volume>(true).SingleOrDefault(v => v.name == "Atmosphere_PostFX");
+            VolumeProfile profile = volume != null ? volume.sharedProfile : null;
+            if (sun == null || fill == null || profile == null)
+                throw new InvalidOperationException("Map3 key light, blue fill or atmosphere profile was not found.");
+            if (AssetDatabase.GetAssetPath(profile) != AssetFolder + "/Map3_AtmosphereProfile.asset")
+                throw new InvalidOperationException("Map3 must use its own atmosphere profile before repairing lighting.");
+            if (!profile.TryGet<ColorAdjustments>(out var color) || !profile.TryGet<WhiteBalance>(out var balance) ||
+                !profile.TryGet<Bloom>(out var bloom))
+                throw new InvalidOperationException("Map3 atmosphere profile is missing its color, white balance or bloom settings.");
+
+            // Repair only the excessive lighting; preserve fog, water, geometry, gameplay, cookies and transforms.
+            RenderSettings.ambientLight = p.ambient;
+            RenderSettings.ambientSkyColor = p.ambient;
+            RenderSettings.ambientEquatorColor = p.ambient * .9f;
+            RenderSettings.ambientGroundColor = p.ambient * .75f;
+            SetAmbientProbe(p);
+            sun.color = p.keyColor; sun.intensity = p.keyIntensity; sun.shadowStrength = p.keyShadowStrength;
+            fill.color = p.blueFillColor; fill.intensity = p.blueFillIntensity;
+            if (underFill != null)
+            {
+                underFill.intensity = p.underFillIntensity;
+                underFill.enabled = p.underFillEnabled;
+            }
+            color.postExposure.Override(p.exposure); color.contrast.Override(p.contrast);
+            balance.temperature.Override(p.temperature);
+            bloom.intensity.Override(p.bloomIntensity);
+            EditorUtility.SetDirty(color); EditorUtility.SetDirty(balance); EditorUtility.SetDirty(bloom);
+            EditorUtility.SetDirty(profile);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorApplication.QueuePlayerLoopUpdate();
+            SceneView.RepaintAll();
+            Debug.Log("[Temple Atmosphere] Repaired Map3 lighting. Scene and profile are dirty; save after reviewing.");
+        }
+
         static void AdjustAtmosphere(bool brighten)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -134,10 +195,10 @@ namespace PAO.EditorTools
                             var root = Environment(scene,p).transform;
                             ApplyRenderSettings(p);
                             Light sun = Components<Light>(scene).First(l => l.type == LightType.Directional && l.cookie != null);
-                            sun.color = new Color(.98f,.99f,1f); sun.shadowStrength = .25f;
+                            sun.color = p.keyColor; sun.intensity = p.keyIntensity; sun.shadowStrength = p.keyShadowStrength;
                             var fill = root.Find("Temple_BlueFill").GetComponent<Light>();
-                            fill.color = new Color(.97f,.99f,1f); fill.intensity = 1.1f;
-                            CreateUnderFill(root);
+                            fill.color = p.blueFillColor; fill.intensity = p.blueFillIntensity;
+                            CreateUnderFill(root,p);
                             foreach (var camera in Components<Camera>(scene)) camera.backgroundColor = p.fog;
                             foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
                                 if (renderer.sharedMaterial != null && renderer.sharedMaterial.shader.name == "PAO/UnderwaterCeiling")
@@ -717,9 +778,9 @@ namespace PAO.EditorTools
         {
             Effect<Tonemapping>(profile).mode.Override(TonemappingMode.ACES);
             var bloom = Effect<Bloom>(profile);
-            bloom.threshold.Override(1.35f); bloom.intensity.Override(.12f); bloom.scatter.Override(.72f);
+            bloom.threshold.Override(1.35f); bloom.intensity.Override(p.bloomIntensity); bloom.scatter.Override(.72f);
             var color = Effect<ColorAdjustments>(profile);
-            color.postExposure.Override(p.exposure); color.contrast.Override(-12f); color.saturation.Override(-2f);
+            color.postExposure.Override(p.exposure); color.contrast.Override(p.contrast); color.saturation.Override(-2f);
             var balance = Effect<WhiteBalance>(profile);
             balance.temperature.Override(p.temperature); balance.tint.Override(1f);
             var vignette = Effect<Vignette>(profile);
@@ -767,12 +828,12 @@ namespace PAO.EditorTools
             Light sun = Components<Light>(scene).FirstOrDefault(l => l.type == LightType.Directional && !l.transform.IsChildOf(root));
             if (sun == null) { sun = Child(root, "Temple_KeyLight").AddComponent<Light>(); sun.type = LightType.Directional; }
             ConfigureCausticLight(sun);
-            sun.color = new Color(.98f,.99f,1f); sun.shadowStrength = .25f;
+            sun.color = p.keyColor; sun.intensity = p.keyIntensity; sun.shadowStrength = p.keyShadowStrength;
             var fill = Child(root, "Temple_BlueFill").AddComponent<Light>();
-            fill.type = LightType.Directional; fill.color = new Color(.97f,.99f,1f);
-            fill.intensity = 1.1f; fill.shadows = LightShadows.None;
+            fill.type = LightType.Directional; fill.color = p.blueFillColor;
+            fill.intensity = p.blueFillIntensity; fill.shadows = LightShadows.None;
             fill.transform.rotation = Quaternion.Euler(30,140,0);
-            CreateUnderFill(root);
+            CreateUnderFill(root,p);
             LightAt(root, "Entrance_SoftLight", p.entry + new Vector3(0,5,-3), p.shallow, 4f, 30f);
             LightAt(root, "Goal_AccentLight", p.goal + new Vector3(0,5,2), p.accent, 5.5f, 28f);
             for (int i = 1; i <= 3; i++)
@@ -780,11 +841,12 @@ namespace PAO.EditorTools
                     Color.Lerp(p.shallow,Color.white,.3f), 2.5f, 26f);
         }
 
-        static void CreateUnderFill(Transform root)
+        static void CreateUnderFill(Transform root, Palette p)
         {
             var child = root.Find("Temple_UnderFill");
             Light fill = child != null ? child.GetComponent<Light>() : Child(root,"Temple_UnderFill").AddComponent<Light>();
-            fill.type = LightType.Directional; fill.intensity = .65f; fill.color = new Color(1f,.97f,.90f);
+            fill.type = LightType.Directional; fill.intensity = p.underFillIntensity; fill.color = new Color(1f,.97f,.90f);
+            fill.enabled = p.underFillEnabled;
             fill.shadows = LightShadows.None; fill.transform.rotation = Quaternion.Euler(-35,-40,0);
         }
 

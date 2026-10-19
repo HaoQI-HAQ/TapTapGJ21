@@ -728,11 +728,23 @@ namespace PAO
 
         /// <summary>
         /// 真正的爆炸实现。
+        ///
         /// settingsOverride 是给「宿主」用的：宿主自己是浮粘/弹力泡泡，
         /// 没有 m_BombSettings，必须由调用方把体内那颗炸弹的参数传进来。
         /// 不能靠 m_AbsorbedBomb 现取 —— 调用方往往在清空引用之后才调这里。
         /// </summary>
-        public void ExplodeWithMultiplier(float radiusMultiplier, BombBubbleSettings settingsOverride)
+        /// <param name="radiusMultiplier">范围倍率。普通引爆 1，被吸收后 = absorbedBlastMultiplier</param>
+        /// <param name="settingsOverride">借用谁的参数（宿主引爆时传体内那颗炸弹的）</param>
+        /// <param name="sourceDiameter">
+        /// 「决定这次爆炸有多大的那颗泡泡」的直径。&lt;= 0 表示就是自己。
+        ///
+        /// 必须单独传，不能直接读 GetDiameter()：
+        /// 宿主引爆时 this 是宿主（1.1~1.6 米），而玩家真正吹的是体内那颗炸弹（0.2~0.6 米）。
+        /// 拿宿主去算蓄力进度会永远顶到 100%，「吹多大炸多大」就没了。
+        /// </param>
+        public void ExplodeWithMultiplier(float radiusMultiplier,
+                                          BombBubbleSettings settingsOverride = null,
+                                          float sourceDiameter = -1f)
         {
             // 宿主自己是浮粘/弹力泡泡，没有 m_BombSettings。
             // 这时必须借用体内那颗炸弹的参数，否则下面会直接销毁、
@@ -769,7 +781,18 @@ namespace PAO
                 return;
             }
 
-            float radius = bombSettings.blastRadius * radiusMultiplier;
+            // 【爆炸范围随蓄力变化】
+            // 点按 0.3 米、蓄满 0.6 米（见 BombBubbleSettings.blastRadius / blastRadiusAtMaxSize）。
+            // 被浮粘/弹力泡泡吸收后，外层再乘 absorbedBlastMultiplier（当前配置是 3）。
+            //
+            // 蓄力进度读 sourceDiameter 而不是 GetDiameter()：
+            // 宿主引爆时 this 是宿主，真正该看的是体内那颗炸弹 —— 理由见方法注释。
+            float chargeDiameter = sourceDiameter > 0.001f ? sourceDiameter : GetDiameter();
+            float bombMaxSize = Mathf.Max(bombSettings.minSize + 0.001f, bombSettings.maxSize);
+            float charge = Mathf.InverseLerp(bombSettings.minSize, bombMaxSize, chargeDiameter);
+            float radiusAtFullCharge = Mathf.Max(bombSettings.blastRadius, bombSettings.blastRadiusAtMaxSize);
+
+            float radius = Mathf.Lerp(bombSettings.blastRadius, radiusAtFullCharge, charge) * radiusMultiplier;
             float force = bombSettings.blastForce;
 
             // 广播爆炸 —— 场景机关（弹力跳板等）靠它知道"被炸到了"。
@@ -791,46 +814,54 @@ namespace PAO
             // 场景里没有潮水时这个方法自己会跳过，不影响玩法。
             PAO.BubbleTide.BubbleTideBridge.OnBombExploded(center, radius);
 
-            // 爆炸特效：水彩洇开式的爆开。
+            // ---- 爆炸特效 ----
             //
-            // 【尺寸只看泡泡直径】
-            // 之前是按爆炸半径（blastRadius，固定 3 米）推尺寸的，结果无论泡泡吹多小，
-            // 爆炸画面都一样大 —— 玩家感觉不到"我把泡泡吹大了"。
-            // 现在特效大小完全由泡泡直径决定：吹得小 = 紧凑一小簇，吹得满 = 铺开一整团。
-            // 爆炸半径仍然只用于下面的物理推力，两者不再混在一起。
+            // 【尺寸怎么定】
+            // 现在特效大小**跟着爆炸半径**走（0.3~1.8 米 → 整体缩放 0.15~0.9），
+            // 不再跟泡泡直径。理由：半径本身已经跟蓄力和吸收倍率走了，
+            // 视觉只要和判定范围成固定比例，就不会出现「看着炸得很大、其实打不到」。
             //
-            // ---- 爆炸特效：按场景启用 ----
+            // 【颜色怎么定】
+            // 炸弹自己炸 = 红；被黏浮（蓝）吸收 = 青蓝；被弹力（黄）吸收 = 黄。
+            // 颜色不写在材质里，而是实例化之后改粒子颜色（见 ExplosionPalette）。
+            //
+            // ---- 按场景启用 ----
             //
             // Bubble 是所有关卡共用的脚本。早先这里无条件调 BubbleBurstVFX，
             // 等于给 cs 和 Map0~Map5 也一起加了特效 —— 那些是别人做的关卡，
             // 风格和节奏该由他们定。所以现在过一道场景白名单
             // （见 SceneScopedEffects），没列进去的场景完全不受影响。
             //
-            // 注意：视觉范围只影响特效，**不影响上面那段物理爆炸** ——
+            // 注意：视觉只影响特效，**不影响上面那段物理爆炸** ——
             // 冲击力、连线引爆、地形破坏都照旧。
             if (SceneScopedEffects.BubbleVfxAllowed)
             {
-                // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
-                // 归一化都自动跟着走；拿不到就退回 1.5（BubbleSettings.maxSize 的默认值）。
-                float sizeReference = 1.5f;
+                ExplosionVfxSettings splash = bombSettings.explosionVfx;
 
-                BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
-                    FindObjectsInactive.Exclude);
-
-                if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+                if (splash != null && splash.prefab != null)
                 {
-                    sizeReference = launcher.CurrentMaxSize;
+                    // 第三方爆炸特效（VFX_Klaus）：大小和颜色都在里面处理。
+                    // 颜色直接用「我自己是什么类型」——
+                    // 炸弹自己炸是红；被吸收后 this 是宿主，就是宿主那份色。
+                    SplashExplosionVFX.Spawn(center, radius, Type, splash);
                 }
+                else
+                {
+                    // 没配预制体就退回旧的代码版能量爆炸。
+                    // 参考值从发射器读"满蓄力直径"，这样不管美术把 maxSize 调成多少，
+                    // 归一化都自动跟着走；拿不到就退回 1.5。
+                    float sizeReference = 1.5f;
 
-                // 能量爆炸：蓝白球状爆发 + 冲击环 + 放射光条 + 余烬。
-                //
-                // 【为什么换掉了原来的 BubbleBurstVFX】
-                // 那一版是"水彩洇开"式的一团彩块（安静、柔和），
-                // 和炸弹泡泡"能量爆发"的定位对不上。策划要的是那种
-                // 瞬间撑开、过曝发亮的能量炸开感，所以换成了 EnergyExplosionVFX。
-                //
-                // 两版都留着：BubbleBurstVFX 没删，想回退改这一行就行。
-                EnergyExplosionVFX.Spawn(center, GetDiameter(), sizeReference);
+                    BubbleLauncher launcher = UnityEngine.Object.FindFirstObjectByType<BubbleLauncher>(
+                        FindObjectsInactive.Exclude);
+
+                    if (launcher != null && launcher.CurrentMaxSize > 0.001f)
+                    {
+                        sizeReference = launcher.CurrentMaxSize;
+                    }
+
+                    EnergyExplosionVFX.Spawn(center, GetDiameter(), sizeReference);
+                }
             }
 
             // 同一个物体可能挂多个碰撞体，用 HashSet 去重，避免被叠加多次力
@@ -918,8 +949,17 @@ namespace PAO
                 return;
             }
 
+            // 画两个圈：点按的最小范围、蓄满的最大范围。
+            // 真正那一次爆炸落在两者之间，取决于丢出去时吹了多大。
             Gizmos.color = new Color(1f, 0.5f, 0.2f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, m_BombSettings.blastRadius);
+
+            float maxRadius = Mathf.Max(m_BombSettings.blastRadius, m_BombSettings.blastRadiusAtMaxSize);
+            if (maxRadius > m_BombSettings.blastRadius + 0.001f)
+            {
+                Gizmos.color = new Color(1f, 0.25f, 0.08f, 0.22f);
+                Gizmos.DrawWireSphere(transform.position, maxRadius);
+            }
         }
 
         /// <summary>
@@ -1264,6 +1304,19 @@ namespace PAO
             m_AbsorbedBomb = null;
             m_AbsorbedBombArmed = false;
 
+            // 记下体内那颗炸弹的直径，再销毁它。
+            //
+            // 【为什么必须现在记】
+            // 爆炸范围现在跟蓄力走，而「这颗炸弹当初吹了多大」只有本体知道。
+            // 宿主自己是 1.1~1.6 米，拿它去算蓄力进度会永远顶到 100%，
+            // 玩家就感觉不到「我这个炸弹是点按丢的还是蓄满丢的」了。
+            float payloadDiameter = -1f;
+            if (bomb != null)
+            {
+                Vector3 payloadScale = bomb.transform.lossyScale;
+                payloadDiameter = Mathf.Max(payloadScale.x, Mathf.Max(payloadScale.y, payloadScale.z));
+            }
+
             // 只炸一次：销毁体内的炸弹本体，但不单独引爆它。
             // 否则会有两组力（一小一大）叠加，推两次。
             if (bomb != null)
@@ -1271,8 +1324,9 @@ namespace PAO
                 Destroy(bomb.gameObject);
             }
 
-            // 再按放大的范围炸宿主自己
-            ExplodeWithMultiplier(multiplier, payloadSettings);
+            // 再按放大的范围炸宿主自己。
+            // 颜色不用额外传：this 就是宿主，ExplodeWithMultiplier 会用 Type 取色。
+            ExplodeWithMultiplier(multiplier, payloadSettings, payloadDiameter);
             return true;
         }
 
@@ -1348,6 +1402,14 @@ namespace PAO
         /// </summary>
         public void OnLaunchedFromHold()
         {
+            // 已经粘成地形了：它现在是墙的一部分，不接受「重新发射」。
+            // 这里必须挡住 —— 否则它会带着 IsStuck=true 飞起来，
+            // 既不会再粘回任何东西，也不会因为寿命到点而消失。
+            if (m_IsStuck)
+            {
+                return;
+            }
+
             m_IsHeld = false;
 
             // 发射了就不再提着玩家，让他自己飞

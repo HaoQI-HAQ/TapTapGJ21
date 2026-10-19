@@ -19,7 +19,7 @@ MonoBehaviour:
   growthPushDirection: {x: 0, y: 0, z: 1}
   sticky:
     prefab: {fileID: 341690582057091424, guid: e9f2f5ae1bff9df44b57f8043defaea4, type: 3}
-    color: {r: 0.55, g: 0.85, b: 1, a: 1}
+    color: {r: 0.47450984, g: 0.6392157, b: 0.5764706, a: 1}
     minSize: 0.2
     maxSize: 1.6
     minLaunchSpeed: 0.4
@@ -28,7 +28,7 @@ MonoBehaviour:
     largeRiseSpeed: 0.3
     drag: 0.8
     useGravity: 0
-    lifeTime: 5
+    lifeTime: 10
     minCost: 2
     maxCost: 12
     rideMinLifeTime: 1
@@ -45,7 +45,7 @@ MonoBehaviour:
   bouncy:
     prefab: {fileID: 6405886918564779948, guid: 8f590202dea297d41bf9e14bbd41e26f,
       type: 3}
-    color: {r: 1, g: 0, b: 0.910151, a: 1}
+    color: {r: 0.43921572, g: 0.65882355, b: 0.6313726, a: 1}
     minSize: 0.3
     maxSize: 1.1
     minLaunchSpeed: 4
@@ -84,12 +84,21 @@ MonoBehaviour:
     largeRiseSpeed: 0
     drag: 0.8
     useGravity: 0
-    lifeTime: 13
+    lifeTime: 20
     minCost: 10
     maxCost: 20
     rideMinLifeTime: 1
     blastRadius: 0.3
+    blastRadiusAtMaxSize: 0.6
     blastForce: 12
     fuseTime: 2
     detonateTerrains: 1
-    absorbedBlastMultiplier: 9
+    absorbedBlastMultiplier: 3
+    explosionVfx:
+      prefab: {fileID: 6516472662652680112, guid: 2b5f433371cff9f4cae150fbf0a3ffdb, type: 3}
+      scalePerBlastRadius: 0.5
+      minScale: 0.05
+      maxScale: 0.9
+      tintStrength: 1
+      lifeTime: 1.8
+      maxConcurrent: 3
