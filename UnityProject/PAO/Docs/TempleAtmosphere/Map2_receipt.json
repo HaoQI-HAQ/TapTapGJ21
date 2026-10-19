@@ -1,0 +1,32 @@
+{
+    "scene": "Assets/GameMain/Scenes/Map2.unity",
+    "mood": "明亮水下遗迹 · 青蓝柔雾",
+    "backup": "D:\\TapTap21\\PAO-EnvironmentBackups\\Map2_20261019_101003_550.unity",
+    "utc": "2026-10-19T10:10:04.6513661Z",
+    "boundsCenter": {
+        "x": 0.000011444091796875,
+        "y": 10.062905311584473,
+        "z": -61.911888122558597
+    },
+    "boundsSize": {
+        "x": 71.99996948242188,
+        "y": 31.874191284179689,
+        "z": 192.1762237548828
+    },
+    "waterHeight": 40.0,
+    "fogDensity": 0.004000000189989805,
+    "collidersBefore": 1763,
+    "collidersAfter": 1763,
+    "gameplayBehavioursBefore": 734,
+    "gameplayBehavioursAfter": 734,
+    "cameras": 1,
+    "lights": 6,
+    "particleSystems": 8,
+    "missingScripts": 0,
+    "screenshots": [
+        "Docs/TempleAtmosphere\\Map2_after_entrance.png",
+        "Docs/TempleAtmosphere\\Map2_after_hall.png",
+        "Docs/TempleAtmosphere\\Map2_after_goal.png",
+        "Docs/TempleAtmosphere\\Map2_after_detail.png"
+    ]
+}

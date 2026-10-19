@@ -106,6 +106,25 @@ namespace PAO.UI.V2
             rule.raycastTarget = false;
             link.gameObject.AddComponent<UILinkUnderline>().Configure(creditsLabel, rule);
             credits.onClick.AddListener(ShowCredits);
+
+            if (Application.CanStreamedLevelBeLoaded("Creat"))
+            {
+                RectTransform sandbox = ui.Rect("Sandbox link", page.transform);
+                sandbox.anchorMin = sandbox.anchorMax = Vector2.up;
+                sandbox.pivot = Vector2.up;
+                sandbox.anchoredPosition = new Vector2(40, -18);
+                sandbox.sizeDelta = new Vector2(320, 46);
+                Image sandboxHit = sandbox.gameObject.AddComponent<Image>();
+                sandboxHit.color = new Color(1, 1, 1, 0);
+                Button sandboxButton = sandbox.gameObject.AddComponent<Button>();
+                sandboxButton.transition = Selectable.Transition.None; sandboxButton.targetGraphic = sandboxHit;
+                Text sandboxLabel = ui.Label(sandbox, T("究极沙盒 · Creat", "Bubble sandbox · Creat"), 18, Config.ink, TextAnchor.MiddleLeft);
+                UIWidgets.Stretch(sandboxLabel.rectTransform);
+                Image sandboxRule = ui.Surface("Sandbox link rule", sandbox, Config.ink);
+                sandboxRule.raycastTarget = false;
+                sandbox.gameObject.AddComponent<UILinkUnderline>().Configure(sandboxLabel, sandboxRule);
+                sandboxButton.onClick.AddListener(() => LoadScene("Creat"));
+            }
         }
 
         private void ShowMenuActions()

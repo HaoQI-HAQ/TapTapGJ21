@@ -25,6 +25,7 @@ namespace PAO.UI.V2
         public void ShowPause()
         {
             if (!IsGameplay || IsBlockingGameplay) return;
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { ShowSandboxPause(); return; }
             AutoSaveQuietly();
             UIPage page = Push(T("暂停", "PAUSED"), "", false, UIPageDesign.Pause);
             page.Rebuild = ShowPause;
@@ -100,6 +101,11 @@ namespace PAO.UI.V2
 
         private void AutoSaveQuietly()
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null)
+            {
+                if (PAO.Sandbox.BubbleSandbox.Instance.restoreSavedWorld) PAO.Sandbox.BubbleSandbox.Instance.SaveWorld();
+                return;
+            }
             if (!IsGameplay || player == null || loading) return;
             if (switcher != null) UIRunState.Progress.bubbleType = (int)switcher.Current;
             SaveSystem.SaveCurrentState(UIRunState.AutoSlot, player.transform, ChapterName(lastScene));

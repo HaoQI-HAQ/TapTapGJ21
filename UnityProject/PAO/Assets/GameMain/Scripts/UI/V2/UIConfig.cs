@@ -30,7 +30,7 @@ namespace PAO.UI.V2
     {
         public bool enabledInBuild = true;
         public string menuScene = "Menu";
-        public string[] additionalGameplayScenes = { "cs", "Control UI" };
+        public string[] additionalGameplayScenes = { "cs", "Control UI", "Creat" };
         public Font font;
         public Sprite round;
         public Sprite ring;

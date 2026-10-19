@@ -1,0 +1,379 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using PAO.UI.V2;
+using UnityEngine;
+
+namespace PAO.Sandbox
+{
+    public enum SandboxShape { Bubble, Block }
+
+    [Serializable]
+    public struct SandboxCellData
+    {
+        public Vector3Int position;
+        public int color;
+        public bool customColor;
+        public Color tint;
+        public SandboxShape shape;
+        public Color PaintColor => customColor ? tint : BubbleSandbox.Palette[color];
+    }
+
+    /// <summary>A finite lattice of permanent creations. Only arriving bubble shots edit it.</summary>
+    [DefaultExecutionOrder(-600)]
+    public sealed class BubbleSandbox : MonoBehaviour
+    {
+        public static BubbleSandbox Instance { get; private set; }
+        public static readonly Vector3 DefaultOrigin = new Vector3(-48, 0, -24);
+        public static readonly Vector3Int DefaultDimensions = new Vector3Int(48, 36, 24);
+        public Vector3 origin = DefaultOrigin;
+        public Vector3Int dimensions = DefaultDimensions;
+        public float cellSize = 2;
+        public Material creationMaterial;
+        public bool restoreSavedWorld = true;
+        public Vector3 spawn = new Vector3(0, .15f, -18);
+        public static readonly Color[] Palette = {
+            new Color32(104, 222, 206, 255), new Color32(112, 184, 246, 255),
+            new Color32(179, 153, 239, 255), new Color32(246, 155, 189, 255),
+            new Color32(249, 183, 112, 255), new Color32(246, 224, 143, 255),
+            new Color32(155, 215, 143, 255), new Color32(236, 245, 238, 255),
+            new Color32(235, 61, 71, 255), new Color32(255, 112, 96, 255),
+            new Color32(255, 144, 40, 255), new Color32(255, 202, 40, 255),
+            new Color32(186, 218, 56, 255), new Color32(58, 180, 92, 255),
+            new Color32(24, 192, 205, 255), new Color32(45, 114, 235, 255),
+            new Color32(77, 76, 202, 255), new Color32(142, 70, 210, 255),
+            new Color32(210, 63, 181, 255), new Color32(240, 72, 136, 255),
+            new Color32(128, 31, 53, 255), new Color32(151, 64, 39, 255),
+            new Color32(128, 91, 44, 255), new Color32(122, 128, 46, 255),
+            new Color32(32, 104, 66, 255), new Color32(26, 107, 111, 255),
+            new Color32(35, 68, 114, 255), new Color32(78, 48, 111, 255),
+            new Color32(255, 219, 218, 255), new Color32(255, 225, 189, 255),
+            new Color32(220, 235, 189, 255), new Color32(194, 228, 247, 255),
+            new Color32(255, 255, 255, 255), new Color32(210, 214, 220, 255),
+            new Color32(149, 158, 170, 255), new Color32(92, 103, 119, 255),
+            new Color32(48, 56, 70, 255), new Color32(18, 21, 28, 255),
+            new Color32(189, 156, 125, 255), new Color32(99, 72, 58, 255)
+        };
+        // Keep the first eight entries stable so existing creations retain their colors.
+        public static readonly string[] ColorNames = { "薄荷", "晴空", "薰衣草", "樱花", "蜜橘", "奶油", "嫩叶", "珍珠",
+            "朱红", "珊瑚", "鲜橙", "金黄", "青柠", "草绿", "湖蓝", "宝蓝",
+            "靛蓝", "紫罗兰", "洋红", "玫红", "酒红", "陶土", "赭石", "橄榄",
+            "森林", "深青", "海军蓝", "葡萄", "浅桃", "杏仁", "芽白", "冰蓝",
+            "纯白", "银灰", "雾灰", "石板", "炭灰", "墨黑", "沙棕", "可可" };
+        private readonly Dictionary<Vector3Int, SandboxPiece> cells = new Dictionary<Vector3Int, SandboxPiece>();
+        private readonly List<SandboxPiece> moving = new List<SandboxPiece>();
+        private readonly List<Edit> undo = new List<Edit>(), redo = new List<Edit>();
+        private readonly Material[] colors = new Material[Palette.Length];
+        private MaterialPropertyBlock customTint;
+        private static readonly Vector3Int[] Neighbors = { Vector3Int.up, Vector3Int.down, Vector3Int.left,
+            Vector3Int.right, new Vector3Int(0, 0, 1), new Vector3Int(0, 0, -1) };
+        private Transform creations;
+        private bool dirty;
+        private float saveAt;
+        private PlayerController player;
+        private SandboxPiece riding;
+        private Vector3 ridingLastPosition;
+        private sealed class Edit
+        {
+            public readonly List<SandboxCellData> before = new List<SandboxCellData>();
+            public readonly List<SandboxCellData> after = new List<SandboxCellData>();
+        }
+        [Serializable] private sealed class WorldData
+        {
+            public int version = 2;
+            public Vector3Int dimensions;
+            public float cellSize;
+            public Vector3 origin;
+            public List<SandboxCellData> cells = new List<SandboxCellData>();
+        }
+        public int Count => cells.Count;
+        public int Capacity => dimensions.x * dimensions.y * dimensions.z;
+        public int Revision { get; private set; }
+        public int ShotGeneration { get; private set; }
+        public bool CanUndo => undo.Count > 0;
+        public bool CanRedo => redo.Count > 0;
+        public string Status { get; private set; } = "吹一颗泡泡，让想象落地。";
+        public string SavePath => Path.Combine(Application.persistentDataPath, "Creat", "sandbox.json");
+        public Bounds WorldBounds => new Bounds(origin + (Vector3)dimensions * cellSize * .5f, (Vector3)dimensions * cellSize);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() { Instance = null; }
+        private void Awake()
+        {
+            Instance = this;
+            customTint = new MaterialPropertyBlock();
+            creations = new GameObject("Bubble creations").transform;
+            creations.SetParent(transform, false);
+            for (int i = 0; i < colors.Length; i++)
+            {
+                colors[i] = creationMaterial != null ? new Material(creationMaterial) :
+                    new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                colors[i].name = "Sandbox / " + ColorNames[i];
+                colors[i].color = Palette[i];
+                colors[i].SetFloat("_Smoothness", .78f);
+                colors[i].enableInstancing = true;
+            }
+        }
+        private void Start()
+        {
+            player = FindFirstObjectByType<PlayerController>();
+            saveAt = Time.unscaledTime + 30;
+            if (restoreSavedWorld && File.Exists(SavePath)) LoadWorld();
+        }
+        private void Update()
+        {
+            if (restoreSavedWorld && dirty && Time.unscaledTime >= saveAt && !UIInput.Blocked)
+            { SaveWorld(); saveAt = Time.unscaledTime + 30; }
+        }
+        private void LateUpdate()
+        {
+            if (player != null && player.transform.position.y < origin.y - 4) Respawn();
+            for (int i = moving.Count - 1; i >= 0; i--)
+            {
+                SandboxPiece piece = moving[i];
+                if (piece == null) { moving.RemoveAt(i); continue; }
+                Vector3 target = CellCenter(piece.Data.position);
+                piece.transform.position = Vector3.MoveTowards(piece.transform.position, target, cellSize * 2.5f * Time.deltaTime);
+                if (Vector3.SqrMagnitude(piece.transform.position - target) < .0001f) moving.RemoveAt(i);
+            }
+            if (riding != null && player != null)
+            {
+                CharacterController controller = player.GetComponent<CharacterController>();
+                if (controller.enabled) controller.Move(riding.transform.position - ridingLastPosition);
+                ridingLastPosition = riding.transform.position;
+                Bounds bounds = riding.GetComponent<Collider>().bounds;
+                Vector3 feet = controller.bounds.min;
+                if (Mathf.Abs(player.transform.position.x - bounds.center.x) > cellSize * .6f ||
+                    Mathf.Abs(player.transform.position.z - bounds.center.z) > cellSize * .6f ||
+                    Mathf.Abs(feet.y - bounds.max.y) > .65f || !moving.Contains(riding)) riding = null;
+            }
+        }
+        public bool Contains(Vector3Int p) => p.x >= 0 && p.y >= 0 && p.z >= 0 &&
+            p.x < dimensions.x && p.y < dimensions.y && p.z < dimensions.z;
+        public Vector3Int WorldToCell(Vector3 world) => Vector3Int.FloorToInt((world - origin) / cellSize);
+        public Vector3 CellCenter(Vector3Int p) => origin + ((Vector3)p + Vector3.one * .5f) * cellSize;
+        public bool TryGetCell(Vector3Int p, out SandboxCellData data)
+        {
+            if (cells.TryGetValue(p, out SandboxPiece piece)) { data = piece.Data; return true; }
+            data = default; return false;
+        }
+        public void Notify(string message) { Status = message; }
+        public IEnumerable<Vector3Int> Footprint(Vector3Int center, int diameter, SandboxShape shape)
+        {
+            int radius = Mathf.Clamp(diameter / 2, 0, 2);
+            for (int x = -radius; x <= radius; x++)
+            for (int y = -radius; y <= radius; y++)
+            for (int z = -radius; z <= radius; z++)
+                if (shape == SandboxShape.Block || x * x + y * y + z * z <= radius * radius + .5f)
+                    yield return center + new Vector3Int(x, y, z);
+        }
+        private bool OverlapsPlayer(Vector3Int p)
+        {
+            if (player == null) return false;
+            return new Bounds(CellCenter(p), Vector3.one * (cellSize * .96f)).Intersects(player.GetComponent<CharacterController>().bounds);
+        }
+        public int Build(Vector3Int center, int diameter, SandboxShape shape, int color, bool paint, Color? tint = null)
+        {
+            color = Mathf.Clamp(color, 0, Palette.Length - 1);
+            if (tint.HasValue && !ValidTint(tint.Value)) return 0;
+            Color selected = tint ?? Palette[color];
+            Edit edit = new Edit();
+            foreach (Vector3Int p in Footprint(center, diameter, shape))
+            {
+                if (!Contains(p)) continue;
+                if (cells.TryGetValue(p, out SandboxPiece piece))
+                {
+                    if (!paint || piece.Data.PaintColor == selected) continue;
+                    edit.before.Add(piece.Data);
+                    SandboxCellData recolored = piece.Data;
+                    recolored.color = color; recolored.customColor = tint.HasValue; recolored.tint = selected;
+                    edit.after.Add(recolored);
+                }
+                else if (!paint && !OverlapsPlayer(p))
+                    edit.after.Add(new SandboxCellData { position = p, color = color, shape = shape,
+                        customColor = tint.HasValue, tint = selected });
+            }
+            if (edit.after.Count == 0) { Notify(paint ? "瞄准已有造物，用泡泡染上颜色。" : "这里已满、超出边界，或离你太近了。" ); return 0; }
+            Apply(edit, true); Remember(edit);
+            Notify((paint ? "染色 " : "建造 ") + edit.after.Count + " 格 · 泡泡无限供应");
+            return edit.after.Count;
+        }
+        public int DestroyBrush(Vector3Int center, int diameter, SandboxShape shape)
+        {
+            Edit edit = new Edit();
+            foreach (Vector3Int p in Footprint(center, diameter, shape))
+                if (cells.TryGetValue(p, out SandboxPiece piece)) edit.before.Add(piece.Data);
+            if (edit.before.Count == 0) { Notify("破坏泡泡只拆除你的造物。" ); return 0; }
+            Apply(edit, true); Remember(edit); Notify("拆除 " + edit.before.Count + " 格 · Ctrl+Z 可撤销");
+            return edit.before.Count;
+        }
+        public int Lift(Vector3Int start, int levels)
+        {
+            if (!cells.ContainsKey(start)) { Notify("将浮空泡泡吹向相连的造物。" ); return 0; }
+            if (moving.Count > 0) { Notify("等造物浮稳，再继续抬升。" ); return 0; }
+            var connected = new HashSet<Vector3Int> { start };
+            var queue = new Queue<Vector3Int>(); queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                Vector3Int p = queue.Dequeue();
+                foreach (Vector3Int direction in Neighbors)
+                    if (cells.ContainsKey(p + direction) && connected.Add(p + direction)) queue.Enqueue(p + direction);
+            }
+            Vector3Int offset = Vector3Int.up * Mathf.Clamp(levels, 1, 3);
+            SandboxPiece support = null;
+            if (player != null)
+                foreach (Vector3Int p in connected)
+                {
+                    SandboxPiece piece = cells[p]; Bounds b = piece.GetComponent<Collider>().bounds;
+                    if (Mathf.Abs(player.transform.position.x - b.center.x) < cellSize * .5f &&
+                        Mathf.Abs(player.transform.position.z - b.center.z) < cellSize * .5f &&
+                        Mathf.Abs(player.GetComponent<CharacterController>().bounds.min.y - b.max.y) < .3f) support = piece;
+                }
+            foreach (Vector3Int p in connected)
+                for (int step = 1; step <= offset.y; step++)
+                {
+                    Vector3Int destination = p + Vector3Int.up * step;
+                    if (!Contains(destination) || (!connected.Contains(destination) && cells.ContainsKey(destination)) ||
+                        (support == null && OverlapsPlayer(destination)))
+                    { Notify("上方空间不足：相连造物需要整体留在边界内。" ); return 0; }
+                }
+            riding = support; if (support != null) ridingLastPosition = support.transform.position;
+            Edit edit = new Edit(); var pieces = new List<SandboxPiece>();
+            foreach (Vector3Int p in connected)
+            {
+                SandboxPiece piece = cells[p]; pieces.Add(piece); edit.before.Add(piece.Data);
+                SandboxCellData data = piece.Data; data.position += offset; edit.after.Add(data);
+            }
+            foreach (Vector3Int p in connected) cells.Remove(p);
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                pieces[i].Data = edit.after[i]; cells.Add(edit.after[i].position, pieces[i]); moving.Add(pieces[i]);
+            }
+            Remember(edit); Notify("托起 " + connected.Count + " 格相连造物 · 上升 " + offset.y * cellSize + " 米");
+            return connected.Count;
+        }
+        private void Remember(Edit edit)
+        {
+            undo.Add(edit); if (undo.Count > 64) undo.RemoveAt(0); redo.Clear(); Changed();
+        }
+        private void Changed() { dirty = true; Revision++; saveAt = Mathf.Min(saveAt, Time.unscaledTime + 30); }
+        private void Apply(Edit edit, bool forward)
+        {
+            foreach (SandboxCellData data in forward ? edit.before : edit.after) Remove(data.position);
+            foreach (SandboxCellData data in forward ? edit.after : edit.before) Add(data);
+        }
+        private void Add(SandboxCellData data)
+        {
+            if (cells.ContainsKey(data.position)) Remove(data.position);
+            GameObject go = GameObject.CreatePrimitive(data.shape == SandboxShape.Bubble ? PrimitiveType.Sphere : PrimitiveType.Cube);
+            go.name = "Bubble " + data.position; go.transform.SetParent(creations, false);
+            go.transform.position = CellCenter(data.position); go.transform.localScale = Vector3.one * cellSize;
+            Renderer renderer = go.GetComponent<Renderer>();
+            renderer.sharedMaterial = colors[data.customColor ? 0 : data.color];
+            if (data.customColor)
+            {
+                customTint.SetColor("_BaseColor", data.tint);
+                renderer.SetPropertyBlock(customTint);
+            }
+            SandboxPiece piece = go.AddComponent<SandboxPiece>(); piece.Data = data; cells.Add(data.position, piece);
+        }
+        private void Remove(Vector3Int p)
+        {
+            if (!cells.TryGetValue(p, out SandboxPiece piece)) return;
+            cells.Remove(p); moving.Remove(piece);
+            if (piece != null) { piece.gameObject.SetActive(false); Destroy(piece.gameObject); }
+        }
+        public bool Undo()
+        {
+            if (!CanUndo) return false;
+            ShotGeneration++;
+            Edit edit = undo[undo.Count - 1]; undo.RemoveAt(undo.Count - 1);
+            Apply(edit, false); redo.Add(edit); Changed(); Notify("已撤销上一笔。" ); return true;
+        }
+        public bool Redo()
+        {
+            if (!CanRedo) return false;
+            ShotGeneration++;
+            Edit edit = redo[redo.Count - 1]; redo.RemoveAt(redo.Count - 1);
+            Apply(edit, true); undo.Add(edit); Changed(); Notify("已重做上一笔。" ); return true;
+        }
+        public void ClearWorld()
+        {
+            ShotGeneration++;
+            if (Count == 0) return;
+            Edit edit = new Edit(); foreach (SandboxPiece piece in cells.Values) edit.before.Add(piece.Data);
+            Apply(edit, true); Remember(edit); Notify("场地已清空 · Ctrl+Z 可恢复。" );
+        }
+        public bool SaveWorld(string path = null)
+        {
+            try
+            {
+                WorldData data = new WorldData { dimensions = dimensions, cellSize = cellSize, origin = origin };
+                foreach (SandboxPiece piece in cells.Values) data.cells.Add(piece.Data);
+                AtomicJsonFile.Write(path ?? SavePath, JsonUtility.ToJson(data));
+                dirty = false; Notify("沙盒作品已保存。" ); return true;
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            { Notify("保存失败，请检查存储空间。" ); Debug.LogWarning("[Creat] Save failed: " + e.Message); return false; }
+        }
+        public bool LoadWorld(string path = null)
+        {
+            try
+            {
+                WorldData data = JsonUtility.FromJson<WorldData>(AtomicJsonFile.Read(path ?? SavePath));
+                if (data == null || (data.version != 1 && data.version != 2) || data.cells == null ||
+                    data.cellSize != cellSize || data.cells.Count > Capacity)
+                    throw new InvalidDataException("Incompatible sandbox save.");
+                bool originalVolume = data.dimensions == new Vector3Int(24, 12, 24) &&
+                    data.origin == new Vector3(-24, 0, -24) && cellSize == 2 &&
+                    dimensions == DefaultDimensions && origin == DefaultOrigin;
+                if (!originalVolume && (data.dimensions != dimensions || data.origin != origin))
+                    throw new InvalidDataException("Incompatible sandbox bounds.");
+                // Rebase original saves without moving or scaling any creations in world space.
+                Vector3Int offset = originalVolume ? new Vector3Int(12, 0, 0) : Vector3Int.zero;
+                var occupied = new HashSet<Vector3Int>();
+                for (int i = 0; i < data.cells.Count; i++)
+                {
+                    SandboxCellData cell = data.cells[i];
+                    Vector3Int source = cell.position;
+                    cell.position += offset;
+                    if (source.x < 0 || source.y < 0 || source.z < 0 || source.x >= data.dimensions.x ||
+                        source.y >= data.dimensions.y || source.z >= data.dimensions.z ||
+                        !Contains(cell.position) || cell.color < 0 || cell.color >= Palette.Length ||
+                        (cell.customColor && (data.version < 2 || !ValidTint(cell.tint))) ||
+                        (cell.shape != SandboxShape.Bubble && cell.shape != SandboxShape.Block) || !occupied.Add(cell.position))
+                        throw new InvalidDataException("Invalid cell in sandbox save.");
+                    data.cells[i] = cell;
+                }
+                // Validate the complete file before replacing the current work.
+                ClearWorld(); foreach (SandboxCellData cell in data.cells) Add(cell);
+                undo.Clear(); redo.Clear(); dirty = false; Revision++;
+                Respawn(); Notify("已恢复 " + Count + " 格泡泡造物。" ); return true;
+            }
+            catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException || e is ArgumentException)
+            { Notify("读取失败，当前作品已保留。" ); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
+        }
+        private static bool ValidTint(Color value) => value.r >= 0 && value.r <= 1 &&
+            value.g >= 0 && value.g <= 1 && value.b >= 0 && value.b <= 1 && value.a == 1;
+        public void Respawn()
+        {
+            if (player == null) player = FindFirstObjectByType<PlayerController>();
+            if (player == null) return;
+            CharacterController controller = player.GetComponent<CharacterController>();
+            Vector3 position = spawn;
+            // A saved structure can occupy the entry. Place the player above that column.
+            Vector3Int column = WorldToCell(spawn);
+            for (int y = 0; y < dimensions.y; y++)
+                if (cells.ContainsKey(new Vector3Int(column.x, y, column.z))) position.y = origin.y + (y + 1) * cellSize + .15f;
+            position.y += (controller.height * .5f - controller.center.y) * player.transform.lossyScale.y;
+            bool wasEnabled = controller.enabled; controller.enabled = false;
+            player.transform.position = position; controller.enabled = wasEnabled; riding = null;
+        }
+        private void OnApplicationQuit() { if (restoreSavedWorld && dirty) SaveWorld(); }
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+            foreach (Material material in colors) if (material != null) Destroy(material);
+        }
+    }
+}

@@ -769,8 +769,9 @@ namespace PAO.UI.V2
             }
             if (textWidth <= 0) return;
             RectTransform line = rule.rectTransform;
-            line.anchorMin = line.anchorMax = new Vector2(1, .5f);
-            line.pivot = new Vector2(1, 1);
+            bool left = label.alignment == TextAnchor.MiddleLeft || label.alignment == TextAnchor.UpperLeft || label.alignment == TextAnchor.LowerLeft;
+            line.anchorMin = line.anchorMax = new Vector2(left ? 0 : 1, .5f);
+            line.pivot = new Vector2(left ? 0 : 1, 1);
             line.sizeDelta = new Vector2(Mathf.Max(1, textWidth * Mathf.Lerp(.42f, 1, reveal)), 2);
             line.anchoredPosition = new Vector2(0, -label.fontSize * .52f);
             Color ink = rule.color; ink.a = Mathf.Lerp(.32f, 1, reveal); rule.color = ink;

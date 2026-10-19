@@ -1,0 +1,33 @@
+{
+    "scene": "Assets/GameMain/Scenes/Map3.unity",
+    "mood": "水下峡谷 · 冰蓝与柔紫远景",
+    "backup": "D:\\TapTap21\\PAO-EnvironmentBackups\\Map3_20261019_101005_672.unity",
+    "utc": "2026-10-19T10:10:06.0696386Z",
+    "boundsCenter": {
+        "x": 25.59685516357422,
+        "y": -8.828750610351563,
+        "z": -13.589202880859375
+    },
+    "boundsSize": {
+        "x": 253.47560119628907,
+        "y": 179.56103515625,
+        "z": 277.46820068359377
+    },
+    "waterHeight": 94.95176696777344,
+    "fogDensity": 0.0044999998062849049,
+    "collidersBefore": 283,
+    "collidersAfter": 283,
+    "gameplayBehavioursBefore": 19,
+    "gameplayBehavioursAfter": 19,
+    "cameras": 1,
+    "lights": 6,
+    "particleSystems": 8,
+    "missingScripts": 0,
+    "screenshots": [
+        "Docs/TempleAtmosphere\\Map3_after_entrance.png",
+        "Docs/TempleAtmosphere\\Map3_after_hall.png",
+        "Docs/TempleAtmosphere\\Map3_after_goal.png",
+        "Docs/TempleAtmosphere\\Map3_after_detail.png",
+        "Docs/TempleAtmosphere\\Map3_after_gameplay.png"
+    ]
+}

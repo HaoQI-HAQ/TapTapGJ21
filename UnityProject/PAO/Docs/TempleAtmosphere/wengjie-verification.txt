@@ -1,0 +1,3 @@
+PASS: legacy fullscreen/ground caustics removed; Map4 animated cookie (15x15) assigned to the main light.
+PASS: preserved 200 colliders, 82 gameplay behaviours and 0 audio sources.
+PASS: bloom uses a scene-specific profile. Backup: D:\TapTap21\PAO-EnvironmentBackups\wengjie_20261019_101006_228.unity

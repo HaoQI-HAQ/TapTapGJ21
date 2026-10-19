@@ -1,0 +1,20 @@
+{
+    "mapName": "Map2",
+    "artRootName": "Map2_Preset_Art",
+    "scenePath": "Assets/GameMain/Scenes/Map2.unity",
+    "backupPath": "G:\\project\\TapTapGJ21\\docs\\plan\\Map2美术替换\\backups\\Map2_before_mesh_collider_20261019_031145_864.unity",
+    "utc": "2026-10-19T03:11:45.8676425Z",
+    "eligibleMeshFilters": 1245,
+    "meshColliderTotal": 1245,
+    "sceneMeshColliderTotal": 1250,
+    "addedMeshColliders": 1245,
+    "reusedMeshColliders": 0,
+    "disabledProxyColliders": 404,
+    "preservedTriggerColliders": 0,
+    "preservedCustomArtColliders": 0,
+    "protectedProxyColliders": 0,
+    "dynamicConvexColliders": 0,
+    "skippedInactiveOrHiddenMeshes": 0,
+    "saved": true,
+    "rolledBack": false
+}

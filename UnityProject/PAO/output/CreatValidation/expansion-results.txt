@@ -1,0 +1,18 @@
+PASS The arena is 96 by 48 meters with a 72-meter ceiling and unchanged 2-meter cells.
+PASS Floor area doubles, height triples, and build capacity grows to 41472 cells.
+PASS The newly added floor area has a solid floor at ground level.
+PASS The east wall is at 48 meters and no old wall blocks the expanded area.
+PASS The west wall is at minus 48 meters.
+PASS Side walls span the entire expanded width and height.
+PASS The physical ceiling is at 72 meters, with no old ceiling at 24 meters.
+PASS Construction works at the newly added far corner above the old ceiling.
+PASS Building and floating still respect all new outer limits.
+PASS Construction also works in the added western area.
+PASS Original version-two creations keep their positions, sizes, shapes and custom colors after expansion.
+PASS Loading an original save leaves its source file unchanged.
+PASS Expanded worlds serialize successfully.
+PASS Expanded saves restore high cells and never shift migrated creations a second time.
+PASS A cell outside its original saved bounds is rejected before replacing the current work.
+PASS Original version-one saves also migrate with their existing palette colors.
+PASS Expansion verification never modifies the player's real save.
+PASS Expanded arena runs without Unity runtime errors.

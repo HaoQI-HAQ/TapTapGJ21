@@ -41,8 +41,14 @@ namespace PAO
     /// 【炸弹怎么推】
     /// ============================================================
     /// 订阅 <see cref="Bubble.Exploded"/>（和 RotatingHazard / BouncyPad 同一套），
-    /// 判定用"爆炸中心到**本体碰撞体**的最近距离"，而不是到支点的距离 ——
+    /// 判定用"爆炸中心到**本体所有碰撞体**的最近距离"，而不是到支点的距离 ——
     /// 门架有几米长，炸在底板上离支点很远，但明明已经炸到了。
+    ///
+    /// 【判定半径用自己的，不跟炸弹的 blastRadius 走】
+    /// CSBubbleLoadout 里炸弹的 blastRadius 现在只有 0.3 米，
+    /// 拿它当判定半径等于"必须把炸弹贴在柱子上炸"。
+    /// 所以这里单独有 <see cref="m_BlastRadius"/>（默认 4 米），
+    /// 取 max(自己的半径, 炸弹半径) + 余量，玩家炸在附近就一定看得见在动。
     ///
     /// 冲量按真正的力臂算：r = 支点→受力点，F = 爆炸→受力点的方向，
     /// 绕轴的力矩 = dot(axis, cross(r, F))。所以：
@@ -104,8 +110,13 @@ namespace PAO
         [Tooltip("一次满力度爆炸给多少角速度（度/秒）。爆炸离得越远、力臂越短，给得越少。")]
         [SerializeField] private float m_BlastImpulse = 90f;
 
-        [Tooltip("爆炸判定额外范围（米）。爆炸半径已经算进去了，这里只是余量。")]
-        [SerializeField] private float m_BlastReachBonus = 0.4f;
+        [Tooltip("秋千自己的爆炸感应半径（米）。\n" +
+                 "**不要**跟着炸弹的 blastRadius 走 —— 现在 CSBubbleLoadout 里 blastRadius 只有 0.3 米，\n" +
+                 "拿它当判定半径等于要求炸弹贴着柱子炸才动。所以这里单独给一个玩家能接受的感应半径。")]
+        [SerializeField] private float m_BlastRadius = 4f;
+
+        [Tooltip("爆炸判定额外范围（米）。在上面那个感应半径之外再放宽一点。")]
+        [SerializeField] private float m_BlastReachBonus = 0.5f;
 
         [Tooltip("最小力臂系数。爆炸正好在支点正下方时力臂是 0，这里保底给一点推力，避免「炸了没反应」。")]
         [SerializeField, Range(0f, 1f)] private float m_BlastMinLever = 0.25f;
@@ -308,33 +319,48 @@ namespace PAO
         /// </summary>
         public bool PushFromBlast(Vector3 center, float radius)
         {
-            Collider body = FindRepresentativeCollider();
+            // 判定距离：拿**本体上所有碰撞体**里离爆炸最近的那个点，而不是支点。
+            // 门架有 9 米高，炸在底板和炸在柱子上都得算到，所以每个碰撞体都扫一遍。
+            Vector3 closest = transform.position;
+            float distance = Vector3.Distance(center, closest);
+            bool found = false;
 
-            // 判定距离：拿**本体**上离爆炸最近的点，而不是支点
-            Vector3 closest;
-            float distance;
+            Collider[] colliders = GetComponentsInChildren<Collider>(false);
 
-            if (body != null && body.enabled)
+            for (int i = 0; i < colliders.Length; i++)
             {
-                closest = body.ClosestPoint(center);
-                distance = Vector3.Distance(center, closest);
-            }
-            else
-            {
-                closest = transform.position;
-                distance = Vector3.Distance(center, closest);
+                Collider c = colliders[i];
+
+                if (c == null || !c.enabled)
+                {
+                    continue;
+                }
+
+                Vector3 p = c.ClosestPoint(center);
+                float d = Vector3.Distance(center, p);
+
+                if (!found || d < distance)
+                {
+                    closest = p;
+                    distance = d;
+                    found = true;
+                }
             }
 
-            float reach = Mathf.Max(0.01f, radius) + m_BlastReachBonus;
+            // 【关键】感应半径用自己的 m_BlastRadius，不是炸弹的 blastRadius。
+            // CSBubbleLoadout 里 blastRadius 只有 0.3 米（连半个身位都不到），
+            // 直接拿它当判定半径 = 要求炸弹贴着柱子炸才有反应，玩家会觉得"炸了没动"。
+            float reach = Mathf.Max(m_BlastRadius, radius) + m_BlastReachBonus;
 
             if (distance > reach)
             {
                 return false;
             }
 
-            // 爆炸越近推得越狠。用平方衰减，贴脸炸才够夸张。
-            float falloff = 1f - Mathf.Clamp01(distance / reach);
-            falloff *= falloff;
+            // 衰减：贴脸 1.0，判定边缘还有 0.25。
+            // 不用平方衰减 —— 平方会让"差一点点距离"直接等于没反应，
+            // 这里要的是"炸在附近就一定看得出来在动"。
+            float falloff = 0.25f + 0.75f * Mathf.Clamp01(1f - distance / reach);
 
             Vector3 axis = AxisWorld;
             Vector3 r = closest - transform.position;              // 支点 → 受力点
@@ -383,39 +409,6 @@ namespace PAO
         public void ResetSwing()
         {
             SnapToAngle(0f);
-        }
-
-        /// <summary>
-        /// 挑一个代表本体的碰撞体：优先取包住整个机关的（尺寸最大的那个），
-        /// 这样"最近点"落在结构边缘而不是某根装饰细杆上。
-        /// </summary>
-        private Collider FindRepresentativeCollider()
-        {
-            Collider best = null;
-            float bestVolume = -1f;
-
-            Collider[] colliders = GetComponentsInChildren<Collider>(false);
-
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                Collider c = colliders[i];
-
-                if (c == null || !c.enabled || c.isTrigger)
-                {
-                    continue;
-                }
-
-                Vector3 size = c.bounds.size;
-                float volume = size.x * size.y * size.z;
-
-                if (volume > bestVolume)
-                {
-                    bestVolume = volume;
-                    best = c;
-                }
-            }
-
-            return best;
         }
 
         // ==================== 载人 ====================
@@ -569,13 +562,14 @@ namespace PAO
         /// 编辑器 / 搭建脚本用的配置入口。摆长一般传"支点到包围盒中心的高度"。
         /// </summary>
         public void Configure(Vector3 localAxis, float maxAngle, float pendulumLength,
-                              float startAngle = 0f, float blastImpulse = 90f)
+                              float startAngle = 0f, float blastImpulse = 90f, float blastRadius = 4f)
         {
             m_LocalAxis = localAxis.sqrMagnitude > 0.0001f ? localAxis.normalized : Vector3.right;
             m_MaxAngle = Mathf.Clamp(maxAngle, 5f, 80f);
             m_PendulumLength = Mathf.Max(0.5f, pendulumLength);
             m_StartAngle = Mathf.Clamp(startAngle, -m_MaxAngle, m_MaxAngle);
             m_BlastImpulse = Mathf.Max(1f, blastImpulse);
+            m_BlastRadius = Mathf.Max(0.5f, blastRadius);
         }
     }
 }

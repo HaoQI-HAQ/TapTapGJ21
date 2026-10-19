@@ -1,0 +1,33 @@
+{
+    "scene": "Assets/GameMain/Scenes/Map2_5.unity",
+    "mood": "水光回廊 · 青绿与淡紫天光",
+    "backup": "D:\\TapTap21\\PAO-EnvironmentBackups\\Map2_5_20261019_101004_916.unity",
+    "utc": "2026-10-19T10:10:05.5907489Z",
+    "boundsCenter": {
+        "x": -10.911880493164063,
+        "y": 16.400001525878908,
+        "z": 23.25
+    },
+    "boundsSize": {
+        "x": 98.17623901367188,
+        "y": 52.80000305175781,
+        "z": 142.5
+    },
+    "waterHeight": 56.80000305175781,
+    "fogDensity": 0.0035000001080334188,
+    "collidersBefore": 2308,
+    "collidersAfter": 2308,
+    "gameplayBehavioursBefore": 476,
+    "gameplayBehavioursAfter": 476,
+    "cameras": 1,
+    "lights": 6,
+    "particleSystems": 8,
+    "missingScripts": 0,
+    "screenshots": [
+        "Docs/TempleAtmosphere\\Map2_5_after_entrance.png",
+        "Docs/TempleAtmosphere\\Map2_5_after_hall.png",
+        "Docs/TempleAtmosphere\\Map2_5_after_goal.png",
+        "Docs/TempleAtmosphere\\Map2_5_after_detail.png",
+        "Docs/TempleAtmosphere\\Map2_5_after_gameplay.png"
+    ]
+}

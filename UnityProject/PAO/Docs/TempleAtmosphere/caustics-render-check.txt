@@ -1,0 +1,4 @@
+Map2: PASS; animated light cookie affects 692116/1440000 pixels in the detail view.
+Map2_5: PASS; animated light cookie affects 873387/1440000 pixels in the detail view.
+Map3: PASS; animated light cookie affects 206810/1440000 pixels in the detail view.
+wengjie: PASS; animated light cookie affects 1377591/1440000 pixels in the detail view.

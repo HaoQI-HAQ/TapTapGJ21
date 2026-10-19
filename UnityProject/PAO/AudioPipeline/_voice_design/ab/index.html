@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PAO 旁白 · AI 语音设计 A/B</title>
+<style>
+:root { color-scheme: dark; }
+body { margin:0; background:#0e1114; color:#e8edf2; font:15px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+main { max-width:1080px; margin:0 auto; padding:40px 24px 80px; }
+h1 { font-size:26px; margin:0 0 6px; letter-spacing:.5px; }
+.sub { color:#8b98a5; margin-bottom:28px; }
+h2 { font-size:16px; margin:36px 0 12px; color:#b7c4d1; letter-spacing:1px; }
+.card { background:#151a1f; border:1px solid #222b33; border-radius:12px; padding:18px 20px; margin:14px 0; }
+.lid { font:600 12px/1 monospace; color:#5f8fb8; letter-spacing:1px; }
+.text { margin:8px 0 14px; color:#cfd8e1; }
+.row { display:grid; grid-template-columns:300px 1fr 60px; gap:14px; align-items:center; padding:6px 0; border-top:1px dashed #1e262e; }
+.row:first-of-type { border-top:0; }
+.row.recommend { background:linear-gradient(90deg,rgba(38,110,80,.18),transparent 65%); border-radius:8px; }
+.who b { display:block; font-size:13px; }
+.who span { display:block; font-size:11.5px; color:#7d8b98; }
+audio { width:100%; height:34px; }
+.dur { font:12px/1 monospace; color:#8b98a5; text-align:right; }
+table { width:100%; border-collapse:collapse; font-size:13.5px; }
+th,td { text-align:left; padding:9px 8px; border-bottom:1px solid #1e262e; }
+th { color:#8b98a5; font-weight:500; }
+td.num { font-family:monospace; }
+ul { margin:0; padding-left:20px; color:#aab7c4; }
+li { margin:4px 0; }
+code { background:#1b2229; padding:1px 6px; border-radius:5px; font-size:12.5px; }
+.warn { background:#1d1a12; border:1px solid #3b331c; border-radius:10px; padding:14px 18px; margin-top:14px; color:#cbb98a; }
+.warn b { color:#e6cf95; }
+</style></head><body><main>
+<h1>PAO 旁白 · AI 语音设计 A/B</h1>
+<div class="sub">5 段关键机制旁白 · edge-tts 神经语音 + 参数化 prosody · 32 kHz / 16-bit / mono WAV · 生成于 2026-10-19</div>
+
+<h2>怎么试</h2>
+<p style="color:#aab7c4;margin:0">每张卡片是同一句台词的不同音色。重点听三件事：<b>句尾是否自然落平</b>（不要拖、不要上扬卖萌）、<b>有没有播音腔</b>、<b>语速是否稳</b>。B 行高亮，是我按上一轮“克制、不表演”方向给的起点。</p>
+
+<h2>候选</h2>
+<ul><li><b>现版 · Windows SAPI</b> — 项目正在用的机器音。刻意“不像人”，但语速偏拖。</li><li><b>A · Yunxi 常规</b> — 明亮、干净，接近日常讲述；比现版快很多。</li><li><b>B · Yunxi 放慢（推荐起点）</b> — 更稳、更克制，接近“说故事但不表演”；句尾落平。</li><li><b>C · Yunxia 儿童</b> — 真正的“男孩”，但偏卡通可爱，风险最高。</li><li><b>D · Yunyang 成年男声</b> — 新闻播报底子，可靠但“太像播音”，与旁白设定冲突。</li></ul>
+
+<h2>时长对照</h2>
+<table><thead><tr><th>方案</th><th>参数</th><th>5 段合计</th><th>相对现版</th></tr></thead><tbody><tr><td>现版 · Windows SAPI</td><td>zh-CN-Huihui（女声）· Rate −2</td><td class="num">96.54 s</td><td class="num">+0%</td></tr><tr><td>A · Yunxi 常规</td><td>男 · 少年感 · rate −5% · pitch −25Hz</td><td class="num">64.66 s</td><td class="num">-33%</td></tr><tr><td>B · Yunxi 放慢（推荐起点）</td><td>男 · 少年感 · rate −15% · pitch −25Hz</td><td class="num">72.24 s</td><td class="num">-25%</td></tr><tr><td>C · Yunxia 儿童</td><td>男童 · rate −10% · pitch −15Hz</td><td class="num">72.82 s</td><td class="num">-25%</td></tr><tr><td>D · Yunyang 成年男声</td><td>男 · 成年 · rate −8% · pitch −15Hz</td><td class="num">63.12 s</td><td class="num">-35%</td></tr></tbody></table>
+
+<h2>逐段试听</h2>
+<section class="card"><div class="lid">M-005</div><div class="text">看向前方。那是一面墙。严格说不是——是许多小泡泡挤在一起。但它挡住了你的路。接下来很简单：打破它</div><div class="row"><div class="who"><b>现版 · Windows SAPI</b><span>zh-CN-Huihui（女声）· Rate −2</span></div><audio controls preload="none" src="00_current_sapi/m_005.wav"></audio><div class="dur">17.91 s</div></div><div class="row"><div class="who"><b>A · Yunxi 常规</b><span>男 · 少年感 · rate −5% · pitch −25Hz</span></div><audio controls preload="none" src="10_yunxi_r5/m_005.wav"></audio><div class="dur">12.1 s</div></div><div class="row recommend"><div class="who"><b>B · Yunxi 放慢（推荐起点）</b><span>男 · 少年感 · rate −15% · pitch −25Hz</span></div><audio controls preload="none" src="11_yunxi_r15/m_005.wav"></audio><div class="dur">13.51 s</div></div><div class="row"><div class="who"><b>C · Yunxia 儿童</b><span>男童 · rate −10% · pitch −15Hz</span></div><audio controls preload="none" src="12_yunxia_r10/m_005.wav"></audio><div class="dur">13.63 s</div></div><div class="row"><div class="who"><b>D · Yunyang 成年男声</b><span>男 · 成年 · rate −8% · pitch −15Hz</span></div><audio controls preload="none" src="13_yunyang_r8/m_005.wav"></audio><div class="dur">12.02 s</div></div></section><section class="card"><div class="lid">M-007</div><div class="text">等等。你打破的东西，正在重新长回来。一点一点，像一道缓慢愈合的伤口。可这里没有伤口——破裂与恢复，都是正常的</div><div class="row"><div class="who"><b>现版 · Windows SAPI</b><span>zh-CN-Huihui（女声）· Rate −2</span></div><audio controls preload="none" src="00_current_sapi/m_007.wav"></audio><div class="dur">19.12 s</div></div><div class="row"><div class="who"><b>A · Yunxi 常规</b><span>男 · 少年感 · rate −5% · pitch −25Hz</span></div><audio controls preload="none" src="10_yunxi_r5/m_007.wav"></audio><div class="dur">12.72 s</div></div><div class="row recommend"><div class="who"><b>B · Yunxi 放慢（推荐起点）</b><span>男 · 少年感 · rate −15% · pitch −25Hz</span></div><audio controls preload="none" src="11_yunxi_r15/m_007.wav"></audio><div class="dur">14.21 s</div></div><div class="row"><div class="who"><b>C · Yunxia 儿童</b><span>男童 · rate −10% · pitch −15Hz</span></div><audio controls preload="none" src="12_yunxia_r10/m_007.wav"></audio><div class="dur">13.99 s</div></div><div class="row"><div class="who"><b>D · Yunyang 成年男声</b><span>男 · 成年 · rate −8% · pitch −15Hz</span></div><audio controls preload="none" src="13_yunyang_r8/m_007.wav"></audio><div class="dur">12.55 s</div></div></section><section class="card"><div class="lid">M-008</div><div class="text">现在，谈一件不太愉快的事：消耗。每一次发射泡泡，都要花掉一点泡泡值。泡泡值不是无限的。但你看——泡泡值在回来</div><div class="row"><div class="who"><b>现版 · Windows SAPI</b><span>zh-CN-Huihui（女声）· Rate −2</span></div><audio controls preload="none" src="00_current_sapi/m_008.wav"></audio><div class="dur">19.36 s</div></div><div class="row"><div class="who"><b>A · Yunxi 常规</b><span>男 · 少年感 · rate −5% · pitch −25Hz</span></div><audio controls preload="none" src="10_yunxi_r5/m_008.wav"></audio><div class="dur">12.19 s</div></div><div class="row recommend"><div class="who"><b>B · Yunxi 放慢（推荐起点）</b><span>男 · 少年感 · rate −15% · pitch −25Hz</span></div><audio controls preload="none" src="11_yunxi_r15/m_008.wav"></audio><div class="dur">13.63 s</div></div><div class="row"><div class="who"><b>C · Yunxia 儿童</b><span>男童 · rate −10% · pitch −15Hz</span></div><audio controls preload="none" src="12_yunxia_r10/m_008.wav"></audio><div class="dur">14.57 s</div></div><div class="row"><div class="who"><b>D · Yunyang 成年男声</b><span>男 · 成年 · rate −8% · pitch −15Hz</span></div><audio controls preload="none" src="13_yunyang_r8/m_008.wav"></audio><div class="dur">12.31 s</div></div></section><section class="card"><div class="lid">M-011</div><div class="text">现在，教你一件事：按住不放。泡泡会慢慢变大。变大，意味着变强。但也要花掉更多。按住多久，是只有你能做的决定</div><div class="row"><div class="who"><b>现版 · Windows SAPI</b><span>zh-CN-Huihui（女声）· Rate −2</span></div><audio controls preload="none" src="00_current_sapi/m_011.wav"></audio><div class="dur">19.65 s</div></div><div class="row"><div class="who"><b>A · Yunxi 常规</b><span>男 · 少年感 · rate −5% · pitch −25Hz</span></div><audio controls preload="none" src="10_yunxi_r5/m_011.wav"></audio><div class="dur">13.92 s</div></div><div class="row recommend"><div class="who"><b>B · Yunxi 放慢（推荐起点）</b><span>男 · 少年感 · rate −15% · pitch −25Hz</span></div><audio controls preload="none" src="11_yunxi_r15/m_011.wav"></audio><div class="dur">15.55 s</div></div><div class="row"><div class="who"><b>C · Yunxia 儿童</b><span>男童 · rate −10% · pitch −15Hz</span></div><audio controls preload="none" src="12_yunxia_r10/m_011.wav"></audio><div class="dur">15.17 s</div></div><div class="row"><div class="who"><b>D · Yunyang 成年男声</b><span>男 · 成年 · rate −8% · pitch −15Hz</span></div><audio controls preload="none" src="13_yunyang_r8/m_011.wav"></audio><div class="dur">13.22 s</div></div></section><section class="card"><div class="lid">M-013</div><div class="text">接下来这件事，可能有点难理解。你打出的泡泡，也能变成墙的一部分。工具，也是材料。你用来打破世界的东西，也能用来建造世界</div><div class="row"><div class="who"><b>现版 · Windows SAPI</b><span>zh-CN-Huihui（女声）· Rate −2</span></div><audio controls preload="none" src="00_current_sapi/m_013.wav"></audio><div class="dur">20.51 s</div></div><div class="row"><div class="who"><b>A · Yunxi 常规</b><span>男 · 少年感 · rate −5% · pitch −25Hz</span></div><audio controls preload="none" src="10_yunxi_r5/m_013.wav"></audio><div class="dur">13.73 s</div></div><div class="row recommend"><div class="who"><b>B · Yunxi 放慢（推荐起点）</b><span>男 · 少年感 · rate −15% · pitch −25Hz</span></div><audio controls preload="none" src="11_yunxi_r15/m_013.wav"></audio><div class="dur">15.34 s</div></div><div class="row"><div class="who"><b>C · Yunxia 儿童</b><span>男童 · rate −10% · pitch −15Hz</span></div><audio controls preload="none" src="12_yunxia_r10/m_013.wav"></audio><div class="dur">15.46 s</div></div><div class="row"><div class="who"><b>D · Yunyang 成年男声</b><span>男 · 成年 · rate −8% · pitch −15Hz</span></div><audio controls preload="none" src="13_yunyang_r8/m_013.wav"></audio><div class="dur">13.01 s</div></div></section>
+
+<div class="warn">
+<b>三条必须知道的限制</b><br>
+1. <b>Edge TTS 是微软在线朗读服务</b>，用于开发/试听没问题；正式发行请换 Azure Speech（同音色、可商用授权）或国内 MiniMax / 豆包等，并保留同一套参数。<br>
+2. <b>时长变了</b>：现版 5 段 96.6 s，候选 63–73 s。触发器和字幕节拍都能自适应，但“旁白说完再发生”的停顿感会变；锁定音色后要重跑 <code>Tools/PAO/关卡白盒/Map0 教程重构 · 旁白自检</code> 并实机走一遍。<br>
+3. <b>不是 bit 级可复现</b>：同一文本两次生成听觉一致但文件不同；manifest 里记了参数与文本 sha1，重生成请以听觉验收，别做文件哈希校验。
+</div>
+
+<h2>重新生成</h2>
+<p style="color:#aab7c4;margin:0">
+<code>python Tools/AV/design_voice.py --lines AudioPipeline/map0_narration_slim.json --voice zh-CN-YunxiNeural --rate=-15% --pitch=-25Hz --out AudioPipeline/_voice_design/ab/11_yunxi_r15</code><br>
+<code>python Tools/AV/make_voice_design_report.py</code>
+</p>
+</main></body></html>

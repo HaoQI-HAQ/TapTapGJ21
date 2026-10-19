@@ -35,6 +35,7 @@ namespace PAO.UI.V2
 
         private void BuildHud()
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { BuildSandboxHud(); return; }
             hud = ui.Rect("Gameplay HUD", safeRoot); UIWidgets.Stretch(hud);
             int chapter = Config.IndexOf(lastScene);
             RectTransform objective = ui.Column("Objective", hud, 16, 8);
@@ -135,6 +136,7 @@ namespace PAO.UI.V2
 
         private void OnAbilityChanged(BubbleType ability)
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { RefreshSandboxHud(); return; }
             UIRunState.Progress.bubbleType = (int)ability; RefreshHud();
             string[] descriptions = {
                 T("浮粘泡泡能彼此黏附，帮助你抵达更高的位置。", "Sticky bubbles attach to one another to help you reach higher places."),
@@ -145,6 +147,7 @@ namespace PAO.UI.V2
 
         private void RefreshHud()
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { RefreshSandboxHud(); return; }
             RefreshResourceHud();
             if (hud == null || switcher == null) return;
             int type = launcher != null ? (int)launcher.DisplayType : (int)switcher.Current;
@@ -326,6 +329,7 @@ namespace PAO.UI.V2
 
         public void ShowHelp()
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { ShowSandboxWorkshop(); return; }
             UIPage page = Push(T("操作与教学", "Controls & tutorials"), T("任何时候都可以回到这里复习。", "Return here at any time for a refresher."), false, UIPageDesign.Guide);
             page.Rebuild = ShowHelp;
             string[,] topics = {
@@ -368,6 +372,7 @@ namespace PAO.UI.V2
 
         public void ShowJournal()
         {
+            if (PAO.Sandbox.BubbleSandbox.Instance != null) { ShowSandboxWorkshop(); return; }
             UIPage page = Push(T("意识碎片", "Memory journal"),
                 T("你在水流中拾起的片段，将在这里留下回声。", "Fragments gathered in the current echo here."), false, UIPageDesign.Journal);
             page.Rebuild = ShowJournal;
