@@ -1,0 +1,64 @@
+{
+ "engine": "edge-tts",
+ "voice": "zh-CN-YunyangNeural",
+ "rate": "-8%",
+ "pitch": "-15Hz",
+ "volume": "+0%",
+ "sampleRate": 32000,
+ "channels": 1,
+ "sampleWidth": 2,
+ "sourceLines": "AudioPipeline/map0_narration_slim.json",
+ "files": [
+  {
+   "id": "M-005",
+   "text": "看向前方。那是一面墙。严格说不是——是许多小泡泡挤在一起。但它挡住了你的路。接下来很简单：打破它",
+   "wav": "m_005.wav",
+   "mp3": "m_005.mp3",
+   "seconds": 12.024,
+   "bytes": 769580,
+   "textSha1": "28434670119a0586bcadc47f99771bd6c444e154",
+   "sentences": 0
+  },
+  {
+   "id": "M-007",
+   "text": "等等。你打破的东西，正在重新长回来。一点一点，像一道缓慢愈合的伤口。可这里没有伤口——破裂与恢复，都是正常的",
+   "wav": "m_007.wav",
+   "mp3": "m_007.mp3",
+   "seconds": 12.552,
+   "bytes": 803372,
+   "textSha1": "f53cf5c632b86278dec05024d5b7504788427ec4",
+   "sentences": 0
+  },
+  {
+   "id": "M-008",
+   "text": "现在，谈一件不太愉快的事：消耗。每一次发射泡泡，都要花掉一点泡泡值。泡泡值不是无限的。但你看——泡泡值在回来",
+   "wav": "m_008.wav",
+   "mp3": "m_008.mp3",
+   "seconds": 12.312,
+   "bytes": 788012,
+   "textSha1": "e2632615fc1cade1e1ac7cfece942753d3a7b36a",
+   "sentences": 0
+  },
+  {
+   "id": "M-011",
+   "text": "现在，教你一件事：按住不放。泡泡会慢慢变大。变大，意味着变强。但也要花掉更多。按住多久，是只有你能做的决定",
+   "wav": "m_011.wav",
+   "mp3": "m_011.mp3",
+   "seconds": 13.224,
+   "bytes": 846380,
+   "textSha1": "cd4b4a7d8d455e6f17fce44080a769e3de619de1",
+   "sentences": 0
+  },
+  {
+   "id": "M-013",
+   "text": "接下来这件事，可能有点难理解。你打出的泡泡，也能变成墙的一部分。工具，也是材料。你用来打破世界的东西，也能用来建造世界",
+   "wav": "m_013.wav",
+   "mp3": "m_013.mp3",
+   "seconds": 13.008,
+   "bytes": 832556,
+   "textSha1": "87fa9d056b1f5b59a4c06e326780ae94136be55f",
+   "sentences": 0
+  }
+ ],
+ "totalSeconds": 63.12
+}

@@ -78,3 +78,15 @@ Map0 的旁白从 **11 段 / 约 3 分 35 秒** 砍到 **5 段 / 约 1 分 37 �
 - 还想再少一段：从 `Map0NarrationData.All` 删掉对应 beat，并从 `kMechanicBeatIds` / `BuildNarrationTriggers` 删掉对应项，再跑一次「只重建旁白（精简）」。
 - 想恢复某段：从 git 取回 `m_0xx.wav` + `.meta`，把 beat 加回数据，重建旁白即可。
 - 说明：本轮只做「少说话」，没有改写保留的 5 段台词（沿用原 SAPI 配音）。
+
+## 2026-10-19 换音色：SAPI → edge-tts Yunxi（A/B 的 B 方案）
+
+- 动机：原 SAPI 是**女声**（Microsoft Huihui）且 Rate −2 偏拖，与「清亮少年、克制不表演」的旁白方向不符。
+- 方案：`edge-tts` 的 `zh-CN-YunxiNeural`，`rate=-15%`、`pitch=-25Hz`；32 kHz / 16-bit / mono WAV。
+- 替换方式：**同路径覆盖** `Assets/GameMain/Audio/Map0VO/m_005|007|008|011|013.wav`，`.meta`/GUID 不变，场景引用与 `m_Clips` 无需改动。
+- 新时长：13.51 / 14.21 / 13.63 / 15.55 / 15.34 s，合计 **72.24 s**（原 96.54 s，−25%）。
+  字幕按片段长度比例分配，会自动变快；触发区 / 停留区 / 场景摆放均未改。
+- 自检（2026-10-19 18:2x，Map0 加加载后跑菜单）：数据 5 段/20 句；播放器 OK（配音 5 条，缺 0）；触发区 5 个（异常 0）；停留区 0；字幕条 OK；配音文件 5 个。Unity 重导入日志确认 5 个 wav 均以原 GUID 重新导入，0 error。
+- 备份：`AudioPipeline/_voice_design/_backup_map0vo/`（原 5 个 wav + .meta）。回滚：`git checkout -- Assets/GameMain/Audio/Map0VO`。
+- 响度：新片段 RMS ≈ −25 dBFS，旧版 ≈ −23 dBFS，整体约低 2 dB；实机若偏小声，调 `Map0NarrationDirector` 的 AudioSource 音量或设置页「音效」滑条，不要逐条压限。
+- 试听 / A-B：`AudioPipeline/_voice_design/ab/index.html`；生成脚本 `Tools/AV/design_voice.py`；决策记录 `Docs/AV/voice-design.md`。
