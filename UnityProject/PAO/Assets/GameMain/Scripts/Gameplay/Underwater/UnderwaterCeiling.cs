@@ -40,8 +40,6 @@ namespace PAO.Underwater
         [SerializeField, Min(0f)] private float m_SkirtDepth = 80f;
 
         private Mesh m_Mesh;
-        private float m_BuiltHalfSize = float.NaN;
-        private float m_BuiltSkirtDepth = float.NaN;
 
         /// <summary>水面半边长（米）。Editor 工具摆放时会读它。</summary>
         public float HalfSize => m_HalfSize;
@@ -59,31 +57,56 @@ namespace PAO.Underwater
 
         private void OnEnable()
         {
-            RebuildIfNeeded();
+            // 必须在这里无条件重建一次。
+            //
+            // OnValidate 是 Unity 的"消息系统已上锁"上下文，在里面给 MeshFilter 赋
+            // sharedMesh 时，Unity 会拒绝发送 OnMeshFilterChanged（日志里那行
+            // "SendMessage cannot be called during ... OnValidate"），渲染器就永远
+            // 拿不到这面网格 —— 表现就是水面凭空消失。
+            //
+            // 所以 OnEnable 不能"看情况跳过"：网格是运行时生成、不落盘的，
+            // 每次加载/每次脚本重编译（比如 git 拉完代码触发 domain reload）都要重来一次，
+            // 而且只有在这条正常路径上赋值才会被渲染器认。
+            Rebuild();
         }
 
         private void OnValidate()
         {
-            // 在 Inspector 里改数字要立刻看到结果
+            // 在 Inspector 里改数字要能看到结果，但不能就地改 MeshFilter，
+            // 推迟到下一次编辑器 tick（那时消息系统是正常的）。
             m_HalfSize = Mathf.Max(1f, m_HalfSize);
             m_SkirtDepth = Mathf.Max(0f, m_SkirtDepth);
-            RebuildIfNeeded();
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.delayCall -= DeferredRebuild;
+            UnityEditor.EditorApplication.delayCall += DeferredRebuild;
+#else
+            Rebuild();
+#endif
         }
+
+#if UNITY_EDITOR
+        private void DeferredRebuild()
+        {
+            // delayCall 是静态事件，回调时对象可能已经被删了
+            if (this == null)
+                return;
+
+            Rebuild();
+        }
+#endif
 
         private void OnDestroy()
         {
             ReleaseMesh();
         }
 
-        private void RebuildIfNeeded()
+        /// <summary>
+        /// 手动重建。场景里如果出现"水面没了"，在组件的右键菜单点一下就能救回来。
+        /// </summary>
+        [ContextMenu("重建水面网格")]
+        private void RebuildFromContextMenu()
         {
-            if (Mathf.Approximately(m_BuiltHalfSize, m_HalfSize)
-                && Mathf.Approximately(m_BuiltSkirtDepth, m_SkirtDepth)
-                && m_Mesh != null)
-            {
-                return;
-            }
-
             Rebuild();
         }
 
@@ -194,8 +217,6 @@ namespace PAO.Underwater
                 meshRenderer.allowOcclusionWhenDynamic = false;
             }
 
-            m_BuiltHalfSize = m_HalfSize;
-            m_BuiltSkirtDepth = m_SkirtDepth;
         }
 
         private void ReleaseMesh()

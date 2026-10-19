@@ -196,6 +196,10 @@ namespace PAO
 
         private void Update()
         {
+            // 先把「嘴上那颗」校验一遍：它可能已经自己离开嘴边了（粘墙 / 弹走 / 溶解）。
+            // 不校验的话，下面那段 m_HeldBubble 分支会一直截胡左键，HUD 的类型也会被冻住。
+            DropStaleHeldBubble();
+
             if (InputBlocked || PAO.UI.V2.UIInput.Blocked) return;
             bool mouseCharge = !PAO.UI.V2.UIInput.UsesV2 || PAO.UI.V2.UIInput.Binding(PAO.UI.V2.UIInput.Charge) >= KeyCode.Mouse0;
             if (mouseCharge && !PAO.UI.V2.UIInput.ControllerHeld(PAO.UI.V2.UIInput.PadBinding(PAO.UI.V2.UIInput.Charge)) && UnityEngine.EventSystems.EventSystem.current != null &&
@@ -378,6 +382,42 @@ namespace PAO
         }
 
         /// <summary>
+        /// 每帧校验「嘴上的泡泡」还在不在嘴上。
+        ///
+        /// 【为什么需要这一步】
+        /// m_HeldBubble 只在「发射它」的时候被清空，可泡泡自己会在三种情况下
+        /// 悄悄离开嘴边，而且都不会通知发射器：
+        ///   * 粘到了可粘地形 —— Bubble.StickWhileHeld 里 IsHeld=false / IsStuck=true
+        ///   * 弹力泡泡被墙挤到后自己弹出去 —— Bubble.LaunchFromSqueeze 里 IsHeld=false
+        ///   * 在嘴上待满 heldLifeTime、开始溶解 —— RemainingLifeTime 归零
+        ///
+        /// 槽位一旦被这种「已经不属于手上」的泡泡占住，会同时坏两件事：
+        ///   ① Update 里 m_HeldBubble 那一段会一直截胡左键，吹不出下一颗泡泡；
+        ///   ② DisplayType 被钉在 m_HeldType 上，HUD 的类型环不跟着 1/2/3 走，
+        ///      看起来就像「类型切换被锁死了」。
+        /// 所以这里每帧清一次：只要它不再是嘴上那颗，立刻交出槽位。
+        /// 泡泡本体不动 —— 它该是墙就继续当墙。
+        /// </summary>
+        private void DropStaleHeldBubble()
+        {
+            if (m_HeldBubble == null)
+            {
+                return;
+            }
+
+            Bubble held = m_HeldBubble.GetComponent<Bubble>();
+
+            // held 为 null：泡泡已被销毁（Unity 重载的 == 会接住这种「假 null」）。
+            // IsHeld 为 false：它自己宣布离开嘴边了。
+            // IsStuck：已经钉成地形，绝不能再被当作可发射的滞留泡泡。
+            // RemainingLifeTime <= 0：嘴上寿命到了、正在溶解，点它也没有意义。
+            if (held == null || !held.IsHeld || held.IsStuck || held.RemainingLifeTime <= 0f)
+            {
+                m_HeldBubble = null;
+            }
+        }
+
+        /// <summary>
         /// 发射滞留在发射口的泡泡：按当初蓄的力给速度。
         /// </summary>
         public void LaunchHeldBubble()
@@ -389,6 +429,16 @@ namespace PAO
 
             GameObject bubble = m_HeldBubble;
             m_HeldBubble = null;
+
+            // 双保险：这一帧物理可能刚好把它粘到地形上、或者弹力泡泡自己挤飞了。
+            // 那两种情况下它已经不是「嘴上那颗」，绝不能在这里解冻 ——
+            // 解冻会把墙上的泡泡送上天，而且它 IsStuck 还是 true，
+            // 会变成一颗永不过期、也再也粘不回去的泡泡。
+            Bubble heldBehaviour = bubble != null ? bubble.GetComponent<Bubble>() : null;
+            if (heldBehaviour != null && (heldBehaviour.IsStuck || !heldBehaviour.IsHeld))
+            {
+                return;
+            }
 
             BubbleSettings settings = GetHeldSettings();
             float speed = Mathf.Lerp(settings.minLaunchSpeed, settings.maxLaunchSpeed, m_HeldChargeProgress);
@@ -407,7 +457,7 @@ namespace PAO
             }
 
             // 通知泡泡：它从「滞留」变成「飞行」了
-            Bubble behaviour = bubble != null ? bubble.GetComponent<Bubble>() : null;
+            Bubble behaviour = heldBehaviour;
             if (behaviour != null)
             {
                 behaviour.OnLaunchedFromHold();

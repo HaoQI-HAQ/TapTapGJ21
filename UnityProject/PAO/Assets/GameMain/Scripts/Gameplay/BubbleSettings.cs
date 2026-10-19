@@ -153,15 +153,55 @@ namespace PAO
     }
 
     /// <summary>
+    /// 爆炸特效的参数。
+    ///
+    /// 挂在 <see cref="BombBubbleSettings"/> 里，三种泡泡共用一份 ——
+    /// 因为被吸收后是「宿主借用体内那颗炸弹的参数」来炸的，
+    /// 只要炸弹这份配好了，普通引爆和吸收引爆就都带上了。
+    /// </summary>
+    [System.Serializable]
+    public class ExplosionVfxSettings
+    {
+        [Tooltip("爆炸特效预制体。留空则回退到旧的 EnergyExplosionVFX")]
+        public GameObject prefab;
+
+        [Tooltip("特效整体缩放 = 爆炸半径 × 这个系数。\n" +
+                 "0.5 的含义：半径 0.3 米 → 0.15 倍，半径 0.6 米 → 0.3 倍；\n" +
+                 "被吸收后半径变成 0.9~1.8 米，缩放就自动跟着变成 0.45~0.9 倍")]
+        public float scalePerBlastRadius = 0.5f;
+
+        [Tooltip("缩放下限。防止点按的小爆炸小到看不清")]
+        public float minScale = 0.05f;
+
+        [Tooltip("缩放上限。防止吸收后的大爆炸糊满屏幕")]
+        public float maxScale = 0.9f;
+
+        [Range(0f, 1f)]
+        [Tooltip("上色强度。0 = 保留第三方原色，1 = 完全换成项目配色\n" +
+                 "调小了可以当「万一颜色不好看」的保险丝")]
+        public float tintStrength = 1f;
+
+        [Tooltip("特效存活时间（秒），到点自动销毁")]
+        public float lifeTime = 1.8f;
+
+        [Tooltip("同时最多存在几个爆炸特效。超了当帧就不播（防止连爆刷屏、掉帧）")]
+        public int maxConcurrent = 3;
+    }
+
+    /// <summary>
     /// 炸弹泡泡：会爆炸。
     /// 参数已就位，行为待实现（见 Bubble.cs 的 HandleBomb）。
     /// </summary>
     [System.Serializable]
     public class BombBubbleSettings : BubbleSettings
     {
-        [Header("炸弹泡泡 · 待实现")]
-        [Tooltip("爆炸影响半径（米）")]
-        public float blastRadius = 3f;
+        [Header("炸弹泡泡 · 爆炸范围")]
+        [Tooltip("点按（最小泡泡）时的爆炸影响半径（米）")]
+        public float blastRadius = 0.3f;
+
+        [Tooltip("蓄满力时的爆炸影响半径（米）。中间按蓄力比例线性插值\n" +
+                 "想恢复「不管吹多大都是固定范围」，把两个值填成一样的就行")]
+        public float blastRadiusAtMaxSize = 0.6f;
 
         [Tooltip("爆炸推力大小")]
         public float blastForce = 12f;
@@ -175,5 +215,9 @@ namespace PAO
         [Header("炸弹泡泡 · 被吸收后")]
         [Tooltip("被浮粘/弹力泡泡吸收后引爆，爆炸半径的倍率。1 = 跟普通引爆一样大")]
         public float absorbedBlastMultiplier = 2f;
+
+        [Header("炸弹泡泡 · 爆炸特效")]
+        [Tooltip("爆炸时播的特效。预制体留空则回退到旧的 EnergyExplosionVFX")]
+        public ExplosionVfxSettings explosionVfx = new ExplosionVfxSettings();
     }
 }
