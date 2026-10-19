@@ -1,0 +1,23 @@
+PASS Standing in the intended cell blocks foot placement instead of pushing or teleporting the player.
+PASS An obstructed placement is shown with a red preview.
+PASS A blocked placement leaves the player's exact position unchanged.
+PASS Jumping keeps the target attached to the floor face below, rather than following the player's height.
+PASS Quick placement still blows a travelling bubble and waits for arrival.
+PASS The released bubble builds the captured color beneath the player without changing player position.
+PASS Normal gravity lands the player on the placed block and the next layer stays blocked until another jump.
+PASS A real controller jump clears the next layer for a Minecraft-style tower placement.
+PASS The player naturally lands on the second tower block without any scripted relocation.
+PASS The last tower placement is undone as one stroke.
+PASS Redo refuses to restore a block inside the player and preserves the redo entry.
+PASS Redo succeeds after the player clears the cell and never teleports the player.
+PASS Bubble arrival rechecks the player's current position and cancels if they fell back into the target.
+PASS Walking away after release does not redirect the shot or pull the player back.
+PASS Large brushes reject the whole stroke when any new cell intersects the player.
+PASS A large underfoot brush remains anchored to the supporting surface when the player has enough clearance.
+PASS A clear three-cell brush places all 27 cells without relocating the player.
+PASS All six block faces target their correct adjacent grid cell.
+PASS Occupied cells cannot be overwritten by placement.
+PASS Minecraft-style placement still obeys the sandbox ceiling.
+PASS Painting does not activate underfoot building.
+PASS Placement verification leaves the player's real save untouched.
+PASS Underfoot construction runs without Unity runtime errors.

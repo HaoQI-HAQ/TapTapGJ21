@@ -10,10 +10,15 @@ using UnityEngine.UI;
 namespace PAO.Sandbox
 {
     /// <summary>Runs only when requested by the editor setup tool; never ships in a player.</summary>
-    public sealed class SandboxVerificationRunner : MonoBehaviour
+    public sealed partial class SandboxVerificationRunner : MonoBehaviour
     {
         public bool PreviewOnly;
         public bool ExpansionOnly;
+        public bool UnderfootOnly;
+        public bool TargetingOnly;
+        public bool DestructionOnly;
+        public bool ModelPreviewOnly;
+        public bool ArchivesOnly;
         private readonly List<string> results = new List<string>();
         private readonly List<string> errors = new List<string>();
         private string output;
@@ -42,12 +47,49 @@ namespace PAO.Sandbox
             var inputModule = FindFirstObjectByType<UnityEngine.EventSystems.StandaloneInputModule>();
             if (inputModule != null) inputModule.enabled = false;
             if (ExpansionOnly) { yield return VerifyExpansion(); Finish(); yield break; }
+            if (ArchivesOnly)
+            {
+                yield return VerifyWorkArchives(inputBrush);
+                Check(errors.Count == 0, "Work archives run without Unity runtime errors.");
+                Finish(); yield break;
+            }
+            if (ModelPreviewOnly)
+            {
+                yield return VerifyModelPreview(inputBrush);
+                Check(errors.Count == 0, "Independent model preview runs without Unity runtime errors.");
+                Finish(); yield break;
+            }
+            if (DestructionOnly)
+            {
+                yield return VerifySelectedDestruction(inputBrush);
+                Check(errors.Count == 0, "Selected destruction runs without Unity runtime errors.");
+                Finish(); yield break;
+            }
+            if (TargetingOnly)
+            {
+                yield return VerifyUpwardTargeting(inputBrush);
+                Check(errors.Count == 0, "Upward targeting runs without Unity runtime errors.");
+                Finish(); yield break;
+            }
+            if (UnderfootOnly)
+            {
+                yield return VerifyUnderfootPlacement(inputBrush);
+                Check(errors.Count == 0, "Underfoot construction runs without Unity runtime errors.");
+                Finish(); yield break;
+            }
             if (PreviewOnly) { yield return CapturePages(); Finish(); yield break; }
             Check(UIRuntime.Instance != null && UIRuntime.Instance.IsGameplay, "Creat boots the integrated gameplay UI.");
             Check(FindFirstObjectByType<SandboxBrush>() != null && FindFirstObjectByType<BubbleLauncher>() == null,
                 "Sandbox brush replaces the resource-consuming launcher only in Creat.");
             string pieceGuid = UnityEditor.AssetDatabase.AssetPathToGUID("Assets/GameMain/Scripts/Gameplay/Sandbox/SandboxPiece.cs");
             Check(!File.ReadAllText("Assets/GameMain/Scenes/Creat.unity").Contains(pieceGuid), "The authored sandbox starts empty.");
+            yield return VerifyUnderfootPlacement(inputBrush);
+            yield return VerifyUpwardTargeting(inputBrush);
+            yield return VerifySelectionAndLower(inputBrush);
+            yield return VerifyModelPreview(inputBrush);
+            yield return VerifyWorkArchives(inputBrush);
+            CameraOcclusionVerification.Run();
+            yield return new WaitUntil(() => FindFirstObjectByType<CameraOcclusionVerification>() == null);
             // A real user save may already have been restored on entry. Keep verification edits in memory only.
             world.ClearWorld();
             Vector3Int p = new Vector3Int(8, 0, 8);
@@ -144,6 +186,11 @@ namespace PAO.Sandbox
                 "Invalid custom colors cannot replace the current work.");
             File.WriteAllText(Path.Combine(output, "invalid.json"), "{\"version\":999}");
             Check(!world.LoadWorld(Path.Combine(output, "invalid.json")) && world.Count == savedCount, "An invalid save preserves the current work.");
+            string corrupt = Path.Combine(output, "corrupt-world.json");
+            File.WriteAllText(corrupt, "{\"format\":1,\"payload\":\"bad\",\"checksum\":\"bad\"}");
+            Check(!world.LoadWorld(corrupt) && world.Count == savedCount &&
+                world.TryGetCell(customCell, out state) && state.PaintColor == custom,
+                "A rolling save with a broken checksum returns failure without replacing the current work.");
             world.ClearWorld();
             Vector3Int shotCell = new Vector3Int(12, 0, 12);
             GameObject shot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -340,19 +387,22 @@ namespace PAO.Sandbox
             world.Build(new Vector3Int(12, 2, 18), 5, SandboxShape.Bubble, 0, false);
             world.Build(new Vector3Int(12, 4, 18), 3, SandboxShape.Bubble, 3, false);
         }
-        private IEnumerator Capture(string name)
+        private IEnumerator Capture(string name, int width = 1600, int height = 900)
         {
             Camera view = Camera.main;
             Canvas canvas = UIRuntime.Instance.GetComponentInChildren<Canvas>();
-            var target = new RenderTexture(1600, 900, 24); target.Create();
+            var target = new RenderTexture(width, height, 24); target.Create();
             RenderTexture previousTarget = view.targetTexture;
             view.targetTexture = target;
             canvas.renderMode = RenderMode.ScreenSpaceCamera; canvas.worldCamera = view; canvas.planeDistance = 1;
             yield return null; yield return null;
+            // The disabled runtime does not normally refit after the temporary render size changes.
+            Canvas.ForceUpdateCanvases();
+            if (BubbleSandbox.Instance != null) UIRuntime.Instance.SendMessage("RefreshSandboxHud");
             Canvas.ForceUpdateCanvases(); view.Render();
             RenderTexture previous = RenderTexture.active; RenderTexture.active = target;
-            var texture = new Texture2D(1600, 900, TextureFormat.RGB24, false);
-            texture.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); texture.Apply();
+            var texture = new Texture2D(width, height, TextureFormat.RGB24, false);
+            texture.ReadPixels(new Rect(0, 0, width, height), 0, 0); texture.Apply();
             File.WriteAllBytes(Path.Combine(output, name), texture.EncodeToPNG());
             RenderTexture.active = previous;
             canvas.worldCamera = null; canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -361,7 +411,7 @@ namespace PAO.Sandbox
         private void Finish()
         {
             Application.logMessageReceived -= OnLog;
-            File.WriteAllText(Path.Combine(output, ExpansionOnly ? "expansion-results.txt" : PreviewOnly ? "preview-results.txt" : "results.txt"), string.Join("\n", results) + "\n" + string.Join("\n", errors));
+            File.WriteAllText(Path.Combine(output, ArchivesOnly ? "archives-results.txt" : ModelPreviewOnly ? "model-preview-results.txt" : DestructionOnly ? "destruction-results.txt" : TargetingOnly ? "targeting-results.txt" : UnderfootOnly ? "underfoot-results.txt" : ExpansionOnly ? "expansion-results.txt" : PreviewOnly ? "preview-results.txt" : "results.txt"), string.Join("\n", results) + "\n" + string.Join("\n", errors));
             UnityEditor.EditorApplication.delayCall += () => UnityEditor.EditorApplication.isPlaying = false;
         }
     }

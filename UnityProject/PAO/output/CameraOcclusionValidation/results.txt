@@ -1,0 +1,14 @@
+PASS Wall between camera and focus dissolves into particles.
+PASS Camera fade preserves solid wall physics.
+PASS Faded wall uses the transparent particle pass without writing an opaque depth mask.
+PASS Rendered subject is visible through the particle wall with its actual orange color.
+PASS Leaving the sightline restores the original material and shadow settings.
+PASS Camera already inside a wall is handled by overlap detection.
+PASS Trigger volumes do not turn into particles.
+PASS Camera collision layer mask is respected.
+PASS Low camera angle dissolves both floor and foundation, including layered occluders.
+PASS Disabling the effect immediately restores the solid material.
+PASS Scene cleanup releases all fading materials.
+PASS Actual Creat player camera dissolves the obstructing floor and foundation at a low angle.
+PASS Particle shader compiles without diagnostics.
+PASS Verification completes without Unity errors.

@@ -175,6 +175,9 @@ namespace PAO
         public float LookSensitivityMultiplier { get; set; } = 1f;
         public bool InvertVerticalLook { get; set; }
 
+        // Enabled by the creation sandbox; other levels retain their authored camera collision.
+        public bool UseOcclusionParticles { get; set; }
+
         /// <summary>
         /// 锁定的光标是否应该在「回到游戏」时自动重新锁上。
         /// 由 UIRuntime 统一管理：任何界面打开时设为 false（光标交给玩家点按钮），
@@ -311,6 +314,7 @@ namespace PAO
 
         private void OnDisable()
         {
+            if (UseOcclusionParticles) CameraOcclusionParticles.ReleaseAll();
             // 组件被禁用时必须解锁光标，否则编辑器里点不动界面
             SetCursorLocked(false);
         }
@@ -635,6 +639,18 @@ namespace PAO
 
             Vector3 origin = m_CameraPivot.position;
             Vector3 direction = -m_CameraPivot.forward;   // 摄像机在枢轴正后方
+            if (UseOcclusionParticles)
+            {
+                Vector3 intendedLocal = m_CameraTransform.localPosition;
+                intendedLocal.z = -m_CameraDistance;
+                Vector3 intendedPosition = m_CameraTransform.parent.TransformPoint(intendedLocal);
+                Camera view = m_CameraTransform.GetComponent<Camera>();
+                float nearRadius = view != null ? view.nearClipPlane * Mathf.Sqrt(1 +
+                    Mathf.Pow(Mathf.Tan(view.fieldOfView * .5f * Mathf.Deg2Rad), 2) *
+                    (1 + view.aspect * view.aspect)) : .35f;
+                CameraOcclusionParticles.Prepare(origin, intendedPosition, Mathf.Max(.4f, nearRadius),
+                    m_CameraCollisionMask, transform, CameraAnchor);
+            }
             float targetDistance = ResolveCameraDistance(origin, direction, m_CameraDistance);
 
             targetDistance = Mathf.Max(targetDistance, m_MinCameraDistance);
@@ -687,6 +703,9 @@ namespace PAO
                 {
                     continue;
                 }
+
+                if (UseOcclusionParticles && hitCollider.TryGetComponent(out CameraOcclusionParticles particles) && particles.IsObstructing)
+                    continue;
 
                 if (m_HitBuffer[i].distance < nearest)
                 {

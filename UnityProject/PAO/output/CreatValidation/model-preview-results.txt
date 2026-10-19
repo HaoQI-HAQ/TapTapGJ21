@@ -1,0 +1,21 @@
+PASS Gameplay exposes a dedicated F6 creation-preview entry.
+PASS Preview opens independently and suspends player movement and edits.
+PASS Preview includes only actual creation meshes in a separate scene, without walls, physics, player or red frames.
+PASS Auto framing includes far-apart low and high creations instead of centering the empty arena.
+PASS Preview supplies ceramic and pearl materials while retaining exact custom paint.
+PASS Preview camera is independent of the arena bounds and gameplay collision controller.
+PASS Orbiting past the arena walls does not pull the preview camera inward.
+PASS Preview pan and zoom move the camera while gameplay time is paused.
+PASS Front view reframes the complete creation.
+PASS Side view reframes the complete creation.
+PASS Top view reframes the complete creation.
+PASS The optional preview ground can be hidden.
+PASS Leaving preview restores gameplay and the exact player and camera state.
+PASS Preview does not modify creations, original materials, undo history or the selection.
+PASS Leaving preview releases its separate scene and viewing resources.
+PASS Entering from pause reads the latest actual work and frames a compact sculpture.
+PASS Automatic framing adapts to a resized preview viewport.
+PASS An empty creation opens a valid preview with a helpful empty state.
+PASS Independent preview leaves the real saved creation untouched.
+PASS Preview material shader compiles without diagnostics.
+PASS Independent model preview runs without Unity runtime errors.

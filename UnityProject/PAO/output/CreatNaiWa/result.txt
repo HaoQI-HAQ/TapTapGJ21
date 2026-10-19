@@ -1,0 +1,8 @@
+DONE
+Name: 奶娃 · 捧脸小黄龙
+Cells: 3026
+Archive: C:/Users/Huya/AppData/LocalLow/DefaultCompany/PAO\Creat\Works\d79280c171bc4b59984e2e640d04590a.json
+World: D:\TapTap21\TapTapGJ21-clone\UnityProject\PAO\output\CreatNaiWa\naiwa-world.json
+Preview: D:\TapTap21\TapTapGJ21-clone\UnityProject\PAO\output\CreatNaiWa\naiwa-front.png
+Named archive reload: PASS
+Autosave: preserved

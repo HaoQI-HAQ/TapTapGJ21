@@ -1,0 +1,13 @@
+PASS Low upward view reproduces the dissolved floor and foundation remaining physical ray blockers.
+PASS Upward crosshair reaches the visible elevated bubble through camera-dissolved floor and foundation.
+PASS Selection mode adds the elevated bubble aimed at from below the floor.
+PASS Q action targets an elevated bubble while retaining build mode.
+PASS Upward Q action moves the aimed bubble after its travelling bubble arrives.
+PASS E action can also target the elevated bubble from below.
+PASS Upward E action returns the elevated bubble by one cell.
+PASS Underfoot placement still detects solid ground while its camera effect is active.
+PASS A solid floor still blocks view targeting when it is not dissolved for the camera.
+PASS An ordinary visible foreground block remains the nearest target before an elevated bubble.
+PASS A high creation more than 60 metres away is selectable within the enlarged sandbox.
+PASS Upward targeting verification leaves the player's saved creations unchanged.
+PASS Upward targeting runs without Unity runtime errors.

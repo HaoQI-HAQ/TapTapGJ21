@@ -22,6 +22,11 @@ namespace PAO.EditorTools
         private const string PreviousPlaySceneKey = "PAO.Creat.PreviousPlayScene";
         private const string PreviewKey = "PAO.Creat.Preview";
         private const string ExpansionKey = "PAO.Creat.Expansion";
+        private const string UnderfootKey = "PAO.Creat.Underfoot";
+        private const string TargetingKey = "PAO.Creat.Targeting";
+        private const string DestructionKey = "PAO.Creat.Destruction";
+        private const string ModelPreviewKey = "PAO.Creat.ModelPreview";
+        private const string ArchivesKey = "PAO.Creat.Archives";
         private static double nextRequestPoll;
         private static bool processing;
         static CreatSandboxSetup()
@@ -44,6 +49,11 @@ namespace PAO.EditorTools
                     var runner = new GameObject("Creat verification").AddComponent<SandboxVerificationRunner>();
                     runner.PreviewOnly = SessionState.GetBool(PreviewKey, false);
                     runner.ExpansionOnly = SessionState.GetBool(ExpansionKey, false);
+                    runner.UnderfootOnly = SessionState.GetBool(UnderfootKey, false);
+                    runner.TargetingOnly = SessionState.GetBool(TargetingKey, false);
+                    runner.DestructionOnly = SessionState.GetBool(DestructionKey, false);
+                    runner.ModelPreviewOnly = SessionState.GetBool(ModelPreviewKey, false);
+                    runner.ArchivesOnly = SessionState.GetBool(ArchivesKey, false);
                 }
             };
         }
@@ -55,7 +65,7 @@ namespace PAO.EditorTools
             string request = File.ReadAllText(RequestPath).Trim();
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
-                if (request == "verify" || request == "preview" || request == "verify-expansion" || request == "resize" || request == "build")
+                if (request == "verify" || request == "preview" || request == "verify-archives" || request == "verify-model-preview" || request == "verify-expansion" || request == "verify-underfoot" || request == "verify-targeting" || request == "verify-destruction" || request == "resize" || request == "build")
                 {
                     EditorApplication.isPlaying = false;
                 }
@@ -64,7 +74,7 @@ namespace PAO.EditorTools
             DateTime runtimeBuild = File.GetLastWriteTimeUtc(typeof(BubbleSandbox).Assembly.Location);
             foreach (string source in Directory.GetFiles("Assets/GameMain/Scripts/Gameplay/Sandbox", "*.cs"))
                 if (File.GetLastWriteTimeUtc(source) > runtimeBuild) { AssetDatabase.Refresh(); return; }
-            foreach (string source in new[] { "UIRuntime.Sandbox.cs", "UIRuntime.Menu.cs", "UIMenuPresentation.cs", "UIButtonFeedback.cs" })
+            foreach (string source in new[] { "UIRuntime.Sandbox.cs", "UIRuntime.SandboxArchives.cs", "UIRuntime.SandboxPreview.cs", "UIRuntime.Menu.cs", "UIMenuPresentation.cs", "UIButtonFeedback.cs" })
                 if (File.GetLastWriteTimeUtc("Assets/GameMain/Scripts/UI/V2/" + source) > runtimeBuild) { AssetDatabase.Refresh(); return; }
             if (File.GetLastWriteTimeUtc("Assets/GameMain/Scripts/Editor/CreatSandboxSetup.cs") > File.GetLastWriteTimeUtc(typeof(CreatSandboxSetup).Assembly.Location))
             { AssetDatabase.Refresh(); return; }
@@ -72,7 +82,7 @@ namespace PAO.EditorTools
             File.Delete(RequestPath);
             try
             {
-                if (request == "verify" || request == "preview" || request == "verify-expansion")
+                if (request == "verify" || request == "preview" || request == "verify-archives" || request == "verify-model-preview" || request == "verify-expansion" || request == "verify-underfoot" || request == "verify-targeting" || request == "verify-destruction")
                 {
                     if (!File.Exists(ScenePath)) BuildScene();
                     if (request == "verify-expansion") ExpandScene();
@@ -83,6 +93,11 @@ namespace PAO.EditorTools
                     SessionState.SetBool(VerifyKey, true);
                     SessionState.SetBool(PreviewKey, request == "preview");
                     SessionState.SetBool(ExpansionKey, request == "verify-expansion");
+                    SessionState.SetBool(UnderfootKey, request == "verify-underfoot");
+                    SessionState.SetBool(TargetingKey, request == "verify-targeting");
+                    SessionState.SetBool(DestructionKey, request == "verify-destruction");
+                    SessionState.SetBool(ModelPreviewKey, request == "verify-model-preview");
+                    SessionState.SetBool(ArchivesKey, request == "verify-archives");
                     EditorApplication.isPlaying = true;
                 }
                 else if (request == "resize") ExpandScene();

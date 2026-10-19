@@ -117,6 +117,12 @@ namespace PAO.Sandbox
         private void Start()
         {
             player = FindFirstObjectByType<PlayerController>();
+            if (player != null)
+            {
+                player.UseOcclusionParticles = true;
+                foreach (MeshRenderer solid in GetComponentsInChildren<MeshRenderer>())
+                    if (!solid.transform.IsChildOf(player.transform)) CameraOcclusionParticles.Attach(solid.gameObject);
+            }
             saveAt = Time.unscaledTime + 30;
             if (restoreSavedWorld && File.Exists(SavePath)) LoadWorld();
         }
@@ -160,23 +166,36 @@ namespace PAO.Sandbox
         public void Notify(string message) { Status = message; }
         public IEnumerable<Vector3Int> Footprint(Vector3Int center, int diameter, SandboxShape shape)
         {
+            // The preview is a box. Shape chooses each created solid, not which cells the brush affects.
             int radius = Mathf.Clamp(diameter / 2, 0, 2);
             for (int x = -radius; x <= radius; x++)
             for (int y = -radius; y <= radius; y++)
             for (int z = -radius; z <= radius; z++)
-                if (shape == SandboxShape.Block || x * x + y * y + z * z <= radius * radius + .5f)
-                    yield return center + new Vector3Int(x, y, z);
+                yield return center + new Vector3Int(x, y, z);
         }
         private bool OverlapsPlayer(Vector3Int p)
         {
             if (player == null) return false;
             return new Bounds(CellCenter(p), Vector3.one * (cellSize * .96f)).Intersects(player.GetComponent<CharacterController>().bounds);
         }
+        public bool CanBuild(Vector3Int center, int diameter, SandboxShape shape)
+        {
+            bool empty = false;
+            foreach (Vector3Int p in Footprint(center, diameter, shape))
+            {
+                if (!Contains(p) || cells.ContainsKey(p)) continue;
+                if (OverlapsPlayer(p)) return false;
+                empty = true;
+            }
+            return empty;
+        }
         public int Build(Vector3Int center, int diameter, SandboxShape shape, int color, bool paint, Color? tint = null)
         {
             color = Mathf.Clamp(color, 0, Palette.Length - 1);
             if (tint.HasValue && !ValidTint(tint.Value)) return 0;
             Color selected = tint ?? Palette[color];
+            if (!paint && !CanBuild(center, diameter, shape))
+            { Notify("目标格被占用或碰到玩家；脚下搭高时先跳起。" ); return 0; }
             Edit edit = new Edit();
             foreach (Vector3Int p in Footprint(center, diameter, shape))
             {
@@ -189,7 +208,7 @@ namespace PAO.Sandbox
                     recolored.color = color; recolored.customColor = tint.HasValue; recolored.tint = selected;
                     edit.after.Add(recolored);
                 }
-                else if (!paint && !OverlapsPlayer(p))
+                else if (!paint)
                     edit.after.Add(new SandboxCellData { position = p, color = color, shape = shape,
                         customColor = tint.HasValue, tint = selected });
             }
@@ -207,10 +226,28 @@ namespace PAO.Sandbox
             Apply(edit, true); Remember(edit); Notify("拆除 " + edit.before.Count + " 格 · Ctrl+Z 可撤销");
             return edit.before.Count;
         }
-        public int Lift(Vector3Int start, int levels)
+        public int DestroySelection(SandboxPiece[] pieces)
         {
-            if (!cells.ContainsKey(start)) { Notify("将浮空泡泡吹向相连的造物。" ); return 0; }
-            if (moving.Count > 0) { Notify("等造物浮稳，再继续抬升。" ); return 0; }
+            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。" ); return 0; }
+            var positions = new HashSet<Vector3Int>();
+            Edit edit = new Edit();
+            foreach (SandboxPiece piece in pieces)
+            {
+                if (piece == null || !cells.TryGetValue(piece.Data.position, out SandboxPiece current) || current != piece)
+                { Notify("选中的造物已改变，请重新选择。" ); return 0; }
+                if (positions.Add(piece.Data.position)) edit.before.Add(piece.Data);
+            }
+            Apply(edit, true); Remember(edit);
+            Notify("已拆除选中的 " + edit.before.Count + " 件造物 · Ctrl+Z 可整批恢复");
+            return edit.before.Count;
+        }
+        public int Lift(Vector3Int start, int levels)
+        { return MoveConnected(start, Mathf.Clamp(levels, 1, 3)); }
+        public int Lower(Vector3Int start, int levels)
+        { return MoveConnected(start, -Mathf.Clamp(levels, 1, 3)); }
+        private int MoveConnected(Vector3Int start, int levels)
+        {
+            if (!cells.ContainsKey(start)) { Notify("将" + (levels > 0 ? "浮空" : "下浮") + "泡泡吹向相连的造物。" ); return 0; }
             var connected = new HashSet<Vector3Int> { start };
             var queue = new Queue<Vector3Int>(); queue.Enqueue(start);
             while (queue.Count > 0)
@@ -219,7 +256,27 @@ namespace PAO.Sandbox
                 foreach (Vector3Int direction in Neighbors)
                     if (cells.ContainsKey(p + direction) && connected.Add(p + direction)) queue.Enqueue(p + direction);
             }
-            Vector3Int offset = Vector3Int.up * Mathf.Clamp(levels, 1, 3);
+            return MoveCells(connected, levels);
+        }
+        public int MoveSelection(SandboxPiece[] pieces, int levels)
+        {
+            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。" ); return 0; }
+            var selected = new HashSet<Vector3Int>();
+            foreach (SandboxPiece piece in pieces)
+            {
+                if (piece == null || !cells.TryGetValue(piece.Data.position, out SandboxPiece current) || current != piece)
+                { Notify("选中的造物已改变，请重新选择。" ); return 0; }
+                selected.Add(piece.Data.position);
+            }
+            return MoveCells(selected, levels);
+        }
+        private int MoveCells(HashSet<Vector3Int> connected, int levels)
+        {
+            if (levels == 0) return 0;
+            if (moving.Count > 0) { Notify("等造物浮稳，再继续移动。" ); return 0; }
+            int count = Mathf.Clamp(Mathf.Abs(levels), 1, 3);
+            Vector3Int direction = levels > 0 ? Vector3Int.up : Vector3Int.down;
+            Vector3Int offset = direction * count;
             SandboxPiece support = null;
             if (player != null)
                 foreach (Vector3Int p in connected)
@@ -229,13 +286,19 @@ namespace PAO.Sandbox
                         Mathf.Abs(player.transform.position.z - b.center.z) < cellSize * .5f &&
                         Mathf.Abs(player.GetComponent<CharacterController>().bounds.min.y - b.max.y) < .3f) support = piece;
                 }
+            // Collect every bubble touched along the sweep before changing anything. A later
+            // blocked cell must reject the whole edit, including all potential merges.
+            var absorbed = new Dictionary<Vector3Int, SandboxPiece>();
             foreach (Vector3Int p in connected)
-                for (int step = 1; step <= offset.y; step++)
+                for (int step = 1; step <= count; step++)
                 {
-                    Vector3Int destination = p + Vector3Int.up * step;
-                    if (!Contains(destination) || (!connected.Contains(destination) && cells.ContainsKey(destination)) ||
-                        (support == null && OverlapsPlayer(destination)))
-                    { Notify("上方空间不足：相连造物需要整体留在边界内。" ); return 0; }
+                    Vector3Int destination = p + direction * step;
+                    bool occupied = !connected.Contains(destination) && cells.TryGetValue(destination, out _);
+                    bool merge = occupied && cells[p].Data.shape == SandboxShape.Bubble &&
+                        cells[destination].Data.shape == SandboxShape.Bubble;
+                    if (!Contains(destination) || (occupied && !merge) || (support == null && OverlapsPlayer(destination)))
+                    { Notify((levels > 0 ? "上方" : "下方") + "空间不足：不能穿过地面、其他造物或角色。" ); return 0; }
+                    if (merge && !absorbed.ContainsKey(destination)) absorbed.Add(destination, cells[p]);
                 }
             riding = support; if (support != null) ridingLastPosition = support.transform.position;
             Edit edit = new Edit(); var pieces = new List<SandboxPiece>();
@@ -244,12 +307,21 @@ namespace PAO.Sandbox
                 SandboxPiece piece = cells[p]; pieces.Add(piece); edit.before.Add(piece.Data);
                 SandboxCellData data = piece.Data; data.position += offset; edit.after.Add(data);
             }
+            SandboxSelection selection = absorbed.Count > 0 ? FindFirstObjectByType<SandboxSelection>() : null;
+            foreach (var item in absorbed)
+            {
+                SandboxPiece stationary = cells[item.Key]; edit.before.Add(stationary.Data);
+                if (selection != null) selection.Transfer(stationary, item.Value);
+                Remove(item.Key);
+            }
             foreach (Vector3Int p in connected) cells.Remove(p);
             for (int i = 0; i < pieces.Count; i++)
             {
                 pieces[i].Data = edit.after[i]; cells.Add(edit.after[i].position, pieces[i]); moving.Add(pieces[i]);
             }
-            Remember(edit); Notify("托起 " + connected.Count + " 格相连造物 · 上升 " + offset.y * cellSize + " 米");
+            Remember(edit); Notify((levels > 0 ? "托起 " : "下浮 ") + connected.Count + " 格造物 · " +
+                (levels > 0 ? "上升 " : "下降 ") + count * cellSize + " 米" +
+                (absorbed.Count > 0 ? " · 已合并 " + absorbed.Count + " 颗泡泡" : ""));
             return connected.Count;
         }
         private void Remember(Edit edit)
@@ -276,6 +348,7 @@ namespace PAO.Sandbox
                 renderer.SetPropertyBlock(customTint);
             }
             SandboxPiece piece = go.AddComponent<SandboxPiece>(); piece.Data = data; cells.Add(data.position, piece);
+            CameraOcclusionParticles.Attach(go);
         }
         private void Remove(Vector3Int p)
         {
@@ -293,8 +366,12 @@ namespace PAO.Sandbox
         public bool Redo()
         {
             if (!CanRedo) return false;
+            Edit edit = redo[redo.Count - 1];
+            foreach (SandboxCellData cell in edit.after)
+                if (!cells.ContainsKey(cell.position) && OverlapsPlayer(cell.position))
+                { Notify("重做的位置碰到玩家，请先离开或跳起。" ); return false; }
             ShotGeneration++;
-            Edit edit = redo[redo.Count - 1]; redo.RemoveAt(redo.Count - 1);
+            redo.RemoveAt(redo.Count - 1);
             Apply(edit, true); undo.Add(edit); Changed(); Notify("已重做上一笔。" ); return true;
         }
         public void ClearWorld()
@@ -308,9 +385,7 @@ namespace PAO.Sandbox
         {
             try
             {
-                WorldData data = new WorldData { dimensions = dimensions, cellSize = cellSize, origin = origin };
-                foreach (SandboxPiece piece in cells.Values) data.cells.Add(piece.Data);
-                AtomicJsonFile.Write(path ?? SavePath, JsonUtility.ToJson(data));
+                AtomicJsonFile.Write(path ?? SavePath, CaptureWorldJson());
                 dirty = false; Notify("沙盒作品已保存。" ); return true;
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
@@ -320,15 +395,42 @@ namespace PAO.Sandbox
         {
             try
             {
-                WorldData data = JsonUtility.FromJson<WorldData>(AtomicJsonFile.Read(path ?? SavePath));
-                if (data == null || (data.version != 1 && data.version != 2) || data.cells == null ||
-                    data.cellSize != cellSize || data.cells.Count > Capacity)
+                return RestoreWorldJson(AtomicJsonFile.Read(path ?? SavePath));
+            }
+            catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException || e is ArgumentException)
+            { Notify("读取失败，当前作品已保留。" ); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
+        }
+        internal string CaptureWorldJson()
+        {
+            WorldData data = new WorldData { dimensions = dimensions, cellSize = cellSize, origin = origin };
+            foreach (SandboxPiece piece in cells.Values) data.cells.Add(piece.Data);
+            return JsonUtility.ToJson(data);
+        }
+        internal bool RestoreWorldJson(string json, bool scheduleAutosave = false)
+        {
+            try
+            {
+                WorldData data = JsonUtility.FromJson<WorldData>(json);
+                if (data == null || (data.version != 1 && data.version != 2) || data.cells == null)
                     throw new InvalidDataException("Incompatible sandbox save.");
+                // A detailed work may use 1m bubbles within the same physical 96m x 72m x 48m arena.
+                // Only these two bounded lattices are accepted; never resize from arbitrary save data.
+                bool standardArena = origin == DefaultOrigin &&
+                    ((cellSize == 2 && dimensions == DefaultDimensions) ||
+                     (cellSize == 1 && dimensions == DefaultDimensions * 2));
+                bool compatibleResolution = standardArena && data.origin == DefaultOrigin &&
+                    ((data.cellSize == 2 && data.dimensions == DefaultDimensions) ||
+                     (data.cellSize == 1 && data.dimensions == DefaultDimensions * 2));
                 bool originalVolume = data.dimensions == new Vector3Int(24, 12, 24) &&
-                    data.origin == new Vector3(-24, 0, -24) && cellSize == 2 &&
-                    dimensions == DefaultDimensions && origin == DefaultOrigin;
-                if (!originalVolume && (data.dimensions != dimensions || data.origin != origin))
+                    data.origin == new Vector3(-24, 0, -24) && data.cellSize == 2 && standardArena;
+                Vector3Int targetDimensions = originalVolume ? DefaultDimensions : data.dimensions;
+                float targetCellSize = originalVolume ? 2 : data.cellSize;
+                Vector3 targetOrigin = originalVolume ? DefaultOrigin : data.origin;
+                if (!originalVolume && !compatibleResolution &&
+                    (data.cellSize != cellSize || data.dimensions != dimensions || data.origin != origin))
                     throw new InvalidDataException("Incompatible sandbox bounds.");
+                if (data.cells.Count > targetDimensions.x * targetDimensions.y * targetDimensions.z)
+                    throw new InvalidDataException("Sandbox capacity exceeded.");
                 // Rebase original saves without moving or scaling any creations in world space.
                 Vector3Int offset = originalVolume ? new Vector3Int(12, 0, 0) : Vector3Int.zero;
                 var occupied = new HashSet<Vector3Int>();
@@ -339,15 +441,20 @@ namespace PAO.Sandbox
                     cell.position += offset;
                     if (source.x < 0 || source.y < 0 || source.z < 0 || source.x >= data.dimensions.x ||
                         source.y >= data.dimensions.y || source.z >= data.dimensions.z ||
-                        !Contains(cell.position) || cell.color < 0 || cell.color >= Palette.Length ||
+                        cell.position.x < 0 || cell.position.y < 0 || cell.position.z < 0 ||
+                        cell.position.x >= targetDimensions.x || cell.position.y >= targetDimensions.y ||
+                        cell.position.z >= targetDimensions.z || cell.color < 0 || cell.color >= Palette.Length ||
                         (cell.customColor && (data.version < 2 || !ValidTint(cell.tint))) ||
                         (cell.shape != SandboxShape.Bubble && cell.shape != SandboxShape.Block) || !occupied.Add(cell.position))
                         throw new InvalidDataException("Invalid cell in sandbox save.");
                     data.cells[i] = cell;
                 }
                 // Validate the complete file before replacing the current work.
-                ClearWorld(); foreach (SandboxCellData cell in data.cells) Add(cell);
-                undo.Clear(); redo.Clear(); dirty = false; Revision++;
+                ClearWorld();
+                dimensions = targetDimensions; cellSize = targetCellSize; origin = targetOrigin;
+                foreach (SandboxCellData cell in data.cells) Add(cell);
+                undo.Clear(); redo.Clear(); dirty = scheduleAutosave; Revision++;
+                if (scheduleAutosave) saveAt = Time.unscaledTime + 30;
                 Respawn(); Notify("已恢复 " + Count + " 格泡泡造物。" ); return true;
             }
             catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException || e is ArgumentException)
@@ -372,6 +479,8 @@ namespace PAO.Sandbox
         private void OnApplicationQuit() { if (restoreSavedWorld && dirty) SaveWorld(); }
         private void OnDestroy()
         {
+            if (player != null) player.UseOcclusionParticles = false;
+            CameraOcclusionParticles.ReleaseAll();
             if (Instance == this) Instance = null;
             foreach (Material material in colors) if (material != null) Destroy(material);
         }

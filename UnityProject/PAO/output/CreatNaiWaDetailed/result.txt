@@ -1,0 +1,10 @@
+DONE
+Name: 奶娃 · 抱肚大笑精细版
+Cells: 9737
+Archive: C:/Users/Huya/AppData/LocalLow/DefaultCompany/PAO\Creat\Works\e15e518d9a5949dbb7564f0b0c0f7cdb.json
+World: D:\TapTap21\TapTapGJ21-clone\UnityProject\PAO\output\CreatNaiWaDetailed\naiwa-world.json
+Preview: D:\TapTap21\TapTapGJ21-clone\UnityProject\PAO\output\CreatNaiWaDetailed\naiwa-front.png
+Named archive reload: PASS
+Autosave: preserved
+Fine bubble spacing: 1m (standard: 2m)
+Standard/fine lattice round-trip: PASS

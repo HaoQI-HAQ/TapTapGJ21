@@ -1,0 +1,33 @@
+PASS Switching to destroy mode retains a multi-selection of distant blocks and bubbles.
+PASS Destroy HUD shows the selected count and explicit batch destruction hint.
+PASS Batch destruction fires without a crosshair target and waits for its travelling bubble.
+PASS One shot destroys every captured selected object while preserving unselected neighbors even with a five-cell brush.
+PASS Changing selection in flight does not redirect destruction or clear newly selected objects.
+PASS One undo restores the entire destroyed batch with its exact positions, shapes and colors.
+PASS One redo removes the complete selected batch again.
+PASS Q action remains available for a selection while in destroy mode.
+PASS Vertical selection actions in destroy mode move objects instead of destroying them.
+PASS Without a selection, destroy still fires at the aimed brush footprint.
+PASS Ordinary local destruction still preserves nearby creations outside its footprint.
+PASS An invalid batch member rejects the whole destruction without partial deletion.
+PASS Duplicate batch references create only one deletion and one history entry.
+PASS A stale captured object cannot delete its replacement or partially delete other members.
+PASS Undo cancels in-flight batch destruction before it edits the restored world.
+PASS Selected destruction verification leaves the player's saved creations unchanged.
+PASS 3-cell round-bubble brush fills the whole preview box, including its corners.
+PASS 3-cell paint affects the entire box while preserving the adjacent outside cell.
+PASS 3-cell volume paint remains one reversible edit.
+PASS 3-cell destruction removes all box cells, including corners, and preserves the outside cell.
+PASS 3-cell volume destruction supports whole-stroke undo and redo.
+PASS 5-cell round-bubble brush fills the whole preview box, including its corners.
+PASS 5-cell paint affects the entire box while preserving the adjacent outside cell.
+PASS 5-cell volume paint remains one reversible edit.
+PASS 5-cell destruction removes all box cells, including corners, and preserves the outside cell.
+PASS 5-cell volume destruction supports whole-stroke undo and redo.
+PASS A player occupying a box corner blocks the entire round-bubble build stroke.
+PASS The actual aimed three-cell destruction preview encloses exactly a six-metre cube.
+PASS Volume destruction blows a travelling bubble before changing the nine objects inside the box.
+PASS The released round-bubble stroke removes all eight box corners and its center despite later brush changes.
+PASS Actual volume shots undo and redo as one complete box edit.
+PASS Volume brush verification leaves the player's saved creations unchanged.
+PASS Selected destruction runs without Unity runtime errors.

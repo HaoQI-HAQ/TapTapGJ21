@@ -1,0 +1,14 @@
+Video: D:\TapTap21\TapTapGJ21-clone\UnityProject\PAO\output\CreatRecording\20261020-012641\Creat-test-1080p-BGM.mp4
+Resolution: 1920x1080
+FPS: 30
+H264 target bitrate: 20 Mbps
+Frames: 1660
+Duration: 55.33 s
+Passed: 222
+Failed: 0
+Music: PAOAudio/Music/Custom/Pipa_Solo
+Music gain: 0.4
+Audio sample rate: 44100
+Audio channels: 2
+Audio RMS: 0.039721
+Source: Actual Creat Play-mode automated regression with the game's configured soundtrack.

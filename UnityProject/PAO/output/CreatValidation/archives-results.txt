@@ -1,0 +1,29 @@
+PASS A fresh work archive lists an empty state without creating or replacing any saves.
+PASS Named snapshots preserve Chinese names, exact counts and the pending autosave state.
+PASS Work data and metadata are committed together in one checksummed atomic file.
+PASS A second named work saves independently from the first.
+PASS Reopening the archive restores separate named works in newest-first order.
+PASS Loading a work restores exact geometry and custom colors and schedules the rolling autosave.
+PASS Overwrite updates only the chosen work, retains an atomic backup and does not create a new slot.
+PASS Renaming changes the title while preserving all saved creation data.
+PASS Empty, oversized and multiline names are rejected without changing any work slots.
+PASS Invalid slot identifiers cannot reach outside the archive or alter the current work.
+PASS A corrupt archive is reported and cannot replace the current scene or hide other readable works.
+PASS A valid checksum with invalid world contents is fully rejected before scene replacement.
+PASS A failed disk write reports failure and preserves both current creations and existing work files.
+PASS Deleting a work removes its own main, backup and temporary files while preserving other works.
+PASS Sandbox pause exposes both named saving and the work archive.
+PASS The archive page pauses editing and exposes named work actions plus the existing rolling save.
+PASS The save-name dialog keeps invalid input open without writing an empty-named work.
+PASS Saving through the name dialog creates a new work and refreshes the archive without resuming gameplay.
+PASS The rename dialog updates a chosen work in the archive list.
+PASS Cancelling overwrite preserves the original stored work.
+PASS Confirmed overwrite refreshes the existing work with the current creation count.
+PASS Cancelling delete leaves every named work intact.
+PASS Confirmed delete removes only the chosen archive and preserves the current scene.
+PASS Independent creation preview exposes save and archive entries.
+PASS Saving from preview returns to the same independent preview and retains paused gameplay.
+PASS Cancelling load preserves the current unsaved creation and returns to the archive.
+PASS Confirmed loading restores the saved work, disposes the prior preview and resumes building.
+PASS All archive verification preserves the player's real rolling save and uses an isolated work folder.
+PASS Work archives run without Unity runtime errors.
