@@ -1,0 +1,24 @@
+{
+ "engine": "edge-tts",
+ "voice": "zh-CN-YunxiNeural",
+ "rate": "-5%",
+ "pitch": "-25Hz",
+ "volume": "+0%",
+ "sampleRate": 32000,
+ "channels": 1,
+ "sampleWidth": 2,
+ "sourceLines": "AudioPipeline/map0_narration_slim.json",
+ "files": [
+  {
+   "id": "M-005",
+   "text": "看向前方。那是一面墙。严格说不是——是许多小泡泡挤在一起。但它挡住了你的路。接下来很简单：打破它",
+   "wav": "m_005.wav",
+   "mp3": "m_005.mp3",
+   "seconds": 12.096,
+   "bytes": 774188,
+   "textSha1": "28434670119a0586bcadc47f99771bd6c444e154",
+   "sentences": 0
+  }
+ ],
+ "totalSeconds": 12.096
+}
