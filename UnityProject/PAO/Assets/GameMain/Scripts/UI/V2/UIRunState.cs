@@ -19,6 +19,8 @@ namespace PAO.UI.V2
         public List<string> completed = new List<string>();
         public List<MemoryEntry> memories = new List<MemoryEntry>();
         public List<string> tutorialsSeen = new List<string>();
+        /// <summary>已经解除首周目能力限制的关卡（通关，或从章节地图进入过）。</summary>
+        public List<string> abilityTutorialsCleared = new List<string>();
         public string ending = "";
         public float playSeconds;
         public int bubbleType;
@@ -34,8 +36,9 @@ namespace PAO.UI.V2
             if (completed == null) completed = new List<string>();
             if (memories == null) memories = new List<MemoryEntry>();
             if (tutorialsSeen == null) tutorialsSeen = new List<string>();
+            if (abilityTutorialsCleared == null) abilityTutorialsCleared = new List<string>();
             if (builds == null) builds = new List<BuiltItem>();
-            NormalizeIds(completed); NormalizeIds(tutorialsSeen);
+            NormalizeIds(completed); NormalizeIds(tutorialsSeen); NormalizeIds(abilityTutorialsCleared);
             var memoryIds = new HashSet<string>();
             memories.RemoveAll(m => m == null || string.IsNullOrEmpty(m.id) || !memoryIds.Add(m.id));
             var buildIds = new HashSet<string>();
@@ -103,8 +106,28 @@ namespace PAO.UI.V2
         public static void Complete(string scene)
         {
             if (!Progress.completed.Contains(scene)) Progress.completed.Add(scene);
+            // 通关即视为这一关的能力教学结束：下次再进来开放全部泡泡。
+            MarkAbilityTutorialCleared(scene);
             Notify();
         }
+
+        /// <summary>解除某关的首周目能力限制（从章节地图进入时调用，规则见 BubbleAbilityRules）。</summary>
+        public static void ClearAbilityTutorial(string scene)
+        {
+            if (MarkAbilityTutorialCleared(scene)) Notify();
+        }
+
+        /// <summary>只改数据、不派发事件；返回是否真的改动了。</summary>
+        private static bool MarkAbilityTutorialCleared(string scene)
+        {
+            if (string.IsNullOrEmpty(scene)) return false;
+            if (Progress.abilityTutorialsCleared == null)
+                Progress.abilityTutorialsCleared = new List<string>();
+            if (Progress.abilityTutorialsCleared.Contains(scene)) return false;
+            Progress.abilityTutorialsCleared.Add(scene);
+            return true;
+        }
+
         public static void Notify() { if (Changed != null) Changed(); }
     }
 }

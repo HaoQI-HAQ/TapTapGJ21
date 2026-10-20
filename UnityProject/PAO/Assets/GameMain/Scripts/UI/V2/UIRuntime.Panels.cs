@@ -405,7 +405,13 @@ namespace PAO.UI.V2
             if (!recordPreview)
                 ui.Button(page.Footer, T("进入本章", "Enter stage"), () => Confirm(chapter.title,
                     T("从本章起点进入。当前未保存的探索会重置。", "Enter from the chapter start. Unsaved exploration will reset."),
-                    () => { SaveOnNextEntry = true; LoadScene(chapter.scene); }), false, unlocked && available);
+                    () =>
+                    {
+                        SaveOnNextEntry = true;
+                        // 从地图进入 = 自由练习，解除这一关的首周目能力限制。
+                        PAO.BubbleAbilityRules.BeginFreePlay(chapter.scene);
+                        LoadScene(chapter.scene);
+                    }), false, unlocked && available);
             ui.Button(page.Footer, T("返回地图", "Back to map"), Pop);
             body.gameObject.AddComponent<UIStageDossierMotion>().Configure(chartSheet);
             Finish(page);
