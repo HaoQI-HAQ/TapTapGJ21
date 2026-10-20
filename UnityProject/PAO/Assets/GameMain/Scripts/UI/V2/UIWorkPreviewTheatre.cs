@@ -25,8 +25,17 @@ namespace PAO.UI.V2
         private Vector2 lastSize;
         private float lastScale = -1;
         private int lastView = -2;
+        private int lastLanguage = -1;
         private bool? lastGround;
         private string lastTitle;
+
+        private void OnEnable() { UISettings.Changed += SettingsChanged; }
+        private void OnDisable() { UISettings.Changed -= SettingsChanged; }
+        private void SettingsChanged()
+        {
+            if (root == null || controls == null || instructions == null) return;
+            RefreshLanguage(); Arrange();
+        }
 
         public static UIWorkPreviewTheatre Create(UIWidgets ui, UIPage page, SandboxPreviewView preview,
             RawImage viewport, Action save, Action archives, Action back)
@@ -52,9 +61,9 @@ namespace PAO.UI.V2
             brand = Label(header, "P A O   /   C R E A T I O N   T H E A T R E", 12);
             actions = ui.Rect("Preview actions", header);
             top = new[] {
-                ActionButton(actions, "Save preview work", "保存作品", UIWorkTheatreGraphic.Icon.Save, save),
-                ActionButton(actions, "Open preview work archives", "作品存档", UIWorkTheatreGraphic.Icon.Archives, archives),
-                ActionButton(actions, "Close creation preview", "返回建造", UIWorkTheatreGraphic.Icon.Escape, back)
+                ActionButton(actions, "Save preview work", "", UIWorkTheatreGraphic.Icon.Save, save),
+                ActionButton(actions, "Open preview work archives", "", UIWorkTheatreGraphic.Icon.Archives, archives),
+                ActionButton(actions, "Close creation preview", "", UIWorkTheatreGraphic.Icon.Escape, back)
             };
 
             identity = ui.Rect("Preview artwork information", root);
@@ -65,32 +74,32 @@ namespace PAO.UI.V2
             title.resizeTextForBestFit = true; title.resizeTextMinSize = 18;
             title.lineSpacing = 1.05f; title.alignment = TextAnchor.UpperLeft;
             RefreshTitle();
-            empty = Label(root, "返回建造，开始你的第一份作品。", 23, Muted);
+            empty = Label(root, "", 23, Muted);
             empty.alignment = TextAnchor.MiddleCenter; empty.gameObject.SetActive(preview.ObjectCount == 0);
 
             tools = ui.Rect("Preview controls", root);
             rules = Graphic("Viewing tool rules", tools, UIWorkTheatreGraphic.Kind.Rule);
             UIWidgets.Stretch(rules.rectTransform); rules.color = new Color(1, 1, 1, .28f);
             controls = new UIWorkTheatreAction[6];
-            controls[0] = ActionButton(tools, "F  取景全部", "取景全部", UIWorkTheatreGraphic.Icon.Frame, () => preview.FrameAll());
+            controls[0] = ActionButton(tools, "F  取景全部", "", UIWorkTheatreGraphic.Icon.Frame, () => preview.FrameAll());
             string[] names = { "透视", "正面", "侧面", "顶视" };
             for (int i = 0; i < 4; i++)
             {
                 int view = i;
-                controls[i + 1] = ActionButton(tools, names[i], names[i],
+                controls[i + 1] = ActionButton(tools, names[i], "",
                     (UIWorkTheatreGraphic.Icon)((int)UIWorkTheatreGraphic.Icon.Perspective + i), () => SelectView(view));
             }
-            controls[5] = ActionButton(tools, "地面 开/关", "地面  开/关", UIWorkTheatreGraphic.Icon.Grid, () => preview.ToggleGrid());
+            controls[5] = ActionButton(tools, "地面 开/关", "", UIWorkTheatreGraphic.Icon.Grid, () => preview.ToggleGrid());
 
             help = ui.Rect("Preview instructions", root);
-            string[] labels = { "拖动旋转", "滚轮缩放", "中键 / Shift + 拖动平移", "重新取景" };
             instructions = new Text[4]; mouseIcons = new UIWorkTheatreGraphic[4];
             for (int i = 0; i < 4; i++)
             {
                 mouseIcons[i] = Graphic("Mouse instruction " + i, help, UIWorkTheatreGraphic.Kind.Symbol);
                 mouseIcons[i].icon = i == 3 ? UIWorkTheatreGraphic.Icon.Frame :
                     i == 0 ? UIWorkTheatreGraphic.Icon.MouseLeft : i == 1 ? UIWorkTheatreGraphic.Icon.MouseWheel : UIWorkTheatreGraphic.Icon.MouseMiddle;
-                instructions[i] = Label(help, labels[i], 16);
+                instructions[i] = Label(help, "", 16);
+                instructions[i].resizeTextForBestFit = true; instructions[i].resizeTextMinSize = 12;
             }
             page.Content = identity; page.Footer = tools;
             // Toasts must remain visible when the stock page body is hidden.
@@ -98,7 +107,7 @@ namespace PAO.UI.V2
             page.NoticeArea.GetComponent<Image>().color = new Color(.1f, .095f, .08f, .98f);
             page.NoticeLabel.GetComponent<UIStyledText>().Configure(21, false, ui.Config);
             page.NoticeLabel.color = White;
-            RefreshSelection(); Arrange();
+            RefreshLanguage(); RefreshSelection(); Arrange();
         }
 
         private Text Label(Transform parent, string value, int size, Color? color = null)
@@ -151,9 +160,25 @@ namespace PAO.UI.V2
         private void LateUpdate()
         {
             if (root == null || preview == null) return;
+            if (lastLanguage != UISettings.Current.language) { RefreshLanguage(); Arrange(); }
             if (root.rect.size != lastSize || !Mathf.Approximately(lastScale, UISettings.Current.textScale)) Arrange();
             RefreshSelection();
             RefreshTitle();
+        }
+
+        private void RefreshLanguage()
+        {
+            lastLanguage = UISettings.Current.language;
+            top[0].Label.text = UISettings.Text("保存作品", "Save work");
+            top[1].Label.text = UISettings.Text("作品存档", "Saved works");
+            top[2].Label.text = UISettings.Text("返回建造", "Back");
+            empty.text = UISettings.Text("返回建造，开始你的第一份作品。", "Return to build and create your first work.");
+            string[] views = { UISettings.Text("取景全部", "Fit all"), UISettings.Text("透视", "Perspective"),
+                UISettings.Text("正面", "Front"), UISettings.Text("侧面", "Side"), UISettings.Text("顶视", "Top"), UISettings.Text("地面", "Ground") };
+            for (int i = 0; i < controls.Length; i++) controls[i].Label.text = views[i];
+            string[] hints = { UISettings.Text("拖动旋转", "Rotate"), UISettings.Text("滚轮缩放", "Zoom"),
+                UISettings.Text("中键 / Shift + 拖动平移", "Middle / Shift + drag"), UISettings.Text("重新取景", "Fit all") };
+            for (int i = 0; i < instructions.Length; i++) instructions[i].text = hints[i];
         }
 
         private void RefreshTitle()
@@ -170,7 +195,7 @@ namespace PAO.UI.V2
             if (w < 1 || h < 1) return;
             lastSize = root.rect.size; lastScale = UISettings.Current.textScale;
             bool narrow = w < 1100;
-            bool twoRows = w < 900 || (w < 1250 && lastScale > 1.15f);
+            bool twoRows = w < 900 || (w < 1250 && (lastScale > 1.15f || lastLanguage != 0));
             float margin = narrow ? 34 : Mathf.Min(100, w * .057f);
             Box(header, 30, 16, w - 60, narrow ? 112 : 48);
             Box(brand.rectTransform, 0, 0, narrow ? w - 60 : Mathf.Max(350, w - 690), 28); brand.fontSize = 12;
@@ -212,6 +237,7 @@ namespace PAO.UI.V2
                 Box(mouseIcons[i].rectTransform, x, 7, 28, 28);
                 Box(instructions[i].rectTransform, x + 36, 0, width - 38, 36);
                 instructions[i].fontSize = Mathf.RoundToInt((narrow ? 13 : 15) * Mathf.Min(lastScale, 1.2f));
+                instructions[i].resizeTextMaxSize = instructions[i].fontSize;
                 x += width;
             }
             float noticeWidth = Mathf.Min(w - margin * 2, 800);
@@ -256,6 +282,9 @@ namespace PAO.UI.V2
             UIWidgets.Stretch(Label.rectTransform);
             Label.rectTransform.offsetMin = new Vector2(left + 46, 0); Label.rectTransform.offsetMax = new Vector2(-10, 0);
             Label.fontSize = size;
+            Label.resizeTextForBestFit = true;
+            Label.resizeTextMinSize = Mathf.Max(13, Mathf.RoundToInt(size * .75f));
+            Label.resizeTextMaxSize = size;
             if (toggle && this.toggle != null)
             {
                 this.toggle.rectTransform.anchorMin = this.toggle.rectTransform.anchorMax = new Vector2(1, .5f);
@@ -274,7 +303,7 @@ namespace PAO.UI.V2
             surface.color = selected ? (focus ? new Color(.87f, .81f, .7f) : new Color(.94f, .93f, .9f)) : focus || hover ? new Color(1, 1, 1, .065f) : Color.clear;
             Color ink = selected ? new Color(.035f, .04f, .045f) : new Color(.94f, .93f, .89f);
             icon.color = Label.color = ink;
-            if (isSwitch) { Label.text = "地面"; if (toggle != null) toggle.color = ink; }
+            if (isSwitch) { Label.text = UISettings.Text("地面", "Ground"); if (toggle != null) toggle.color = ink; }
             icon.SetVerticesDirty();
         }
     }

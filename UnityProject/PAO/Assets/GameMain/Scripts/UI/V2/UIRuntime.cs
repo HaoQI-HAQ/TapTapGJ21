@@ -530,6 +530,7 @@ namespace PAO.UI.V2
             if (launcher != null) launcher.ToggleChargeInput = UISettings.Current.toggleCharge;
             if (canvas != null) canvas.GetComponent<CanvasScaler>().referenceResolution = new Vector2(1600, 900) / UISettings.Current.uiScale;
             ApplyHintPresentation();
+            if (PAO.Sandbox.BubbleSandbox.Instance != null && hud != null) RefreshSandboxHud();
         }
         private void UnbindGameplay()
         {

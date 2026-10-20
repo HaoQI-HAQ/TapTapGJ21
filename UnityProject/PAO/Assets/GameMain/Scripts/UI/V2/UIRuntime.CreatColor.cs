@@ -8,7 +8,7 @@ namespace PAO.UI.V2
     {
         private void ShowCreatColorMixer(Action updated)
         {
-            UIPage page = Push("自由调色", "", false, UIPageDesign.Settings);
+            UIPage page = Push(T("自由调色", "Custom color"), "", false, UIPageDesign.Settings);
             page.Rebuild = () => ShowSandboxColorMixer(updated);
             page.BeforeClose = () => updated?.Invoke();
             UIFluidGradient gradient = page.GetComponent<UIFluidGradient>();
@@ -19,10 +19,11 @@ namespace PAO.UI.V2
 
             RectTransform header = ui.Rect("Color atelier header", page.transform);
             Text eyebrow = UICreatStyle.Label(ui, header, "COLOR ATELIER   ///", 14);
-            Text heading = UICreatStyle.Label(ui, header, "自由调色", 60); heading.fontStyle = FontStyle.Bold;
+            Text heading = UICreatStyle.Label(ui, header, T("自由调色", "Custom color"), 60); heading.fontStyle = FontStyle.Bold;
             heading.verticalOverflow = VerticalWrapMode.Overflow;
-            Text instructions = UICreatStyle.Label(ui, header, "拖动 RGB 滑杆，或输入 6 位 HEX 色号。", 22);
-            Text explanation = UICreatStyle.Label(ui, header, "颜色用于建造与染色", 17, true);
+            heading.resizeTextForBestFit = true; heading.resizeTextMinSize = 32;
+            Text instructions = UICreatStyle.Label(ui, header, T("拖动 RGB 滑杆，或输入 6 位 HEX 色号。", "Use RGB sliders or a 6-digit HEX color."), 22);
+            Text explanation = UICreatStyle.Label(ui, header, T("颜色用于建造与染色", "Use this color to build and paint"), 17, true);
             RectTransform workspace = ui.Rect("Color atelier workspace", page.transform);
             RectTransform content = ui.Scroll(workspace);
             content.GetComponent<VerticalLayoutGroup>().enabled = false;
@@ -40,10 +41,10 @@ namespace PAO.UI.V2
             sample.raycastTarget = false;
             Outline sampleOutline = sample.gameObject.AddComponent<Outline>();
             sampleOutline.effectColor = Color.black; sampleOutline.effectDistance = new Vector2(1, -1);
-            Text currentLabel = UICreatStyle.Label(ui, previewPanel, "当前原色", 18, true);
+            Text currentLabel = UICreatStyle.Label(ui, previewPanel, T("当前原色", "Current color"), 18, true);
             Text currentHex = UICreatStyle.Label(ui, previewPanel, "", 36); currentHex.fontStyle = FontStyle.Bold;
             currentHex.verticalOverflow = VerticalWrapMode.Overflow;
-            Text exactColor = UICreatStyle.Label(ui, previewPanel, "立体示意，下方色样为准确原色", 13, true);
+            Text exactColor = UICreatStyle.Label(ui, previewPanel, T("立体示意，下方色样为准确原色", "The flat swatch shows the exact color."), 13, true);
 
             RectTransform rgbPanel = ui.Rect("RGB channels", content);
             UICreatStyle.Panel(ui, rgbPanel);
@@ -53,10 +54,12 @@ namespace PAO.UI.V2
             RectTransform[] sliderRects = new RectTransform[3];
             Text[] channelNames = new Text[3], minimums = new Text[3], maximums = new Text[3];
             InputField hex = null; Text hint = null;
-            string[] names = { "R 红", "G 绿", "B 蓝" };
+            bool invalidHex = false;
+            string[] names = { T("R 红", "R Red"), T("G 绿", "G Green"), T("B 蓝", "B Blue") };
             Color[] semantic = { new Color32(224, 65, 77, 255), new Color32(62, 174, 82, 255), new Color32(58, 111, 226, 255) };
             Action sync = () =>
             {
+                invalidHex = false;
                 Color selected = sandboxBrush.SelectedColor;
                 sample.color = selected; cube.SelectedColor = selected;
                 currentHex.text = "#" + ColorUtility.ToHtmlStringRGB(selected);
@@ -67,7 +70,7 @@ namespace PAO.UI.V2
                         channels[i].SetValueWithoutNotify(value); values[i].text = value.ToString();
                     }
                 if (hex != null) hex.SetTextWithoutNotify(currentHex.text);
-                if (hint != null) { hint.text = "支持复制粘贴，按 Enter 应用"; hint.color = UICreatStyle.Muted; }
+                if (hint != null) { hint.text = T("支持复制粘贴，按 Enter 应用", "Paste a color; press Enter to apply."); hint.color = UICreatStyle.Muted; }
                 updated?.Invoke();
             };
             for (int i = 0; i < channels.Length; i++)
@@ -123,13 +126,13 @@ namespace PAO.UI.V2
             Action applyHex = () =>
             {
                 if (sandboxBrush.SelectHexColor(hex.text)) sync();
-                else { hint.text = "请输入 6 位 HEX 色号，例如 #FF8800。"; hint.color = new Color(.72f, .16f, .16f); }
+                else { invalidHex = true; hint.text = T("请输入 6 位 HEX 色号，例如 #FF8800。", "Enter a 6-digit HEX color, e.g. #FF8800."); hint.color = new Color(.72f, .16f, .16f); }
             };
             hex.onEndEdit.AddListener(_ => applyHex());
-            Button apply = ui.Button(inputRow, "应用色号", () => applyHex());
+            Button apply = ui.Button(inputRow, T("应用色号", "Apply HEX"), () => applyHex());
             FitSandboxActionLabel(apply); UICreatStyle.StyleButton(apply);
             hint = UICreatStyle.Label(ui, rgbPanel, "", 16, true);
-            Button done = ui.Button(page.transform, "完成调色   →", Pop, true);
+            Button done = ui.Button(page.transform, T("完成调色   →", "Done   →"), Pop, true);
             done.name = "完成调色";
             FitSandboxActionLabel(done); UICreatStyle.StyleButton(done, true);
             Text doneLabel = done.GetComponentInChildren<Text>();
@@ -145,6 +148,20 @@ namespace PAO.UI.V2
             layout.ChannelNames = channelNames; layout.Values = values; layout.Minimums = minimums; layout.Maximums = maximums;
             layout.InputRow = inputRow; layout.Field = fieldRoot; layout.Apply = (RectTransform)apply.transform;
             layout.Hint = hint.rectTransform; layout.Done = (RectTransform)done.transform;
+            page.gameObject.AddComponent<UICreatPageTextLocale>().Configure(() =>
+            {
+                heading.text = T("自由调色", "Custom color");
+                instructions.text = T("拖动 RGB 滑杆，或输入 6 位 HEX 色号。", "Use RGB sliders or a 6-digit HEX color.");
+                explanation.text = T("颜色用于建造与染色", "Use this color to build and paint");
+                currentLabel.text = T("当前原色", "Current color");
+                exactColor.text = T("立体示意，下方色样为准确原色", "The flat swatch shows the exact color.");
+                channelNames[0].text = T("R 红", "R Red"); channelNames[1].text = T("G 绿", "G Green"); channelNames[2].text = T("B 蓝", "B Blue");
+                apply.GetComponentInChildren<Text>().text = T("应用色号", "Apply HEX");
+                doneLabel.text = T("完成调色   →", "Done   →");
+                hint.text = invalidHex ? T("请输入 6 位 HEX 色号，例如 #FF8800。", "Enter a 6-digit HEX color, e.g. #FF8800.") :
+                    T("支持复制粘贴，按 Enter 应用", "Paste a color; press Enter to apply.");
+                layout.Arrange();
+            });
             sync(); layout.Arrange();
             page.Show(); page.SetVisible(true); done.Select();
         }
@@ -170,6 +187,7 @@ namespace PAO.UI.V2
             float margin = Mathf.Clamp(width * .03f, 20, 48), inner = width - margin * 2;
             bool narrow = width < 1100 || (width < 1280 && previousScale > 1.1f);
             float titleHeight = Heading.GetComponent<Text>().fontSize * 1.35f;
+            Heading.GetComponent<Text>().resizeTextMaxSize = Mathf.RoundToInt(60 * previousScale);
             float headerHeight = narrow ? titleHeight + 116 : Mathf.Max(180, titleHeight + 50);
             Place(Header, 0, 0, width, headerHeight);
             Place(Eyebrow, margin, 8, inner, 28);
@@ -211,9 +229,15 @@ namespace PAO.UI.V2
             for (int i = 0; i < 3; i++)
             {
                 Place(Rows[i], 24, 12 + i * rowHeight, rgbWidth - 48, rowHeight);
-                float available = rgbWidth - 48, labelWidth = Mathf.Max(74, 62 * previousScale), valueWidth = Mathf.Max(62, 55 * previousScale);
+                float available = rgbWidth - 48;
+                float labelWidth = Mathf.Max(74, (UISettings.Current.language == 0 ? 62 : 164) * previousScale);
+                float valueWidth = Mathf.Max(62, 55 * previousScale);
                 float trackWidth = Mathf.Max(60, available - labelWidth - valueWidth - 16);
-                Place(ChannelNames[i].rectTransform, 0, rowInset + 10, labelWidth - 6, 48 * previousScale);
+                Place(ChannelNames[i].rectTransform, 0, rowInset + 10, labelWidth - 6, 40 * previousScale);
+                ChannelNames[i].resizeTextForBestFit = true;
+                ChannelNames[i].resizeTextMinSize = Mathf.RoundToInt(20 * previousScale);
+                ChannelNames[i].resizeTextMaxSize = Mathf.RoundToInt(28 * previousScale);
+                ChannelNames[i].verticalOverflow = VerticalWrapMode.Truncate;
                 Place(SliderRects[i], labelWidth, rowInset + 11, trackWidth, 44);
                 Place(Values[i].rectTransform, labelWidth + trackWidth + 10, rowInset + 8, valueWidth, 48 * previousScale);
                 Place(Minimums[i].rectTransform, labelWidth, rowInset + 57, trackWidth * .5f, 28 * previousScale);

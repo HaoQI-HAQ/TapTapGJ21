@@ -60,6 +60,16 @@ namespace PAO.Sandbox
             "靛蓝", "紫罗兰", "洋红", "玫红", "酒红", "陶土", "赭石", "橄榄",
             "森林", "深青", "海军蓝", "葡萄", "浅桃", "杏仁", "芽白", "冰蓝",
             "纯白", "银灰", "雾灰", "石板", "炭灰", "墨黑", "沙棕", "可可" };
+        private static readonly string[] EnglishColorNames = { "Mint", "Sky", "Lavender", "Blossom", "Tangerine", "Cream", "Leaf", "Pearl",
+            "Vermilion", "Coral", "Orange", "Gold", "Lime", "Grass", "Lake", "Royal Blue",
+            "Indigo", "Violet", "Magenta", "Rose", "Burgundy", "Terracotta", "Ochre", "Olive",
+            "Forest", "Teal", "Navy", "Grape", "Peach", "Almond", "Sprout", "Ice Blue",
+            "White", "Silver", "Mist", "Slate", "Charcoal", "Ink", "Sand", "Cocoa" };
+        public static string ColorName(int index)
+        {
+            index = Mathf.Clamp(index, 0, ColorNames.Length - 1);
+            return UISettings.Text(ColorNames[index], EnglishColorNames[index]);
+        }
         private readonly Dictionary<Vector3Int, SandboxPiece> cells = new Dictionary<Vector3Int, SandboxPiece>();
         private readonly List<SandboxPiece> moving = new List<SandboxPiece>();
         private readonly List<Edit> undo = new List<Edit>(), redo = new List<Edit>();
@@ -95,7 +105,24 @@ namespace PAO.Sandbox
         public string CurrentWorkName { get; private set; }
         public bool CanUndo => undo.Count > 0;
         public bool CanRedo => redo.Count > 0;
-        public string Status { get; private set; } = "吹一颗泡泡，让想象落地。";
+        private string statusChinese = "吹一颗泡泡，让想象落地。";
+        private string statusEnglish = "Blow a bubble and bring your imagination to life.";
+        private object[] statusArguments;
+        private string renderedStatus;
+        private int renderedStatusLanguage = int.MinValue;
+        public bool HasStatusMessage { get; private set; }
+        public string Status
+        {
+            get
+            {
+                int language = UISettings.Current != null ? UISettings.Current.language : 0;
+                if (renderedStatus != null && renderedStatusLanguage == language) return renderedStatus;
+                string text = UISettings.Text(statusChinese, statusEnglish);
+                renderedStatus = statusArguments == null || statusArguments.Length == 0 ? text : string.Format(text, statusArguments);
+                renderedStatusLanguage = language;
+                return renderedStatus;
+            }
+        }
         public string SavePath => Path.Combine(Application.persistentDataPath, "Creat", "sandbox.json");
         public Bounds WorldBounds => new Bounds(origin + (Vector3)dimensions * cellSize * .5f, (Vector3)dimensions * cellSize);
 
@@ -166,7 +193,14 @@ namespace PAO.Sandbox
             if (cells.TryGetValue(p, out SandboxPiece piece)) { data = piece.Data; return true; }
             data = default; return false;
         }
-        public void Notify(string message) { Status = message; }
+        public void Notify(string message) { Notify(message, message); }
+        public void Notify(string chinese, string english, params object[] arguments)
+        {
+            statusChinese = chinese; statusEnglish = english;
+            statusArguments = arguments;
+            renderedStatus = null;
+            HasStatusMessage = true;
+        }
         public IEnumerable<Vector3Int> Footprint(Vector3Int center, int diameter, SandboxShape shape)
         {
             // The preview is a box. Shape chooses each created solid, not which cells the brush affects.
@@ -198,7 +232,7 @@ namespace PAO.Sandbox
             if (tint.HasValue && !ValidTint(tint.Value)) return 0;
             Color selected = tint ?? Palette[color];
             if (!paint && !CanBuild(center, diameter, shape))
-            { Notify("目标格被占用或碰到玩家；脚下搭高时先跳起。" ); return 0; }
+            { Notify("目标格被占用或碰到玩家；脚下搭高时先跳起。", "That cell is occupied or touches the player. Jump before building underfoot."); return 0; }
             Edit edit = new Edit();
             foreach (Vector3Int p in Footprint(center, diameter, shape))
             {
@@ -215,9 +249,15 @@ namespace PAO.Sandbox
                     edit.after.Add(new SandboxCellData { position = p, color = color, shape = shape,
                         customColor = tint.HasValue, tint = selected });
             }
-            if (edit.after.Count == 0) { Notify(paint ? "瞄准已有造物，用泡泡染上颜色。" : "这里已满、超出边界，或离你太近了。" ); return 0; }
+            if (edit.after.Count == 0)
+            {
+                Notify(paint ? "瞄准已有造物，用泡泡染上颜色。" : "这里已满、超出边界，或离你太近了。",
+                    paint ? "Aim at an existing creation to paint it with bubbles." : "This area is full, out of bounds, or too close to you.");
+                return 0;
+            }
             Apply(edit, true); Remember(edit);
-            Notify((paint ? "染色 " : "建造 ") + edit.after.Count + " 格 · 泡泡无限供应");
+            Notify(paint ? "染色 {0} 格 · 泡泡无限供应" : "建造 {0} 格 · 泡泡无限供应",
+                paint ? "Painted {0} cells · Unlimited bubbles" : "Built {0} cells · Unlimited bubbles", edit.after.Count);
             return edit.after.Count;
         }
         public int DestroyBrush(Vector3Int center, int diameter, SandboxShape shape)
@@ -225,23 +265,23 @@ namespace PAO.Sandbox
             Edit edit = new Edit();
             foreach (Vector3Int p in Footprint(center, diameter, shape))
                 if (cells.TryGetValue(p, out SandboxPiece piece)) edit.before.Add(piece.Data);
-            if (edit.before.Count == 0) { Notify("破坏泡泡只拆除你的造物。" ); return 0; }
-            Apply(edit, true); Remember(edit); Notify("拆除 " + edit.before.Count + " 格 · Ctrl+Z 可撤销");
+            if (edit.before.Count == 0) { Notify("破坏泡泡只拆除你的造物。", "Destroy bubbles only remove your creations."); return 0; }
+            Apply(edit, true); Remember(edit); Notify("拆除 {0} 格 · Ctrl+Z 可撤销", "Removed {0} cells · Ctrl+Z to undo", edit.before.Count);
             return edit.before.Count;
         }
         public int DestroySelection(SandboxPiece[] pieces)
         {
-            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。" ); return 0; }
+            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。", "Choose creations with the Select tool first."); return 0; }
             var positions = new HashSet<Vector3Int>();
             Edit edit = new Edit();
             foreach (SandboxPiece piece in pieces)
             {
                 if (piece == null || !cells.TryGetValue(piece.Data.position, out SandboxPiece current) || current != piece)
-                { Notify("选中的造物已改变，请重新选择。" ); return 0; }
+                { Notify("选中的造物已改变，请重新选择。", "The selected creations have changed. Select them again."); return 0; }
                 if (positions.Add(piece.Data.position)) edit.before.Add(piece.Data);
             }
             Apply(edit, true); Remember(edit);
-            Notify("已拆除选中的 " + edit.before.Count + " 件造物 · Ctrl+Z 可整批恢复");
+            Notify("已拆除选中的 {0} 件造物 · Ctrl+Z 可整批恢复", "Removed {0} selected creations · Ctrl+Z to restore the batch", edit.before.Count);
             return edit.before.Count;
         }
         public int Lift(Vector3Int start, int levels)
@@ -250,7 +290,12 @@ namespace PAO.Sandbox
         { return MoveConnected(start, -Mathf.Clamp(levels, 1, 3)); }
         private int MoveConnected(Vector3Int start, int levels)
         {
-            if (!cells.ContainsKey(start)) { Notify("将" + (levels > 0 ? "浮空" : "下浮") + "泡泡吹向相连的造物。" ); return 0; }
+            if (!cells.ContainsKey(start))
+            {
+                Notify(levels > 0 ? "将浮空泡泡吹向相连的造物。" : "将下浮泡泡吹向相连的造物。",
+                    levels > 0 ? "Blow a Lift bubble at connected creations." : "Blow a Lower bubble at connected creations.");
+                return 0;
+            }
             var connected = new HashSet<Vector3Int> { start };
             var queue = new Queue<Vector3Int>(); queue.Enqueue(start);
             while (queue.Count > 0)
@@ -263,12 +308,12 @@ namespace PAO.Sandbox
         }
         public int MoveSelection(SandboxPiece[] pieces, int levels)
         {
-            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。" ); return 0; }
+            if (pieces == null || pieces.Length == 0) { Notify("先用选中模式选择造物。", "Choose creations with the Select tool first."); return 0; }
             var selected = new HashSet<Vector3Int>();
             foreach (SandboxPiece piece in pieces)
             {
                 if (piece == null || !cells.TryGetValue(piece.Data.position, out SandboxPiece current) || current != piece)
-                { Notify("选中的造物已改变，请重新选择。" ); return 0; }
+                { Notify("选中的造物已改变，请重新选择。", "The selected creations have changed. Select them again."); return 0; }
                 selected.Add(piece.Data.position);
             }
             return MoveCells(selected, levels);
@@ -276,7 +321,7 @@ namespace PAO.Sandbox
         private int MoveCells(HashSet<Vector3Int> connected, int levels)
         {
             if (levels == 0) return 0;
-            if (moving.Count > 0) { Notify("等造物浮稳，再继续移动。" ); return 0; }
+            if (moving.Count > 0) { Notify("等造物浮稳，再继续移动。", "Wait for the creations to settle before moving them again."); return 0; }
             int count = Mathf.Clamp(Mathf.Abs(levels), 1, 3);
             Vector3Int direction = levels > 0 ? Vector3Int.up : Vector3Int.down;
             Vector3Int offset = direction * count;
@@ -300,7 +345,12 @@ namespace PAO.Sandbox
                     bool merge = occupied && cells[p].Data.shape == SandboxShape.Bubble &&
                         cells[destination].Data.shape == SandboxShape.Bubble;
                     if (!Contains(destination) || (occupied && !merge) || (support == null && OverlapsPlayer(destination)))
-                    { Notify((levels > 0 ? "上方" : "下方") + "空间不足：不能穿过地面、其他造物或角色。" ); return 0; }
+                    {
+                        Notify(levels > 0 ? "上方空间不足：不能穿过地面、其他造物或角色。" : "下方空间不足：不能穿过地面、其他造物或角色。",
+                            levels > 0 ? "Not enough space above. Creations cannot pass through the ground, other creations, or the player." :
+                            "Not enough space below. Creations cannot pass through the ground, other creations, or the player.");
+                        return 0;
+                    }
                     if (merge && !absorbed.ContainsKey(destination)) absorbed.Add(destination, cells[p]);
                 }
             riding = support; if (support != null) ridingLastPosition = support.transform.position;
@@ -322,9 +372,14 @@ namespace PAO.Sandbox
             {
                 pieces[i].Data = edit.after[i]; cells.Add(edit.after[i].position, pieces[i]); moving.Add(pieces[i]);
             }
-            Remember(edit); Notify((levels > 0 ? "托起 " : "下浮 ") + connected.Count + " 格造物 · " +
-                (levels > 0 ? "上升 " : "下降 ") + count * cellSize + " 米" +
-                (absorbed.Count > 0 ? " · 已合并 " + absorbed.Count + " 颗泡泡" : ""));
+            Remember(edit);
+            if (absorbed.Count > 0)
+                Notify(levels > 0 ? "托起 {0} 格造物 · 上升 {1} 米 · 已合并 {2} 颗泡泡" : "下浮 {0} 格造物 · 下降 {1} 米 · 已合并 {2} 颗泡泡",
+                    levels > 0 ? "Lifted {0} cells · Up {1} m · Merged {2} bubbles" : "Lowered {0} cells · Down {1} m · Merged {2} bubbles",
+                    connected.Count, count * cellSize, absorbed.Count);
+            else
+                Notify(levels > 0 ? "托起 {0} 格造物 · 上升 {1} 米" : "下浮 {0} 格造物 · 下降 {1} 米",
+                    levels > 0 ? "Lifted {0} cells · Up {1} m" : "Lowered {0} cells · Down {1} m", connected.Count, count * cellSize);
             return connected.Count;
         }
         private void Remember(Edit edit)
@@ -364,7 +419,7 @@ namespace PAO.Sandbox
             if (!CanUndo) return false;
             ShotGeneration++;
             Edit edit = undo[undo.Count - 1]; undo.RemoveAt(undo.Count - 1);
-            Apply(edit, false); redo.Add(edit); Changed(); Notify("已撤销上一笔。" ); return true;
+            Apply(edit, false); redo.Add(edit); Changed(); Notify("已撤销上一笔。", "Undid the last edit."); return true;
         }
         public bool Redo()
         {
@@ -372,27 +427,27 @@ namespace PAO.Sandbox
             Edit edit = redo[redo.Count - 1];
             foreach (SandboxCellData cell in edit.after)
                 if (!cells.ContainsKey(cell.position) && OverlapsPlayer(cell.position))
-                { Notify("重做的位置碰到玩家，请先离开或跳起。" ); return false; }
+                { Notify("重做的位置碰到玩家，请先离开或跳起。", "The redo would touch the player. Move away or jump first."); return false; }
             ShotGeneration++;
             redo.RemoveAt(redo.Count - 1);
-            Apply(edit, true); undo.Add(edit); Changed(); Notify("已重做上一笔。" ); return true;
+            Apply(edit, true); undo.Add(edit); Changed(); Notify("已重做上一笔。", "Redid the last edit."); return true;
         }
         public void ClearWorld()
         {
             ShotGeneration++;
             if (Count == 0) return;
             Edit edit = new Edit(); foreach (SandboxPiece piece in cells.Values) edit.before.Add(piece.Data);
-            Apply(edit, true); Remember(edit); Notify("场地已清空 · Ctrl+Z 可恢复。" );
+            Apply(edit, true); Remember(edit); Notify("场地已清空 · Ctrl+Z 可恢复。", "Cleared the arena · Ctrl+Z to restore.");
         }
         public bool SaveWorld(string path = null)
         {
             try
             {
                 AtomicJsonFile.Write(path ?? SavePath, CaptureWorldJson());
-                dirty = false; Notify("沙盒作品已保存。" ); return true;
+                dirty = false; Notify("沙盒作品已保存。", "Sandbox creation saved."); return true;
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
-            { Notify("保存失败，请检查存储空间。" ); Debug.LogWarning("[Creat] Save failed: " + e.Message); return false; }
+            { Notify("保存失败，请检查存储空间。", "Save failed. Check your storage space."); Debug.LogWarning("[Creat] Save failed: " + e.Message); return false; }
         }
         public bool LoadWorld(string path = null)
         {
@@ -401,7 +456,7 @@ namespace PAO.Sandbox
                 return RestoreWorldJson(AtomicJsonFile.Read(path ?? SavePath));
             }
             catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException || e is ArgumentException)
-            { Notify("读取失败，当前作品已保留。" ); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
+            { Notify("读取失败，当前作品已保留。", "Load failed. Your current creation has been kept."); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
         }
         internal string CaptureWorldJson()
         {
@@ -461,10 +516,10 @@ namespace PAO.Sandbox
                 CurrentWorkName = SandboxWorkArchive.ValidateName(data.workName, out string name, out _) ? name : null;
                 undo.Clear(); redo.Clear(); dirty = scheduleAutosave; Revision++;
                 if (scheduleAutosave) saveAt = Time.unscaledTime + 30;
-                Respawn(); Notify("已恢复 " + Count + " 格泡泡造物。" ); return true;
+                Respawn(); Notify("已恢复 {0} 格泡泡造物。", "Restored {0} bubble cells.", Count); return true;
             }
             catch (Exception e) when (e is IOException || e is InvalidDataException || e is UnauthorizedAccessException || e is ArgumentException)
-            { Notify("读取失败，当前作品已保留。" ); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
+            { Notify("读取失败，当前作品已保留。", "Load failed. Your current creation has been kept."); Debug.LogWarning("[Creat] Load failed: " + e.Message); return false; }
         }
         private static bool ValidTint(Color value) => value.r >= 0 && value.r <= 1 &&
             value.g >= 0 && value.g <= 1 && value.b >= 0 && value.b <= 1 && value.a == 1;

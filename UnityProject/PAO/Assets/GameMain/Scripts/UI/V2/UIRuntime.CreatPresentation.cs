@@ -18,7 +18,7 @@ namespace PAO.UI.V2
             sandboxBrush = FindFirstObjectByType<SandboxBrush>();
             hud = ui.Rect("Creat sandbox HUD", safeRoot); UIWidgets.Stretch(hud);
             creatTitle = CreatPanel("Sandbox title", 0);
-            creatHeading = CreatText(creatTitle, "泡泡造物场", 48, new Vector2(24, -8), new Vector2(430, 72));
+            creatHeading = CreatText(creatTitle, T("泡泡造物场", "Creat Studio"), 48, new Vector2(24, -8), new Vector2(430, 72));
             creatHeading.fontStyle = FontStyle.Bold;
             creatHeading.verticalOverflow = VerticalWrapMode.Overflow;
             creatSubtitle = CreatText(creatTitle, "CREAT  /  BUILD MODE", 15, new Vector2(26, -82), new Vector2(256, 26));
@@ -30,7 +30,7 @@ namespace PAO.UI.V2
             creatPause = CreatButton(creatCapacity, "Ⅱ", ShowSandboxPause, true);
             creatPause.name = "Pause creation";
             creatEntries = ui.Rect("Creation quick actions", hud);
-            creatEntryButtons[1] = CreatButton(creatEntries, "F6  作品预览", ShowSandboxPreview);
+            creatEntryButtons[1] = CreatButton(creatEntries, T("F6  作品预览", "F6  Preview"), ShowSandboxPreview);
             creatEntryButtons[1].name = "Open creation preview";
 
             RectTransform crosshair = ui.Rect("Center crosshair", hud);
@@ -52,7 +52,7 @@ namespace PAO.UI.V2
 
             creatTools = ui.Rect("Bubble tool belt", hud);
             SandboxTool[] modes = { SandboxTool.Build, SandboxTool.Destroy, SandboxTool.Select };
-            string[] names = { "1  建造", "2  破坏", "3  选中" };
+            string[] names = { T("1  建造", "1 Build"), T("2  破坏", "2 Erase"), T("3  选中", "3 Select") };
             for (int i = 0; i < modes.Length; i++)
             {
                 SandboxTool mode = modes[i];
@@ -83,19 +83,19 @@ namespace PAO.UI.V2
             sandboxColor.gameObject.AddComponent<Outline>().effectColor = UICreatStyle.Ink;
             sandboxBrushInfo = CreatText(creatBrush, "", 23, new Vector2(80, -20), new Vector2(340, 48));
             sandboxBrushInfo.fontStyle = FontStyle.Bold;
-            creatToolsButtons[3] = CreatButton(hud, "B  调色", ShowSandboxWorkshop);
-            creatSave = CreatButton(hud, "F5  保存", () => { if (BubbleSandbox.Instance != null) BubbleSandbox.Instance.SaveWorld(); });
-            creatUndo = CreatButton(hud, "Ctrl+Z  撤销", () => { if (BubbleSandbox.Instance != null) BubbleSandbox.Instance.Undo(); });
-            creatBrushHint = ui.Label(hud, "C/V 换色  ·  X 大小  ·  G 形状", 14, UICreatStyle.Paper, TextAnchor.MiddleRight);
+            creatToolsButtons[3] = CreatButton(hud, T("B  调色", "B  Color"), ShowSandboxWorkshop);
+            creatSave = CreatButton(hud, T("F5  保存", "F5  Save"), () => { if (BubbleSandbox.Instance != null) BubbleSandbox.Instance.SaveWorld(); });
+            creatUndo = CreatButton(hud, T("Ctrl+Z  撤销", "Ctrl+Z Undo"), () => { if (BubbleSandbox.Instance != null) BubbleSandbox.Instance.Undo(); });
+            creatBrushHint = ui.Label(hud, T("C/V 换色  ·  X 大小  ·  G 形状", "C/V Color  ·  X Size  ·  G Shape"), 14, UICreatStyle.Paper, TextAnchor.MiddleRight);
             creatBrushHint.gameObject.AddComponent<Outline>().effectColor = UICreatStyle.Ink;
 
             sandboxSelectionHud = ui.Rect("Selection HUD", hud);
             sandboxSelectionInfo = ui.Label(sandboxSelectionHud, "", 16, UICreatStyle.Paper);
             sandboxSelectionInfo.gameObject.AddComponent<Outline>().effectColor = UICreatStyle.Ink;
-            creatSelectionHint = CreatText(sandboxSelectionHud, "点击添加或取消选择", 14, new Vector2(18, -40), new Vector2(300, 26), true);
-            sandboxSelectionUp = CreatButton(sandboxSelectionHud, "Q  上浮", () => sandboxBrush.MoveVertical(1));
-            sandboxSelectionDown = CreatButton(sandboxSelectionHud, "E  下浮", () => sandboxBrush.MoveVertical(-1));
-            sandboxSelectionClear = CreatButton(sandboxSelectionHud, "R  清空", () => sandboxBrush.ClearSelection());
+            creatSelectionHint = CreatText(sandboxSelectionHud, T("点击添加或取消选择", "Click to select or deselect"), 14, new Vector2(18, -40), new Vector2(300, 26), true);
+            sandboxSelectionUp = CreatButton(sandboxSelectionHud, T("Q  上浮", "Q  Raise"), () => sandboxBrush.MoveVertical(1));
+            sandboxSelectionDown = CreatButton(sandboxSelectionHud, T("E  下浮", "E  Lower"), () => sandboxBrush.MoveVertical(-1));
+            sandboxSelectionClear = CreatButton(sandboxSelectionHud, T("R  清空", "R  Clear"), () => sandboxBrush.ClearSelection());
             sandboxSelectionUp.name = "Selection action 0"; sandboxSelectionDown.name = "Selection action 1"; sandboxSelectionClear.name = "Selection action 2";
             var motion = hud.gameObject.AddComponent<UICreatHudMotion>();
             motion.Brush = sandboxBrush; motion.Charge = sandboxCharge; motion.Status = sandboxStatus;
@@ -158,7 +158,7 @@ namespace PAO.UI.V2
             // One narrow strip on wide displays; two edge rows when there is not enough width.
             float toolWidth = compact ? available * .56f : Mathf.Min(420 * Mathf.Min(scale, 1.1f), available * .36f);
             float brushWidth = compact ? available - toolWidth - 10 : Mathf.Min(300, available * .25f);
-            float actionWidth = compact ? Mathf.Min(390, available) : Mathf.Min(366, available - toolWidth - brushWidth - 24);
+            float actionWidth = compact ? Mathf.Min(390, available) : Mathf.Min(UISettings.Current.language == 0 ? 366 : 394, available - toolWidth - brushWidth - 24);
             float rowY = compact ? 82 : 34;
             Anchor(creatTools, Vector2.zero, new Vector2(margin, rowY), new Vector2(toolWidth, rowHeight), Vector2.zero);
             float cell = (toolWidth - 12) / 3;
@@ -179,6 +179,7 @@ namespace PAO.UI.V2
             Anchor(sandboxColor.rectTransform, Vector2.up, new Vector2(10, -(rowHeight - 26) * .5f), new Vector2(26, 26), Vector2.up);
             Anchor(sandboxBrushInfo.rectTransform, Vector2.up, new Vector2(46, -2), new Vector2(brushWidth - 56, rowHeight - 4), Vector2.up);
             sandboxBrushInfo.GetComponent<UIStyledText>().Configure(compact ? 14 : 16, false, Config);
+            FitCreatHudLine(sandboxBrushInfo, 12);
             bool selecting = sandboxBrush.Tool == SandboxTool.Select;
             creatBrush.gameObject.SetActive(!selecting);
             Button[] actions = { creatToolsButtons[3], creatSave, creatUndo };
@@ -209,37 +210,66 @@ namespace PAO.UI.V2
             Anchor(sandboxTool.rectTransform, Vector2.zero, new Vector2(margin, 2), new Vector2(available, 24), Vector2.zero);
             sandboxTool.GetComponent<UIStyledText>().Configure(13, false, Config);
             Anchor(creatChargeTrack, Vector2.zero, new Vector2(margin, rowY - 5), new Vector2(toolWidth, 2), Vector2.zero);
-            Anchor(sandboxStatus.rectTransform, Vector2.one, new Vector2(-margin, -68), new Vector2(Mathf.Min(520, available), 28), Vector2.one);
+            float statusWidth = compact ? available - previewWidth - 12 : Mathf.Min(660, available);
+            Anchor(sandboxStatus.rectTransform, Vector2.one, new Vector2(-margin, -68), new Vector2(statusWidth, 44), Vector2.one);
             sandboxStatus.GetComponent<UIStyledText>().Configure(13, false, Config);
             sandboxTarget.rectTransform.anchoredPosition = new Vector2(0, 38);
-            sandboxTarget.rectTransform.sizeDelta = new Vector2(Mathf.Min(540, available), 28);
+            sandboxTarget.rectTransform.sizeDelta = new Vector2(Mathf.Min(720, available), 28);
             sandboxTarget.GetComponent<UIStyledText>().Configure(14, false, Config);
+            FitCreatHudLine(sandboxTarget, 12);
+        }
+        private static void FitCreatHudLine(Text label, int minimum)
+        {
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = minimum;
+            TextGenerationSettings settings = label.GetGenerationSettings(Vector2.zero);
+            settings.resizeTextForBestFit = false;
+            settings.horizontalOverflow = HorizontalWrapMode.Overflow;
+            float preferred = label.cachedTextGeneratorForLayout.GetPreferredWidth(label.text, settings) / label.pixelsPerUnit;
+            int singleLineSize = preferred > 0 ? Mathf.FloorToInt(label.fontSize * label.rectTransform.rect.width / preferred) : label.fontSize;
+            label.resizeTextMaxSize = Mathf.Clamp(singleLineSize, minimum, label.fontSize);
         }
         private static void RectWidth(RectTransform rect, float width)
         { if (rect != null) rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(1, width)); }
         private void RefreshCreatToolSelection()
         {
             if (sandboxBrush == null || BubbleSandbox.Instance == null) return;
+            creatHeading.text = T("泡泡造物场", "Creat Studio");
+            creatEntryButtons[1].GetComponentInChildren<Text>().text = T("F6  作品预览", "F6  Preview");
+            string[] labels = { T("1  建造", "1 Build"), T("2  破坏", "2 Erase"), T("3  选中", "3 Select") };
             SandboxTool[] modes = { SandboxTool.Build, SandboxTool.Destroy, SandboxTool.Select };
             for (int i = 0; i < 3; i++)
             {
                 bool chosen = sandboxBrush.Tool == modes[i]; UICreatStyle.SetSelected(creatToolsButtons[i], chosen);
+                creatToolsButtons[i].GetComponentInChildren<Text>().text = labels[i];
             }
             BubbleSandbox world = BubbleSandbox.Instance;
-            Vector3 size = (Vector3)world.dimensions * world.cellSize;
+            creatToolsButtons[3].GetComponentInChildren<Text>().text = T("B  调色", "B  Color");
+            creatSave.GetComponentInChildren<Text>().text = T("F5  保存", "F5  Save");
+            creatUndo.GetComponentInChildren<Text>().text = T("Ctrl+Z  撤销", "Ctrl+Z Undo");
+            sandboxSelectionUp.GetComponentInChildren<Text>().text = T("Q  上浮", "Q  Raise");
+            sandboxSelectionDown.GetComponentInChildren<Text>().text = T("E  下浮", "E  Lower");
+            sandboxSelectionClear.GetComponentInChildren<Text>().text = T("R  清空", "R  Clear");
             sandboxStats.text = world.Count + " / " + world.Capacity;
-            sandboxBrushInfo.text = sandboxBrush.ColorName + " · " + (sandboxBrush.Shape == SandboxShape.Bubble ? "圆泡" : "方泡") + " · " + sandboxBrush.Diameter + "格";
-            sandboxTool.text = sandboxBrush.Tool == SandboxTool.Select ? "点击选择  ·  Q/E 上下浮  ·  R 清空" :
-                (UIInput.ToggleCharge ? "点击 " + UIInput.Prompt(UIInput.Charge) + " 蓄力，再次点击吹出" : "按住 " + UIInput.Prompt(UIInput.Charge) + " 蓄力，松开吹出") + (sandboxBrush.Paint ? "  /  染色" : "");
+            sandboxBrushInfo.text = sandboxBrush.ColorName + " · " + (sandboxBrush.Shape == SandboxShape.Bubble ? T("圆泡", "Sphere") : T("方泡", "Block")) + " · " + sandboxBrush.Diameter + T("格", sandboxBrush.Diameter == 1 ? " cell" : " cells");
+            sandboxTool.text = sandboxBrush.Tool == SandboxTool.Select ? T("点击选择  ·  Q/E 上下浮  ·  R 清空", "Click to select  ·  Q/E Raise/Lower  ·  R Clear") :
+                string.Format(UIInput.ToggleCharge ? T("点击 {0} 蓄力，再次点击吹出", "Tap {0} to charge; tap again to release") : T("按住 {0} 蓄力，松开吹出", "Hold {0} to charge; release to blow"), UIInput.Prompt(UIInput.Charge)) + (sandboxBrush.Paint ? T("  /  染色", "  /  Paint") : "");
             creatUndo.interactable = world.CanUndo;
             int selected = sandboxBrush.Selection != null ? sandboxBrush.Selection.Count : 0;
-            sandboxSelectionInfo.text = selected > 0 ? "已选中 " + selected : "点击造物选择";
+            sandboxSelectionInfo.text = selected > 0 ? string.Format(T("已选中 {0}", "{0} selected"), selected) : T("点击造物选择", "Click a piece to select");
+            FitCreatHudLine(creatHeading, 16);
+            FitCreatHudLine(sandboxBrushInfo, 12);
+            FitCreatHudLine(sandboxTarget, 12);
+            FitCreatHudLine(sandboxSelectionInfo, 12);
+            for (int i = 0; i < 3; i++) FitCreatHudLine(creatToolsButtons[i].GetComponentInChildren<Text>(), 14);
             sandboxTarget.gameObject.SetActive((sandboxBrush.HasTarget && !sandboxBrush.CanPlaceTarget) ||
                 (sandboxBrush.Tool == SandboxTool.Select && sandboxBrush.HoveredPiece != null));
         }
 
         private void FinishCreatPage(UIPage page)
         {
+            BindCreatPageLanguage(page);
             UIFluidGradient background = page.GetComponent<UIFluidGradient>();
             if (background != null) background.enabled = false;
             page.GetComponent<Image>().color = UICreatStyle.Paper;
@@ -268,6 +298,40 @@ namespace PAO.UI.V2
                 UICreatStyle.StyleButton(button, primary);
             }
             Finish(page);
+        }
+        private void BindCreatPageLanguage(UIPage page)
+        {
+            if (page.Rebuild == null) return;
+            var refresh = page.GetComponent<UICreatPageLanguageRefresh>();
+            if (refresh == null) refresh = page.gameObject.AddComponent<UICreatPageLanguageRefresh>();
+            refresh.Configure(() => pages.Count > 0 && pages[pages.Count - 1] == page,
+                RefreshVisiblePage);
+        }
+    }
+
+    // Rebuild only the visible Creat page, after settings events have finished.
+    // Underlying pages wait until they return to the front; text input stays intact while focused.
+    public sealed class UICreatPageLanguageRefresh : MonoBehaviour
+    {
+        private int language;
+        private bool pending;
+        private System.Func<bool> isTopPage;
+        private System.Action refresh;
+        public void Configure(System.Func<bool> isTop, System.Action rebuild)
+        { isTopPage = isTop; refresh = rebuild; language = UISettings.Current.language; }
+        private void OnEnable() { UISettings.Changed += Changed; }
+        private void OnDisable() { UISettings.Changed -= Changed; }
+        private void Changed()
+        {
+            if (language == UISettings.Current.language) return;
+            language = UISettings.Current.language; pending = true;
+        }
+        private void LateUpdate()
+        {
+            if (!pending || isTopPage == null || !isTopPage()) return;
+            foreach (InputField input in GetComponentsInChildren<InputField>())
+                if (input.isFocused) return;
+            pending = false; refresh?.Invoke();
         }
     }
 
@@ -302,7 +366,7 @@ namespace PAO.UI.V2
                 if (lastStatus != Status.text)
                 {
                     lastStatus = Status.text;
-                    statusRemaining = string.IsNullOrEmpty(lastStatus) || lastStatus == "吹一颗泡泡，让想象落地。" ? 0 : 4;
+                    statusRemaining = string.IsNullOrEmpty(lastStatus) || BubbleSandbox.Instance == null || !BubbleSandbox.Instance.HasStatusMessage ? 0 : 4;
                 }
                 statusRemaining -= Time.unscaledDeltaTime;
                 Status.gameObject.SetActive(statusRemaining > 0);

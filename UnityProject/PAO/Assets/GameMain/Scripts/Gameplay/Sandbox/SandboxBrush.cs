@@ -12,7 +12,7 @@ namespace PAO.Sandbox
         public bool HasCustomColor { get; private set; }
         private Color customColor;
         public Color SelectedColor => HasCustomColor ? customColor : BubbleSandbox.Palette[ColorIndex];
-        public string ColorName => HasCustomColor ? "#" + ColorUtility.ToHtmlStringRGB(customColor) : BubbleSandbox.ColorNames[ColorIndex];
+        public string ColorName => HasCustomColor ? "#" + ColorUtility.ToHtmlStringRGB(customColor) : BubbleSandbox.ColorName(ColorIndex);
         public int Diameter { get; private set; } = 1;
         public SandboxShape Shape { get; private set; }
         public bool Paint { get; private set; }
@@ -37,8 +37,9 @@ namespace PAO.Sandbox
         private BubbleSandbox world;
         private BubbleTypeSwitcher switcher;
         private RaycastHit[] hits = new RaycastHit[64];
-        public string ToolName => Tool == SandboxTool.Lift ? "浮空" : Tool == SandboxTool.Lower ? "下浮" :
-            Tool == SandboxTool.Select ? "选中" : Tool == SandboxTool.Destroy ? "破坏" : Paint ? "染色" : "建造";
+        public string ToolName => Tool == SandboxTool.Lift ? UISettings.Text("浮空", "Lift") : Tool == SandboxTool.Lower ? UISettings.Text("下浮", "Lower") :
+            Tool == SandboxTool.Select ? UISettings.Text("选中", "Select") : Tool == SandboxTool.Destroy ? UISettings.Text("破坏", "Destroy") :
+            Paint ? UISettings.Text("染色", "Paint") : UISettings.Text("建造", "Build");
         public Color BrushColor => Tool == SandboxTool.Destroy ? new Color(1, .45f, .3f) :
             Tool == SandboxTool.Lift ? new Color(.45f, .8f, 1) : Tool == SandboxTool.Lower ? new Color(.72f, .6f, 1) :
             Tool == SandboxTool.Select ? new Color(1, .12f, .16f) : SelectedColor;
@@ -82,15 +83,16 @@ namespace PAO.Sandbox
         }
         public bool ToggleTargetSelection()
         {
-            if (Selection == null || HoveredPiece == null) { world.Notify("将十字准心对准一个造物，再点击选中。" ); return false; }
+            if (Selection == null || HoveredPiece == null) { world.Notify("将十字准心对准一个造物，再点击选中。", "Aim at a creation, then click to select it."); return false; }
             bool added = Selection.Toggle(HoveredPiece);
-            world.Notify((added ? "已选中" : "已取消选中") + " · 共 " + Selection.Count + " 件");
+            world.Notify(added ? "已选中 · 共 {0} 件" : "已取消选中 · 共 {0} 件",
+                added ? "Selected · {0} total" : "Deselected · {0} total", Selection.Count);
             return added;
         }
-        public void ClearSelection() { if (Selection != null) Selection.Clear(); world.Notify("已清除全部选择。" ); }
+        public void ClearSelection() { if (Selection != null) Selection.Clear(); world.Notify("已清除全部选择。", "Cleared all selections."); }
         public bool MoveSelected(int direction)
         {
-            if (Selection == null || Selection.Count == 0) { world.Notify("先用选中模式选择造物。" ); return false; }
+            if (Selection == null || Selection.Count == 0) { world.Notify("先用选中模式选择造物。", "Choose creations with the Select tool first."); return false; }
             return FireSelection(0, direction < 0, Selection.Snapshot());
         }
         public bool MoveVertical(int direction)
@@ -99,7 +101,7 @@ namespace PAO.Sandbox
             if (UIInput.Blocked || Time.timeScale <= 0) return false;
             if (Selection != null && Selection.Count > 0) return MoveSelected(direction);
             UpdateTarget();
-            if (HoveredPiece == null) { world.Notify("选中造物，或将十字准心对准造物，再按 Q 上浮 / E 下浮。" ); return false; }
+            if (HoveredPiece == null) { world.Notify("选中造物，或将十字准心对准造物，再按 Q 上浮 / E 下浮。", "Select or aim at a creation, then press Q to lift or E to lower."); return false; }
             GameObject bubble = CreateVisual(MouthPosition(), .3f);
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", direction < 0 ? new Color(.72f, .6f, 1) : new Color(.45f, .8f, 1));
@@ -216,8 +218,8 @@ namespace PAO.Sandbox
                 if (fired) waitForRelease = true;
                 return fired;
             }
-            if (!HasTarget) { world.Notify("瞄准场地或造物；所有创造都要留在光框内。" ); return false; }
-            if (!CanPlaceTarget) { world.Notify("红框内不能放置；脚下搭高时先跳起。" ); return false; }
+            if (!HasTarget) { world.Notify("瞄准场地或造物；所有创造都要留在光框内。", "Aim at the arena or a creation. Keep all creations inside the lit boundary."); return false; }
+            if (!CanPlaceTarget) { world.Notify("红框内不能放置；脚下搭高时先跳起。", "Cannot place in the red outline. Jump before building underfoot."); return false; }
             GameObject bubble = CreateVisual(MouthPosition(), Mathf.Lerp(.3f, .8f, charge));
             // Shared material colors are captured per shot with a property block.
             var tint = new MaterialPropertyBlock(); tint.SetColor("_BaseColor", BrushColor);

@@ -15,7 +15,7 @@ namespace PAO.UI.V2
             BubbleSandbox world = BubbleSandbox.Instance;
             if (world == null || sandboxPreview != null || loading) return;
             ClearPages();
-            UIPage page = Push("作品预览", "", false, UIPageDesign.Pause);
+            UIPage page = Push(T("作品预览", "Work preview"), "", false, UIPageDesign.Pause);
             page.transform.Find("Page").gameObject.SetActive(false);
             RawImage viewport = ui.Rect("Creation preview viewport", page.transform).gameObject.AddComponent<RawImage>();
             UIWidgets.Stretch(viewport.rectTransform);

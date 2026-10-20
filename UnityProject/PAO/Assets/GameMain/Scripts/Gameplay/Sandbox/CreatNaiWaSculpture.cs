@@ -115,7 +115,7 @@ namespace PAO.Sandbox
             if (Detailed) report += "Fine bubble spacing: 1m (standard: 2m)\nStandard/fine lattice round-trip: PASS\n";
             File.WriteAllText(Folder + "/result.txt", report);
             File.WriteAllText("Library/CreatNaiWa.status", report);
-            world.Notify("奶娃已拼好 · 已保存独立作品 · Esc 返回继续编辑");
+            world.Notify("奶娃已拼好 · 已保存独立作品 · Esc 返回继续编辑", "NaiWa is ready · Saved as a separate work · Esc to continue editing");
             Debug.Log("[Creat NaiWa] " + report);
         }
 

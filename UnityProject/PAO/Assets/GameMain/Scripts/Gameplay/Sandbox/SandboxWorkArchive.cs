@@ -43,10 +43,10 @@ namespace PAO.Sandbox
                     try { works.Add(Info(Read(Path.GetFileNameWithoutExtension(file)))); }
                     catch (Exception e) when (Handled(e)) { unreadable++; }
                 }
-                if (unreadable > 0) warning = unreadable + " 份存档暂时无法读取，原文件已保留。";
+                if (unreadable > 0) warning = string.Format(UISettings.Text("{0} 份存档暂时无法读取，原文件已保留。", "{0} saved works could not be read. Their files have been kept."), unreadable);
                 works.Sort((a, b) => b.UpdatedUtc.CompareTo(a.UpdatedUtc));
             }
-            catch (Exception e) when (Handled(e)) { warning = "无法打开作品存档，请检查存储空间或访问权限。"; }
+            catch (Exception e) when (Handled(e)) { warning = UISettings.Text("无法打开作品存档，请检查存储空间或访问权限。", "Cannot open saved works. Check storage space and access permissions."); }
             return works;
         }
 
@@ -60,7 +60,7 @@ namespace PAO.Sandbox
                     cellCount = world.Count, worldJson = world.CaptureWorldJson(), updatedUtcTicks = DateTime.UtcNow.Ticks };
                 Write(record); info = Info(record); world.SetCurrentWork(record.id, record.name); return true;
             }
-            catch (Exception e) when (Handled(e)) { error = "保存失败，请检查存储空间或访问权限。"; return false; }
+            catch (Exception e) when (Handled(e)) { error = UISettings.Text("保存失败，请检查存储空间或访问权限。", "Save failed. Check storage space and access permissions."); return false; }
         }
         public bool Overwrite(BubbleSandbox world, string id, out string error)
         {
@@ -72,7 +72,7 @@ namespace PAO.Sandbox
                 record.updatedUtcTicks = DateTime.UtcNow.Ticks;
                 Write(record); world.SetCurrentWork(record.id, record.name); return true;
             }
-            catch (Exception e) when (Handled(e)) { error = "覆盖失败，原作品存档已保留。"; return false; }
+            catch (Exception e) when (Handled(e)) { error = UISettings.Text("覆盖失败，原作品存档已保留。", "Overwrite failed. The original saved work has been kept."); return false; }
         }
         public bool Load(BubbleSandbox world, string id, out string error)
         {
@@ -81,12 +81,12 @@ namespace PAO.Sandbox
             {
                 Record record = Read(id);
                 if (!world.RestoreWorldJson(record.worldJson, true))
-                { error = "存档内容无效，当前作品已保留。"; return false; }
+                { error = UISettings.Text("存档内容无效，当前作品已保留。", "Invalid saved work. Your current work has been kept."); return false; }
                 world.SetCurrentWork(record.id, record.name);
-                world.Notify("已读取作品「" + record.name + "」 · " + world.Count + " 件造物");
+                world.Notify("已读取作品「{0}」 · {1} 件造物", "Loaded \"{0}\" · {1} objects", record.name, world.Count);
                 return true;
             }
-            catch (Exception e) when (Handled(e)) { error = "读取失败，当前作品已保留。"; return false; }
+            catch (Exception e) when (Handled(e)) { error = UISettings.Text("读取失败，当前作品已保留。", "Load failed. Your current work has been kept."); return false; }
         }
         public bool Rename(string id, string name, out string error)
         {
@@ -99,7 +99,7 @@ namespace PAO.Sandbox
                 if (current != null && current.CurrentWorkId == id) current.SetCurrentWork(id, name);
                 return true;
             }
-            catch (Exception e) when (Handled(e)) { error = "重命名失败，原作品存档已保留。"; return false; }
+            catch (Exception e) when (Handled(e)) { error = UISettings.Text("重命名失败，原作品存档已保留。", "Rename failed. The original saved work has been kept."); return false; }
         }
         public bool Delete(string id, out string error)
         {
@@ -111,7 +111,7 @@ namespace PAO.Sandbox
                 File.Delete(path + ".bak"); File.Delete(path + ".tmp"); File.Delete(path);
                 return true;
             }
-            catch (Exception e) when (Handled(e)) { error = "删除失败，请检查存档访问权限。"; return false; }
+            catch (Exception e) when (Handled(e)) { error = UISettings.Text("删除失败，请检查存档访问权限。", "Delete failed. Check access permissions for the saved work."); return false; }
         }
         private string WorkPath(string id)
         {
@@ -135,10 +135,10 @@ namespace PAO.Sandbox
         public static bool ValidateName(string value, out string normalized, out string error)
         {
             normalized = (value ?? "").Trim(); error = null;
-            if (normalized.Length == 0) { error = "请给作品起个名字。"; return false; }
-            if (normalized.Length > NameLimit) { error = "作品名称最多 " + NameLimit + " 个字符。"; return false; }
+            if (normalized.Length == 0) { error = UISettings.Text("请给作品起个名字。", "Enter a name for your work."); return false; }
+            if (normalized.Length > NameLimit) { error = string.Format(UISettings.Text("作品名称最多 {0} 个字符。", "Work names can contain up to {0} characters."), NameLimit); return false; }
             foreach (char character in normalized)
-                if (char.IsControl(character)) { error = "作品名称不能包含换行或控制字符。"; return false; }
+                if (char.IsControl(character)) { error = UISettings.Text("作品名称不能包含换行或控制字符。", "Work names cannot contain line breaks or control characters."); return false; }
             return true;
         }
     }
