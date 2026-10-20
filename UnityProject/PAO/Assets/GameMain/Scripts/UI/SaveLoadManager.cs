@@ -287,6 +287,13 @@ namespace PAO.UI
             // 存档里没记场景，或者就是当前场景 → 直接传送
             if (string.IsNullOrEmpty(data.sceneName) || data.sceneName == current)
             {
+                PAO.UI.V2.UIRunState.Apply(data);
+                BubbleTypeSwitcher switcher = BubbleTypeSwitcher.Instance;
+                if (switcher != null)
+                {
+                    switcher.SetType((BubbleType)PAO.UI.V2.UIRunState.Progress.bubbleType);
+                    PAO.UI.V2.UIRunState.Progress.bubbleType = (int)switcher.Current;
+                }
                 // 读完要退出暂停状态，否则游戏还冻着
                 ResumeIfPaused();
                 TeleportPlayer(target);
@@ -301,6 +308,7 @@ namespace PAO.UI
 
             if (Application.CanStreamedLevelBeLoaded(data.sceneName))
             {
+                PAO.UI.V2.UIRunState.Apply(data);
                 Debug.Log("[SaveLoadManager] 读档切场景：" + data.sceneName, this);
                 Time.timeScale = 1f;
                 SceneManager.LoadScene(data.sceneName);

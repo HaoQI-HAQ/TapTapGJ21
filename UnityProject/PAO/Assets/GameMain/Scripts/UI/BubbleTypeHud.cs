@@ -147,6 +147,7 @@ namespace PAO
             }
 
             int active = (int)type;
+            BubbleTypeSwitcher switcher = BubbleTypeSwitcher.Instance;
             float delta = Time.unscaledDeltaTime * m_LerpSpeed;   // 暂停时也要能看见过渡
 
             for (int i = 0; i < m_Slots.Length; i++)
@@ -157,7 +158,10 @@ namespace PAO
                     continue;
                 }
 
-                bool isActive = (i == active);
+                bool available = switcher == null || switcher.IsAvailable((BubbleType)i);
+                bool isActive = available && (i == active);
+                float availabilityAlpha = available ? 1f : 0.25f;
+                if (slot.button != null) slot.button.interactable = available;
 
                 float targetScale = isActive ? m_ActiveScale : m_IdleScale;
                 float targetAlpha = isActive ? m_ActiveAlpha : m_IdleAlpha;
@@ -178,7 +182,7 @@ namespace PAO
                 // 每个类型有自己的代表色，未选中时掺灰 + 降透明度
                 Color baseColor = BubbleTypeSwitcher.ColorOf((BubbleType)i);
                 Color shown = isActive ? baseColor : Color.Lerp(baseColor, Color.gray, m_IdleDesaturate);
-                shown.a = alpha;
+                shown.a = alpha * availabilityAlpha;
 
                 if (slot.ring != null)
                 {
@@ -188,13 +192,13 @@ namespace PAO
                 if (slot.icon != null)
                 {
                     Color iconColor = isActive ? Color.white : new Color(1f, 1f, 1f, 0.75f);
-                    iconColor.a *= alpha;
+                    iconColor.a *= alpha * availabilityAlpha;
                     slot.icon.color = iconColor;
                 }
 
                 if (slot.label != null)
                 {
-                    slot.label.color = new Color(0.15f, 0.15f, 0.15f, Mathf.Max(alpha, 0.35f));
+                    slot.label.color = new Color(0.15f, 0.15f, 0.15f, Mathf.Max(alpha, 0.35f) * availabilityAlpha);
                 }
             }
         }
@@ -214,7 +218,7 @@ namespace PAO
             }
 
             switcher.SetType((BubbleType)index);
-            ApplyVisuals((BubbleType)index);
+            ApplyVisuals(switcher.Current);
         }
 
         /// <summary>

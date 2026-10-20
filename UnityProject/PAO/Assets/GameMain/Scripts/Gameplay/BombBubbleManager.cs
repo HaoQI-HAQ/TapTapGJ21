@@ -102,6 +102,7 @@ namespace PAO
         /// </summary>
         public bool DetonateOldest()
         {
+            if (!BubbleAbilityRules.IsAvailable(BubbleType.Bomb)) return false;
             CleanupDestroyed();
 
             if (m_Bombs.Count == 0)

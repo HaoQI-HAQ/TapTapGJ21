@@ -139,6 +139,7 @@ namespace PAO.UI.V2
                 switcher.TypeChanged += OnAbilityChanged;
                 switcher.SetLabelVisible(false);
                 switcher.SetType(PAO.Sandbox.BubbleSandbox.Instance != null ? BubbleType.Bouncy : (BubbleType)UIRunState.Progress.bubbleType);
+                UIRunState.Progress.bubbleType = (int)switcher.Current;
             }
             tide = BubbleTideDirector.Instance;
             if (tide != null) { tide.Won += OnLevelWon; tide.Lost += OnLevelLost; }
@@ -162,7 +163,11 @@ namespace PAO.UI.V2
                     player.transform.position = new Vector3(pending.posX, pending.posY, pending.posZ);
                     if (controller != null) controller.enabled = wasEnabled;
                 }
-                if (switcher != null) switcher.SetType((BubbleType)UIRunState.Progress.bubbleType);
+                if (switcher != null)
+                {
+                    switcher.SetType((BubbleType)UIRunState.Progress.bubbleType);
+                    UIRunState.Progress.bubbleType = (int)switcher.Current;
+                }
             }
             BuildHud();
             foreach (AudioSource audio in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))

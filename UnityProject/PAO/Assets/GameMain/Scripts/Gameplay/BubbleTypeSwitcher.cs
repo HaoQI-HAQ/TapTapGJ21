@@ -88,6 +88,12 @@ namespace PAO
         /// <summary>当前选中的泡泡类型。</summary>
         public BubbleType Current { get; private set; }
 
+        /// <summary>当前关卡和存档是否允许玩家使用该类型。</summary>
+        public bool IsAvailable(BubbleType type)
+        {
+            return BubbleAbilityRules.IsAvailable(type);
+        }
+
         /// <summary>
         /// 蓄力期间锁定类型切换。
         /// 泡泡是在按下左键那一刻、用当时的类型参数造出来的，
@@ -127,6 +133,7 @@ namespace PAO
         private void Awake()
         {
             Instance = this;
+            Current = BubbleAbilityRules.Resolve(Current);
             EnsureLabel();
             Refresh();
         }
@@ -141,6 +148,7 @@ namespace PAO
 
         private void Update()
         {
+            RefreshAvailability();
             // 蓄力中不许换类型，见 IsLocked 的说明
             if (!m_InputEnabled || IsLocked || PAO.UI.V2.UIInput.Blocked)
             {
@@ -178,8 +186,9 @@ namespace PAO
         /// <summary>直接指定类型。</summary>
         public void SetType(BubbleType type)
         {
+            RefreshAvailability();
             // 蓄力期间不允许换类型
-            if (IsLocked)
+            if (IsLocked || !IsAvailable(type))
             {
                 return;
             }
@@ -199,8 +208,19 @@ namespace PAO
                 Debug.Log("[BubbleTypeSwitcher] SetType(" + type + ")，原类型 " + Current, this);
             }
 
+            ApplyType(type, true);
+        }
+
+        /// <summary>读档或更换关卡后，保证当前类型仍然可用。</summary>
+        public void RefreshAvailability()
+        {
+            if (!IsAvailable(Current)) ApplyType(BubbleType.Bouncy, false);
+        }
+
+        private void ApplyType(BubbleType type, bool playFeedback)
+        {
             Current = type;
-            PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleSwitch, transform.position);
+            if (playFeedback) PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.BubbleSwitch, transform.position);
             Refresh();
 
             // 通知外界（HUD 的亮圈就靠这一句跟着变）
@@ -213,14 +233,17 @@ namespace PAO
         /// <summary>按方向循环切换：+1 下一个，-1 上一个。</summary>
         public void Cycle(int direction)
         {
+            RefreshAvailability();
+            if (direction == 0) return;
             int count = s_DisplayNames.Length;
-            int next = ((int)Current + direction) % count;
-            if (next < 0)
+            int step = direction > 0 ? 1 : -1;
+            for (int offset = 1; offset <= count; offset++)
             {
-                next += count;
+                int next = ((int)Current + step * offset + count) % count;
+                if (!IsAvailable((BubbleType)next)) continue;
+                SetType((BubbleType)next);
+                return;
             }
-
-            SetType((BubbleType)next);
         }
 
         private void Refresh()

@@ -7485,17 +7485,17 @@ PrefabInstance:
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.451
+      value: 0.168
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 11.194
+      value: 9.865
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 20.211
+      value: 15.554
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
@@ -9957,9 +9957,9 @@ GameObject:
   - component: {fileID: 1503911168}
   - component: {fileID: 1503911174}
   - component: {fileID: 1503911173}
-  - component: {fileID: 1503911172}
   - component: {fileID: 1503911170}
   - component: {fileID: 1503911169}
+  - component: {fileID: 1503911175}
   m_Layer: 0
   m_Name: "\u5F39\u529B\u8DF3\u677F (2)"
   m_TagString: Untagged
@@ -10026,37 +10026,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1503911172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1503911167}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 741674a7839d8bb478ac6c1d8edc25c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_BouncyHeight: 8
-  m_SuperHeight: 15
-  m_RequireBubbleConsumed: 1
-  m_PopBubbleOnCharge: 1
-  m_ChargeTimeout: 10
-  m_BombRequiresBouncy: 1
-  m_BlastReachBonus: 0.5
-  m_Cooldown: 0.2
-  m_DetectHeight: 0.55
-  m_ResetAfterBounce: 0
-  m_TintByState: 1
-  m_NormalTint: {r: 1, g: 1, b: 1, a: 1}
-  m_BouncyTint: {r: 0.72, g: 0.95, b: 1, a: 1}
-  m_SuperTint: {r: 1, g: 0.92, b: 0.55, a: 1}
-  m_FlashDuration: 0.16
-  m_RotateWhenCharged: 0
-  m_RotationAxis: {x: 0, y: 1, z: 0}
-  m_RotationSpeed: 60
-  m_Log: 1
 --- !u!23 &1503911173
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10107,6 +10076,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1503911167}
   m_Mesh: {fileID: 2193351800811498991, guid: 0dad305bca6769346b77bbadd3eb0e01, type: 3}
+--- !u!114 &1503911175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1503911167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 741674a7839d8bb478ac6c1d8edc25c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_BouncyHeight: 8
+  m_SuperHeight: 15
+  m_RequireBubbleConsumed: 1
+  m_PopBubbleOnCharge: 1
+  m_ChargeTimeout: 10
+  m_BombRequiresBouncy: 1
+  m_BlastReachBonus: 0.5
+  m_Cooldown: 0.2
+  m_DetectHeight: 0.55
+  m_ResetAfterBounce: 0
+  m_TintByState: 1
+  m_NormalTint: {r: 1, g: 1, b: 1, a: 1}
+  m_BouncyTint: {r: 0.72, g: 0.95, b: 1, a: 1}
+  m_SuperTint: {r: 1, g: 0.92, b: 0.55, a: 1}
+  m_FlashDuration: 0.16
+  m_RotateWhenCharged: 1
+  m_RotationAxis: {x: 0, y: 1, z: 0}
+  m_RotationSpeed: 60
+  m_Log: 1
 --- !u!1 &1516065722
 GameObject:
   m_ObjectHideFlags: 0

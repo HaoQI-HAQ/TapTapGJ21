@@ -422,7 +422,7 @@ namespace PAO
         /// </summary>
         public void LaunchHeldBubble()
         {
-            if (m_HeldBubble == null)
+            if (m_HeldBubble == null || !BubbleAbilityRules.IsAvailable(m_HeldType))
             {
                 return;
             }
@@ -761,12 +761,12 @@ namespace PAO
         }
 
         /// <summary>
-        /// 当前泡泡类型。场景里没挂切换器时按浮粘泡泡处理。
+        /// 当前泡泡类型。缺少切换器时仍遵守本关的能力限制。
         /// </summary>
         private BubbleType GetCurrentType()
         {
             BubbleTypeSwitcher switcher = GetComponent<BubbleTypeSwitcher>();
-            return switcher != null ? switcher.Current : BubbleType.Sticky;
+            return BubbleAbilityRules.Resolve(switcher != null ? switcher.Current : BubbleType.Sticky);
         }
 
         /// <summary>
