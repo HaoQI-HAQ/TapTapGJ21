@@ -188,11 +188,47 @@ namespace PAO
 
         /// <summary>
         /// 地形炸掉：里面的泡泡一起炸，自己按破坏来源决定是重生还是永久消失。
-        /// 保留这个无参入口，填满时的自爆走它（等同弹力泡泡破坏）。
+        /// 保留这个无参入口，填满时的自爆走它。
+        ///
+        /// 【为什么这里要判断"里面有没有炸弹"】
+        /// 玩家把炸弹泡泡用弹力泡泡裹起来发射，这是关卡教学里教的打法。
+        /// 如果那颗裹着炸弹的弹力泡泡直接撞到墙上，走的是 HandleBouncy 的"被墙吸收"这条路，
+        /// 填满时只会调这里 —— 以前一律按弹力破坏（过几秒长回来），
+        /// 于是玩家看到的就成了"墙炸了又复原，桥也不掉"。
+        /// 现在只要填进去的泡泡里有炸弹（炸弹本体，或肚子里裹着炸弹的弹力泡泡），
+        /// 就按**炸弹破坏**算：永久消失。
         /// </summary>
         public void Explode()
         {
-            Break(BreakCause.Bouncy);
+            Break(HasBombInside() ? BreakCause.Bomb : BreakCause.Bouncy);
+        }
+
+        /// <summary>已经装进来的泡泡里，有没有带炸弹的。</summary>
+        private bool HasBombInside()
+        {
+            for (int i = 0; i < m_Contained.Count; i++)
+            {
+                Bubble contained = m_Contained[i];
+
+                if (contained == null)
+                {
+                    continue;
+                }
+
+                // 本身就是炸弹泡泡
+                if (contained.BombSettings != null)
+                {
+                    return true;
+                }
+
+                // 弹力/浮粘泡泡，肚子里裹着一颗炸弹（HasBomb 是宿主侧的标志）
+                if (contained.HasBomb)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

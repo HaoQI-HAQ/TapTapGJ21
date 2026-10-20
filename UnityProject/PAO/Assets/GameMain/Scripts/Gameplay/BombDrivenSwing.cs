@@ -147,6 +147,18 @@ namespace PAO
                  "站上来时顶到 60°，下去立刻还原。")]
         [SerializeField] private float m_RideSlopeLimit = 60f;
 
+        [Tooltip("乘客被台板抬升得太快时，直接把人挑飞出去（跷跷板 / 弹射板用）。")]
+        [SerializeField] private bool m_LaunchRiders = false;
+
+        [Tooltip("台板给乘客的**向上速度**超过这个值（米/秒）就挑飞。越小越容易被弹。")]
+        [SerializeField] private float m_LaunchRiseSpeed = 3.5f;
+
+        [Tooltip("挑飞速度倍率。1 = 完全用台板给的真实速度，>1 会飞得更远。")]
+        [SerializeField] private float m_LaunchBoost = 1.15f;
+
+        [Tooltip("挑飞后由 Launch 接管多少秒（这段时间不再把人粘在台板上）。")]
+        [SerializeField] private float m_LaunchDuration = 0.45f;
+
         // ==================== 调试 ====================
 
         [Header("调试")]
@@ -188,6 +200,10 @@ namespace PAO
         /// <summary>骑乘期间被临时放宽了坡度上限的角色 → 原来的值。</summary>
         private readonly Dictionary<CharacterController, float> m_SlopeLimitBackup =
             new Dictionary<CharacterController, float>(2);
+
+        /// <summary>刚被挑飞的乘客 → 冷却到什么时候（这段时间不再粘在台板上）。</summary>
+        private readonly Dictionary<PlayerController, float> m_LaunchCooldown =
+            new Dictionary<PlayerController, float>(2);
 
         // 场景里的玩家。玩家可能是运行时生成的，所以空了会隔一会儿重找。
         private readonly List<PlayerController> m_Players = new List<PlayerController>(1);
@@ -264,6 +280,7 @@ namespace PAO
             m_Riders.Clear();
             m_RiderControllers.Clear();
             m_RiderLocals.Clear();
+            m_LaunchCooldown.Clear();
         }
 
         // ==================== 每帧 ====================
@@ -353,6 +370,25 @@ namespace PAO
         }
 
         /// <summary>
+        /// 取碰撞体上离 point 最近的点 —— 但要绕开 Unity 的一个坑：
+        /// **非凸 MeshCollider 的 ClosestPoint 不可靠**，它会直接把传进去的点原样返回，
+        /// 于是 distance 恒等于 0。结果就是：只要场景里哪架秋千身上挂了一个非凸 MeshCollider，
+        /// 它就会"听到"整张地图上任何一次爆炸 —— 炸前面的秋千，后面的也跟着荡。
+        /// 所以这类碰撞体退回用包围盒算最近点。
+        /// </summary>
+        private static Vector3 ClosestPointSafe(Collider collider, Vector3 point)
+        {
+            MeshCollider mesh = collider as MeshCollider;
+
+            if (mesh != null && !mesh.convex)
+            {
+                return collider.bounds.ClosestPoint(point);
+            }
+
+            return collider.ClosestPoint(point);
+        }
+
+        /// <summary>
         /// 按一次爆炸给角冲量。返回是否真的推到了（用来打日志）。
         ///
         /// 力臂算法：r = 支点→受力点，F = 爆炸中心→受力点，
@@ -378,7 +414,7 @@ namespace PAO
                     continue;
                 }
 
-                Vector3 p = c.ClosestPoint(center);
+                Vector3 p = ClosestPointSafe(c, center);
                 float d = Vector3.Distance(center, p);
 
                 if (!found || d < distance)
@@ -621,6 +657,35 @@ namespace PAO
                 Vector3 target = transform.TransformPoint(m_RiderLocals[i]);
                 Vector3 delta = target - player.transform.position;
 
+                // 【挑飞】跷跷板/弹射板：台板把人往上顶得太快时，人就不该再被"粘"在板上，
+                // 而是顺着这一瞬间的速度飞出去（速度就是台板给他的真实速度 × 倍率）。
+                if (m_LaunchRiders && !IsLaunchCooldown(player))
+                {
+                    float dt = Mathf.Max(0.0001f, Time.deltaTime);
+                    float riseSpeed = delta.y / dt;
+
+                    if (riseSpeed >= m_LaunchRiseSpeed)
+                    {
+                        Vector3 direction = delta / dt;
+                        float speed = direction.magnitude * Mathf.Max(1f, m_LaunchBoost);
+
+                        if (direction.sqrMagnitude > 0.0001f)
+                        {
+                            player.Launch(direction.normalized, speed, m_LaunchDuration);
+                        }
+
+                        m_LaunchCooldown[player] = Time.time + Mathf.Max(0.1f, m_LaunchDuration);
+
+                        if (m_Log)
+                        {
+                            Debug.Log("[BombDrivenSwing] \"" + name + "\" 把乘客挑飞：速度 " +
+                                      speed.ToString("F1") + " m/s（向上 " + riseSpeed.ToString("F1") + "）", this);
+                        }
+
+                        continue;
+                    }
+                }
+
                 if (delta.sqrMagnitude > 0.0000001f)
                 {
                     controller.Move(delta);
@@ -647,6 +712,19 @@ namespace PAO
                 // 宽限自然过期，不会变成空中二段跳。
                 player.GrantGroundGrace(kRiderJumpGrace);
             }
+        }
+
+        /// <summary>这个人是不是刚被挑飞过（还在 Launch 接管期）。</summary>
+        private bool IsLaunchCooldown(PlayerController player)
+        {
+            float until;
+
+            if (m_LaunchCooldown.TryGetValue(player, out until) && Time.time < until)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void RefreshPlayersIfNeeded()
@@ -708,7 +786,8 @@ namespace PAO
         /// 编辑器 / 搭建脚本用的配置入口。摆长一般传"支点到包围盒中心的高度"。
         /// </summary>
         public void Configure(Vector3 localAxis, float maxAngle, float pendulumLength,
-                              float startAngle = 0f, float blastImpulse = 90f, float blastRadius = 4f)
+                              float startAngle = 0f, float blastImpulse = 90f, float blastRadius = 4f,
+                              bool launchRiders = false, float launchRiseSpeed = 3.5f, float launchBoost = 1.15f)
         {
             m_LocalAxis = localAxis.sqrMagnitude > 0.0001f ? localAxis.normalized : Vector3.right;
             m_MaxAngle = Mathf.Clamp(maxAngle, 5f, 80f);
@@ -716,6 +795,9 @@ namespace PAO
             m_StartAngle = Mathf.Clamp(startAngle, -m_MaxAngle, m_MaxAngle);
             m_BlastImpulse = Mathf.Max(1f, blastImpulse);
             m_BlastRadius = Mathf.Max(0.5f, blastRadius);
+            m_LaunchRiders = launchRiders;
+            m_LaunchRiseSpeed = Mathf.Max(0.5f, launchRiseSpeed);
+            m_LaunchBoost = Mathf.Max(1f, launchBoost);
         }
     }
 }

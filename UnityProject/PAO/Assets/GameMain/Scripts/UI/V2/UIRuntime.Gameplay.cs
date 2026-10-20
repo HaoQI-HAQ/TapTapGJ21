@@ -12,6 +12,8 @@ namespace PAO.UI.V2
         private Text objectiveLabel;
         private UIAbilityMotion abilityMotion;
         private readonly List<Image> abilityRings = new List<Image>();
+        private readonly List<Button> abilityButtons = new List<Button>();
+        private readonly List<CanvasGroup> abilityAvailabilityGroups = new List<CanvasGroup>();
         private Text journalShortcut;
         private Text pauseShortcut;
         private Text goalLabel;
@@ -64,6 +66,8 @@ namespace PAO.UI.V2
                 Anchor(circle.rectTransform, new Vector2(1, 0), positions[i], new Vector2(96, 96), new Vector2(0.5f, 0.5f));
                 Button button = circle.gameObject.AddComponent<Button>(); button.targetGraphic = circle;
                 button.onClick.AddListener(() => { if (switcher != null) switcher.SetType((BubbleType)index); });
+                abilityButtons.Add(button);
+                abilityAvailabilityGroups.Add(circle.gameObject.AddComponent<CanvasGroup>());
                 circle.gameObject.AddComponent<UIFocusRing>().Configure(Config.teal);
                 Image ring = ui.Surface("Selection ring", circle.transform, Config.teal);
                 UIWidgets.Stretch(ring.rectTransform, -8); ring.sprite = Config.ring; ring.raycastTarget = false;
@@ -122,6 +126,7 @@ namespace PAO.UI.V2
             if (hud != null) { hud.gameObject.SetActive(false); Destroy(hud.gameObject); }
             hud = null; hudMessages = abilityCluster = null;
             abilityMotion = null; abilityRings.Clear();
+            abilityButtons.Clear(); abilityAvailabilityGroups.Clear();
             ClearVisualGuidance();
             ClearResourceHud();
             if (noticeRoot != null) Destroy(noticeRoot.gameObject);
@@ -151,7 +156,14 @@ namespace PAO.UI.V2
             RefreshResourceHud();
             if (hud == null || switcher == null) return;
             int type = launcher != null ? (int)launcher.DisplayType : (int)switcher.Current;
-            // HUD controls show symbols only; their button actions remain available.
+            if (!switcher.IsAvailable((BubbleType)type)) type = (int)switcher.Current;
+            for (int i = 0; i < abilityButtons.Count; i++)
+            {
+                bool available = switcher.IsAvailable((BubbleType)i);
+                abilityButtons[i].interactable = available;
+                abilityAvailabilityGroups[i].alpha = available ? 1f : .25f;
+                abilityAvailabilityGroups[i].interactable = available;
+            }
             if (goalLabel != null)
                 goalLabel.text = chapterGoal != null && player != null ? T("终点距离 ", "Goal distance ") +
                     Mathf.RoundToInt(Vector3.Distance(player.transform.position, chapterGoal.position)) + " m" :
