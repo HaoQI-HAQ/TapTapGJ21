@@ -7409,17 +7409,17 @@ PrefabInstance:
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.071
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 35.645
+      value: 9.4
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.243
+      value: 17.387
       objectReference: {fileID: 0}
     - target: {fileID: 8060876061183553752, guid: 533472653752a5e42b3a814b5ef9cbac,
         type: 3}
@@ -9013,6 +9013,11 @@ MonoBehaviour:
   m_BlastReachBonus: 0.1
   m_TintWhileStunned: 1
   m_StunnedTint: {r: 0.55, g: 0.78, b: 1, a: 1}
+  m_SlowByBouncyBubble: 1
+  m_SlowFactor: 0.5
+  m_MinSpeed: 5
+  m_SlowDuration: 10
+  m_SlowRecoverSeconds: 0
   m_Log: 1
 --- !u!1 &1321962907
 GameObject:
@@ -9217,6 +9222,11 @@ MonoBehaviour:
   m_BlastReachBonus: 0.5
   m_TintWhileStunned: 1
   m_StunnedTint: {r: 0.55, g: 0.78, b: 1, a: 1}
+  m_SlowByBouncyBubble: 1
+  m_SlowFactor: 0.5
+  m_MinSpeed: 5
+  m_SlowDuration: 6
+  m_SlowRecoverSeconds: 0
   m_Log: 1
 --- !u!1 &1403940656
 GameObject:
@@ -9888,7 +9898,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Axis: {x: 0, y: 1, z: 0}
-  m_Speed: -50
+  m_Speed: -80
   m_PingPong: 0
   m_SwingAngle: 100
   m_StunByBomb: 1
@@ -9896,6 +9906,11 @@ MonoBehaviour:
   m_BlastReachBonus: 0.1
   m_TintWhileStunned: 1
   m_StunnedTint: {r: 0.55, g: 0.78, b: 1, a: 1}
+  m_SlowByBouncyBubble: 1
+  m_SlowFactor: 0.5
+  m_MinSpeed: 5
+  m_SlowDuration: 10
+  m_SlowRecoverSeconds: 0
   m_Log: 1
 --- !u!1 &1550028996
 GameObject:
@@ -15132,6 +15147,11 @@ MonoBehaviour:
   m_BlastReachBonus: 0.5
   m_TintWhileStunned: 1
   m_StunnedTint: {r: 0.55, g: 0.78, b: 1, a: 1}
+  m_SlowByBouncyBubble: 1
+  m_SlowFactor: 0.5
+  m_MinSpeed: 5
+  m_SlowDuration: 6
+  m_SlowRecoverSeconds: 0
   m_Log: 1
 --- !u!1 &2135086944
 GameObject:

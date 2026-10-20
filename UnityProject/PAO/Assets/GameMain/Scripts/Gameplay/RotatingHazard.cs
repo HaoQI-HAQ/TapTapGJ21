@@ -79,8 +79,14 @@ namespace PAO
         [Tooltip("最低转速（度/秒）。减速不会低于这个值 —— 设成 0 才能被减到完全停住")]
         [SerializeField] private float m_MinSpeed = 5f;
 
-        [Tooltip("多少秒内自动恢复到原来的转速。0 = 不恢复（一直保持减速后的速度）")]
-        [SerializeField] private float m_SlowRecoverSeconds = 0f;
+        [Tooltip("减速**持续多少秒**，之后恢复正常转速。\n" +
+                 "0 = 永久减速（不恢复）。\n" +
+                 "被减速期间再被碰一次，计时重新开始")]
+        [SerializeField] private float m_SlowDuration = 6f;
+
+        [Tooltip("减速时间结束、往回恢复时，用多少秒渐变回原速。\n" +
+                 "0 = 到点立刻恢复原速")]
+        [SerializeField] private float m_SlowRecoverSeconds = 1.5f;
 
         [Header("调试")]
         [Tooltip("打印被炸停 / 恢复 / 减速的日志")]
@@ -103,6 +109,15 @@ namespace PAO
 
         /// <summary>剩余停摆时间（秒）。0 = 正在转。</summary>
         private float m_StunLeft;
+
+        /// <summary>
+        /// 减速还剩多少秒。
+        ///
+        /// 只有配置了「Slow Duration &gt; 0」时才用它；
+        /// 那两条是分开的：Duration 决定**减速维持多久**，
+        /// RecoverSeconds 决定**到点之后用多久变回原速**。
+        /// </summary>
+        private float m_SlowLeft;
 
         private Renderer[] m_Renderers;
         private Color[] m_BaseColors;
@@ -128,6 +143,9 @@ namespace PAO
 
         /// <summary>是否已经被弹力泡泡减速过。</summary>
         public bool IsSlowed { get { return Mathf.Abs(m_CurrentSpeed) < Mathf.Abs(m_Speed) - 0.01f; } }
+
+        /// <summary>减速还剩多少秒（只有配了 Slow Duration 时才有意义）。</summary>
+        public float SlowRemaining { get { return Mathf.Max(0f, m_SlowLeft); } }
 
         // ==================== 生命周期 ====================
 
@@ -304,24 +322,45 @@ namespace PAO
 
             m_CurrentSpeed = sign * magnitude;
 
+            // 减速计时：配了「Slow Duration」就重新开始计时，
+            // 也就是**减速期间再被撞一次，减速会续期**。
+            if (m_SlowDuration > 0f)
+            {
+                m_SlowLeft = m_SlowDuration;
+            }
+
             if (m_Log)
             {
                 Debug.Log("[RotatingHazard] \"" + name + "\" 被弹力泡泡减速 → " +
                           m_CurrentSpeed.ToString("F1") + " 度/秒" +
-                          "（原 " + m_Speed.ToString("F1") + "）", this);
+                          "（原 " + m_Speed.ToString("F1") + "，" +
+                          (m_SlowDuration > 0f
+                              ? "持续 " + m_SlowDuration.ToString("F1") + " 秒"
+                              : "永久") + "）", this);
             }
         }
 
-        /// <summary>把转速恢复到 Inspector 里配的原始值。</summary>
+        /// <summary>把转速立刻恢复到 Inspector 里配的原始值（并取消减速计时）。</summary>
         public void ResetSpeed()
         {
             m_CurrentSpeed = m_Speed;
+            m_SlowLeft = 0f;
         }
 
-        /// <summary>如果配了恢复时长，就在这个时间里线性回到原速。</summary>
+        /// <summary>
+        /// 减速的计时与恢复。
+        ///
+        /// 两个参数分工明确：
+        ///   Slow Duration        —— 减速**维持**多久（这段时间转速一直是被减过的值）
+        ///   Slow Recover Seconds —— 时间到了之后，用多久**渐变**回原速
+        ///
+        /// Slow Duration = 0 表示永久减速，此时不会再恢复，
+        /// Recover Seconds 也就不起作用了。
+        /// </summary>
         private void UpdateSlowRecovery()
         {
-            if (m_SlowRecoverSeconds <= 0f)
+            // 永久减速：不恢复
+            if (m_SlowDuration <= 0f)
             {
                 return;
             }
@@ -329,8 +368,39 @@ namespace PAO
             float current = Mathf.Abs(m_CurrentSpeed);
             float target = Mathf.Abs(m_Speed);
 
+            // 已经是原速了，没什么可做的
             if (current >= target - 0.001f)
             {
+                m_SlowLeft = 0f;
+                return;
+            }
+
+            float sign = Mathf.Sign(m_CurrentSpeed == 0f ? m_Speed : m_CurrentSpeed);
+
+            // ---- 阶段 1：减速维持期，只倒计时，速度保持不动 ----
+            if (m_SlowLeft > 0f)
+            {
+                m_SlowLeft -= Time.deltaTime;
+
+                if (m_SlowLeft > 0f)
+                {
+                    return;
+                }
+
+                m_SlowLeft = 0f;
+
+                if (m_Log)
+                {
+                    Debug.Log("[RotatingHazard] \"" + name + "\" 减速时间到，开始恢复转速。", this);
+                }
+            }
+
+            // ---- 阶段 2：恢复到原速 ----
+
+            // 不配渐变时间 = 到点立刻恢复
+            if (m_SlowRecoverSeconds <= 0f)
+            {
+                m_CurrentSpeed = sign * target;
                 return;
             }
 
@@ -338,7 +408,6 @@ namespace PAO
             float span = Mathf.Max(0.01f, target - Mathf.Abs(m_MinSpeed));
             float rate = span / Mathf.Max(0.01f, m_SlowRecoverSeconds);
 
-            float sign = Mathf.Sign(m_CurrentSpeed == 0f ? m_Speed : m_CurrentSpeed);
             float magnitude = Mathf.MoveTowards(current, target, rate * Time.deltaTime);
 
             m_CurrentSpeed = sign * magnitude;
@@ -486,6 +555,7 @@ namespace PAO
             // 改了原始转速，运行时转速也要跟着重置，
             // 否则搭建完之后跑起来用的还是旧值。
             m_CurrentSpeed = speed;
+            m_SlowLeft = 0f;
         }
     }
 }
