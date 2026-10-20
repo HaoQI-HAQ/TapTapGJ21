@@ -157,9 +157,16 @@ namespace PAO.UI.V2
                     bool done = progress.completed != null && progress.completed.Contains(chapter.scene);
                     bool unlocked = i == 0 || progress.completed != null &&
                         progress.completed.Contains(Config.chapters[i - 1].scene);
-                    bool available = Application.CanStreamedLevelBeLoaded(chapter.scene);
+
+                    // 【scene 为空 = 未完待续的占位关卡】
+                    // 这类节点没有真实场景可加载，但也不该显示成"不可用"（那读起来像"构建缺失"）。
+                    // 小标签仍用"未解锁"，因为节点右上角那块地方很窄，
+                    // "未完待续"四个字会溢出；大标题（chapter.title）里已经写了"未完待续"。
+                    bool missing = string.IsNullOrEmpty(chapter.scene);
+                    bool available = !missing && Application.CanStreamedLevelBeLoaded(chapter.scene);
                     reachable[i] = unlocked && available;
-                    nodeStates[i].text = !available ? T("不可用", "OFFLINE") : done ?
+                    nodeStates[i].text = missing ? T("未解锁", "LOCKED") :
+                        !available ? T("不可用", "OFFLINE") : done ?
                         T("已完成", "CLEARED") : currentScene == chapter.scene ? T("当前", "CURRENT") :
                         unlocked ? T("已开放", "OPEN") : T("未解锁", "LOCKED");
                     selectionBars[i].gameObject.SetActive(i == selected);
@@ -173,7 +180,9 @@ namespace PAO.UI.V2
                 bool canUnlock = selected == 0 || progress.completed != null &&
                     progress.completed.Contains(Config.chapters[selected - 1].scene);
                 bool canLoad = Application.CanStreamedLevelBeLoaded(chosen.scene);
-                string state = !canLoad ? T("暂不可进入", "Unavailable") : completed ?
+                bool chosenMissing = string.IsNullOrEmpty(chosen.scene);
+                string state = chosenMissing ? T("未完待续", "TO BE CONTINUED") :
+                    !canLoad ? T("暂不可进入", "Unavailable") : completed ?
                     T("已完成", "Completed") : currentScene == chosen.scene ?
                     T("当前章节", "Current stage") : canUnlock ? T("已开放", "Available") :
                     T("未解锁", "Locked");
@@ -181,10 +190,12 @@ namespace PAO.UI.V2
                 detailNumber.text = (selected + 1).ToString("00");
                 detailTitle.text = chosen.title;
                 detailStatus.text = T("航线状态  /  ", "STATUS  /  ") + state;
-                detailScene.text = T("场景  /  ", "SCENE  /  ") + chosen.scene;
+                detailScene.text = T("场景  /  ", "SCENE  /  ") +
+                    (chosenMissing ? "—" : chosen.scene);
                 description.text = string.IsNullOrWhiteSpace(chosen.description) ? "—" : chosen.description;
                 objective.text = string.IsNullOrWhiteSpace(chosen.objective) ? "—" : chosen.objective;
-                reason.text = !canLoad ? T("此关卡暂未包含在当前版本中。", "This stage is not in this build.") :
+                reason.text = chosenMissing ? T("此关卡尚在制作中。", "This stage is still in production.") :
+                    !canLoad ? T("此关卡暂未包含在当前版本中。", "This stage is not in this build.") :
                     !canUnlock ? T("完成前一关卡后开放。", "Complete the previous stage to unlock.") :
                     T("从本章起点进入。", "Enter from the stage start.");
                 enter.interactable = canUnlock && canLoad;

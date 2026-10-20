@@ -144,6 +144,7 @@ namespace PAO.UI.V2
             Button resume = MenuButton(actions, T("继续游戏", "Continue"), () => { if (state.latest != null) ContinueJourney(state.latest.slot); }, true);
             resume.interactable = state.latest != null;
             MenuButton(actions, T("新游戏", "New game"), RequestNewRun);
+            MenuButton(actions, T("创造模式", "Creative mode"), EnterCreativeMode);
             MenuButton(actions, T("读档", "Load game"), ShowSaves);
             MenuButton(actions, T("设置", "Settings"), ShowSettings);
             page.Footer.gameObject.SetActive(false);
@@ -235,6 +236,29 @@ namespace PAO.UI.V2
             bar.handleRect = handle.rectTransform; bar.targetGraphic = handle; bar.direction = Scrollbar.Direction.BottomToTop;
             Navigation navigation = bar.navigation; navigation.mode = Navigation.Mode.None; bar.navigation = navigation;
             scroll.verticalScrollbar = bar; scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
+        }
+
+        /// <summary>
+        /// 创造模式：直接进入 <c>Creat</c> 沙盒场景。
+        ///
+        /// 【为什么先检查 CanStreamedLevelBeLoaded】
+        /// 这个按钮是**常驻**的（不像左下角那个「究极沙盒 · Creat」链接只在场景可用时才出现）。
+        /// 万一 Creat 没被加进 Build Settings，点下去 LoadScene 会静默失败，
+        /// 玩家只会觉得"按了没反应" —— 所以这里先检查并给一条明确提示。
+        /// </summary>
+        private void EnterCreativeMode()
+        {
+            const string scene = "Creat";
+
+            if (!Application.CanStreamedLevelBeLoaded(scene))
+            {
+                Debug.LogWarning("[UIRuntime] 创造模式场景 \"" + scene +
+                                 "\" 不在 Build Settings 里，无法进入。");
+                Toast(T("创造模式暂不可用。", "Creative mode is unavailable."));
+                return;
+            }
+
+            LoadScene(scene);
         }
 
         private void ContinueJourney(int slot)

@@ -471,10 +471,19 @@ namespace PAO.UI.V2
             resultShown = true; UIRunState.Complete(lastScene); bool saved = SaveSnapshot(UIRunState.AutoSlot);
             if (tide == null) PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.ChapterComplete, Vector3.zero);
             int index = Config.IndexOf(lastScene);
-            bool ending = index >= 0 && index == Config.chapters.Length - 1;
+
+            // 【结局判定不能只看"是不是数组最后一个"】
+            // 章节表末尾可能有**未完待续的占位关卡**（scene 为空、没有真实场景）。
+            // 那些占位永远进不去，如果用"最后一个下标"判断结局，
+            // 真正能通关的最后一关（比如第八关）完成时就永远看不到结局了。
+            //
+            // 所以改成往后找**下一个有真实场景的章节**：找不到，才说明这是终章。
+            string followingScene = NextPlayableScene(index);
+            bool ending = index >= 0 && string.IsNullOrEmpty(followingScene);
+
             UIPage page = Push(T("这一段水流，已有回响", "This current now has an echo"), ChapterName(lastScene), false, UIPageDesign.Completion);
             page.CanClose = false;
-            if (string.IsNullOrEmpty(nextScene) && index >= 0 && index + 1 < Config.chapters.Length) nextScene = Config.chapters[index + 1].scene;
+            if (string.IsNullOrEmpty(nextScene) && !string.IsNullOrEmpty(followingScene)) nextScene = followingScene;
             string next = nextScene;
             string primaryLabel = ending ? T("留下最终的回声", "Leave your final echo") :
                 !string.IsNullOrEmpty(next) ? T("前往下一章", "Next chapter") : T("章节路径", "Chapter path");
@@ -484,6 +493,23 @@ namespace PAO.UI.V2
                 index >= 0 ? index + 1 : 0, UIRunState.Progress.memories.Count, UIRunState.Progress.playSeconds,
                 saved, primaryLabel, primary, ShowJournal, ShowChapters, () => LoadScene(Config.menuScene));
             Finish(page); return true;
+        }
+
+        /// <summary>
+        /// 从 <paramref name="index"/> 之后找**第一个有真实场景**的章节。
+        /// 找不到（或 index 无效）返回空串，表示这是终章。
+        ///
+        /// 跳过 scene 为空的"未完待续"占位关卡 —— 它们只用来在章节地图上占位展示。
+        /// </summary>
+        private string NextPlayableScene(int index)
+        {
+            if (index < 0 || Config.chapters == null) return "";
+            for (int i = index + 1; i < Config.chapters.Length; i++)
+            {
+                string scene = Config.chapters[i].scene;
+                if (!string.IsNullOrEmpty(scene)) return scene;
+            }
+            return "";
         }
 
         public void ConfirmChapterGoal(string nextScene)
