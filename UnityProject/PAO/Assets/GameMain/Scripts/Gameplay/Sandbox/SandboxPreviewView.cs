@@ -16,17 +16,21 @@ namespace PAO.Sandbox
         private readonly List<Material> materials = new List<Material>();
         private Scene scene;
         private GameObject stage, ground;
-        private Mesh groundMesh;
+        private Mesh groundMesh, fogMesh;
+        private Material fogMaterial;
         private RawImage surface;
         private RenderTexture target;
         private Vector3 pivot;
         private float yaw = 35, pitch = 24, distance;
+        private float insetTop, insetBottom;
         private bool disposed, autoFrame;
         public Camera ViewCamera { get; private set; }
         public Bounds ContentBounds { get; private set; }
         public int ObjectCount { get; private set; }
         public bool GridVisible => ground != null && ground.activeSelf;
         public float Distance => distance;
+        public float Yaw => yaw;
+        public float Pitch => pitch;
         public Transform Objects { get; private set; }
 
         public void Initialize(BubbleSandbox world)
@@ -78,13 +82,14 @@ namespace PAO.Sandbox
             ViewCamera = cameraObject.GetComponent<Camera>(); ViewCamera.enabled = false;
             ViewCamera.cullingMask = 1 << PreviewLayer;
             ViewCamera.clearFlags = CameraClearFlags.SolidColor;
-            ViewCamera.backgroundColor = new Color(.065f, .085f, .11f);
+            ViewCamera.backgroundColor = new Color(.012f, .015f, .019f, 1);
             ViewCamera.fieldOfView = 40; ViewCamera.nearClipPlane = .03f;
             ViewCamera.farClipPlane = Mathf.Max(500, ContentBounds.size.magnitude * 20);
             ViewCamera.allowHDR = false; ViewCamera.allowMSAA = true;
             var data = ViewCamera.GetUniversalAdditionalCameraData();
             data.renderPostProcessing = false; data.renderShadows = false;
-            data.requiresColorTexture = false; data.requiresDepthTexture = false; data.volumeLayerMask = 0;
+            data.requiresColorTexture = false; data.requiresDepthTexture = true; data.volumeLayerMask = 0;
+            BuildAtmosphere();
             EnsureTarget(); FrameAll(); Render();
         }
 
@@ -107,9 +112,48 @@ namespace PAO.Sandbox
                 new Vector3(radius, y, radius), new Vector3(radius, y, -radius) };
             groundMesh.triangles = new[] { 0, 1, 2, 0, 2, 3 }; groundMesh.RecalculateNormals();
             ground.GetComponent<MeshFilter>().sharedMesh = groundMesh;
-            Material material = MakeMaterial(shader, new Color(.18f, .22f, .27f), 0);
+            Material material = MakeMaterial(shader, new Color(.025f, .028f, .032f), 0);
             material.SetFloat("_Ground", 1); material.SetFloat("_GroundRadius", radius);
             ground.GetComponent<MeshRenderer>().sharedMaterial = material;
+        }
+
+        private void BuildAtmosphere()
+        {
+            Shader shader = Resources.Load<Shader>("SandboxPreviewAtmosphere");
+            if (shader == null) return;
+            float height = Mathf.Max(2, ContentBounds.size.y);
+            float radius = Mathf.Max(8, ContentBounds.extents.magnitude * 2);
+            float floor = -ContentBounds.extents.y - .05f;
+            Vector3 min = new Vector3(-radius, floor, -radius);
+            Vector3 max = new Vector3(radius, floor + height * 1.85f, radius);
+            var fog = new GameObject("Preview ground mist and spotlight", typeof(MeshFilter), typeof(MeshRenderer));
+            fog.layer = PreviewLayer; fog.transform.SetParent(ground.transform, false);
+            fogMesh = new Mesh { name = "Preview atmosphere bounds" };
+            fogMesh.vertices = new[] {
+                new Vector3(min.x, min.y, min.z), new Vector3(max.x, min.y, min.z),
+                new Vector3(max.x, max.y, min.z), new Vector3(min.x, max.y, min.z),
+                new Vector3(min.x, min.y, max.z), new Vector3(max.x, min.y, max.z),
+                new Vector3(max.x, max.y, max.z), new Vector3(min.x, max.y, max.z) };
+            fogMesh.triangles = new[] { 0,2,1, 0,3,2, 4,5,6, 4,6,7, 0,4,7, 0,7,3,
+                1,2,6, 1,6,5, 3,7,6, 3,6,2, 0,1,5, 0,5,4 };
+            fogMesh.RecalculateBounds(); fog.GetComponent<MeshFilter>().sharedMesh = fogMesh;
+            fogMaterial = new Material(shader) { name = "Preview / low mist and warm spotlight" };
+            fogMaterial.SetVector("_StageOrigin", StageOrigin);
+            fogMaterial.SetVector("_BoundsMin", min); fogMaterial.SetVector("_BoundsMax", max);
+            fogMaterial.SetFloat("_FloorY", floor); fogMaterial.SetFloat("_ContentHeight", height);
+            fogMaterial.SetFloat("_StageRadius", radius);
+            materials.Add(fogMaterial);
+            MeshRenderer renderer = fog.GetComponent<MeshRenderer>(); renderer.sharedMaterial = fogMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        public void SetFramingInsets(float top, float bottom)
+        {
+            top = Mathf.Clamp(top, 0, .32f); bottom = Mathf.Clamp(bottom, 0, .32f);
+            if (Mathf.Approximately(insetTop, top) && Mathf.Approximately(insetBottom, bottom)) return;
+            insetTop = top; insetBottom = bottom;
+            if (autoFrame) FrameAll();
         }
 
         public void FrameAll()
@@ -117,8 +161,9 @@ namespace PAO.Sandbox
             if (ViewCamera == null) return;
             pivot = Vector3.zero;
             Quaternion inverse = Quaternion.Inverse(Quaternion.Euler(pitch, yaw, 0));
-            float vertical = Mathf.Tan(ViewCamera.fieldOfView * .5f * Mathf.Deg2Rad);
-            float horizontal = vertical * ViewCamera.aspect;
+            float tangent = Mathf.Tan(ViewCamera.fieldOfView * .5f * Mathf.Deg2Rad);
+            float vertical = tangent * (1 - insetTop - insetBottom);
+            float horizontal = tangent * ViewCamera.aspect;
             float fit = 1;
             Vector3 extents = ContentBounds.extents;
             for (int x = -1; x <= 1; x += 2)
@@ -164,7 +209,9 @@ namespace PAO.Sandbox
         {
             if (ViewCamera == null) return;
             Quaternion rotation = Quaternion.Euler(pitch, yaw, 0);
-            ViewCamera.transform.SetPositionAndRotation(StageOrigin + pivot - rotation * Vector3.forward * distance, rotation);
+            float offset = (insetTop - insetBottom) * distance * Mathf.Tan(ViewCamera.fieldOfView * .5f * Mathf.Deg2Rad);
+            Vector3 aim = pivot + rotation * Vector3.up * offset;
+            ViewCamera.transform.SetPositionAndRotation(StageOrigin + aim - rotation * Vector3.forward * distance, rotation);
             ViewCamera.farClipPlane = Mathf.Max(500, distance + ContentBounds.size.magnitude * 4);
         }
         private void Update()
@@ -188,7 +235,12 @@ namespace PAO.Sandbox
             ViewCamera.aspect = (float)width / height;
             if (autoFrame) FrameAll();
         }
-        public void Render() { if (ViewCamera != null && target != null) ViewCamera.Render(); }
+        public void Render()
+        {
+            if (fogMaterial != null) fogMaterial.SetFloat("_PreviewTime",
+                PAO.UI.V2.UISettings.Current != null && PAO.UI.V2.UISettings.Current.reducedMotion ? 0 : Time.unscaledTime * .035f);
+            if (ViewCamera != null && target != null) ViewCamera.Render();
+        }
         private void ReleaseTarget()
         {
             if (ViewCamera != null) ViewCamera.targetTexture = null;
@@ -204,6 +256,7 @@ namespace PAO.Sandbox
             else if (stage != null) Destroy(stage);
             foreach (Material material in materials) if (material != null) Destroy(material);
             materials.Clear(); if (groundMesh != null) Destroy(groundMesh);
+            if (fogMesh != null) Destroy(fogMesh);
         }
         private void OnDisable() { Dispose(); }
         private void OnDestroy() { Dispose(); }

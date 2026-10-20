@@ -468,27 +468,22 @@ namespace PAO.UI.V2
         public bool CompleteChapter(string nextScene = null)
         {
             if (!IsGameplay || resultShown || loading) return false;
-            resultShown = true; UIRunState.Complete(lastScene); SaveSnapshot(UIRunState.AutoSlot);
+            resultShown = true; UIRunState.Complete(lastScene); bool saved = SaveSnapshot(UIRunState.AutoSlot);
             if (tide == null) PAO.AV.FeedbackBus.Emit(PAO.AV.FeedbackCue.ChapterComplete, Vector3.zero);
             int index = Config.IndexOf(lastScene);
             bool ending = index >= 0 && index == Config.chapters.Length - 1;
             UIPage page = Push(T("这一段水流，已有回响", "This current now has an echo"), ChapterName(lastScene), false, UIPageDesign.Completion);
             page.CanClose = false;
-            ui.Emblem(page.Content, UIGuideSymbol.Check, T("章节完成", "CHAPTER COMPLETE"));
-            RectTransform statistics = ui.Grid("Journey keepsakes", page.Content, 2, 300);
-            RectTransform memories = ui.Card("Memory count", statistics);
-            ui.Emblem(memories, UIGuideSymbol.Memory, T("意识碎片", "MEMORIES"));
-            ui.Label(memories, UIRunState.Progress.memories.Count.ToString("00"), 56);
-            RectTransform time = ui.Card("Journey time", statistics);
-            ui.Emblem(time, UIGuideSymbol.Current, T("旅程时间", "JOURNEY TIME"));
-            ui.Label(time, TimeSpan.FromSeconds(UIRunState.Progress.playSeconds).ToString(@"hh\:mm\:ss"), 44);
             if (string.IsNullOrEmpty(nextScene) && index >= 0 && index + 1 < Config.chapters.Length) nextScene = Config.chapters[index + 1].scene;
             string next = nextScene;
-            if (ending) ui.Button(page.Content, T("留下最终的回声", "Leave your final echo"), ShowEnding, true);
-            else if (!string.IsNullOrEmpty(next)) ui.Button(page.Content, T("前往下一章", "Next chapter"), () => { SaveOnNextEntry = true; LoadScene(next); }, true);
-            ui.Button(page.Content, T("回看意识碎片", "Review memories"), ShowJournal);
-            ui.Button(page.Footer, T("章节路径", "Chapter path"), ShowChapters);
-            ui.Button(page.Footer, T("主菜单", "Main menu"), () => LoadScene(Config.menuScene)); Finish(page); return true;
+            string primaryLabel = ending ? T("留下最终的回声", "Leave your final echo") :
+                !string.IsNullOrEmpty(next) ? T("前往下一章", "Next chapter") : T("章节路径", "Chapter path");
+            Action primary = ending ? (Action)ShowEnding : !string.IsNullOrEmpty(next) ?
+                () => { SaveOnNextEntry = true; LoadScene(next); } : (Action)ShowChapters;
+            page.gameObject.AddComponent<UIChapterCompletionView>().Build(page, Config, ChapterName(lastScene),
+                index >= 0 ? index + 1 : 0, UIRunState.Progress.memories.Count, UIRunState.Progress.playSeconds,
+                saved, primaryLabel, primary, ShowJournal, ShowChapters, () => LoadScene(Config.menuScene));
+            Finish(page); return true;
         }
 
         public void ConfirmChapterGoal(string nextScene)

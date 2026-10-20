@@ -58,7 +58,7 @@ namespace PAO.Sandbox
             {
                 var record = new Record { id = Guid.NewGuid().ToString("N"), name = name,
                     cellCount = world.Count, worldJson = world.CaptureWorldJson(), updatedUtcTicks = DateTime.UtcNow.Ticks };
-                Write(record); info = Info(record); return true;
+                Write(record); info = Info(record); world.SetCurrentWork(record.id, record.name); return true;
             }
             catch (Exception e) when (Handled(e)) { error = "保存失败，请检查存储空间或访问权限。"; return false; }
         }
@@ -70,7 +70,7 @@ namespace PAO.Sandbox
                 Record record = Read(id);
                 record.worldJson = world.CaptureWorldJson(); record.cellCount = world.Count;
                 record.updatedUtcTicks = DateTime.UtcNow.Ticks;
-                Write(record); return true;
+                Write(record); world.SetCurrentWork(record.id, record.name); return true;
             }
             catch (Exception e) when (Handled(e)) { error = "覆盖失败，原作品存档已保留。"; return false; }
         }
@@ -82,6 +82,7 @@ namespace PAO.Sandbox
                 Record record = Read(id);
                 if (!world.RestoreWorldJson(record.worldJson, true))
                 { error = "存档内容无效，当前作品已保留。"; return false; }
+                world.SetCurrentWork(record.id, record.name);
                 world.Notify("已读取作品「" + record.name + "」 · " + world.Count + " 件造物");
                 return true;
             }
@@ -93,7 +94,10 @@ namespace PAO.Sandbox
             try
             {
                 Record record = Read(id); record.name = name;
-                Write(record); return true;
+                Write(record);
+                BubbleSandbox current = BubbleSandbox.Instance;
+                if (current != null && current.CurrentWorkId == id) current.SetCurrentWork(id, name);
+                return true;
             }
             catch (Exception e) when (Handled(e)) { error = "重命名失败，原作品存档已保留。"; return false; }
         }

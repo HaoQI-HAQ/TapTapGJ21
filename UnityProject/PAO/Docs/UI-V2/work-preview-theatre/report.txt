@@ -1,0 +1,175 @@
+Creat work preview theatre
+Passed: 170
+Failed: 0
+Errors: 0
+
+PASS Rendering with a temporary Universal Render Pipeline in the isolated fixture.
+PASS The actual ShowSandboxPreview page opens once.
+PASS The preview shows every actual generated bubble cell: 1490.
+PASS Opening the page pauses gameplay and blocks input.
+PASS The rendering snapshot contains no gameplay colliders or SandboxPiece components.
+PASS The theatre presentation is attached to the actual work page.
+PASS A repeated preview request does not duplicate the page.
+PASS The 透视 button updates the real snapshot camera.
+PASS The 正面 button updates the real snapshot camera.
+PASS The 侧面 button updates the real snapshot camera.
+PASS The 顶视 button updates the real snapshot camera.
+PASS All four view controls produce distinct URP images.
+PASS The ground control hides the rendered ground.
+PASS The ground control restores the ground.
+PASS Left dragging rotates the real model view.
+PASS Middle dragging pans the real model view.
+PASS Wheel input zooms the real model view.
+PASS Frame all restores a finite camera with a positive distance.
+PASS preview-1600x900: every button is inside the canvas.
+PASS preview-1600x900: buttons do not overlap.
+PASS preview-1600x900: text fits: P A O   /   C R E A T I O N   T H E A T R E (12.0 / 28.0).
+PASS preview-1600x900: text fits: 保存作品 (17.0 / 44.0).
+PASS preview-1600x900: text fits: 作品存档 (17.0 / 44.0).
+PASS preview-1600x900: text fits: 返回建造 (17.0 / 44.0).
+PASS preview-1600x900: text fits: 作品 / 预览 (203.0 / 224.0).
+PASS preview-1600x900: text fits: C R E A T I O N   /   P R E V I E W (12.0 / 26.0).
+PASS preview-1600x900: text fits: 1490  件造物 (23.0 / 44.0).
+PASS preview-1600x900: text fits: 8 × 13.3 × 4.9 m (15.0 / 56.0).
+PASS preview-1600x900: text fits: 取景全部 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 透视 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 正面 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 侧面 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 顶视 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 地面 (20.0 / 50.0).
+PASS preview-1600x900: text fits: 拖动旋转 (15.0 / 42.0).
+PASS preview-1600x900: text fits: 滚轮缩放 (15.0 / 42.0).
+PASS preview-1600x900: text fits: 中键 / Shift + 拖动平移 (15.0 / 42.0).
+PASS preview-1600x900: text fits: 重新取景 (15.0 / 42.0).
+PASS The selected view has a white CanvasRenderer multiplier; the former disabled tint is cleared (RGBA(1.000, 1.000, 1.000, 1.000)).
+PASS Rendered preview-1600x900.
+PASS The URP snapshot contains visible gold geometry without error shader pixels (gold 69192, magenta 0).
+PASS Save opens the existing work naming dialog above the preview.
+PASS Opening the save dialog keeps the snapshot and pause alive.
+PASS Rendered preview-save-dialog.
+PASS Cancelling save returns to the same interactive preview.
+PASS Archives opens the existing work archive page.
+PASS Rendered preview-archives.
+PASS Returning from archives preserves the same preview texture and camera.
+PASS Opening views, manipulating the camera and visiting save/archive pages never edit the world.
+PASS Cancelling the naming dialog creates no archive file.
+PASS Confirming a work name writes exactly one record inside the fixture's isolated archive directory.
+PASS The existing save toast is visible in the theatre after saving.
+PASS Rendered preview-saved-toast.
+PASS The existing archive page lists the newly saved isolated work.
+PASS Rendered preview-saved-archive.
+PASS Saving the work archive leaves the original world unchanged.
+PASS Return to build closes the preview and restores the previous gameplay time scale.
+PASS Closing unloads the independent preview scene and releases its camera, objects and render texture.
+PASS preview-934x534: every button is inside the canvas.
+PASS preview-934x534: buttons do not overlap.
+PASS preview-934x534: text fits: P A O   /   C R E A T I O N   T H E A T R E (11.8 / 28.0).
+PASS preview-934x534: text fits: 保存作品 (16.9 / 44.0).
+PASS preview-934x534: text fits: 作品存档 (16.9 / 44.0).
+PASS preview-934x534: text fits: 返回建造 (16.9 / 44.0).
+PASS preview-934x534: text fits: 作品 / 预览 (202.2 / 224.0).
+PASS preview-934x534: text fits: C R E A T I O N   /   P R E V I E W (11.8 / 26.0).
+PASS preview-934x534: text fits: 1490  件造物 (21.9 / 44.0).
+PASS preview-934x534: text fits: 8 × 13.3 × 4.9 m (13.5 / 56.0).
+PASS preview-934x534: text fits: 取景全部 (18.5 / 50.0).
+PASS preview-934x534: text fits: 透视 (18.5 / 50.0).
+PASS preview-934x534: text fits: 正面 (18.5 / 50.0).
+PASS preview-934x534: text fits: 侧面 (18.5 / 50.0).
+PASS preview-934x534: text fits: 顶视 (18.5 / 50.0).
+PASS preview-934x534: text fits: 地面 (18.5 / 50.0).
+PASS preview-934x534: text fits: 拖动旋转 (13.5 / 42.0).
+PASS preview-934x534: text fits: 滚轮缩放 (13.5 / 42.0).
+PASS preview-934x534: text fits: 中键 / Shift + 拖动平移 (13.5 / 42.0).
+PASS preview-934x534: text fits: 重新取景 (13.5 / 42.0).
+PASS preview-934x534: frame all is finite.
+PASS Rendered preview-934x534.
+PASS preview-800x900: every button is inside the canvas.
+PASS preview-800x900: buttons do not overlap.
+PASS preview-800x900: text fits: P A O   /   C R E A T I O N   T H E A T R E (12.0 / 28.0).
+PASS preview-800x900: text fits: 保存作品 (17.0 / 44.0).
+PASS preview-800x900: text fits: 作品存档 (17.0 / 44.0).
+PASS preview-800x900: text fits: 返回建造 (17.0 / 44.0).
+PASS preview-800x900: text fits: 作品预览 (41.0 / 90.0).
+PASS preview-800x900: text fits: C R E A T I O N   /   P R E V I E W (10.0 / 26.0).
+PASS preview-800x900: text fits: 1490  件造物 (23.0 / 44.0).
+PASS preview-800x900: text fits: 8 × 13.3 × 4.9 m (15.0 / 56.0).
+PASS preview-800x900: text fits: 取景全部 (18.0 / 58.0).
+PASS preview-800x900: text fits: 透视 (18.0 / 58.0).
+PASS preview-800x900: text fits: 正面 (18.0 / 58.0).
+PASS preview-800x900: text fits: 侧面 (18.0 / 58.0).
+PASS preview-800x900: text fits: 顶视 (18.0 / 58.0).
+PASS preview-800x900: text fits: 地面 (18.0 / 58.0).
+PASS preview-800x900: text fits: 拖动旋转 (13.0 / 42.0).
+PASS preview-800x900: text fits: 滚轮缩放 (13.0 / 42.0).
+PASS preview-800x900: text fits: 中键 / Shift + 拖动平移 (13.0 / 42.0).
+PASS preview-800x900: text fits: 重新取景 (13.0 / 42.0).
+PASS preview-800x900: frame all is finite.
+PASS Rendered preview-800x900.
+PASS preview-2100x900: every button is inside the canvas.
+PASS preview-2100x900: buttons do not overlap.
+PASS preview-2100x900: text fits: P A O   /   C R E A T I O N   T H E A T R E (12.0 / 28.0).
+PASS preview-2100x900: text fits: 保存作品 (17.0 / 44.0).
+PASS preview-2100x900: text fits: 作品存档 (17.0 / 44.0).
+PASS preview-2100x900: text fits: 返回建造 (17.0 / 44.0).
+PASS preview-2100x900: text fits: 作品 / 预览 (203.0 / 224.0).
+PASS preview-2100x900: text fits: C R E A T I O N   /   P R E V I E W (12.0 / 26.0).
+PASS preview-2100x900: text fits: 1490  件造物 (23.0 / 44.0).
+PASS preview-2100x900: text fits: 8 × 13.3 × 4.9 m (15.0 / 56.0).
+PASS preview-2100x900: text fits: 取景全部 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 透视 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 正面 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 侧面 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 顶视 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 地面 (20.0 / 50.0).
+PASS preview-2100x900: text fits: 拖动旋转 (15.0 / 42.0).
+PASS preview-2100x900: text fits: 滚轮缩放 (15.0 / 42.0).
+PASS preview-2100x900: text fits: 中键 / Shift + 拖动平移 (15.0 / 42.0).
+PASS preview-2100x900: text fits: 重新取景 (15.0 / 42.0).
+PASS preview-2100x900: frame all is finite.
+PASS Rendered preview-2100x900.
+PASS preview-large-text: every button is inside the canvas.
+PASS preview-large-text: buttons do not overlap.
+PASS preview-large-text: text fits: P A O   /   C R E A T I O N   T H E A T R E (11.2 / 28.0).
+PASS preview-large-text: text fits: 保存作品 (21.1 / 44.0).
+PASS preview-large-text: text fits: 作品存档 (21.1 / 44.0).
+PASS preview-large-text: text fits: 返回建造 (21.1 / 44.0).
+PASS preview-large-text: text fits: 作品 / 预览 (160.1 / 176.0).
+PASS preview-large-text: text fits: C R E A T I O N   /   P R E V I E W (11.2 / 26.0).
+PASS preview-large-text: text fits: 1490  件造物 (29.5 / 44.0).
+PASS preview-large-text: text fits: 8 × 13.3 × 4.9 m (19.7 / 56.0).
+PASS preview-large-text: text fits: 取景全部 (25.3 / 58.0).
+PASS preview-large-text: text fits: 透视 (25.3 / 58.0).
+PASS preview-large-text: text fits: 正面 (25.3 / 58.0).
+PASS preview-large-text: text fits: 侧面 (25.3 / 58.0).
+PASS preview-large-text: text fits: 顶视 (25.3 / 58.0).
+PASS preview-large-text: text fits: 地面 (25.3 / 58.0).
+PASS preview-large-text: text fits: 拖动旋转 (16.9 / 42.0).
+PASS preview-large-text: text fits: 滚轮缩放 (16.9 / 42.0).
+PASS preview-large-text: text fits: 中键 / Shift + 拖动平移 (16.9 / 42.0).
+PASS preview-large-text: text fits: 重新取景 (16.9 / 42.0).
+PASS preview-large-text: frame all is finite.
+PASS Rendered preview-large-text.
+PASS preview-empty: every button is inside the canvas.
+PASS preview-empty: buttons do not overlap.
+PASS preview-empty: text fits: P A O   /   C R E A T I O N   T H E A T R E (12.0 / 28.0).
+PASS preview-empty: text fits: 保存作品 (17.0 / 44.0).
+PASS preview-empty: text fits: 作品存档 (17.0 / 44.0).
+PASS preview-empty: text fits: 返回建造 (17.0 / 44.0).
+PASS preview-empty: text fits: 作品 / 预览 (203.0 / 224.0).
+PASS preview-empty: text fits: C R E A T I O N   /   P R E V I E W (12.0 / 26.0).
+PASS preview-empty: text fits: 0  件造物 (23.0 / 44.0).
+PASS preview-empty: text fits: 吹出第一颗泡泡，让想象落地。 (15.0 / 56.0).
+PASS preview-empty: text fits: 返回建造，开始你的第一份作品。 (23.0 / 80.0).
+PASS preview-empty: text fits: 取景全部 (20.0 / 50.0).
+PASS preview-empty: text fits: 透视 (20.0 / 50.0).
+PASS preview-empty: text fits: 正面 (20.0 / 50.0).
+PASS preview-empty: text fits: 侧面 (20.0 / 50.0).
+PASS preview-empty: text fits: 顶视 (20.0 / 50.0).
+PASS preview-empty: text fits: 地面 (20.0 / 50.0).
+PASS preview-empty: text fits: 拖动旋转 (15.0 / 42.0).
+PASS preview-empty: text fits: 滚轮缩放 (15.0 / 42.0).
+PASS preview-empty: text fits: 中键 / Shift + 拖动平移 (15.0 / 42.0).
+PASS preview-empty: text fits: 重新取景 (15.0 / 42.0).
+PASS preview-empty: frame all is finite.
+PASS Rendered preview-empty.
+PASS An empty world displays the first work prompt.

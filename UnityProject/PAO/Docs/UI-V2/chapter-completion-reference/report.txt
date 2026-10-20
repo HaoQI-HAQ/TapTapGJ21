@@ -1,0 +1,293 @@
+Passed: 286
+Completion artwork imports: Badge.
+Completion artwork imports: Current.
+Completion artwork imports: Frame.
+Completion artwork imports: Heading.
+Completion artwork imports: Hero.
+Completion artwork imports: Memory.
+Completion artwork imports: Paper.
+Completion artwork imports: Primary.
+Completion artwork imports: Secondary.
+reference-1600x900 displays the reference fixture values.
+reference-1600x900 preview neither completes a chapter nor writes a save.
+reference-1600x900 exposes four usable actions.
+reference-1600x900 focuses the primary action by default.
+reference-1600x900 has connected directional navigation across all four actions.
+reference-1600x900 keeps Completion primary action inside the viewport.
+reference-1600x900 gives Completion primary action at least 40px screen height.
+reference-1600x900 keeps Review memories inside the viewport.
+reference-1600x900 gives Review memories at least 40px screen height.
+reference-1600x900 keeps Chapter path inside the viewport.
+reference-1600x900 gives Chapter path at least 40px screen height.
+reference-1600x900 keeps Main menu inside the viewport.
+reference-1600x900 gives Main menu at least 40px screen height.
+reference-1600x900 reserves a fitting text box for Chapter label.
+reference-1600x900 reserves a fitting text box for Chapter completion state.
+reference-1600x900 reserves a fitting text box for Memory count label.
+reference-1600x900 reserves a fitting text box for Journey time label.
+reference-1600x900 reserves a fitting text box for Memory count value.
+reference-1600x900 reserves a fitting text box for Journey time value.
+reference-1600x900 reserves a fitting text box for Completion primary action label.
+reference-1600x900 reserves a fitting text box for Review memories label.
+reference-1600x900 reserves a fitting text box for Save status.
+reference-1600x900 reserves a fitting text box for Chapter path label.
+reference-1600x900 reserves a fitting text box for Main menu label.
+Rendered reference-1600x900.png.
+reference-1672x941 displays the reference fixture values.
+reference-1672x941 preview neither completes a chapter nor writes a save.
+reference-1672x941 exposes four usable actions.
+reference-1672x941 focuses the primary action by default.
+reference-1672x941 has connected directional navigation across all four actions.
+reference-1672x941 keeps Completion primary action inside the viewport.
+reference-1672x941 gives Completion primary action at least 40px screen height.
+reference-1672x941 keeps Review memories inside the viewport.
+reference-1672x941 gives Review memories at least 40px screen height.
+reference-1672x941 keeps Chapter path inside the viewport.
+reference-1672x941 gives Chapter path at least 40px screen height.
+reference-1672x941 keeps Main menu inside the viewport.
+reference-1672x941 gives Main menu at least 40px screen height.
+reference-1672x941 reserves a fitting text box for Chapter label.
+reference-1672x941 reserves a fitting text box for Chapter completion state.
+reference-1672x941 reserves a fitting text box for Memory count label.
+reference-1672x941 reserves a fitting text box for Journey time label.
+reference-1672x941 reserves a fitting text box for Memory count value.
+reference-1672x941 reserves a fitting text box for Journey time value.
+reference-1672x941 reserves a fitting text box for Completion primary action label.
+reference-1672x941 reserves a fitting text box for Review memories label.
+reference-1672x941 reserves a fitting text box for Save status.
+reference-1672x941 reserves a fitting text box for Chapter path label.
+reference-1672x941 reserves a fitting text box for Main menu label.
+Rendered reference-1672x941.png.
+reference-2560x1080 displays the reference fixture values.
+reference-2560x1080 preview neither completes a chapter nor writes a save.
+reference-2560x1080 exposes four usable actions.
+reference-2560x1080 focuses the primary action by default.
+reference-2560x1080 has connected directional navigation across all four actions.
+reference-2560x1080 keeps Completion primary action inside the viewport.
+reference-2560x1080 gives Completion primary action at least 40px screen height.
+reference-2560x1080 keeps Review memories inside the viewport.
+reference-2560x1080 gives Review memories at least 40px screen height.
+reference-2560x1080 keeps Chapter path inside the viewport.
+reference-2560x1080 gives Chapter path at least 40px screen height.
+reference-2560x1080 keeps Main menu inside the viewport.
+reference-2560x1080 gives Main menu at least 40px screen height.
+reference-2560x1080 reserves a fitting text box for Chapter label.
+reference-2560x1080 reserves a fitting text box for Chapter completion state.
+reference-2560x1080 reserves a fitting text box for Memory count label.
+reference-2560x1080 reserves a fitting text box for Journey time label.
+reference-2560x1080 reserves a fitting text box for Memory count value.
+reference-2560x1080 reserves a fitting text box for Journey time value.
+reference-2560x1080 reserves a fitting text box for Completion primary action label.
+reference-2560x1080 reserves a fitting text box for Review memories label.
+reference-2560x1080 reserves a fitting text box for Save status.
+reference-2560x1080 reserves a fitting text box for Chapter path label.
+reference-2560x1080 reserves a fitting text box for Main menu label.
+Rendered reference-2560x1080.png.
+reference-1024x768 displays the reference fixture values.
+reference-1024x768 preview neither completes a chapter nor writes a save.
+reference-1024x768 exposes four usable actions.
+reference-1024x768 focuses the primary action by default.
+reference-1024x768 has connected directional navigation across all four actions.
+reference-1024x768 keeps Completion primary action inside the viewport.
+reference-1024x768 gives Completion primary action at least 40px screen height.
+reference-1024x768 keeps Review memories inside the viewport.
+reference-1024x768 gives Review memories at least 40px screen height.
+reference-1024x768 keeps Chapter path inside the viewport.
+reference-1024x768 gives Chapter path at least 40px screen height.
+reference-1024x768 keeps Main menu inside the viewport.
+reference-1024x768 gives Main menu at least 40px screen height.
+reference-1024x768 reserves a fitting text box for Chapter label.
+reference-1024x768 reserves a fitting text box for Chapter completion state.
+reference-1024x768 reserves a fitting text box for Memory count label.
+reference-1024x768 reserves a fitting text box for Journey time label.
+reference-1024x768 reserves a fitting text box for Memory count value.
+reference-1024x768 reserves a fitting text box for Journey time value.
+reference-1024x768 reserves a fitting text box for Completion primary action label.
+reference-1024x768 reserves a fitting text box for Review memories label.
+reference-1024x768 reserves a fitting text box for Save status.
+reference-1024x768 reserves a fitting text box for Chapter path label.
+reference-1024x768 reserves a fitting text box for Main menu label.
+Rendered reference-1024x768.png.
+reference-800x900 displays the reference fixture values.
+reference-800x900 preview neither completes a chapter nor writes a save.
+reference-800x900 exposes four usable actions.
+reference-800x900 focuses the primary action by default.
+reference-800x900 has connected directional navigation across all four actions.
+reference-800x900 keeps Completion primary action inside the viewport.
+reference-800x900 gives Completion primary action at least 40px screen height.
+reference-800x900 keeps Review memories inside the viewport.
+reference-800x900 gives Review memories at least 40px screen height.
+reference-800x900 keeps Chapter path inside the viewport.
+reference-800x900 gives Chapter path at least 40px screen height.
+reference-800x900 keeps Main menu inside the viewport.
+reference-800x900 gives Main menu at least 40px screen height.
+reference-800x900 reserves a fitting text box for Chapter complete eyebrow.
+reference-800x900 reserves a fitting text box for Chapter label.
+reference-800x900 reserves a fitting text box for Chapter completion state.
+reference-800x900 reserves a fitting text box for Memory count label.
+reference-800x900 reserves a fitting text box for Journey time label.
+reference-800x900 reserves a fitting text box for Memory count value.
+reference-800x900 reserves a fitting text box for Journey time value.
+reference-800x900 reserves a fitting text box for Completion primary action label.
+reference-800x900 reserves a fitting text box for Review memories label.
+reference-800x900 reserves a fitting text box for Save status.
+reference-800x900 reserves a fitting text box for Chapter path label.
+reference-800x900 reserves a fitting text box for Main menu label.
+Rendered reference-800x900.png.
+reference-english-large-1600x900 displays the reference fixture values.
+reference-english-large-1600x900 preview neither completes a chapter nor writes a save.
+reference-english-large-1600x900 exposes four usable actions.
+reference-english-large-1600x900 focuses the primary action by default.
+reference-english-large-1600x900 has connected directional navigation across all four actions.
+reference-english-large-1600x900 keeps Completion primary action inside the viewport.
+reference-english-large-1600x900 gives Completion primary action at least 40px screen height.
+reference-english-large-1600x900 keeps Review memories inside the viewport.
+reference-english-large-1600x900 gives Review memories at least 40px screen height.
+reference-english-large-1600x900 keeps Chapter path inside the viewport.
+reference-english-large-1600x900 gives Chapter path at least 40px screen height.
+reference-english-large-1600x900 keeps Main menu inside the viewport.
+reference-english-large-1600x900 gives Main menu at least 40px screen height.
+reference-english-large-1600x900 reserves a fitting text box for Localized completion heading.
+reference-english-large-1600x900 reserves a fitting text box for Chapter label.
+reference-english-large-1600x900 reserves a fitting text box for Chapter completion state.
+reference-english-large-1600x900 reserves a fitting text box for Memory count label.
+reference-english-large-1600x900 reserves a fitting text box for Journey time label.
+reference-english-large-1600x900 reserves a fitting text box for Memory count value.
+reference-english-large-1600x900 reserves a fitting text box for Journey time value.
+reference-english-large-1600x900 reserves a fitting text box for Completion primary action label.
+reference-english-large-1600x900 reserves a fitting text box for Review memories label.
+reference-english-large-1600x900 reserves a fitting text box for Save status.
+reference-english-large-1600x900 reserves a fitting text box for Chapter path label.
+reference-english-large-1600x900 reserves a fitting text box for Main menu label.
+Rendered reference-english-large-1600x900.png.
+reference-english-large-800x900 displays the reference fixture values.
+reference-english-large-800x900 preview neither completes a chapter nor writes a save.
+reference-english-large-800x900 exposes four usable actions.
+reference-english-large-800x900 focuses the primary action by default.
+reference-english-large-800x900 has connected directional navigation across all four actions.
+reference-english-large-800x900 keeps Completion primary action inside the viewport.
+reference-english-large-800x900 gives Completion primary action at least 40px screen height.
+reference-english-large-800x900 keeps Review memories inside the viewport.
+reference-english-large-800x900 gives Review memories at least 40px screen height.
+reference-english-large-800x900 keeps Chapter path inside the viewport.
+reference-english-large-800x900 gives Chapter path at least 40px screen height.
+reference-english-large-800x900 keeps Main menu inside the viewport.
+reference-english-large-800x900 gives Main menu at least 40px screen height.
+reference-english-large-800x900 reserves a fitting text box for Chapter complete eyebrow.
+reference-english-large-800x900 reserves a fitting text box for Localized completion heading.
+reference-english-large-800x900 reserves a fitting text box for Chapter label.
+reference-english-large-800x900 reserves a fitting text box for Chapter completion state.
+reference-english-large-800x900 reserves a fitting text box for Memory count label.
+reference-english-large-800x900 reserves a fitting text box for Journey time label.
+reference-english-large-800x900 reserves a fitting text box for Memory count value.
+reference-english-large-800x900 reserves a fitting text box for Journey time value.
+reference-english-large-800x900 reserves a fitting text box for Completion primary action label.
+reference-english-large-800x900 reserves a fitting text box for Review memories label.
+reference-english-large-800x900 reserves a fitting text box for Save status.
+reference-english-large-800x900 reserves a fitting text box for Chapter path label.
+reference-english-large-800x900 reserves a fitting text box for Main menu label.
+Rendered reference-english-large-800x900.png.
+reference-phone-390x844 displays the reference fixture values.
+reference-phone-390x844 preview neither completes a chapter nor writes a save.
+reference-phone-390x844 exposes four usable actions.
+reference-phone-390x844 focuses the primary action by default.
+reference-phone-390x844 has connected directional navigation across all four actions.
+reference-phone-390x844 keeps Completion primary action inside the viewport.
+reference-phone-390x844 gives Completion primary action at least 48px screen height.
+reference-phone-390x844 keeps Review memories inside the viewport.
+reference-phone-390x844 gives Review memories at least 48px screen height.
+reference-phone-390x844 keeps Chapter path inside the viewport.
+reference-phone-390x844 gives Chapter path at least 48px screen height.
+reference-phone-390x844 keeps Main menu inside the viewport.
+reference-phone-390x844 gives Main menu at least 48px screen height.
+reference-phone-390x844 reserves a fitting text box for Chapter complete eyebrow.
+reference-phone-390x844 reserves a fitting text box for Chapter label.
+reference-phone-390x844 reserves a fitting text box for Chapter completion state.
+reference-phone-390x844 reserves a fitting text box for Memory count label.
+reference-phone-390x844 reserves a fitting text box for Journey time label.
+reference-phone-390x844 reserves a fitting text box for Memory count value.
+reference-phone-390x844 reserves a fitting text box for Journey time value.
+reference-phone-390x844 reserves a fitting text box for Completion primary action label.
+reference-phone-390x844 reserves a fitting text box for Review memories label.
+reference-phone-390x844 reserves a fitting text box for Save status.
+reference-phone-390x844 reserves a fitting text box for Chapter path label.
+reference-phone-390x844 reserves a fitting text box for Main menu label.
+Rendered reference-phone-390x844.png.
+reference-phone-320x568 displays the reference fixture values.
+reference-phone-320x568 preview neither completes a chapter nor writes a save.
+reference-phone-320x568 exposes four usable actions.
+reference-phone-320x568 focuses the primary action by default.
+reference-phone-320x568 has connected directional navigation across all four actions.
+reference-phone-320x568 keeps Completion primary action inside the viewport.
+reference-phone-320x568 gives Completion primary action at least 48px screen height.
+reference-phone-320x568 keeps Review memories inside the viewport.
+reference-phone-320x568 gives Review memories at least 48px screen height.
+reference-phone-320x568 keeps Chapter path inside the viewport.
+reference-phone-320x568 gives Chapter path at least 48px screen height.
+reference-phone-320x568 keeps Main menu inside the viewport.
+reference-phone-320x568 gives Main menu at least 48px screen height.
+reference-phone-320x568 reserves a fitting text box for Chapter complete eyebrow.
+reference-phone-320x568 reserves a fitting text box for Chapter label.
+reference-phone-320x568 reserves a fitting text box for Chapter completion state.
+reference-phone-320x568 reserves a fitting text box for Memory count label.
+reference-phone-320x568 reserves a fitting text box for Journey time label.
+reference-phone-320x568 reserves a fitting text box for Memory count value.
+reference-phone-320x568 reserves a fitting text box for Journey time value.
+reference-phone-320x568 reserves a fitting text box for Completion primary action label.
+reference-phone-320x568 reserves a fitting text box for Review memories label.
+reference-phone-320x568 reserves a fitting text box for Save status.
+reference-phone-320x568 reserves a fitting text box for Chapter path label.
+reference-phone-320x568 reserves a fitting text box for Main menu label.
+Rendered reference-phone-320x568.png.
+Actual completion accepts the clone's final chapter.
+The completion page keeps the real long final chapter title from the clone config.
+actual-long-title-390x844 exposes four usable actions.
+actual-long-title-390x844 focuses the primary action by default.
+actual-long-title-390x844 has connected directional navigation across all four actions.
+actual-long-title-390x844 keeps Completion primary action inside the viewport.
+actual-long-title-390x844 gives Completion primary action at least 48px screen height.
+actual-long-title-390x844 keeps Review memories inside the viewport.
+actual-long-title-390x844 gives Review memories at least 48px screen height.
+actual-long-title-390x844 keeps Chapter path inside the viewport.
+actual-long-title-390x844 gives Chapter path at least 48px screen height.
+actual-long-title-390x844 keeps Main menu inside the viewport.
+actual-long-title-390x844 gives Main menu at least 48px screen height.
+actual-long-title-390x844 reserves a fitting text box for Chapter complete eyebrow.
+actual-long-title-390x844 reserves a fitting text box for Chapter label.
+actual-long-title-390x844 reserves a fitting text box for Chapter completion state.
+actual-long-title-390x844 reserves a fitting text box for Memory count label.
+actual-long-title-390x844 reserves a fitting text box for Journey time label.
+actual-long-title-390x844 reserves a fitting text box for Memory count value.
+actual-long-title-390x844 reserves a fitting text box for Journey time value.
+actual-long-title-390x844 reserves a fitting text box for Completion primary action label.
+actual-long-title-390x844 reserves a fitting text box for Review memories label.
+actual-long-title-390x844 reserves a fitting text box for Save status.
+actual-long-title-390x844 reserves a fitting text box for Chapter path label.
+actual-long-title-390x844 reserves a fitting text box for Main menu label.
+Rendered actual-long-title-390x844.png.
+The final chapter primary callback opens the real ending page.
+The clone config retains Map3_5 as chapter six.
+Actual CompleteChapter accepts the isolated Map3_5 player state.
+Actual completion displays chapter six and live memory/time values.
+Actual CompleteChapter persists chapter progress and all three memories to the isolated automatic slot.
+The automatic record retains the actual fixture player coordinates.
+The completion page displays the real successful save result.
+Repeated completion cannot duplicate the page or commit progress twice.
+actual-map3_5 exposes four usable actions.
+actual-map3_5 focuses the primary action by default.
+actual-map3_5 has connected directional navigation across all four actions.
+Review memories opens the real journal page.
+Closing the journal restores focus to Review memories.
+Chapter path opens the real chapter list.
+Closing the chapter list restores the originating focus.
+Next chapter requests the configured route and saving on entry.
+The actual primary callback enters Map4 after Map3_5.
+Completion remains available when there is no player state to save.
+Save failure is shown honestly on the completion page.
+The actual Main menu callback enters the configured menu scene.
+
+Errors: 0
+
+
+Source: D:/TapTap21/TapTapGJ21-clone/UnityProject/PAO
+Screenshots use real uGUI components and Unity rendering. Map3_5 integration uses its actual chapter configuration with an isolated player fixture and isolated saves; the complex map geometry is not rendered.

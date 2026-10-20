@@ -1,0 +1,172 @@
+{
+  "referenceSize": [
+    1672,
+    941
+  ],
+  "source": "Docs/UI-V2/chapter-completion-reference/reference.png",
+  "coordinateConvention": "top-left, left/top inclusive, right/bottom exclusive; spriteBorder is left/bottom/right/top",
+  "assets": {
+    "Heading": {
+      "rect": [
+        62,
+        143,
+        960,
+        299
+      ],
+      "size": [
+        898,
+        156
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Hero": {
+      "rect": [
+        975,
+        0,
+        1672,
+        600
+      ],
+      "size": [
+        697,
+        600
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Primary": {
+      "rect": [
+        144,
+        600,
+        1530,
+        691
+      ],
+      "size": [
+        1386,
+        91
+      ],
+      "spriteBorder": [
+        190,
+        22,
+        250,
+        22
+      ]
+    },
+    "Secondary": {
+      "rect": [
+        144,
+        702,
+        1531,
+        796
+      ],
+      "size": [
+        1387,
+        94
+      ],
+      "spriteBorder": [
+        150,
+        24,
+        160,
+        24
+      ]
+    },
+    "Memory": {
+      "rect": [
+        93,
+        406,
+        172,
+        526
+      ],
+      "size": [
+        79,
+        120
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Current": {
+      "rect": [
+        661,
+        410,
+        756,
+        463
+      ],
+      "size": [
+        95,
+        53
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Paper": {
+      "rect": [
+        450,
+        314,
+        578,
+        442
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Frame": {
+      "rect": [
+        0,
+        0,
+        1672,
+        941
+      ],
+      "size": [
+        1672,
+        941
+      ],
+      "spriteBorder": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "Badge": {
+      "rect": [
+        226,
+        304,
+        398,
+        347
+      ],
+      "size": [
+        172,
+        43
+      ],
+      "spriteBorder": [
+        22,
+        9,
+        40,
+        9
+      ]
+    }
+  }
+}

@@ -74,7 +74,7 @@ namespace PAO.UI.V2
             }
             ui.Button(page.Footer, "保存当前作品", ShowSandboxSaveWork, true).name = "Save new sandbox work";
             ui.Button(page.Footer, "返回", Pop);
-            Finish(page);
+            FinishCreatPage(page);
         }
 
         public void ShowSandboxSaveWork() => ShowSandboxWorkName(null);
@@ -114,7 +114,7 @@ namespace PAO.UI.V2
                 Toast(existing == null ? "作品已存档。" : "作品已改名。");
             }, true);
             save.name = "Confirm sandbox work name";
-            Finish(page);
+            FinishCreatPage(page);
         }
 
         private void CloseSandboxArchiveMenus()

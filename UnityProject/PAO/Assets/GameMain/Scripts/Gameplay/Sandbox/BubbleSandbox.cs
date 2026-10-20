@@ -84,12 +84,15 @@ namespace PAO.Sandbox
             public Vector3Int dimensions;
             public float cellSize;
             public Vector3 origin;
+            public string workId, workName;
             public List<SandboxCellData> cells = new List<SandboxCellData>();
         }
         public int Count => cells.Count;
         public int Capacity => dimensions.x * dimensions.y * dimensions.z;
         public int Revision { get; private set; }
         public int ShotGeneration { get; private set; }
+        public string CurrentWorkId { get; private set; }
+        public string CurrentWorkName { get; private set; }
         public bool CanUndo => undo.Count > 0;
         public bool CanRedo => redo.Count > 0;
         public string Status { get; private set; } = "吹一颗泡泡，让想象落地。";
@@ -402,7 +405,8 @@ namespace PAO.Sandbox
         }
         internal string CaptureWorldJson()
         {
-            WorldData data = new WorldData { dimensions = dimensions, cellSize = cellSize, origin = origin };
+            WorldData data = new WorldData { dimensions = dimensions, cellSize = cellSize, origin = origin,
+                workId = CurrentWorkId, workName = CurrentWorkName };
             foreach (SandboxPiece piece in cells.Values) data.cells.Add(piece.Data);
             return JsonUtility.ToJson(data);
         }
@@ -453,6 +457,8 @@ namespace PAO.Sandbox
                 ClearWorld();
                 dimensions = targetDimensions; cellSize = targetCellSize; origin = targetOrigin;
                 foreach (SandboxCellData cell in data.cells) Add(cell);
+                CurrentWorkId = Guid.TryParseExact(data.workId, "N", out _) ? data.workId : null;
+                CurrentWorkName = SandboxWorkArchive.ValidateName(data.workName, out string name, out _) ? name : null;
                 undo.Clear(); redo.Clear(); dirty = scheduleAutosave; Revision++;
                 if (scheduleAutosave) saveAt = Time.unscaledTime + 30;
                 Respawn(); Notify("已恢复 " + Count + " 格泡泡造物。" ); return true;
@@ -462,6 +468,12 @@ namespace PAO.Sandbox
         }
         private static bool ValidTint(Color value) => value.r >= 0 && value.r <= 1 &&
             value.g >= 0 && value.g <= 1 && value.b >= 0 && value.b <= 1 && value.a == 1;
+        internal void SetCurrentWork(string id, string name)
+        {
+            CurrentWorkId = id;
+            CurrentWorkName = SandboxWorkArchive.ValidateName(name, out string normalized, out _) ? normalized : null;
+            dirty = true;
+        }
         public void Respawn()
         {
             if (player == null) player = FindFirstObjectByType<PlayerController>();

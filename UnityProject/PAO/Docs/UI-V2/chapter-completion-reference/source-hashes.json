@@ -1,0 +1,72 @@
+[
+  {
+    "File": "Assets\\GameMain\\Scripts\\UI\\V2\\UIChapterCompletionView.cs",
+    "SHA256": "F65AAC21CEA59E27191A2D170F0217F5ABF5B5A088A5BF311FE4F8BB7EB71705",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Scripts\\UI\\V2\\UIRuntime.Gameplay.cs",
+    "SHA256": "E4D963208401550597587B718AB37F37C694EE53B45E62F6B6D216D114E3838F",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Scripts\\UI\\V2\\UIRuntime.CompletionPreview.cs",
+    "SHA256": "1C29E94D4C3045CBAF7D8F9DABE4FC545FE3C95070DEE1B9E9A1DD54C091937E",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Scripts\\Editor\\UIChapterCompletionPreview.cs",
+    "SHA256": "75A337F0A0E8BEAE9643D0BB7D9673EA2842B5305514FD67B288EE5AA0BBA8AA",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Scripts\\Editor\\UIChapterCompletionVerification.cs",
+    "SHA256": "01E478777ED20B700031F8B1B8C58798ED6AA7B1425492CB52B4CF16932A4B53",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Badge.png",
+    "SHA256": "2E0C41AB4C60C23EC742125AF9D9FE3A3DB9A4CE7AD579C8870B89390D635C56",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Current.png",
+    "SHA256": "AB333BEC994232790741AF5606F86BA1A00653BEBEDE408A2A9DA817D3174B3D",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Frame.png",
+    "SHA256": "BD0EC7A22B87DB9511A4419C8F999A10192E28F17B9241110BA0307C595E66D6",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Heading.png",
+    "SHA256": "4147A9B2CB3B5CA2F3CD97302D1226F95C78331E517812ADF872330EB1EFE289",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Hero.png",
+    "SHA256": "F173D4B2C23C971924FEE6716F39366A31F2CF015DF3A04BE7E1641E81C26CD2",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Memory.png",
+    "SHA256": "7215BAE44DF941DFF6E96A237A61CE567D79493ADA4E98F6FD73F0776108977B",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Paper.png",
+    "SHA256": "3DDBCC79F1A3DDD46155F6625C3D045503F04700E6298F4D99D0F82493800A66",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Primary.png",
+    "SHA256": "3A8DA3305C083C7320A7CA58D27FD751E91DCD2086A6C074211D703577907761",
+    "Match": true
+  },
+  {
+    "File": "Assets\\GameMain\\Resources\\UIChapterCompletion\\Secondary.png",
+    "SHA256": "5CE895700BE280A16A2FEA728615F9459BFDBBD012D01CFA187F49CFEC8907A6",
+    "Match": true
+  }
+]
