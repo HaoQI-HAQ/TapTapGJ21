@@ -1,0 +1,257 @@
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using PAO;   // PlayerController 在这个命名空间里
+
+/// <summary>
+/// 触碰跳转：物体身上挂这个脚本，玩家碰到就切到指定场景。
+///
+/// 【用法】
+///   1. 把本脚本挂到任意物体上
+///   2. 挂上后会自动加一个 **Trigger** BoxCollider，在 Inspector 里调大小和位置
+///   3. 填 Scene Name = 目标场景名，必须和 Build Settings 里的名字完全一致（例如 Map1）
+///   4. 玩家碰到就跳转
+///
+/// 【注意】
+///   目标场景必须先加进 Build Settings（File → Build Settings），
+///   否则 LoadScene 会失败。脚本在开始时就会检查并给出明确提示。
+///
+/// ============================================================
+/// 【重要：绝不能改动物体原有的实心碰撞体】
+/// ============================================================
+/// 早先的实现是：
+///     Collider col = GetComponent<Collider>();
+///     if (!col.isTrigger) col.isTrigger = true;
+///
+/// 这是**错的**。GetComponent&lt;Collider&gt;() 返回的是物体上**第一个**碰撞体，
+/// 而跳转点通常挂在落板 / 平台 / 门上 —— 那些物体本来就有一个实心的
+/// MeshCollider 用来站人。结果一进 Play，实心碰撞体被改成 Trigger，
+/// 玩家直接从平台上**掉下去**，还根本看不到任何报错。
+///
+/// 正确做法：物体上已经有 Trigger 就用它；没有就**额外加一个** Trigger，
+/// 原有的实心碰撞体一个都不碰（Unity 允许一个物体挂多个碰撞体）。
+/// ============================================================
+/// </summary>
+public class tiaozhuan : MonoBehaviour
+{
+    [Header("目标场景")]
+    [Tooltip("要跳转到的场景名，必须和 Build Settings 里的名字完全一致，例如 Map1")]
+    public string sceneName = "";
+
+    [Header("触发设置")]
+    [Tooltip("只触发一次。关掉则玩家离开后再进来可以反复触发")]
+    public bool once = true;
+
+    [Tooltip("碰到后延迟多久跳转（秒）。0 = 立刻跳")]
+    public float delay = 0f;
+
+    [Header("调试")]
+    [Tooltip("打勾后会在 Console 打印触发日志，方便确认有没有碰到")]
+    public bool showLog = true;
+
+    private bool triggered;
+
+    /// <summary>实际用来判定"玩家进来了"的 Trigger 碰撞体。</summary>
+    private Collider m_Zone;
+
+    void Reset()
+    {
+        // 刚挂上脚本时给一个合适的范围，免得碰撞体小到看不见。
+        // 同样只加 Trigger，不动已有碰撞体。
+        EnsureZone(true);
+    }
+
+    void Awake()
+    {
+        EnsureZone(false);
+
+        // 提前检查场景在不在 Build Settings，免得碰到时才失败
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogWarning("[tiaozhuan] " + name + " 还没填 Scene Name，碰到时不会跳转。", this);
+        }
+        else if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            Debug.LogError("[tiaozhuan] 场景 \"" + sceneName +
+                           "\" 不在 Build Settings 里，跳转会失败。请先 File → Build Settings 把它加进去。", this);
+        }
+    }
+
+    /// <summary>
+    /// 保证物体上有一个 **Trigger** 碰撞体当判定区。
+    ///
+    /// 查找顺序：
+    ///   1. 已有 Trigger → 直接用它（不新建，避免越挂越多）
+    ///   2. 没有 Trigger → **额外加一个** Trigger BoxCollider
+    ///
+    /// 无论哪一步，都**不会修改**物体上已有的实心碰撞体。
+    /// </summary>
+    private void EnsureZone(bool fromReset)
+    {
+        Collider[] cols = GetComponents<Collider>();
+
+        // 1) 已经有 Trigger 就用它
+        for (int i = 0; i < cols.Length; i++)
+        {
+            if (cols[i].isTrigger)
+            {
+                m_Zone = cols[i];
+                return;
+            }
+        }
+
+        // 2) 没有 Trigger：加一个新的，原有碰撞体保持原样
+        BoxCollider box = gameObject.AddComponent<BoxCollider>();
+        box.isTrigger = true;
+        box.size = new Vector3(3f, 3f, 3f);
+        box.center = new Vector3(0f, 1.5f, 0f);
+
+        m_Zone = box;
+
+        if (!fromReset && showLog)
+        {
+            bool hadSolid = cols.Length > 0;
+
+            Debug.Log("[tiaozhuan] " + name +
+                      (hadSolid
+                          ? " 没有 Trigger 碰撞体，已**额外**加一个 3×3×3 的跳转判定区（原有实心碰撞体保持不变）。"
+                          : " 上没有碰撞体，已自动补一个 3×3×3 的 Trigger 判定区。") +
+                      " 判定中心在物体上方 1.5 米处，可在 Inspector 里调 BoxCollider 的 Center / Size。", this);
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (once && triggered)
+        {
+            return;
+        }
+
+        // 认玩家：工程里没有自定义 Tag，所以按组件判断。
+        // 玩家的 CharacterController 能触发 OnTriggerEnter，所以这里只检查进来的对象。
+        // 注意：在泡泡里（IsInCarrier）时 CharacterController 是被禁用的，
+        // 那种状态下本来就碰不到，这里不用特殊处理。
+        PlayerController player = other.GetComponentInParent<PlayerController>();
+        CharacterController controller = other.GetComponentInParent<CharacterController>();
+
+        if (player == null && controller == null)
+        {
+            // 让"碰到东西但没跳"这种情况也能被看见 —— 否则很难区分
+            // "根本没碰到" 和 "碰到了但不是玩家"。
+            if (showLog)
+            {
+                Debug.Log("[tiaozhuan] " + name + " 被 \"" + other.name +
+                          "\" 碰到，但它不是玩家（没找到 PlayerController / CharacterController），忽略。", this);
+            }
+
+            return;
+        }
+
+        triggered = true;
+
+        if (showLog)
+        {
+            Debug.Log("[tiaozhuan] " + name + " 被玩家碰到，准备跳转到 \"" + sceneName + "\"", this);
+        }
+
+        if (delay > 0f)
+        {
+            Invoke("LoadNow", delay);
+        }
+        else
+        {
+            LoadNow();
+        }
+    }
+
+    /// <summary>真正加载场景。</summary>
+    public void LoadNow()
+    {
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogError("[tiaozhuan] " + name + " 没有填 Scene Name，跳转取消。", this);
+            return;
+        }
+
+        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        {
+            Debug.LogError("[tiaozhuan] 场景 \"" + sceneName +
+                           "\" 不在 Build Settings 里，无法加载。", this);
+            return;
+        }
+
+        // 走章节流程（会在结算界面里给"前往下一章"按钮）。
+        // 但章节流程有几个前置条件（已经在结算 / 正在加载 / 不在游戏场景），
+        // 被拦下来的话会静默什么都不做 —— 那正是"点了没反应"的常见来源。
+        // 所以这里检查 CompleteChapter 的返回值：**没接管就自己直接切场景**。
+        PAO.UI.V2.UIRuntime runtime = PAO.UI.V2.UIRuntime.Instance;
+
+        if (runtime != null && runtime.IsGameplay)
+        {
+            if (runtime.CompleteChapter(sceneName))
+            {
+                return;      // 章节流程已经接管（会弹结算界面）
+            }
+
+            if (showLog)
+            {
+                Debug.Log("[tiaozhuan] 章节流程没有接管（可能已经在结算 / 正在加载），" +
+                          "改为直接加载场景 \"" + sceneName + "\"。", this);
+            }
+        }
+
+        Debug.Log("[tiaozhuan] 加载场景：" + sceneName, this);
+        SceneManager.LoadScene(sceneName);
+    }
+
+#if UNITY_EDITOR
+    // 选中物体时在 Scene 视图画出触发范围，方便摆位置
+    void OnDrawGizmosSelected()
+    {
+        Collider[] cols = GetComponents<Collider>();
+        bool drewAny = false;
+
+        Gizmos.color = new Color(0.3f, 0.9f, 1f, 0.5f);
+        Gizmos.matrix = transform.localToWorldMatrix;
+
+        for (int i = 0; i < cols.Length; i++)
+        {
+            if (!cols[i].isTrigger)
+            {
+                continue;    // 只画判定区，不画实心碰撞体
+            }
+
+            BoxCollider box = cols[i] as BoxCollider;
+            if (box != null)
+            {
+                Gizmos.DrawWireCube(box.center, box.size);
+                drewAny = true;
+                continue;
+            }
+
+            SphereCollider sphere = cols[i] as SphereCollider;
+            if (sphere != null)
+            {
+                Gizmos.DrawWireSphere(sphere.center, sphere.radius);
+                drewAny = true;
+                continue;
+            }
+
+            CapsuleCollider capsule = cols[i] as CapsuleCollider;
+            if (capsule != null)
+            {
+                Gizmos.DrawWireSphere(capsule.center, capsule.radius);
+                drewAny = true;
+            }
+        }
+
+        // 编辑器里还没 Awake 时，把"将会自动创建"的判定区先画出来
+        if (!drewAny)
+        {
+            Gizmos.color = new Color(0.3f, 0.9f, 1f, 0.28f);
+            Gizmos.DrawWireCube(new Vector3(0f, 1.5f, 0f), new Vector3(3f, 3f, 3f));
+        }
+
+        Gizmos.matrix = Matrix4x4.identity;
+    }
+#endif
+}
