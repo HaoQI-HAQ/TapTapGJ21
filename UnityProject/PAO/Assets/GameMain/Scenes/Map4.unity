@@ -53754,17 +53754,17 @@ PrefabInstance:
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 5
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 5
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 5
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
@@ -53774,7 +53774,7 @@ PrefabInstance:
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 10.1
+      value: 11.41
       objectReference: {fileID: 0}
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
@@ -53858,6 +53858,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneName: Map5
+  range: 2.2
+  rangeOffset: {x: 0, y: 0, z: 0}
+  useTriggerCollider: 1
+  requireExitFirst: 1
   once: 1
   delay: 0
   showLog: 1

@@ -5532,7 +5532,7 @@ PrefabInstance:
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 91.18
+      value: 90.94
       objectReference: {fileID: 0}
     - target: {fileID: 4806281396849065856, guid: adf0e3ed14a9867439ed04993f1ede03,
         type: 3}
@@ -5632,6 +5632,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneName: Map4
+  range: 3
+  rangeOffset: {x: 0, y: 1.5, z: 0}
+  useTriggerCollider: 1
+  requireExitFirst: 1
   once: 1
   delay: 0
   showLog: 1
