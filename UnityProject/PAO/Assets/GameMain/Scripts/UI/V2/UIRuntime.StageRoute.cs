@@ -305,7 +305,13 @@ namespace PAO.UI.V2
                 if (!unlocked || !Application.CanStreamedLevelBeLoaded(chapter.scene)) return;
                 Confirm(chapter.title,
                     T("从本章起点进入。当前未保存的探索会重置。", "Enter from the chapter start. Unsaved exploration will reset."),
-                    () => { SaveOnNextEntry = true; LoadScene(chapter.scene); });
+                    () =>
+                    {
+                        SaveOnNextEntry = true;
+                        // 从地图进入 = 自由练习，解除这一关的首周目能力限制。
+                        PAO.BubbleAbilityRules.BeginFreePlay(chapter.scene);
+                        LoadScene(chapter.scene);
+                    });
             });
 
             for (int i = 0; i < nodes.Length; i++)
