@@ -1,0 +1,20 @@
+{
+  "build": {
+    "result": "Succeeded",
+    "outputPath": "G:\\project\\TapTapGJ21\\UnityProject\\PAO\\output\\terrain-build-validation-20261020_185307\\PAO.exe",
+    "target": "StandaloneWindows64",
+    "errors": 0,
+    "warnings": 0,
+    "seconds": 299.4765422,
+    "errorMessages": []
+  },
+  "exeExists": true,
+  "burstPlugins": [
+    "G:\\project\\TapTapGJ21\\UnityProject\\PAO\\output\\terrain-build-validation-20261020_185307\\PAO_Data\\Plugins\\x86_64\\lib_burst_generated.dll"
+  ],
+  "missingPrototypes": 0,
+  "invalidInstances": 0,
+  "map4Instances": 594,
+  "tempRestored": true,
+  "terrainMetaUnchanged": true
+}

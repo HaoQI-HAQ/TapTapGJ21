@@ -12,7 +12,8 @@ namespace PAO.Underwater
     /// 不存在"看到网格边界外面"的情况，也就不需要靠雾或者后处理去遮。
     ///
     /// 为什么整块水不是一分为二的透明层：
-    ///   见 UnderwaterCeiling.shader 顶部注释（Opaque 队列、双面、不采样 Scene Color）。
+    ///   见 UnderwaterCeiling.shader 顶部注释
+    ///   （Transparent-1 队列 + ZWrite Off、双面、不采样 Scene Color）。
     ///
     /// 网格是运行时生成的（HideFlags.DontSave），不落在场景文件里；
     /// 场景里只保存 HalfSize / SkirtDepth 两个数字。

@@ -100,6 +100,7 @@ namespace PAO.UI.V2
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (mode == LoadSceneMode.Additive) return;
+            RefreshEnvironmentLighting();
             ReleasePause(); UnbindGameplay(); ClearPages(); ClearHud();
             int initialization = ++sceneInitialization;
             lastScene = scene.name; loading = true;
@@ -119,6 +120,44 @@ namespace PAO.UI.V2
             EnsureEventSystem(scene);
             HideLegacyUI();
             StartCoroutine(InitializeScene(scene, initialization));
+        }
+
+        /// <summary>
+        /// 重建天空盒环境探针（ambient probe）。
+        ///
+        /// 【为什么必须有这一步】
+        /// Unity 用 SceneManager 切场景后**不会**自动重算天空盒环境光：
+        /// 新场景的 RenderSettings 生效了（主光、雾、环境光来源都换成了新场景的），
+        /// 但"拿天空盒渲染出来的环境探针"还留在上一个场景算出的旧值。
+        /// 于是凡是把环境光来源设成 Skybox 的关卡（洛琪希 / shiliuye map / Map4 / Map5），
+        /// 在编辑器里直接 Play 是正常的，一旦用跳关进来就只剩主光 ——
+        /// 暗部纯黑、亮部发黄，正是"阴影黑的离谱"那张图的样子。
+        /// 官方 IssueTracker 有记录：
+        ///   Skybox Environment Lighting is not visible after loading Scene using SceneManager
+        ///   Skybox lighting doesn't update when switching Scenes using SceneManager
+        ///
+        /// 这里挂在 sceneLoaded 上（此刻新场景已激活、RenderSettings 已应用），
+        /// 一处覆盖所有入口：菜单选章、tiaozhuan 跳关、暂停菜单重开、读档、验证脚本。
+        ///
+        /// 【为什么不影响别的关卡】
+        /// 只在"环境光来源 = Skybox"时才动手。Map0/Map1/Map2/Map3 这些用的是
+        /// Flat 颜色环境光，颜色存在场景文件里、加载即生效，本来就没坏，不去碰它们，
+        /// 也就不会顺手改掉别人的反光表现。
+        ///
+        /// 【开销】
+        /// 每次加载渲染一次 128px 立方图，不是每帧，可以忽略；
+        /// 而且这时候过场黑幕还盖着（要等 FinishSceneTransition 才揭幕），看不到跳变。
+        /// </summary>
+        private static void RefreshEnvironmentLighting()
+        {
+            // 必须写全限定名：本类里有个同名私有方法 RenderSettings(SettingsSession, int)
+            // （设置页的面板渲染），会遮住引擎的 UnityEngine.RenderSettings 类型，少写前缀就是 CS0119。
+            if (UnityEngine.RenderSettings.ambientMode != UnityEngine.Rendering.AmbientMode.Skybox)
+            {
+                return;
+            }
+
+            DynamicGI.UpdateEnvironment();
         }
 
         private IEnumerator InitializeScene(Scene scene, int initialization)

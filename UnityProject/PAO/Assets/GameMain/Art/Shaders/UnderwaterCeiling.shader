@@ -5,12 +5,22 @@
 // 运行时生成的"水体壳"上（顶面 + 一圈往下垂的裙边）。网格原点就在水面上，
 // 所以物体 Y 就是水位，shader 靠这个判断相机有没有出水。
 //
-// 为什么是 Opaque 队列而不是 Transparent：
+// 【队列必须是 Transparent-1（= 2999），绝不能留在 Geometry】
 //   水面永远在玩家头顶几十米、且玩家永远在水下，它其实就是这个世界的"天"。
-//   走 Opaque + 写深度之后，
-//     - 珊瑚天花板靠深度测试天然挡在水面前面，不需要任何排序；
-//     - 满地图的泡泡粒子（透明队列）永远画在水面之后，不会随机穿插；
-//     - 顺带少一次全屏级的透明混合。
+//   ForwardLit 是 ZWrite Off（不写深度）：珊瑚靠 ZTest 就能挡住它，泡泡和光柱
+//   也不会被它顶掉。但「不透明段 + 不写深度」是致命组合：
+//     URP 的顺序是  不透明物体(250) → 天空盒(350) → 透明物体(450)，
+//     天空盒用 ZTest LEqual 往「还停在最远值」的深度缓冲上画，
+//     于是水面被天空盒整片刷掉 —— 只有 RenderSettings.skybox 为空的场景
+//     才侥幸看得见（Map1 / Map3 就是这样幸存的，带天空盒的 5 张图全中招）。
+//   放进 Transparent-1（= 2999）之后：
+//     - 晚于天空盒 → 不会被刷掉；
+//     - 早于其它透明物（光柱 / 泡泡 / 焦散，3000 起）→ 它们照旧叠在水面前面；
+//     - ZTest LEqual 不变 → 珊瑚、地形照旧正常遮挡。
+//   ★ 队列写在下面 SubShader 的 Tags 里，不写材质的 Custom Render Queue：
+//     材质队列 -1（跟随 Shader）才正确，而 UnderwaterCeilingSetup 的
+//     「重置水面材质为 shader 默认值」会用 new Material(shader) 重建材质，
+//     任何写在材质上的队列都会被抹掉。
 //
 // 三个 Pass：
 //   ForwardLit / DepthOnly / DepthNormals
@@ -61,7 +71,7 @@ Shader "PAO/UnderwaterCeiling"
         {
             "RenderType"     = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
-            "Queue"          = "Geometry"
+            "Queue"          = "Transparent-1"
             "IgnoreProjector" = "True"
         }
         LOD 100
@@ -75,10 +85,10 @@ Shader "PAO/UnderwaterCeiling"
             // Cull Off：双面。玩家虽然永远在水下，但编辑器自由视角、演出镜头
             // 都可能越过水面，单面渲染会在那一刻整片消失。
             Cull Off
-            // ★ ZWrite Off + 材质渲染队列 2999（透明段最前）：
-            //   水面在「不透明物体之后、所有透明光柱之前」画，且不写深度。
+            // ★ ZWrite Off + SubShader 队列 Transparent-1（= 2999，透明段最前）：
+            //   水面在「天空盒之后、所有透明光柱之前」画，且不写深度。
             //   这样：
-            //     · 天空盒早就画完了，不会被它抢；
+            //     · 天空盒早就画完了，不会被它抢（留在 Geometry 就会被抢）；
             //     · 丁达尔光柱（透明、加法）在它之后画，不会被这层水面挡掉；
             //     · 光柱本身仍然正常被角色/地形遮挡。
             ZWrite Off
@@ -138,8 +148,11 @@ Shader "PAO/UnderwaterCeiling"
         }
 
         // ==================== 深度 ====================
-        // 工程里 SSAO 是开着的（URP-HighFidelity-Renderer 上的 SSAO feature），
-        // 少了这两个 Pass，水面会被当成"没有深度/法线"的对象，SSAO 会脏。
+        // 工程里 SSAO 是开着的（URP-HighFidelity-Renderer 上的 SSAO feature）。
+        // 队列改成 Transparent-1 之后，URP 的深度/法线预渲染只扫不透明段
+        // （三个 Renderer 的 m_DepthPrimingMode 都是 0，本来也没开预渲染），
+        // 水面不会再被扫到；这两个 Pass 留着无害，万一以后队列改回不透明段，
+        // SSAO 也不会被水面带脏。
         Pass
         {
             Name "DepthOnly"

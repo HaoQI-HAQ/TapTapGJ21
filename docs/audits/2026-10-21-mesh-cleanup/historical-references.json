@@ -1,0 +1,50 @@
+[
+  {
+    "path": "Assets/GameMain/Art/Materials/L4海草2/Kelp.fbx",
+    "guid": "2f6f802a5401f14469c3312e14de682a",
+    "bytes": 79580,
+    "sha256": "cc16f8cf10bf0ee8b86eabb34f256452cdea44ce0a49eb0d31475f71c0957d21",
+    "historicalReferences": [],
+    "searchExit": 1
+  },
+  {
+    "path": "Assets/GameMain/Art/Models/1111.glb",
+    "guid": "70db1f7092ad35a42bdd96490ccaf0f6",
+    "bytes": 8721636,
+    "sha256": "39c902043489539b22b903caaa3c027e457529067f786ba5480936ccab36e23c",
+    "historicalReferences": [],
+    "searchExit": 1
+  },
+  {
+    "path": "Assets/GameMain/Art/Models/IKTest.fbx",
+    "guid": "c292d58c079b18f4b8e0ee7dd5abd2b2",
+    "bytes": 4148256,
+    "sha256": "15f6c8998a99a8ab479d9cf916827025f8c6027266eeee5c0a0f52258501c8bb",
+    "historicalReferences": [],
+    "searchExit": 1
+  },
+  {
+    "path": "Assets/GameMain/Art/Models/level0.obj",
+    "guid": "f5e936988c74d2646aedd9eab80f1987",
+    "bytes": 10477,
+    "sha256": "683c8a637f82eb934daffcb9307db70bbdc823b16bfe5c00d0bf168eeb969707",
+    "historicalReferences": [],
+    "searchExit": 1
+  },
+  {
+    "path": "Assets/GameMain/Data/ShrineReferences/GeneratedMeshes/Slope_a805a83c6fde940cd56f0aafefc5fbb7.asset",
+    "guid": "334bb1470aa48304fbe152da3e9fd1d7",
+    "bytes": 3552,
+    "sha256": "0db916bb7a35b32abd03b05c26672c8f3daa5a236e66f696a4005a7b4cbacbe9",
+    "historicalReferences": [],
+    "searchExit": 1
+  },
+  {
+    "path": "Assets/ThirdParty/Thalassophobia/Contents/Meshes/Light Cone.fbx",
+    "guid": "71a52015f4e93f044b74c53e1ae7d049",
+    "bytes": 12540,
+    "sha256": "568bcfea4aba0b9f950512cf39beb8c375d6a8af5cb445dd84b49a92754b0000",
+    "historicalReferences": [],
+    "searchExit": 1
+  }
+]

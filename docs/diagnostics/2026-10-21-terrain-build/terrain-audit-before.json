@@ -1,0 +1,172 @@
+{
+    "utc": "2026-10-20T18:36:30.4611553Z",
+    "buildTarget": "StandaloneWindows64",
+    "buildLocation": "G:/project/TapTapGJ21\\PAO.exe",
+    "missingPrototypeCount": 1,
+    "terrains": [
+        {
+            "path": "Assets/New Terrain 1.asset",
+            "guid": "6f39f137f9908a146b89da65b441a129",
+            "treeInstanceCount": 0,
+            "invalidInstanceCount": 0,
+            "buildScenes": [],
+            "prototypes": []
+        },
+        {
+            "path": "Assets/New Terrain 2.asset",
+            "guid": "15affe6bf559c194d8aa81dc01e16fb0",
+            "treeInstanceCount": 537,
+            "invalidInstanceCount": 0,
+            "buildScenes": [
+                "Assets/GameMain/Scenes/Map5.unity"
+            ],
+            "prototypes": [
+                {
+                    "index": 0,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Grass.fbx",
+                    "prefabName": "Grass",
+                    "missing": false,
+                    "instanceCount": 0
+                },
+                {
+                    "index": 1,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草2/Kelp 1.prefab",
+                    "prefabName": "Kelp 1",
+                    "missing": false,
+                    "instanceCount": 0
+                },
+                {
+                    "index": 2,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草2/Kelp 2.prefab",
+                    "prefabName": "Kelp 2",
+                    "missing": false,
+                    "instanceCount": 86
+                },
+                {
+                    "index": 3,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Green Sea Grass 3.prefab",
+                    "prefabName": "Green Sea Grass 3",
+                    "missing": false,
+                    "instanceCount": 451
+                },
+                {
+                    "index": 4,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草1/Deep Kelp 4.prefab",
+                    "prefabName": "Deep Kelp 4",
+                    "missing": false,
+                    "instanceCount": 0
+                }
+            ]
+        },
+        {
+            "path": "Assets/New Terrain 3.asset",
+            "guid": "a47f242ef50397047babee52c2f89715",
+            "treeInstanceCount": 0,
+            "invalidInstanceCount": 0,
+            "buildScenes": [],
+            "prototypes": []
+        },
+        {
+            "path": "Assets/New Terrain 4.asset",
+            "guid": "3f7b863ea37d5c34aa4ea4ff4c55e426",
+            "treeInstanceCount": 534,
+            "invalidInstanceCount": 0,
+            "buildScenes": [
+                "Assets/GameMain/Scenes/Map3_5.unity"
+            ],
+            "prototypes": [
+                {
+                    "index": 0,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草2/Kelp 3.prefab",
+                    "prefabName": "Kelp 3",
+                    "missing": false,
+                    "instanceCount": 27
+                },
+                {
+                    "index": 1,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Green Sea Grass 4.prefab",
+                    "prefabName": "Green Sea Grass 4",
+                    "missing": false,
+                    "instanceCount": 507
+                }
+            ]
+        },
+        {
+            "path": "Assets/New Terrain 5.asset",
+            "guid": "04aa7ec3edd14084dab6378b0ba11966",
+            "treeInstanceCount": 0,
+            "invalidInstanceCount": 0,
+            "buildScenes": [],
+            "prototypes": []
+        },
+        {
+            "path": "Assets/New Terrain.asset",
+            "guid": "75b0e6d82c1ee0545ba950aa43e5f265",
+            "treeInstanceCount": 594,
+            "invalidInstanceCount": 0,
+            "buildScenes": [
+                "Assets/GameMain/Scenes/Map4.unity"
+            ],
+            "prototypes": [
+                {
+                    "index": 0,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草1/Deep Kelp 3.prefab",
+                    "prefabName": "Deep Kelp 3",
+                    "missing": false,
+                    "instanceCount": 3
+                },
+                {
+                    "index": 1,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Green Sea Grass 1.prefab",
+                    "prefabName": "Green Sea Grass 1",
+                    "missing": false,
+                    "instanceCount": 1
+                },
+                {
+                    "index": 2,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Green Sea Grass 2.prefab",
+                    "prefabName": "Green Sea Grass 2",
+                    "missing": false,
+                    "instanceCount": 7
+                },
+                {
+                    "index": 3,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4海草2/Kelp 1.prefab",
+                    "prefabName": "Kelp 1",
+                    "missing": false,
+                    "instanceCount": 17
+                },
+                {
+                    "index": 4,
+                    "prefabPath": "",
+                    "prefabName": "",
+                    "missing": true,
+                    "instanceCount": 0
+                },
+                {
+                    "index": 5,
+                    "prefabPath": "Assets/GameMain/Art/Materials/L4草地/Green Sea Grass 5.prefab",
+                    "prefabName": "Green Sea Grass 5",
+                    "missing": false,
+                    "instanceCount": 566
+                }
+            ]
+        },
+        {
+            "path": "Assets/TerrainData_607d43be-ef80-4672-8575-71f55fd672ab.asset",
+            "guid": "05ab2c1cf960fb2448a5fe5e72dfcbe4",
+            "treeInstanceCount": 0,
+            "invalidInstanceCount": 0,
+            "buildScenes": [],
+            "prototypes": []
+        },
+        {
+            "path": "Assets/TerrainData_cf8f55d4-66f4-4b2d-9a94-50d7dbd9c583.asset",
+            "guid": "c279083f5b3df7b4fb4ea4ad3d1aed2a",
+            "treeInstanceCount": 0,
+            "invalidInstanceCount": 0,
+            "buildScenes": [],
+            "prototypes": []
+        }
+    ]
+}

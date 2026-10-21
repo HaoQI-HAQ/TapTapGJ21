@@ -1,0 +1,14 @@
+{
+    "changes": [
+        {
+            "path": "Assets/New Terrain.asset",
+            "backup": "G:\\project\\TapTapGJ21\\docs\\diagnostics\\2026-10-21-terrain-build\\backups\\20261020_183746_537\\New Terrain.asset",
+            "removedPrototypeIndices": [
+                4
+            ],
+            "originalInstanceCount": 594,
+            "resultingInstanceCount": 594,
+            "remappedInstanceCount": 566
+        }
+    ]
+}

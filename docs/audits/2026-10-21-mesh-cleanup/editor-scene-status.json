@@ -1,0 +1,28 @@
+{
+  "id": "mesh-audit-scene-status",
+  "result": {
+    "success": true,
+    "type": "text",
+    "message": "Active scene: 'Creat'",
+    "activeScene": {
+      "name": "Creat",
+      "path": "Assets/GameMain/Scenes/Creat.unity",
+      "buildIndex": 9,
+      "isDirty": false,
+      "isLoaded": true,
+      "rootCount": 3
+    },
+    "loadedSceneCount": 1,
+    "loadedScenes": [
+      {
+        "name": "Creat",
+        "path": "Assets/GameMain/Scenes/Creat.unity",
+        "buildIndex": 9,
+        "isLoaded": true,
+        "isDirty": false,
+        "rootCount": 3,
+        "isActive": true
+      }
+    ]
+  }
+}

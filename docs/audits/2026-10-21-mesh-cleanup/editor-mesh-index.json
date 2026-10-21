@@ -1,0 +1,342 @@
+{
+  "id": "mesh-audit-mesh-index",
+  "result": {
+    "success": true,
+    "message": "Retrieved 37 assets",
+    "assets": [
+      {
+        "name": "Kelp",
+        "filename": "Kelp.fbx",
+        "path": "Assets/GameMain/Art/Materials/L4海草1/Kelp.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "df21ecf851f353d4e8c590d3d0486d8a",
+        "size": 79580
+      },
+      {
+        "name": "Kelp",
+        "filename": "Kelp.fbx",
+        "path": "Assets/GameMain/Art/Materials/L4海草2/Kelp.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "2f6f802a5401f14469c3312e14de682a",
+        "size": 79580
+      },
+      {
+        "name": "Grass",
+        "filename": "Grass.fbx",
+        "path": "Assets/GameMain/Art/Materials/L4草地/Grass.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "b67957797ec004a45bf709937d2cdcca",
+        "size": 32620
+      },
+      {
+        "name": "Hard Corals",
+        "filename": "Hard Corals.fbx",
+        "path": "Assets/GameMain/Art/Materials/L_攀附岩石/Hard Corals.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "18aba36922f6bb241b40a57338e1b63d",
+        "size": 960556
+      },
+      {
+        "name": "1111",
+        "filename": "1111.glb",
+        "path": "Assets/GameMain/Art/Models/1111.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "70db1f7092ad35a42bdd96490ccaf0f6",
+        "size": 8721636
+      },
+      {
+        "name": "IKTest",
+        "filename": "IKTest.fbx",
+        "path": "Assets/GameMain/Art/Models/IKTest.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "c292d58c079b18f4b8e0ee7dd5abd2b2",
+        "size": 4148256
+      },
+      {
+        "name": "level0",
+        "filename": "level0.obj",
+        "path": "Assets/GameMain/Art/Models/level0.obj",
+        "type": "GameObject",
+        "extension": "obj",
+        "guid": "f5e936988c74d2646aedd9eab80f1987",
+        "size": 10477
+      },
+      {
+        "name": "shi_liu_ye",
+        "filename": "shi_liu_ye.glb",
+        "path": "Assets/GameMain/Art/Models/shi_liu_ye.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "6f8a7342f2287d64f87e6e5163953776",
+        "size": 6958588
+      },
+      {
+        "name": "sm_l1",
+        "filename": "sm_l1.glb",
+        "path": "Assets/GameMain/Art/Models/sm_l1.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "8a577420c7c21844eb5dbebb1081bbc5",
+        "size": 4439840
+      },
+      {
+        "name": "sm_l3.5",
+        "filename": "sm_l3.5.glb",
+        "path": "Assets/GameMain/Art/Models/sm_l3.5.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "d2755a25d49c904488d544e6463318b0",
+        "size": 3038916
+      },
+      {
+        "name": "sm_l3_ji_guan",
+        "filename": "sm_l3_ji_guan.glb",
+        "path": "Assets/GameMain/Art/Models/sm_l3_ji_guan.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "0ce08ac528830f04ca34f25b79ba6b56",
+        "size": 9475428
+      },
+      {
+        "name": "SM_L4_shan_ shi",
+        "filename": "SM_L4_shan_ shi.glb",
+        "path": "Assets/GameMain/Art/Models/SM_L4_shan_ shi.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "9ed98f21d17bbed45b7848655aa86497",
+        "size": 3722924
+      },
+      {
+        "name": "SM_L4_yi_ ji_1glb",
+        "filename": "SM_L4_yi_ ji_1glb.glb",
+        "path": "Assets/GameMain/Art/Models/SM_L4_yi_ ji_1glb.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "1ee526b49e3df5946a2ff50c2857297c",
+        "size": 10978560
+      },
+      {
+        "name": "SM_L4_yi_ ji_2glb",
+        "filename": "SM_L4_yi_ ji_2glb.glb",
+        "path": "Assets/GameMain/Art/Models/SM_L4_yi_ ji_2glb.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "570ac9390f8a6764f801e8d6d4ac8bce",
+        "size": 13106076
+      },
+      {
+        "name": "SM_L4_zhi_ wu_1 1",
+        "filename": "SM_L4_zhi_ wu_1 1.fbx",
+        "path": "Assets/GameMain/Art/Models/SM_L4_zhi_ wu_1 1.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "25128d5d963668341b5d29e2a797977d",
+        "size": 1059708
+      },
+      {
+        "name": "SM_L5_mi_gong",
+        "filename": "SM_L5_mi_gong.glb",
+        "path": "Assets/GameMain/Art/Models/SM_L5_mi_gong.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "b44b88765a01677448c88c4be99af400",
+        "size": 9116428
+      },
+      {
+        "name": "sm_l5_shan_shi",
+        "filename": "sm_l5_shan_shi.fbx",
+        "path": "Assets/GameMain/Art/Models/sm_l5_shan_shi.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "ed94b32890de41a4ab2743764a6dbc78",
+        "size": 1843148
+      },
+      {
+        "name": "SM_shugu",
+        "filename": "SM_shugu.glb",
+        "path": "Assets/GameMain/Art/Models/SM_shugu.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "fe417df2562a49944a67427954d84646",
+        "size": 26892436
+      },
+      {
+        "name": "Soft Corals",
+        "filename": "Soft Corals.fbx",
+        "path": "Assets/GameMain/Art/Models/Soft Corals.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "c42d2d11486c61442aa0a7a33b27dd30",
+        "size": 1285004
+      },
+      {
+        "name": "shuimu_unity_5animations_face",
+        "filename": "shuimu_unity_5animations_face.fbx",
+        "path": "Assets/GameMain/Art/Models/最终版模型/shuimu_unity_5animations_face.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "3fc560dc4788d234781267668fc5b1ea",
+        "size": 5741980
+      },
+      {
+        "name": "01",
+        "filename": "01.glb",
+        "path": "Assets/GameMain/Art/Preset/01.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "2b96901e6c7007344808e792358f7f5b",
+        "size": 26450436
+      },
+      {
+        "name": "02",
+        "filename": "02.glb",
+        "path": "Assets/GameMain/Art/Preset/02.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "acb4c003bb296a347a0d9302e8b9e95b",
+        "size": 18369564
+      },
+      {
+        "name": "03",
+        "filename": "03.glb",
+        "path": "Assets/GameMain/Art/Preset/03.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "2a2d15e7c1f975b4cb08e161528aab1e",
+        "size": 19867940
+      },
+      {
+        "name": "04",
+        "filename": "04.glb",
+        "path": "Assets/GameMain/Art/Preset/04.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "18d8e341253392e419af7eda8c0cfdd1",
+        "size": 17886404
+      },
+      {
+        "name": "05",
+        "filename": "05.glb",
+        "path": "Assets/GameMain/Art/Preset/05.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "2fc75ec96aed04d47be54ac364753439",
+        "size": 17397168
+      },
+      {
+        "name": "06",
+        "filename": "06.glb",
+        "path": "Assets/GameMain/Art/Preset/06.glb",
+        "type": "GameObject",
+        "extension": "glb",
+        "guid": "67dfbbeb161b1bb42af7a712fb2d95b2",
+        "size": 41228948
+      },
+      {
+        "name": "all Assets",
+        "filename": "all Assets.fbx",
+        "path": "Assets/GameMain/Art/Preset/all Assets.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "2213409ece7b60244a4bd25591867e49",
+        "size": 19157808
+      },
+      {
+        "name": "Preset01",
+        "filename": "Preset01.fbx",
+        "path": "Assets/GameMain/Art/Preset/Preset01.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "b804ea4e1433c4a449f9076ec3646709",
+        "size": 79960912
+      },
+      {
+        "name": "Preset2",
+        "filename": "Preset2.fbx",
+        "path": "Assets/GameMain/Art/Preset/Preset2.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "51f2487ae332dd44c996c46e1bc95a24",
+        "size": 8667648
+      },
+      {
+        "name": "Preset4",
+        "filename": "Preset4.fbx",
+        "path": "Assets/GameMain/Art/Preset/Preset4.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "0dad305bca6769346b77bbadd3eb0e01",
+        "size": 77205856
+      },
+      {
+        "name": "Slope_61705ee886569e9e2be2dc541830e093",
+        "filename": "Slope_61705ee886569e9e2be2dc541830e093.asset",
+        "path": "Assets/GameMain/Data/ShrineReferences/GeneratedMeshes/Slope_61705ee886569e9e2be2dc541830e093.asset",
+        "type": "Mesh",
+        "extension": "asset",
+        "guid": "7873860437b53224f8132050861dddaf",
+        "size": 3514
+      },
+      {
+        "name": "Slope_a805a83c6fde940cd56f0aafefc5fbb7",
+        "filename": "Slope_a805a83c6fde940cd56f0aafefc5fbb7.asset",
+        "path": "Assets/GameMain/Data/ShrineReferences/GeneratedMeshes/Slope_a805a83c6fde940cd56f0aafefc5fbb7.asset",
+        "type": "Mesh",
+        "extension": "asset",
+        "guid": "334bb1470aa48304fbe152da3e9fd1d7",
+        "size": 3552
+      },
+      {
+        "name": "Slope_a1502394e99a67b5ca28b78957edfc39",
+        "filename": "Slope_a1502394e99a67b5ca28b78957edfc39.asset",
+        "path": "Assets/GameMain/Data/ShrineReferences/GeneratedMeshes/Slope_a1502394e99a67b5ca28b78957edfc39.asset",
+        "type": "Mesh",
+        "extension": "asset",
+        "guid": "f022b6462a96b3048b54a44d6344bde4",
+        "size": 3580
+      },
+      {
+        "name": "Light Cone",
+        "filename": "Light Cone.fbx",
+        "path": "Assets/ThirdParty/Thalassophobia/Contents/Meshes/Light Cone.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "71a52015f4e93f044b74c53e1ae7d049",
+        "size": 12540
+      },
+      {
+        "name": "fbx_fx_half_sphere",
+        "filename": "fbx_fx_half_sphere.FBX",
+        "path": "Assets/ThirdParty/VFX_Klaus/Meshes/fbx_fx_half_sphere.FBX",
+        "type": "GameObject",
+        "extension": "FBX",
+        "guid": "ac9f64b79e810194a84196720ab85940",
+        "size": 16112
+      },
+      {
+        "name": "DebugProbe",
+        "filename": "DebugProbe.fbx",
+        "path": "Packages/com.unity.render-pipelines.core/Editor/Resources/DebugProbe.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "9e1c97fc44f9a8744b61b58f72c56de4",
+        "size": 20572
+      },
+      {
+        "name": "UnityMaterialBall",
+        "filename": "UnityMaterialBall.fbx",
+        "path": "Packages/com.unity.render-pipelines.core/Runtime/RenderPipelineResources/Mesh/UnityMaterialBall.fbx",
+        "type": "GameObject",
+        "extension": "fbx",
+        "guid": "39857cfad1651644682ff5b772e6e697",
+        "size": 1525376
+      }
+    ]
+  }
+}
